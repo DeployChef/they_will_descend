@@ -1,0 +1,55 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor
+.vs/
+.idea/
+*.user
+*.suo
+*.user
+*.userprefs
+
+# Unity project (TheyWillDescend/)
+TheyWillDescend/[Ll]ibrary/
+TheyWillDescend/[Tt]emp/
+TheyWillDescend/[Oo]bj/
+TheyWillDescend/[Bb]uild/
+TheyWillDescend/[Bb]uilds/
+TheyWillDescend/[Ll]ogs/
+TheyWillDescend/[Mm]emoryCaptures/
+TheyWillDescend/[Uu]ser[Ss]ettings/
+TheyWillDescend/.vs/
+TheyWillDescend/.gradle/
+TheyWillDescend/ExportedObj/
+TheyWillDescend/.consulo/
+TheyWillDescend/*.csproj
+TheyWillDescend/*.unityproj
+TheyWillDescend/*.sln
+TheyWillDescend/*.slnx
+TheyWillDescend/*.tmp
+TheyWillDescend/*.user
+TheyWillDescend/*.userprefs
+TheyWillDescend/*.pidb
+TheyWillDescend/*.booproj
+TheyWillDescend/*.svd
+TheyWillDescend/*.pdb
+TheyWillDescend/*.mdb
+TheyWillDescend/*.opendb
+TheyWillDescend/*.VC.db
+TheyWillDescend/*.pidb.meta
+TheyWillDescend/*.pdb.meta
+TheyWillDescend/*.mdb.meta
+TheyWillDescend/sysinfo.txt
+TheyWillDescend/*.apk
+TheyWillDescend/*.unitypackage
+TheyWillDescend/crashlytics-build.properties
+
+# Keep Asset meta
+!TheyWillDescend/[Aa]ssets/**/*.meta
+
+# Obsidian (local workspace noise; keep vault config)
+TheyWillDescendWiki/.obsidian/workspace.json
+TheyWillDescendWiki/.obsidian/workspace-mobile.json
+TheyWillDescendWiki/.trash/
