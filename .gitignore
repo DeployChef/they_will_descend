@@ -53,3 +53,25 @@ TheyWillDescend/crashlytics-build.properties
 TheyWillDescendWiki/.obsidian/workspace.json
 TheyWillDescendWiki/.obsidian/workspace-mobile.json
 TheyWillDescendWiki/.trash/
+
+# ── FMOD Studio ─────────────────────────────────────────────
+# FMOD Studio project lives at: Audio_FMOD/they will desend/
+
+# FMOD Studio per-user state (window layout, local settings, etc.)
+# Regenerated per machine — never commit.
+Audio_FMOD/**/.user/
+Audio_FMOD/**/.cache/
+Audio_FMOD/**/Cache/
+Audio_FMOD/**/*.cache
+Audio_FMOD/**/*.cache.meta
+*.fspro.user
+*.fmod.user
+
+# FMOD Studio build output — intermediate artifacts.
+# Banks are committed ONLY to TheyWillDescend/Assets/StreamingAssets/Desktop/
+Audio_FMOD/**/Build/
+
+# Built .bank files go from Build/Desktop/ → TheyWillDescend/Assets/StreamingAssets/Desktop/
+# They ARE committed — needed by everyone without FMOD Studio:
+#   TheyWillDescend/Assets/StreamingAssets/Desktop/*.bank
+#   TheyWillDescend/Assets/StreamingAssets/Desktop/*.strings.bank
