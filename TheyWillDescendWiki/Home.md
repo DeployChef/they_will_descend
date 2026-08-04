@@ -31,3 +31,4 @@
 - [[Architecture/03 Core Systems|03 Core Systems]] — director, event bus, время сессии
 - [[Architecture/04 Simulation|04 Simulation]] — город, люди, экономика, тепло
 - [[Architecture/05 Content Pipeline|05 Content Pipeline]] — ScriptableObjects, баланс, события
+- [[Architecture/06 FMOD Audio|06 FMOD Audio]] — FMOD Studio 2.03: структура, API, правила

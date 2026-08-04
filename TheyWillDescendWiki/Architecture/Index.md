@@ -14,6 +14,7 @@
 - [[03 Core Systems]] — director, event bus, время сессии
 - [[04 Simulation]] — город, люди, экономика, тепло/жизнь
 - [[05 Content Pipeline]] — ScriptableObjects, баланс, события
+- [[06 FMOD Audio]] — FMOD Studio 2.03: структура, API, правила именования
 
 ## Связь с GDD
 
