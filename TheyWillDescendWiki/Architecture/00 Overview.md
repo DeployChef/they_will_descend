@@ -2,33 +2,39 @@
 
 ← [[Index]] | [[../Home|Home]]
 
-## Стек (черновик)
+## Стек (целевой)
 
 | Слой | Выбор |
 | --- | --- |
 | Engine | Unity 6, URP |
-| DI / lifetime | TBD (в джеме был VContainer + Root LifetimeScope) |
-| Асинхронность / UI | TBD |
-| Данные контента | ScriptableObjects + таблицы баланса |
+| Simulation | **DOTS / Entities** (production ECS) — source of truth |
+| Presentation | GameObjects / UI Toolkit / uGUI + читает ECS |
+| Audio | FMOD (снаружи симуляции) |
+| Content | Authoring + Baker, blobs, prefabs, таблицы баланса |
+| DI | **Не в core симуляции.** Опционально только Presentation/Infra |
+
+Подробности: [[08 Production ECS]].
 
 ## Слои
 
 ```
-Presentation (UI, камера, VFX)
+Presentation (UI, камера, VFX, FMOD)
+        ↓ Intent
+Application (тонкий: Intent → Command)
         ↓
-Session / Director (ран, фазы, win/lose)
-        ↓
-Simulation (город, люди, экономика, боги)
-        ↓
-Content (definitions, события, законы)
+Simulation ECS (город, люди, экономика, боги)  ← истина
+        ↑ Events / projections
+Content (definitions, bake, баланс)
 ```
 
 ## Принципы
 
 - Симуляция не знает про конкретные кнопки UI
-- События — явные сообщения, не скрытые синглтон-хаки без контракта
-- Баланс крутится данными, не магическими константами в коде
+- UI шлёт команды; не считает производство/голод
+- Баланс и типы зданий — данными, не ветками `if` на каждый тип
+- gmtk_2026 — референс сеттинга, не card-архитектуры
+- Обучение и роль агента: [[07 Mentorship & Learning]]
 
 ---
 
-Далее → [[01 Folder Structure]]
+Далее → [[01 Folder Structure]] · [[08 Production ECS]]

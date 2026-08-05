@@ -1,0 +1,41 @@
+---
+description: Production ECS architecture for They Will Descend simulation
+alwaysApply: true
+---
+
+# Production ECS Architecture
+
+Target: mature, extensible DOTS architecture for a large city-survival sim.
+
+## Layers
+
+```
+Presentation (UI, camera, FMOD, VFX)
+  → intents only
+Application (thin): Intent → Command
+  → no economy math
+Simulation (ECS): source of truth
+Content: Authoring/Baker, blobs, prefabs, balance tables
+```
+
+## Simulation domains (folders + SystemGroups)
+
+Time → Commands → Workforce/Assignment → Production → Needs/Survival → Society/Laws → Gods/Crisis → WinLose → EmitEvents
+
+## Rules
+
+- One write model: ECS simulation world
+- Systems = domain rules; components = state; avoid rich OO aggregates on entities
+- Player/UI writes **commands**, not stocks directly
+- Singletons for global state (`GameTime`, ledgers, phase) — not VContainer in core
+- DI only optional in Presentation/Infrastructure (UI, FMOD, save)
+- ScriptableObjects/authoring = design-time; runtime truth = entities/blobs
+- Start workforce as **aggregates** (`AssignedCount`); agents/pathfinding later
+- Prefer data-driven content for new buildings/resources/laws
+
+## Anti-patterns
+
+- `Button.onClick` computing production
+- God `IEconomyService` used by UI and systems alike
+- Mixing jam card architecture into ECS core
+- Burst systems calling managed UI/FMOD directly

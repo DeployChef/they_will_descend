@@ -27,8 +27,10 @@
 - [[Architecture/Index|Index]] — индекс техдоков
 - [[Architecture/00 Overview|00 Overview]] — стек и слои
 - [[Architecture/01 Folder Structure|01 Folder Structure]] — `Assets/_Project`
-- [[Architecture/02 Scenes & Lifetime|02 Scenes & Lifetime]] — сцены и lifetime / DI
-- [[Architecture/03 Core Systems|03 Core Systems]] — director, event bus, время сессии
+- [[Architecture/02 Scenes & Lifetime|02 Scenes & Lifetime]] — Bootstrap, SubScene, lifetime
+- [[Architecture/03 Core Systems|03 Core Systems]] — director, время, команды/события
 - [[Architecture/04 Simulation|04 Simulation]] — город, люди, экономика, тепло
-- [[Architecture/05 Content Pipeline|05 Content Pipeline]] — ScriptableObjects, баланс, события
-- [[Architecture/06 FMOD Audio|06 FMOD Audio]] — FMOD Studio 2.03: структура, API, правила
+- [[Architecture/05 Content Pipeline|05 Content Pipeline]] — Authoring/Baker, баланс
+- [[Architecture/06 FMOD Audio|06 FMOD Audio]] — FMOD Studio 2.03
+- [[Architecture/07 Mentorship & Learning|07 Mentorship & Learning]] — ментор, уроки, прогресс
+- [[Architecture/08 Production ECS|08 Production ECS]] — production ECS, расширение
