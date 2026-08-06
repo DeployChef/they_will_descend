@@ -7,34 +7,36 @@
 | Слой | Выбор |
 | --- | --- |
 | Engine | Unity 6, URP |
-| Simulation | **DOTS / Entities** (production ECS) — source of truth |
-| Presentation | GameObjects / UI Toolkit / uGUI + читает ECS |
-| Audio | FMOD (снаружи симуляции) |
+| Simulation | **DOTS / Entities** — source of truth рана |
+| Shell / App | **AppFlow FSM** + Director + **SimGate**; сцены Root → Game |
+| DI | **VContainer** только Shell/Presentation (паттерн gmtk Root/Game scopes) |
+| Presentation | UI, камера, FMOD; читает ECS / шлёт commands |
 | Content | Authoring + Baker, blobs, prefabs, таблицы баланса |
-| DI | **Не в core симуляции.** Опционально только Presentation/Infra |
+| Logging | `GameLog` + каналы (`Infrastructure/Logging`) |
 
-Подробности: [[08 Production ECS]].
+Подробности: [[08 Production ECS]] · [[09 App Shell]].
 
 ## Слои
 
 ```
+Shell (AppFlow, Director, SimGate, menus)
+        ↓ SessionConfig + SimGate
 Presentation (UI, камера, VFX, FMOD)
-        ↓ Intent
-Application (тонкий: Intent → Command)
-        ↓
-Simulation ECS (город, люди, экономика, боги)  ← истина
+        ↓ Intent / Commands
+Simulation ECS  ← истина рана
         ↑ Events / projections
 Content (definitions, bake, баланс)
 ```
 
 ## Принципы
 
-- Симуляция не знает про конкретные кнопки UI
+- Симуляция не знает про кнопки UI и меню
 - UI шлёт команды; не считает производство/голод
-- Баланс и типы зданий — данными, не ветками `if` на каждый тип
-- gmtk_2026 — референс сеттинга, не card-архитектуры
-- Обучение и роль агента: [[07 Mentorship & Learning]]
+- Shell включает симуляцию через SimGate (не «просто Play Mode»)
+- Баланс и типы зданий — данными
+- gmtk_2026 — референс **shell/DI сцен**, не card-core и не write model
+- Обучение: [[07 Mentorship & Learning]]
 
 ---
 
-Далее → [[01 Folder Structure]] · [[08 Production ECS]]
+Далее → [[01 Folder Structure]] · [[09 App Shell]]

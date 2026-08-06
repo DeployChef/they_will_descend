@@ -46,9 +46,19 @@
 
 | Урок | Тема | Статус |
 | --- | --- | --- |
-| 0 | Entities, SubScene, bake, Entities Hierarchy | done (Probe → entity) |
-| 1 | `GameTime` singleton + tick system | next |
-| 2+ | Resources, workers, workplaces, … | planned |
+| 0 | Entities, SubScene, bake, Entities Hierarchy | done |
+| 1 | `GameTime` singleton + tick + `GameLog` | done |
+| Shell | AppFlow + SimGate (документы: [[09 App Shell]]) | docs done; stub next |
+| 2+ | Resources, workers, workplaces, … | planned (за SimGate) |
+
+## Зафиксированные архитектурные решения (обучение)
+
+- Геймплей: Frostpunk assign/build, не cards
+- Симуляция: production ECS; DI не в `ISystem`
+- Shell: AppFlow + Director + SimGate; VContainer как в gmtk Root/Game — только снаружи ECS
+- Инкапсуляция: public fields на компонентах; запись — дисциплина systems/commands
+- Логи: `GameLog` / `LogChannel`, не сырой `Debug.Log` в новом коде
+
 
 ---
 

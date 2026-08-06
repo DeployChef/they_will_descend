@@ -1,0 +1,24 @@
+---
+description: App Shell vs Simulation — AppFlow, SimGate, VContainer boundaries
+alwaysApply: true
+---
+
+# App Shell
+
+Two machines: **Shell** (menus, AppFlow FSM, Director, SimGate, VContainer) and **Simulation** (ECS). Sim does not know about menus.
+
+## Borrow from gmtk_2026
+
+Eternal Root + additive Game, Root/Game LifetimeScopes (Auto Run off), thin GameDirector, FMOD on Root, ref-counted presentation pause keys.
+
+## Do not borrow from gmtk
+
+Card DnD, FindObjects Inject, MonoBehaviour sim + timeScale as economy pause, soft restart via Find.
+
+## SimGate
+
+Off (menu/cutscene/briefing) / Running (Playing) / Frozen (pause). Drive ECS simulation group — do not rely on timeScale alone for economy.
+
+## Canon
+
+Wiki: `TheyWillDescendWiki/Architecture/09 App Shell.md`

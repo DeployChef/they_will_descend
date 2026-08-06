@@ -4,26 +4,43 @@
 
 ## Цель
 
-Чистый `Assets/_Project` с предсказуемыми зонами ответственности.
+Чистый `Assets/_Project` с предсказуемыми зонами. Shell ≠ Simulation.
 
-## Черновик
+## Целевая структура
 
 ```
 Assets/_Project/
   Art/
   Audio/
   Prefabs/
-  Scenes/
+  Scenes/                 # Boot/Root, MainMenu, Game (Bootstrap пока = Game-зародыш)
+  SubScenes/              # Simulation и др. для bake
   Scripts/
-    Core/
-    Simulation/
-    Presentation/
-    Content/
-  Settings/          # SO definitions, balance
+    Infrastructure/       # Logging (GameLog), утилиты
+    Shell/                # AppFlow, Director, SimGate, Root/Game scopes (когда появятся)
+    Simulation/           # ECS: Time, Economy, … (IComponentData, ISystem)
+    Authoring/            # MonoBehaviour + Baker
+    Presentation/         # UI, камера, bridges ECS→UI
+    Content/              # каталоги сценариев, defs (по мере роста)
+  Settings/               # balance SO, project settings assets
 ```
 
-> TODO: зафиксировать после первого вертикального среза; можно опереться на структуру gmtk `Assets/_Project`.
+## Сейчас (факт)
+
+```
+Assets/_Project/
+  Art/
+  Scenes/Bootstrap.unity
+  SubScenes/Simulation.unity
+  Scripts/
+    Authoring/Time/
+    Simulation/Time/
+    Infrastructure/Logging/
+    Presentation/          # пусто, зарезервировано
+```
+
+Asmdefs появятся при выносе Shell/VContainer (границы как в gmtk: Core / Shell / Simulation / Presentation), без Inject симуляции.
 
 ---
 
-Связанные разделы: [[00 Overview]] · [[05 Content Pipeline]]
+Связанные: [[00 Overview]] · [[09 App Shell]] · [[05 Content Pipeline]]

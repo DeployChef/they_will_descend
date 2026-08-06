@@ -86,8 +86,10 @@ UI ← читает Stock / domain events
 
 - Геймплей: **Frostpunk assign/build**, не card DnD ([[../GDD/00 Overview|GDD]])
 - Workforce v1: **агрегаты** (`AssignedCount`), агенты с pathfinding позже
-- Время: **singleton** `GameTime`
-- Сцены: `Bootstrap` (presentation) + SubScene `Simulation` (bake)
+- Время: **singleton** `GameTime` (уже в коде)
+- Сцены: Root + additive Game + SubScene Simulation — см. [[09 App Shell]]
+- SimGate: дни/экономика только в **Running**
+- Логи: `GameLog` + каналы
 
 ## Анти-паттерны
 
@@ -96,6 +98,8 @@ UI ← читает Stock / domain events
 - SO как runtime write model
 - Burst/ISystem → прямые вызовы UI/FMOD
 - Копирование card-архитектуры джема в core
+- Симуляция тикает на меню/брифинге без SimGate
+- VContainer-сервис как write model экономики
 
 ## Карта с бэкенд-DDD
 
@@ -105,7 +109,8 @@ UI ← читает Stock / domain events
 | Инварианты в правилах | «Сервис на всё» |
 | Domain events | Скрытый bus без контракта |
 | Content vs runtime | SO = истина в Play |
+| Application workflow | AppFlow FSM в Shell ([[09 App Shell]]) |
 
 ---
 
-Связанные: [[04 Simulation]] · [[07 Mentorship & Learning]] · [[00 Overview]] · [[02 Scenes & Lifetime]]
+Связанные: [[04 Simulation]] · [[07 Mentorship & Learning]] · [[00 Overview]] · [[02 Scenes & Lifetime]] · [[09 App Shell]]
