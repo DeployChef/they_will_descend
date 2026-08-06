@@ -1,4 +1,5 @@
 using _Project.Scripts.Infrastructure.Logging;
+using _Project.Scripts.Simulation.Session;
 using Unity.Entities;
 
 namespace _Project.Scripts.Simulation.Time
@@ -7,7 +8,12 @@ namespace _Project.Scripts.Simulation.Time
     {
         public void OnUpdate(ref SystemState state)
         {
-            // Singleton = в мире ровно один GameTime (мы так договорились)
+            if (!SystemAPI.TryGetSingleton<SimControl>(out var simControl))
+                return;
+
+            if (simControl.Mode != SimRunMode.Running)
+                return;
+
             if (!SystemAPI.TryGetSingletonRW<GameTime>(out var timeRW))
                 return;
 

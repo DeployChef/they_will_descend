@@ -2,10 +2,26 @@
 
 ← [[Index]] | [[../Home|Home]]
 
-Сеньорский контракт **оболочки приложения** (всё вокруг симуляции): меню, сценарии, катсцены, пауза, старт рана.  
-Собрано из: Frostpunk-потока, текущего ECS-ядра, и переиспользуемого shell из **gmtk_2026** (без card-архитектуры).
+Сеньорский контракт оболочки. Цель — **элегантность большой игры**, не копирование джем-привычек.
 
 Связано: [[02 Scenes & Lifetime]] · [[03 Core Systems]] · [[08 Production ECS]]
+
+---
+
+## 0. Честный вердикт по gmtk / «GameDirector»
+
+То, что было в GMTK (Root scope, Director, `GameStartState`, pause keys) — **удобный jam-каркас**, не священный канон. Удобно дважды ≠ обязательно красиво для 3-летнего проекта.
+
+| Идея джема | Оценка для полной игры |
+| --- | --- |
+| Вечный Root + additive Game | ✅ Оставить |
+| Тонкий оркестратор сцен | ✅ Оставить как **SceneLoader**, не как бог |
+| Один `GameDirector`, который грузит сцену *и* знает opening *и* restart | ❌ Жиреет; не элегантно |
+| VContainer everywhere | ⚪ Опционально позже; сейчас **Composition Root** без контейнера |
+| Pause = `timeScale` | ❌ Для ECS — **SimGate** |
+| Нет App FSM | ❌ Для Frostpunk-потока нужен явный state machine |
+
+**Элегантная замена «директора»:** не другое магическое имя, а **три узких роли** вместо одного толстого.
 
 ---
 
@@ -13,192 +29,147 @@
 
 | Машина | Технология | Знает |
 | --- | --- | --- |
-| **Shell** | C# + UI + сцены + **VContainer** | меню, FSM потока, какой сценарий, катсцена, пауза UI, SimGate |
-| **Simulation** | **ECS / Entities** | дни, ресурсы, рабочие, законы, win/lose факты |
+| **Shell** | обычный C# + UI + сцены | FSM потока, сценарий, катсцена, пауза UI, SimGate |
+| **Simulation** | ECS | дни, ресурсы, рабочие, законы |
 
-> Shell **включает/выключает** симуляцию.  
-> Симуляция **не знает** про кнопки меню и VContainer.
-
-DI — в Shell/Presentation. В `ISystem` контейнер **не** инжектим.
+Shell включает/выключает симуляцию. ECS не знает меню.  
+Контейнер DI **не обязателен**. Сначала конструкторы из Composition Root.
 
 ---
 
-## 2. Что берём из gmtk_2026
-
-Джем: вечный Root → additive Game → child scope → тонкий director → opening под pause.  
-Это хороший **каркас сцен/DI**, плохая **модель симуляции** для полной игры.
-
-### Переносим
-
-| Паттерн | Зачем |
-| --- | --- |
-| Вечная **Root** + additive **Game** | глобальные сервисы переживают ран |
-| `RootLifetimeScope` + `GameLifetimeScope`, **Auto Run off**, `Build()` в коде | контролируемый lifecycle |
-| Parent scope проставляется директором после load | надёжнее cross-scene Inspector |
-| Тонкий **`IGameDirector`** | только сцены/сессия, не экономика |
-| **FMOD / Audio** на Root | переживает выгрузку Game |
-| Ref-counted pause keys (идея) | несколько оверлеев не дерутся за «паузу» |
-| Явный «вход в сессию» (`GameStartState` в джеме) | у нас разворачивается в полный **AppFlow FSM** |
-| Asmdef: Core contracts / Main(shell) / Presentation | границы сборок |
-
-### Не переносим
-
-| Джем | Почему нет |
-| --- | --- |
-| Card DnD + Inject всех зданий/карт | другой жанр |
-| `FindObjectsByType` + manual Inject | jam-hack |
-| Симуляция через MonoBehaviour + `ITickable` + `timeScale` | у нас ECS + **SimGate** |
-| Нет Main Menu / App FSM | полной игре нужен Frostpunk-поток |
-| Soft restart через `GameObject.Find` | нужен явный Session Reset API |
-| Economy/session services в том же DI, что UI «на всё» | write model — ECS |
-
-Референс-код джема (смотреть, не копировать слепо):  
-`gmtk_2026/.../Main/Startup.cs`, `GameDirector.cs`, `DI/RootLifetimeScope.cs`, `DI/GameLifetimeScope.cs`, `GameAppStates/GameStartState.cs`.
-
----
-
-## 3. Frostpunk-поток → AppFlow FSM
-
-Целевые состояния Shell (имена можно уточнить, смысл — нет):
+## 2. Элегантное ядро Shell (канон)
 
 ```text
-Boot
-  → PressAnyKey
-  → MainMenu
-  → ScenarioSelect
-  → ScenarioIntroCutscene
-  → ScenarioBriefing          // текст + «Начать»
-  → EnterGameplay             // load Game, камера к генератору/пирамиде
-  → Playing                   // SimGate.Running
-       ⇄ Paused               // SimGate.Frozen + pause UI
-  → Results (Win/Lose)
-  → (QuitToMenu | RestartScenario)
+CompositionRoot (Boot)
+  создаёт порты и FSM один раз
+
+AppStateMachine
+  владеет текущим IAppState
+  только TransitionTo(stateId) — тонкий
+
+IAppState (Boot, Menu, Cutscene, Briefing, Playing, Paused, Results…)
+  Enter / Exit / Tick(optional)
+  каждый стейт сам ставит SimGate и шлёт UI
+
+GameSession
+  Start(SessionConfig) / Dispose
+  «одна попытка сценария»: load/unload контента рана, сброс
+
+SimGate
+  Off | Running | Frozen
+  единственный мост к ECS-тикам
+
+SceneLoader (узкий)
+  LoadAdditive / Unload — без знания экономики
 ```
 
-`IAppFlow` / `AppFlowController` владеет текущим состоянием и переходами.  
-Каждый стейт: какие экраны видны + какой **SimGate** + какие input maps.
+### Почему это лучше GameDirector
 
-Это оркестрация уровня application (как workflow/saga на бэке), **не** ECS system.
-
----
-
-## 4. SimGate — мост Shell ↔ ECS
-
-Один переключатель, source of truth у Shell:
-
-| Значение | Когда | Эффект |
-| --- | --- | --- |
-| **Off** | меню, катсцена, брифинг (до «Начать») | Simulation group не тикает / не считаем экономику |
-| **Running** | Playing | `AdvanceGameTimeSystem` и остальные sim-системы идут |
-| **Frozen** | Pause menu, часть синематиков поверх уже начатого рана | sim стоит, UI/оверлей живы |
-
-### Реализация (контракт)
-
-- Shell вызывает `ISimGate.Set(Off|Running|Frozen)`.
-- Реализация гасит/включает **`SimulationSystemGroup`** (или наш custom group), либо выставляет singleton `SimControl`, который sim-системы требуют через `RequireForUpdate` / early-out.
-- **Не** полагаться только на `Time.timeScale`: UI и камера часто должны жить при паузе; ECS-тики должны резаться явно.
-
-Джем использовал `timeScale` + ref-count keys — идею ключей сохраняем для **presentation pause** (диалоги, оверлеи), а для экономики — **SimGate**.
-
-Пока игрок в Briefing: мир/SubScene уже можно грузить (чтобы камера прилетела к печке), но SimGate = **Off**, пока не нажали «Начать».
-
----
-
-## 5. Сцены
-
-| Сцена | Живёт | Содержимое |
-| --- | --- | --- |
-| `Boot` / `Root` | всегда | Startup, RootLifetimeScope, Audio/FMOD, AppFlow, Director, Shell bus, loading/press-any-key, опционально pause overlay root |
-| `MainMenu` | по необходимости | меню, выбор сценария (можно панелями на Root на раннем этапе) |
-| `Game` | сессия рана | GameLifetimeScope, камера, HUD, CameraDirector, **SubScene Simulation** (ECS bake) |
-
-Текущий учебный `Bootstrap.unity` + `SubScenes/Simulation.unity` → эволюционирует в **`Game` + Simulation SubScene**.  
-Root появится, когда вырастет меню; до этого допустим временный stub AppFlow прямо на Bootstrap.
-
-Build Settings: `#0 = Root`. Game/Menu — load additive из Director.
-
----
-
-## 6. DI-карта (зрелая)
-
-```
-RootLifetimeScope
-  IAppFlow
-  IGameDirector
-  ISimGate
-  IShellEventBus          // UI/audio/flow — не write model города
-  IAudioManager (FMOD)
-  IGameLog (или static GameLog + optional wrapper)
-  PauseOverlay (hierarchy)
-  ScenarioCatalog (read-only content access)
-
-GameLifetimeScope : child of Root
-  SessionConfig (выбранный сценарий, seed)
-  CameraDirector, HUD presenters
-  SimulationBridge / EventRelay   // ECS → Shell bus
-  НЕ регистрируем «EconomyService» как write model
-```
-
-**Simulation (ECS):** без VContainer.  
-Commands: Presentation → buffer/singleton queue → systems.  
-Facts: systems → event buffer → Relay → `IShellEventBus` → UI/FMOD.
-
----
-
-## 7. Director vs AppFlow vs StartState
-
-| Тип | Ответственность |
+| GameDirector (джем) | Эта схема |
 | --- | --- |
-| **AppFlow** | «где мы в продукте» (Menu vs Briefing vs Playing) |
-| **GameDirector** | load/unload сцен, Build/Dispose Game scope, передать SessionConfig |
-| **SessionEnter** (наследник идеи `GameStartState`) | последовательность *внутри* входа в ран: cutscene → briefing → camera fly → SimGate.Running |
+| Один класс копит обязанности | Обязанности разрезаны |
+| Restart = ad-hoc Find | `session.Dispose(); session.Start(config)` |
+| Opening зашит в Start | Стейты Cutscene / Briefing |
+| Сложно тестировать | Стейты и SimGate тестируются отдельно |
+| Имя врёт («директор всего») | Имена = реальные роли |
 
-Director не считает еду. AppFlow не bake’ит здания. ECS не открывает Main Menu.
+«Director» как слово можно не использовать. Если понадобится фасад для UI-кнопки «New Game» — тонкий `IGameSessionFrontend`, не бог.
 
 ---
 
-## 8. Пауза vs «ещё не начали»
+## 3. Frostpunk → стейты
 
-| | Briefing / Cutscene | Esc Pause |
+```text
+Boot → PressAnyKey → MainMenu → ScenarioSelect
+  → Cutscene → Briefing → (session.Start) → Playing ⇄ Paused
+  → Results → Menu | Restart (Dispose + Start)
+```
+
+| State | SimGate | Заметка |
 | --- | --- | --- |
-| AppFlow state | ScenarioBriefing / Cutscene | Paused |
-| SimGate | Off (или Frozen если уже Playing) | Frozen |
-| UI | briefing / video | pause menu |
-| Выход | «Начать» → Playing | Resume → Playing |
-
-Не склеивать в один `bool paused`.
-
----
-
-## 9. Логирование
-
-Уже есть `GameLog` + `LogChannel` (`Scripts/Infrastructure/Logging`).  
-Shell и Simulation пишут в каналы (`Bootstrap`, `Time`, …).  
-В Burst — не логировать; факты → managed relay.
+| Menu / Select | Off | ECS может не существовать |
+| Cutscene / Briefing | Off | Session уже можно Start (сцена/сабсцена), тиков нет |
+| Playing | Running | экономика идёт |
+| Paused | Frozen | UI паузы; не путать с Briefing |
+| Results | Off или Frozen | по дизайну |
 
 ---
 
-## 10. Порядок внедрения (чтобы не утонуть)
+## 4. SimGate ↔ ECS
 
-1. **Shell stub** на текущем Bootstrap: мини-FSM (Boot → Briefing → Playing) + SimGate гасит время до Playing.  
-2. Вынести Root + VContainer, когда появятся меню/FMOD-сервисы как зависимости.  
-3. MainMenu + ScenarioSelect.  
-4. Cutscene / CameraDirector.  
-5. Параллельно — домены ECS (ресурсы, рабочие) **всегда** за SimGate.
+`SimGate` (C#) хранит **желаемый** режим.  
+`SimControlSyncSystem` (Shell, `SystemBase`) копирует его в singleton `SimControl`.  
+Симуляционные systems читают только `SimControl` — Shell **не** пишет в `EntityManager` напрямую.
 
-Урок экономики не отменяет shell: любой новый system уважает Running.
-
----
-
-## 11. Анти-паттерны
-
-- `AdvanceGameTimeSystem` тикает на экране меню  
-- UI пишет в ECS stocks минуя commands  
-- `IEconomyService` в VContainer как истина рана  
-- Пауза = только `timeScale` без SimGate  
-- Копирование card Inject из джема  
-- AppFlow стейты размазаны по UI-кнопкам без центрального FSM  
+| Режим | Смысл продукта |
+| --- | --- |
+| **Off** | рана нет / ещё не начали / меню |
+| **Running** | город живёт |
+| **Frozen** | ран есть, пауза посреди сессии |
 
 ---
 
-Связанные: [[02 Scenes & Lifetime]] · [[07 Mentorship & Learning]] · gmtk wiki `Architecture/02`, `04 Game Director`
+## 5. Composition Root (без DI-контейнера)
+
+```csharp
+// псевдокод Boot
+var simGate = new SimGate();
+var scenes = new SceneLoader();
+var session = new GameSession(scenes, simGate);
+var fsm = new AppStateMachine();
+fsm.Register(new BriefingState(fsm, simGate, /* ui */));
+fsm.Register(new PlayingState(fsm, simGate));
+fsm.Register(new PausedState(fsm, simGate));
+fsm.Start(AppStateId.Briefing); // stub: сразу в упрощённый поток
+```
+
+Позже, если граф разрастётся — VContainer *может* регистрировать те же порты. Контейнер = замена ручного new, не новая архитектура.  
+gmtk scopes имеют смысл, когда много hierarchy inject; **не** когда write model в ECS.
+
+---
+
+## 6. Сцены
+
+| Сцена | Роль |
+| --- | --- |
+| Boot/Root | CompositionRoot, FSM, SimGate, Audio (позже), loading |
+| Game | камера, HUD, SubScene Simulation |
+| MainMenu | рано можно UI-панелями на Boot |
+
+Сейчас: `Bootstrap` ≈ зародыш Game; stub Shell можно повесить прямо на него.
+
+---
+
+## 7. Что переносим из gmtk всё же
+
+- Вечный Root + additive session scene  
+- Audio на Root  
+- Идея ref-counted keys для *нескольких presentation-пауз* (опционально поверх SimGate)  
+- Явный «вход в ран» (у нас — стейты + `GameSession.Start`)
+
+## Что не переносим
+
+Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в симуляцию.
+
+---
+
+## 8. Порядок внедрения
+
+1. **Stub без DI** (сейчас): `SimGate` + `AppStateMachine` + Briefing → Playing → Paused; дни только в Playing.  
+2. `GameSession` когда появится load/unload.  
+3. Настоящее меню / сценарии.  
+4. VContainer — только если Composition Root станет невыносимым.
+
+---
+
+## 9. Анти-паттерны
+
+- Толстый `GameDirector` «на всё»  
+- Симуляция тикает на брифинге  
+- `bool paused` на всё подряд  
+- VContainer ради VContainer  
+- AppFlow размазан по кнопкам без FSM  
+
+---
+
+Связанные: [[02 Scenes & Lifetime]] · [[03 Core Systems]] · [[07 Mentorship & Learning]]

@@ -20,6 +20,7 @@
 - [[07 Mentorship & Learning]] — роль ментора, формат уроков, прогресс
 - [[08 Production ECS]] — целевая production-архитектура и точки расширения
 - [[09 App Shell]] — Shell FSM, DI vs ECS, Frostpunk-поток, наследие gmtk
+- [[10 Vertical Slice — Shell + ECS Walkers]] — заходы A–D: меню → ECS ходьба → Frozen
 
 ## Связь с GDD
 

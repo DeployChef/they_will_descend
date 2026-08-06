@@ -12,5 +12,6 @@ namespace _Project.Scripts.Infrastructure.Logging
         public const string Gods = "Gods";
         public const string Presentation = "Presentation";
         public const string Bootstrap = "Bootstrap";
+        public const string Shell = "Shell";
     }
 }

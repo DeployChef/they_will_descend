@@ -8,15 +8,15 @@
 
 | Служба | Ответственность |
 | --- | --- |
-| **AppFlow** | FSM продукта: Boot → Menu → Cutscene → Briefing → Playing ⇄ Paused → Results |
-| **GameDirector** | load/unload Game, Build/Dispose child scope, SessionConfig |
-| **SimGate** | Off / Running / Frozen — единственный мост «тикает ли город» |
-| **Shell Event Bus** | UI/audio/flow события (не write model города) |
+| **AppFlow / AppStateMachine** | FSM продукта: стейты Enter/Exit, переходы |
+| **GameSession** | Start/Dispose одной попытки сценария |
+| **SimGate** | Off / Running / Frozen — мост к ECS-тикам |
+| **SceneLoader** | узкая загрузка сцен (не бог) |
+| **Shell Event Bus** | UI/audio/flow (позже) |
 | **Audio / FMOD** | на Root, переживает выгрузку Game |
 | **GameLog** | каналы логов (`Infrastructure/Logging`) |
 
-Взято из gmtk по форме: Director + Root scope + audio + pause keys.  
-Расширено до полного AppFlow и **SimGate под ECS**.
+Толстый **GameDirector** из gmtk **не канон** — см. [[09 App Shell]]. Composition Root без DI на старте.
 
 ## Simulation (ECS)
 
