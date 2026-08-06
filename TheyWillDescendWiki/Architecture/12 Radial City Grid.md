@@ -2,122 +2,133 @@
 
 ← [[10 Vertical Slice — Shell + ECS Walkers]] | [[Index]]
 
-Канон целевой модели города. **Кода пока нет** — прототип coarse-сетки удалён; следующий чат стартует с этой заметки.
-
-> Наблюдения сверены с Frostpunk в игре (не реверс движка).
+Канон полярной застройки. Наблюдения сверены с Frostpunk в игре (не реверс движка).
 
 ## 1. Суть одной фразой
 
-Город живёт в **полярных координатах** вокруг центра (у нас — пирамида / плаза). Снап идёт не к крупным «тортовым» секциям UI, а к **мелкой дискретной сетке** `(angularIndex, radialIndex)`. Здания и дороги занимают **наборы** этих единиц. Крупные лучи/кольца на экране — только **гайд**, не истина симуляции.
+Город — **полярная подложка кластеров** вокруг центра (пирамида / плаза).  
+Здания занимают `W × D` кластеров; ширина кластера в мире ≈ константа на любом кольце.  
+**Микро-fine сетки нет** — дороги в FP почти свободны по углу; у нас здания сидят на кластерах подложки.
 
-## 2. Что видно в Frostpunk (наблюдения)
+## 2. Наблюдения Frostpunk (зафиксировано)
+
+### 2.1 Подложка и размер
 
 | Наблюдение | Вывод |
 | --- | --- |
-| Нет жёсткой «шахматной» сетки клеток как в square city-builder | Модель полярная, не ортогональная |
-| Есть окружность и лучи от центра | Visual guide / build helpers |
-| «Секции» выглядят разного размера / не жёстко фиксированы | UI-дольки ≠ атомарная единица; packing/footprint важнее |
-| Дом на ~6 делений; другой 3×6 с поворотом | Footprint = `W × D` в fine units + rotation |
-| Дом может «чуть больше клетки» | Fine units + иногда smart shrink/expand |
-| Дорогу от центра можно провести почти под любым углом | Снап к **мелкому** angular step, не к границам крупных секций |
-| Дорога может идти по центру секции, по ⅓, «почти по пикселям» | `AngularDivisions` большое (порядок сотен) |
+| Нет попиксельной / сверхтонкой angular-сетки | Нет fine-grid как истины; подложка = правило для зданий |
+| Дорогу можно вести почти куда угодно | Дороги позже — свободнее зданий |
+| Кольца уходят за камеру | `RingCount` большой; не «ровно 10 навсегда» |
+| Высота кольца небольшая | `RadialStep` относительно низкий |
+| На 1–2 кольце влезает **11 домов шириной 6** | `InnerBandClusterCount = 66` (= 11 × 6) |
+| «Шесть» = ширина по дуге | Footprint `6×2` = 6 кластеров × 2 кольца |
+| Дальше от центра секций больше | `GetClusterCount(ring)` растёт с радиусом |
+| Дома не раздуваются по ширине | Эталон: `TargetClusterWorldWidth` с кольца 0 |
+| Кольца 1–2 с одной нарезкой | Пары колец (0–1, 2–3, …) делят `clusterCount` |
+| Мышь над центром / «реактором» | Snap на кольцо 0 по углу курсора (build plane) |
 
-## 3. Неверная модель (что мы уже отвергли)
+### 2.2 Footprint span и «зубцы»
+
+| Наблюдение | Вывод |
+| --- | --- |
+| Якорь на кольце 2, глубина 2 → на кольце 3 больше секций под той же дугой | Дуга якоря фиксирована; внешнее кольцо режет её мельче (2 → 3 секции и т.п.) |
+| Зона из-за этого выглядит слегка сдвинутой / зубчатой | Честный результат текущей математики |
+| В FP после постановки край выглядит ровным сектором | Локальный **repack / align** границ секций под footprint |
+| После такого сдвига превью следующих домов тоже «переезжает» | Подложка зависит от уже стоящих зданий |
+
+### 2.3 Smart packing / ring align (полировка — позже)
+
+Это **не ядро**, а F6-полировка:
 
 ```text
-Город = ringCount × sectorCount фиксированных клеток (типа 8×24)
-Всё (дома, дороги) только по границам этих клеток
+После Place (или при превью рядом с соседями):
+  пересчитать локальные границы кластеров на затронутых кольцах
+  так, чтобы footprint стал ровным кольцевым сектором (общие лучи)
+  обновить underlay / ghost следующих постановок
 ```
 
-Это удобно для первого урока polar math, но **не** модель Frostpunk и не наш целевой канон.
+Пока **не делаем**. Зубчатый span 2/3 секции — ок для MVP.
 
-## 4. Целевая модель
+### 2.4 Presentation дома
+
+| Наблюдение | Вывод |
+| --- | --- |
+| Зона = пятно секций footprint | Меш annular sectors под зданием |
+| Меш дома ≠ растяжка на всю зону | Дом по короткой стороне пятна; у 6×2 зона шире дома |
+| 6×2 и 2×2 разные | Разный footprint и разный префаб |
+
+Временный куб заменён. Сейчас:
+
+| Footprint | Prefab (RPGPP) |
+| --- | --- |
+| House 6×2 | `rpgpp_lt_building_01` |
+| House 2×2 | `rpgpp_lt_building_02` |
+| Центр (плаза) | `rpgpp_lt_building_03` + `CityCenter` |
+
+Scale: uniform по горизонтальному bounds → короткая сторона pad. Куб остаётся только fallback, если слот prefab пустой.
+
+### 2.5 Valid / invalid placement
+
+| Состояние | Зона | Snap |
+| --- | --- | --- |
+| Можно ставить | cyan | кольцо **и** лучи (cluster) |
+| Нельзя (overlap / out of depth) | **красная** | кольцо **вкл**, лучи **выкл** (угол следует курсору) |
+| Клик | только если valid | — |
+
+Occupy пока в Presentation (`HashSet` кластеров). Потом → ECS occupancy.
+
+## 3. Неверные модели (отвергнуто)
 
 ```text
-World (x,z)
-    →  polar (angle, radius) относительно CityCenter
-    →  snap к fine cell (angularIndex, radialIndex)
-    →  occupy / cost / road flags на этих cells
-
-Visual guide (опционально):
-    редкие spokes (каждый N-й angular)
-    редкие rings (каждый K-й radial или зоны тепла)
+A) Город = ringCount × sectorCount фиксированных coarse-клеток (8×24)
+B) Глобальный fine angular на сотни лучей как обязательный occupy-атом для всего
+C) Один AngularDivisions на все кольца → дома растут по ширине с радиусом
 ```
 
-### Конфиг (идея)
+## 4. Канон у нас (код)
 
 ```text
 RadialGridConfig
-  float3 / Transform  Center
-  float               InnerRadius      // пустая плаза / запретная зона
-  float               RadialStep       // толщина одного radial unit
-  int                 AngularDivisions // напр. 256 / 360 / 512
-  int                 MaxRadialIndex
+  InnerRadius, RadialStep, RingCount
+  InnerBandClusterCount = 66
+
+TargetClusterWorldWidth = 2π * RingMid(0) / 66
+
+GetClusterCount(ring):
+  rings 0–1 → 66
+  дальше → round(2π * RingMid(bandStart) / TargetWidth)
+  (band = ring/2*2)
 ```
 
-### Формулы
+Place:
 
 ```text
-// world → fine
-delta  = pos - Center
-radius = length(delta.xz)
-angle  = atan2(delta.x, delta.z)   // один раз выбрать convention и не менять
-
-angularIndex = floor(normalizedAngle / (2π) * AngularDivisions)
-radialIndex  = floor((radius - InnerRadius) / RadialStep)
-
-// fine → world (центр ячейки)
-θ = (angularIndex + 0.5) * (2π / AngularDivisions)
-r = InnerRadius + (radialIndex + 0.5) * RadialStep
-pos = Center + (sin(θ), 0, cos(θ)) * r
+build plane → snap (cluster, ring)
+→ ExpandClusters (дуга якоря на каждое кольцо глубины)
+→ zone mesh по секциям + prefab дома (не на всю зону)
 ```
 
-### Сущности поверх fine grid
+Центр временно = `rpgpp_lt_building_03` (`CityCenter`).
 
-| Что | Как кодируется |
-| --- | --- |
-| Дорога-spoke | почти постоянный `angularIndex`, диапазон `radialIndex` |
-| Дорога-arc | почти постоянный `radialIndex`, диапазон `angularIndex` |
-| Здание | footprint `widthAngular × depthRadial` (+ поворот 90° и т.п.), occupy cells |
-| Снег / void | walk cost без дороги / вне карты |
-| Blocked | cell под зданием |
-
-Pathfinding (позже): A* / flow **по fine cells** (или dual graph только дорог). Крупные секции в pathfinding не участвуют.
-
-## 5. Слои (когда начнём код)
+## 5. Слои
 
 | Слой | Роль |
 | --- | --- |
-| Presentation | CityCenter transform, optional guide mesh, ghost footprint, hover |
-| Simulation (ECS) | config blob/singleton, occupancy / road / cost buffers |
-| Shell | режимы стройки (дорога / здание) — позже |
+| Presentation | CityCenter, underlay, ghost zone + building prefab |
+| Simulation | config / occupancy (позже) |
+| Shell | build catalog, Esc, SimGate.Frozen |
 
-Правило проекта: истина занятости — в симуляции; меш на Game — картинка.
+## 6. План
 
-## 6. Smart packing (осознанно позже)
-
-В FP соседние здания того же типа могут чуть сжиматься/растягиваться, чтобы заполнить кольцо.  
-**Не делать в первых шагах.** Сначала честный fixed footprint в fine units.
-
-## 7. План заходов (с нуля)
-
-| Шаг | Цель | Код сейчас |
-| --- | --- | --- |
-| **F0** | `RadialGridConfig` + math `world ↔ (angular, radial)` | нет |
-| **F1** | Редкий visual guide + hover fine cell | нет |
-| **F2** | Paint road (spoke/arc) со снэпом к fine | нет |
-| **F3** | Ghost building N×M + rotate | нет |
-| **F4** | Place → occupy fine cells | нет |
-| **F5** | Pathfinding по fine + road/snow cost | нет |
-| **F6** | Smart packing (опционально) | нет |
-
-`CircleWalk` агентов — отдельная заглушка движения по кругу; к городской сетке не относится. Pathfinding по дорогам его заменит для «иди на работу».
-
-## 8. Статус репо
-
-- Прототип coarse (`RadialCoords`, `RadialGridView`, hover, materials, `CityCenter` / `RadialGrid` на Game) — **удалён**.
-- Эта заметка — единственный канон до нового кода.
-- Стартовать новый чат с: «делаем F0 по Architecture/12».
+| Шаг | Статус |
+| --- | --- |
+| Underlay + cluster math | done |
+| Place + zone + house prefab | done |
+| Occupy / red invalid + ray snap off | done (Presentation) |
+| Occupy → ECS | later |
+| Rotate | later |
+| Roads (свободнее) | later |
+| Smart ring align (F6) | later / polish |
 
 ---
 
