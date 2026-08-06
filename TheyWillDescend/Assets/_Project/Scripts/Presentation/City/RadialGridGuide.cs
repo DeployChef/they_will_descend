@@ -6,8 +6,7 @@ using UnityEngine.Rendering;
 namespace _Project.Scripts.Presentation.City
 {
     /// <summary>
-    /// Visual underlay only: rings + per-ring cluster spokes.
-    /// No fine micro-grid (FP has none — roads are freer later).
+    /// Polar underlay: Scene view always via Gizmos; Game view mesh only in build mode.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -20,22 +19,33 @@ namespace _Project.Scripts.Presentation.City
         [SerializeField] float yOffset = 0.08f;
         [SerializeField] float lineWidth = 0.05f;
         [SerializeField] Color underlayColor = new(0.15f, 0.55f, 1f, 1f);
-        [SerializeField] bool visibleInEditMode = true;
-        [SerializeField] bool visibleInPlayMode = true;
+        [SerializeField] bool drawSceneGizmos = true;
 
         MeshFilter _meshFilter;
         MeshRenderer _meshRenderer;
         Mesh _mesh;
         Material _runtimeMaterial;
         int _builtHash;
+        bool _buildModeActive;
 
         public RadialGridConfig Config => config;
         public Transform CenterTransform => cityCenter != null ? cityCenter : transform;
 
+        /// <summary>Game-view mesh underlay only while placing.</summary>
+        public void SetBuildModeActive(bool active)
+        {
+            _buildModeActive = active;
+            ApplyPlayMeshVisibility();
+            if (active && Application.isPlaying)
+                RebuildUnderlayMesh(force: false);
+        }
+
         void OnEnable()
         {
             EnsureComponents();
-            RebuildUnderlayMesh(force: true);
+            if (Application.isPlaying && _buildModeActive)
+                RebuildUnderlayMesh(force: true);
+            ApplyPlayMeshVisibility();
         }
 
         void OnDisable()
@@ -64,8 +74,9 @@ namespace _Project.Scripts.Presentation.City
         {
             lineWidth = Mathf.Max(0.01f, lineWidth);
             EnsureConfigDefaults();
-            if (isActiveAndEnabled)
+            if (Application.isPlaying && _buildModeActive && isActiveAndEnabled)
                 RebuildUnderlayMesh(force: true);
+            ApplyPlayMeshVisibility();
         }
 
         void EnsureConfigDefaults()
@@ -80,12 +91,64 @@ namespace _Project.Scripts.Presentation.City
 
         void LateUpdate()
         {
+            if (!Application.isPlaying || !_buildModeActive)
+                return;
+
             FollowCenter();
-            var want = Application.isPlaying ? visibleInPlayMode : visibleInEditMode;
-            if (_meshRenderer != null)
-                _meshRenderer.enabled = want && config.IsValid;
-            if (want)
-                RebuildUnderlayMesh(force: false);
+            ApplyPlayMeshVisibility();
+            RebuildUnderlayMesh(force: false);
+        }
+
+        /// <summary>
+        /// Scene view: always (edit or play). Does not affect Game view.
+        /// </summary>
+        void OnDrawGizmos()
+        {
+            if (!drawSceneGizmos || !config.IsValid)
+                return;
+
+            EnsureConfigDefaults();
+            var origin = GetDrawOrigin();
+            Gizmos.color = underlayColor;
+
+            for (var ring = 1; ring <= config.RingCount; ring++)
+            {
+                var radius = config.RingLineRadius(ring);
+                var segments = Mathf.Max(48, config.GetClusterCount(Mathf.Min(ring - 1, config.RingCount - 1)));
+                DrawGizmoCircle(origin, radius, segments);
+            }
+
+            for (var ring = 0; ring < config.RingCount; ring++)
+            {
+                var r0 = config.RingLineRadius(ring);
+                var r1 = config.RingLineRadius(ring + 1);
+                var clusters = config.GetClusterCount(ring);
+                for (var i = 0; i < clusters; i++)
+                {
+                    var theta = (i / (float)clusters) * Mathf.PI * 2f;
+                    var dir = new Vector3(Mathf.Sin(theta), 0f, Mathf.Cos(theta));
+                    Gizmos.DrawLine(origin + dir * r0, origin + dir * r1);
+                }
+            }
+        }
+
+        void ApplyPlayMeshVisibility()
+        {
+            if (_meshRenderer == null)
+                _meshRenderer = GetComponent<MeshRenderer>();
+            if (_meshRenderer == null)
+                return;
+
+            // Mesh is for Game view during build only. Edit Mode uses gizmos.
+            _meshRenderer.enabled = Application.isPlaying && _buildModeActive && config.IsValid;
+        }
+
+        Vector3 GetDrawOrigin()
+        {
+            var c = CenterTransform;
+            if (c == null)
+                return transform.position;
+            return c.position + Vector3.up * yOffset;
         }
 
         void FollowCenter()
@@ -168,6 +231,18 @@ namespace _Project.Scripts.Presentation.City
             _mesh.RecalculateNormals();
             _meshFilter.sharedMesh = _mesh;
             ApplyColor(_runtimeMaterial, underlayColor);
+        }
+
+        static void DrawGizmoCircle(Vector3 origin, float radius, int segments)
+        {
+            var prev = origin + new Vector3(0f, 0f, radius);
+            for (var i = 1; i <= segments; i++)
+            {
+                var a = (i / (float)segments) * Mathf.PI * 2f;
+                var next = origin + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * radius;
+                Gizmos.DrawLine(prev, next);
+                prev = next;
+            }
         }
 
         static void AppendCircleRibbon(

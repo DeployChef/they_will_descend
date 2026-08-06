@@ -107,7 +107,7 @@ namespace _Project.Scripts.Presentation.GameHud
 
         void OnSelectCube3x6() => BeginPlace(BuildingFootprint.House6x2, "House 6x2");
 
-        void OnSelectCube2x2() => BeginPlace(BuildingFootprint.Cube2x2, "Cube 2x2");
+        void OnSelectCube2x2() => BeginPlace(BuildingFootprint.Cube2x2, "House 2x2");
 
         void BeginPlace(BuildingFootprint footprint, string label)
         {

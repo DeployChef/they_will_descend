@@ -55,7 +55,27 @@
 | --- | --- |
 | Зона = пятно секций footprint | Меш annular sectors под зданием |
 | Меш дома ≠ растяжка на всю зону | Дом по короткой стороне пятна; у 6×2 зона шире дома |
-| 6×2 и 2×2 разные | Разный footprint и разный размер маркера/префаба |
+| 6×2 и 2×2 разные | Разный footprint и разный префаб |
+
+Временный куб заменён. Сейчас:
+
+| Footprint | Prefab (RPGPP) |
+| --- | --- |
+| House 6×2 | `rpgpp_lt_building_01` |
+| House 2×2 | `rpgpp_lt_building_02` |
+| Центр (плаза) | `rpgpp_lt_building_03` + `CityCenter` |
+
+Scale: uniform по горизонтальному bounds → короткая сторона pad. Куб остаётся только fallback, если слот prefab пустой.
+
+### 2.5 Valid / invalid placement
+
+| Состояние | Зона | Snap |
+| --- | --- | --- |
+| Можно ставить | cyan | кольцо **и** лучи (cluster) |
+| Нельзя (overlap / out of depth) | **красная** | кольцо **вкл**, лучи **выкл** (угол следует курсору) |
+| Клик | только если valid | — |
+
+Occupy пока в Presentation (`HashSet` кластеров). Потом → ECS occupancy.
 
 ## 3. Неверные модели (отвергнуто)
 
@@ -103,8 +123,9 @@ build plane → snap (cluster, ring)
 | Шаг | Статус |
 | --- | --- |
 | Underlay + cluster math | done |
-| Place + zone + house prefab | in progress |
-| Occupy / no overlap | next |
+| Place + zone + house prefab | done |
+| Occupy / red invalid + ray snap off | done (Presentation) |
+| Occupy → ECS | later |
 | Rotate | later |
 | Roads (свободнее) | later |
 | Smart ring align (F6) | later / polish |

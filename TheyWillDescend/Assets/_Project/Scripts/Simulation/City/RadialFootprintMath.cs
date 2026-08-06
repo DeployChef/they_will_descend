@@ -18,17 +18,35 @@ namespace _Project.Scripts.Simulation.City
         {
             clusterIndex = 0;
             radialIndex = 0;
+            if (!TrySnapRing(center, config, world, out radialIndex, out var turns))
+                return false;
+
+            clusterIndex = RadialGridMath.TurnsToCluster(turns, config.GetClusterCount(radialIndex));
+            return true;
+        }
+
+        /// <summary>
+        /// Snap only to ring (plaza → ring 0). Angle stays continuous in <paramref name="turns"/>.
+        /// </summary>
+        public static bool TrySnapRing(
+            float3 center,
+            in RadialGridConfig config,
+            float3 world,
+            out int radialIndex,
+            out float turns)
+        {
+            radialIndex = 0;
+            turns = 0f;
             if (!config.IsValid)
                 return false;
 
             var delta = world - center;
             var radius = math.length(new float2(delta.x, delta.z));
-            var turns = RadialGridMath.NormalizedTurns(delta.x, delta.z);
+            turns = RadialGridMath.NormalizedTurns(delta.x, delta.z);
 
             if (radius < config.InnerRadius)
             {
                 radialIndex = 0;
-                clusterIndex = RadialGridMath.TurnsToCluster(turns, config.GetClusterCount(0));
                 return true;
             }
 
@@ -38,7 +56,6 @@ namespace _Project.Scripts.Simulation.City
             if (radialIndex >= config.RingCount)
                 return false;
 
-            clusterIndex = RadialGridMath.TurnsToCluster(turns, config.GetClusterCount(radialIndex));
             return true;
         }
 
@@ -53,6 +70,27 @@ namespace _Project.Scripts.Simulation.City
             in BuildingFootprint footprint,
             List<(int cluster, int radial)> clustersOut)
         {
+            var nAnchor = config.GetClusterCount(anchorRadial);
+            if (nAnchor <= 0 || anchorCluster < 0 || anchorCluster >= nAnchor)
+            {
+                clustersOut.Clear();
+                return false;
+            }
+
+            var turns0 = anchorCluster / (float)nAnchor;
+            return TryExpandClustersFromTurns(config, turns0, anchorRadial, footprint, clustersOut);
+        }
+
+        /// <summary>
+        /// Expand from continuous start angle (turns 0..1). Used when angular snap is off.
+        /// </summary>
+        public static bool TryExpandClustersFromTurns(
+            in RadialGridConfig config,
+            float turns0,
+            int anchorRadial,
+            in BuildingFootprint footprint,
+            List<(int cluster, int radial)> clustersOut)
+        {
             clustersOut.Clear();
             if (!config.IsValid || !footprint.IsValid)
                 return false;
@@ -61,10 +99,10 @@ namespace _Project.Scripts.Simulation.City
                 return false;
 
             var nAnchor = config.GetClusterCount(anchorRadial);
-            if (anchorCluster < 0 || anchorCluster >= nAnchor)
+            if (nAnchor <= 0)
                 return false;
 
-            var turns0 = anchorCluster / (float)nAnchor;
+            turns0 = Fract(turns0);
             var spanTurns = footprint.WidthClusters / (float)nAnchor;
 
             for (var d = 0; d < footprint.DepthRadialRings; d++)
@@ -72,7 +110,6 @@ namespace _Project.Scripts.Simulation.City
                 var ring = anchorRadial + d;
                 var n = config.GetClusterCount(ring);
                 var start = RadialGridMath.TurnsToCluster(turns0, n);
-                // How many clusters on this ring cover the same world arc.
                 var count = math.max(1, (int)math.round(spanTurns * n));
 
                 for (var w = 0; w < count; w++)
@@ -98,8 +135,26 @@ namespace _Project.Scripts.Simulation.City
             out float stubWorldSize)
         {
             var nAnchor = config.GetClusterCount(anchorRadial);
+            var turns0 = anchorCluster / (float)nAnchor;
+            FootprintMarkerPoseFromTurns(
+                center, config, turns0, anchorRadial, footprint,
+                out position, out rotation, out stubWorldSize);
+        }
+
+        public static void FootprintMarkerPoseFromTurns(
+            float3 center,
+            in RadialGridConfig config,
+            float turns0,
+            int anchorRadial,
+            in BuildingFootprint footprint,
+            out float3 position,
+            out quaternion rotation,
+            out float stubWorldSize)
+        {
+            var nAnchor = config.GetClusterCount(anchorRadial);
             var midRadial = anchorRadial + (footprint.DepthRadialRings - 1) * 0.5f;
-            var turns = (anchorCluster + footprint.WidthClusters * 0.5f) / nAnchor;
+            var turns = Fract(turns0) + footprint.WidthClusters * 0.5f / nAnchor;
+            turns = Fract(turns);
             var midRadius = config.InnerRadius + (midRadial + 0.5f) * config.RadialStep;
 
             var theta = turns * 2f * math.PI;
@@ -107,12 +162,18 @@ namespace _Project.Scripts.Simulation.City
             position = center + radialDir * midRadius;
             rotation = quaternion.LookRotationSafe(radialDir, new float3(0f, 1f, 0f));
 
-            // Zone = full footprint. Stub is a smaller "building" on that pad:
-            // sized by the short side so 6×2 shows lots of zone, 2×2 nearly fills it.
             var padWidth = footprint.WidthClusters * config.TargetClusterWorldWidth;
             var padDepth = footprint.DepthRadialRings * config.RadialStep;
             stubWorldSize = math.min(padWidth, padDepth) * 0.85f;
             stubWorldSize = math.max(0.35f, stubWorldSize);
+        }
+
+        static float Fract(float v)
+        {
+            v -= math.floor(v);
+            if (v < 0f)
+                v += 1f;
+            return v;
         }
     }
 }
