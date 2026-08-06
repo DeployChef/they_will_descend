@@ -11,7 +11,11 @@
 
 ## Камера и взаимодействие
 
-> TODO: решить — top-down RTS, изометрия, или гибрид с card-layer из джема.
+**Канон:** одна Main Camera на Bootstrap (Root) + Cinemachine VCam на MainMenu/Game.  
+Детали: [[../Architecture/11 Camera & Presentation Scenes|Architecture/11]].
+
+Орбита / RTS-стиль кадра — отдельное решение геймплея; не путать с наличием второй Main Camera.
+
 
 ## Обязательные сигналы
 

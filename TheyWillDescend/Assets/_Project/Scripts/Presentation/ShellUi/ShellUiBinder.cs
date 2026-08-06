@@ -1,14 +1,14 @@
 using System;
+using _Project.Scripts.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace _Project.Scripts.Presentation.ShellUi
 {
     /// <summary>
-    /// Shows/hides splash + main menu panels. Wired in the Game/Bootstrap scene.
-    /// Canon for this vertical slice: one place Presentation talks to AppFlow about Start click.
+    /// MainMenu-scene implementation of <see cref="IShellUi"/>.
     /// </summary>
-    public sealed class ShellUiBinder : MonoBehaviour
+    public sealed class ShellUiBinder : MonoBehaviour, IShellUi
     {
         [SerializeField] GameObject pressAnyKeyPanel;
         [SerializeField] GameObject mainMenuPanel;

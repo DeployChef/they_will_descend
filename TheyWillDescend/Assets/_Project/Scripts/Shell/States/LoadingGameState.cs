@@ -3,40 +3,37 @@ using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
 {
-    public sealed class PressAnyKeyState : IAppState
+    public sealed class LoadingGameState : IAppState
     {
         readonly AppStateMachine _fsm;
         readonly SimGate _simGate;
-        readonly IShellIntentSource _intents;
+        readonly GameSession _session;
         readonly IShellUi _ui;
 
-        public AppStateId Id => AppStateId.PressAnyKey;
+        public AppStateId Id => AppStateId.LoadingGame;
 
-        public PressAnyKeyState(
+        public LoadingGameState(
             AppStateMachine fsm,
             SimGate simGate,
-            IShellIntentSource intents,
+            GameSession session,
             IShellUi ui)
         {
             _fsm = fsm;
             _simGate = simGate;
-            _intents = intents;
+            _session = session;
             _ui = ui;
         }
 
         public void Enter()
         {
             _simGate.Set(SimRunMode.Off);
-            _ui.ShowPressAnyKey();
-            GameLog.Info(LogChannel.Bootstrap, "Press any key to continue.");
+            _ui.HideAll();
+            GameLog.Info(LogChannel.Bootstrap, "Loading game session…");
+            _session.Start(() => _fsm.TransitionTo(AppStateId.Playing));
         }
 
         public void Exit() { }
 
-        public void Tick()
-        {
-            if (_intents.ConsumeProceed())
-                _fsm.TransitionTo(AppStateId.MainMenu);
-        }
+        public void Tick() { }
     }
 }

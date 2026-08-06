@@ -1,5 +1,4 @@
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Presentation.ShellUi;
 using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
@@ -9,26 +8,19 @@ namespace _Project.Scripts.Shell.States
         readonly AppStateMachine _fsm;
         readonly SimGate _simGate;
         readonly IShellIntentSource _intents;
-        readonly ShellUiBinder _ui;
 
         public AppStateId Id => AppStateId.Playing;
 
-        public PlayingState(
-            AppStateMachine fsm,
-            SimGate simGate,
-            IShellIntentSource intents,
-            ShellUiBinder ui)
+        public PlayingState(AppStateMachine fsm, SimGate simGate, IShellIntentSource intents)
         {
             _fsm = fsm;
             _simGate = simGate;
             _intents = intents;
-            _ui = ui;
         }
 
         public void Enter()
         {
             _simGate.Set(SimRunMode.Running);
-            _ui.ShowGameplayHud();
             GameLog.Info(LogChannel.Bootstrap, "Playing: Esc to pause.");
         }
 

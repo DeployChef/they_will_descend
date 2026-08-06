@@ -1,5 +1,4 @@
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Presentation.ShellUi;
 using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
@@ -8,11 +7,11 @@ namespace _Project.Scripts.Shell.States
     {
         readonly AppStateMachine _fsm;
         readonly SimGate _simGate;
-        readonly ShellUiBinder _ui;
+        readonly IShellUi _ui;
 
         public AppStateId Id => AppStateId.MainMenu;
 
-        public MainMenuState(AppStateMachine fsm, SimGate simGate, ShellUiBinder ui)
+        public MainMenuState(AppStateMachine fsm, SimGate simGate, IShellUi ui)
         {
             _fsm = fsm;
             _simGate = simGate;
@@ -36,7 +35,7 @@ namespace _Project.Scripts.Shell.States
 
         void OnStartGameClicked()
         {
-            _fsm.TransitionTo(AppStateId.Playing);
+            _fsm.TransitionTo(AppStateId.LoadingGame);
         }
     }
 }

@@ -36,3 +36,4 @@
 - [[Architecture/08 Production ECS|08 Production ECS]] — production ECS, расширение
 - [[Architecture/09 App Shell|09 App Shell]] — Shell FSM, DI, Frostpunk-поток
 - [[Architecture/10 Vertical Slice — Shell + ECS Walkers|10 Vertical Slice]] — меню → ECS ходьба
+- [[Architecture/11 Camera & Presentation Scenes|11 Camera]] — одна Main Camera на Root, VCam

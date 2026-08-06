@@ -1,17 +1,16 @@
 using System;
+using System.Collections;
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Presentation.ShellUi;
 using UnityEngine;
 
 namespace _Project.Scripts.Shell
 {
     /// <summary>
-    /// Scene entry for Shell. Place on Game/Bootstrap — never inside Simulation SubScene.
+    /// Boot/Root entry. Loads shell scenes and starts AppFlow.
+    /// Does not know concrete UI widgets — only that AppFlowFactory can resolve <see cref="IShellUi"/>.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
-        [SerializeField] ShellUiBinder shellUi;
-
         AppStateMachine _fsm;
         IDisposable _intents;
         bool _started;
@@ -21,22 +20,25 @@ namespace _Project.Scripts.Shell
             if (_started)
                 return;
             _started = true;
+            StartCoroutine(BootRoutine());
+        }
 
-            if (shellUi == null)
-                shellUi = FindFirstObjectByType<ShellUiBinder>();
+        IEnumerator BootRoutine()
+        {
+            var scenes = new SceneLoader();
+            yield return scenes.LoadMainMenuAdditive();
 
-            if (shellUi == null)
+            var bundle = AppFlowFactory.Create(this, scenes);
+            if (bundle == null)
             {
-                GameLog.Error(LogChannel.Bootstrap, "Startup: ShellUiBinder missing on scene.");
                 enabled = false;
-                return;
+                yield break;
             }
 
-            var bundle = AppFlowFactory.Create(shellUi);
-            _fsm = bundle.StateMachine;
-            _intents = bundle.Intents as IDisposable;
+            _fsm = bundle.Value.StateMachine;
+            _intents = bundle.Value.Intents as IDisposable;
 
-            GameLog.Info(LogChannel.Bootstrap, "Startup ready.");
+            GameLog.Info(LogChannel.Bootstrap, "Startup ready (Root). AppFlow started.");
             _fsm.Start(AppStateId.PressAnyKey);
         }
 

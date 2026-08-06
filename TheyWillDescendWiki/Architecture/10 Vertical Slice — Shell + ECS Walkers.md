@@ -2,59 +2,50 @@
 
 ← [[09 App Shell]] | [[Index]]
 
-Целевой процесс **ближайших заходов** (не вся игра). Любой временный костыль в чате помечается явно: *временно / канон / заменим когда*.
+Целевой процесс **ближайших заходов**. Временное помечается явно.  
+Камеры/состав сцен: [[11 Camera & Presentation Scenes]].
 
-## Конечный UX этого среза
+## Конечный UX
 
 ```text
-1. Press Any Key          (экран-заставка)
-2. Main Menu              (одна кнопка «Начать игру»)
-3. Playing                (SimGate.Running — челики ходят по карте через ECS)
-   ⇄ Paused (Esc)         (SimGate.Frozen — челики стоят)
+Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
+  → load MainMenu
+       Press Any Key → Main Menu UI
+       ↓ «Начать игру»
+  LoadingGame — unload MainMenu, load Game, SimGate.Off
+       ↓
+  Playing — SimGate.Running
+       ⇄ Paused (Esc, Frozen)
 ```
 
-Источник окружения: сейчас `Assets/Scenes/SampleScene.unity` + `NpcCircleWalker` (MonoBehaviour).  
-Цель: окружение в `_Project`, ходьба — ECS + уважение к `SimControl`.
+## Сцены (канон)
+
+| Сцена | Что на ней |
+| --- | --- |
+| `Bootstrap` | Startup, одна Main Camera (+ AudioListener), EventSystem |
+| `MainMenu` | Canvas splash/menu, ShellUiBinder |
+| `Game` | мир Sample, свет, SubScene Simulation; Main Camera — временно до Cinemachine |
 
 ## Заходы
 
-| # | Цель | Результат |
+| # | Цель | Статус |
 | --- | --- | --- |
-| **A** | AppFlow: PressAnyKey → MainMenu → Playing → Paused | Кнопка «Начать», дни/sim gate как сейчас |
-| **B** | Перенос сцены Sample → `_Project/Scenes/Game` | Камера/свет/уровень/NPC в правильном месте; Startup на Game |
-| **C** | Ходьба NPC через ECS | Authoring + system кругового движения; MB walker убрать с этих NPC |
-| **D** | Frozen останавливает ходьбу | Move system early-out если не Running (как Time) |
+| **A** | UI flow на одном Boot | done (эволюционирует в B) |
+| **B** | Три сцены + load по правилам выше | **next** |
+| **C** | ECS-ходьба | planned |
+| **D** | Frozen стопает ходьбу | с C |
 
-## Как правильно переносить сцену (канон)
+## Заход B — руками
 
-**Не** «вырезать куски в Bootstrap наугад».
+1. `SampleScene` → Save As → `Assets/_Project/Scenes/Game.unity` (мир Sample).  
+2. На Game: SubScene Simulation с Bootstrap; Startup/Canvas **не** копировать.  
+3. New Scene → Save As `Assets/_Project/Scenes/MainMenu.unity`; перенеси туда Canvas + ShellUiBinder.  
+4. Bootstrap: только Startup + Main Camera + EventSystem.  
+5. Build Settings: Bootstrap (0), MainMenu, Game.  
+6. Play с Bootstrap.
 
-1. `SampleScene` → Save As → `Assets/_Project/Scenes/Game.unity` (копия, оригинал можно оставить).  
-2. На `Game`: добавить то, чего не хватает из shell (`Startup`, UI Canvas меню/press-any-key, ссылка на SubScene Simulation).  
-3. Выкинуть мусор демки, если мешает (лишние камеры — одна Main).  
-4. **Статика уровня** (дома, земля) может жить обычными GameObjects на `Game`.  
-5. **Агенты (челики)** — в **Simulation SubScene** (или отдельной Agents SubScene), чтобы bake → entities.  
-6. Build Settings: стартовая сцена = `Game` (пока нет отдельного Boot); позже Boot → load Game.
-
-Почему челики в SubScene: движение — sim; должно подчиняться `SimControl` и baking.
-
-## Временно vs канон (честно)
-
-| Сейчас / скоро | Статус |
-| --- | --- |
-| `SimGate` + `SimControlSyncSystem` | **канон шва** Shell→ECS |
-| Input map Shell в коде | **временно** → потом `.inputactions` asset |
-| `SimGate.Active` static | **временно ок** для одного gate; при тестах/мультимире — инжект |
-| UI PressAnyKey / Menu на Canvas | **канон** для этого среза |
-| Ходьба кругом как у `NpcCircleWalker` | **временно** механика; важно что ECS + SimGate |
-
-## Ссылки на код
-
-- Shell: `Scripts/Shell/`
-- Sim control: `Scripts/Simulation/Session/`
-- Старый walker: `Assets/Scripts/NpcCircleWalker.cs` (заменим на ECS в заходе C)
-- Сцена-источник: `Assets/Scenes/SampleScene.unity`
+**Временно:** камера на Game до Cinemachine; челики MB до C.
 
 ---
 
-Связанные: [[09 App Shell]] · [[07 Mentorship & Learning]]
+Связанные: [[11 Camera & Presentation Scenes]] · [[09 App Shell]] · [[02 Scenes & Lifetime]]

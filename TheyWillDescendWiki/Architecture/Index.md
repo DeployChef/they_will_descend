@@ -21,6 +21,7 @@
 - [[08 Production ECS]] — целевая production-архитектура и точки расширения
 - [[09 App Shell]] — Shell FSM, DI vs ECS, Frostpunk-поток, наследие gmtk
 - [[10 Vertical Slice — Shell + ECS Walkers]] — заходы A–D: меню → ECS ходьба → Frozen
+- [[11 Camera & Presentation Scenes]] — одна Main Camera на Root, VCam, что на какой сцене
 
 ## Связь с GDD
 

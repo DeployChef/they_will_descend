@@ -4,7 +4,8 @@ namespace _Project.Scripts.Shell
     {
         PressAnyKey = 0,
         MainMenu = 1,
-        Playing = 2,
-        Paused = 3
+        LoadingGame = 2,
+        Playing = 3,
+        Paused = 4
     }
 }
