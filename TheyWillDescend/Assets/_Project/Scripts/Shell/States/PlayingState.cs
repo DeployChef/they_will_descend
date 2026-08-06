@@ -28,8 +28,14 @@ namespace _Project.Scripts.Shell.States
 
         public void Tick()
         {
-            if (_intents.ConsumePauseToggle())
-                _fsm.TransitionTo(AppStateId.Paused);
+            if (!_intents.ConsumePauseToggle())
+                return;
+
+            // Overlays (build catalog) consume Esc before shell pause.
+            if (GameplayEscapeRouter.Active != null && GameplayEscapeRouter.Active.TryHandleEscape())
+                return;
+
+            _fsm.TransitionTo(AppStateId.Paused);
         }
     }
 }
