@@ -48,14 +48,17 @@ Visual guide (опционально):
 
 ```text
 RadialGridConfig
-  float3 / Transform  Center
-  float               InnerRadius      // пустая плаза / запретная зона
-  float               RadialStep       // толщина одного radial unit
-  int                 AngularDivisions // напр. 256 / 360 / 512
-  int                 MaxRadialIndex
+  float               InnerRadius
+  float               RadialStep        // толщина одного кольца (общая)
+  int                 RingCount         // кол-во колец, общее для fine и квантов (напр. 10)
+  int                 AngularDivisions  // fine-клинья по кругу (напр. 240)
+  int                 AngularQuantum    // fine на один квант по углу (напр. 5)
 ```
 
-### Формулы
+- **Кольца** — одни и те же для fine и квантов.
+- **Fine** — густые угловые секции на этих кольцах.
+- **Квант** — склейка `AngularQuantum` соседних fine по углу.
+- Подложка в игре рисует кванты; Gizmos в Scene — fine на тех же кольцах.### Формулы
 
 ```text
 // world → fine
@@ -103,8 +106,8 @@ Pathfinding (позже): A* / flow **по fine cells** (или dual graph то�
 
 | Шаг | Цель | Код сейчас |
 | --- | --- | --- |
-| **F0** | `RadialGridConfig` + math `world ↔ (angular, radial)` | нет |
-| **F1** | Редкий visual guide + hover fine cell | нет |
+| **F0** | `RadialGridConfig` + math `world ↔ (angular, radial)` | есть (`Simulation/City`) |
+| **F1** | Редкий visual guide + hover fine cell | guide есть; hover ещё нет |
 | **F2** | Paint road (spoke/arc) со снэпом к fine | нет |
 | **F3** | Ghost building N×M + rotate | нет |
 | **F4** | Place → occupy fine cells | нет |
@@ -115,9 +118,8 @@ Pathfinding (позже): A* / flow **по fine cells** (или dual graph то�
 
 ## 8. Статус репо
 
-- Прототип coarse (`RadialCoords`, `RadialGridView`, hover, materials, `CityCenter` / `RadialGrid` на Game) — **удалён**.
-- Эта заметка — единственный канон до нового кода.
-- Стартовать новый чат с: «делаем F0 по Architecture/12».
+- Прототип coarse (`RadialCoords`, `RadialGridView`, hover, materials) — **удалён**.
+- **F0+F1 (в работе):** `RadialGridConfig` / `RadialCell` / `RadialGridMath` в `Simulation/City`; `CityCenter` + `RadialGridGuide` в `Presentation/City`. Центр временно = дом `rpgpp_lt_building_03`. Кольца общие (`RingCount`); fine/квант — только угол. Подложка = кванты; Gizmos = fine. Hover / place — ещё нет.
 
 ---
 

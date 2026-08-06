@@ -11,6 +11,10 @@ namespace _Project.Scripts.Shell
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
+        [Header("Temporary debug")]
+        [Tooltip("Skip PressAnyKey/MainMenu and load Game immediately. Turn OFF before shipping flow work.")]
+        [SerializeField] bool skipMenuToGameTemporarily = true;
+
         AppStateMachine _fsm;
         IDisposable _intents;
         bool _started;
@@ -26,6 +30,7 @@ namespace _Project.Scripts.Shell
         IEnumerator BootRoutine()
         {
             var scenes = new SceneLoader();
+            // Still need MainMenu briefly so AppFlowFactory can resolve IShellUi.
             yield return scenes.LoadMainMenuAdditive();
 
             var bundle = AppFlowFactory.Create(this, scenes);
@@ -38,8 +43,18 @@ namespace _Project.Scripts.Shell
             _fsm = bundle.Value.StateMachine;
             _intents = bundle.Value.Intents as IDisposable;
 
-            GameLog.Info(LogChannel.Bootstrap, "Startup ready (Root). AppFlow started.");
-            _fsm.Start(AppStateId.PressAnyKey);
+            if (skipMenuToGameTemporarily)
+            {
+                GameLog.Warning(
+                    LogChannel.Bootstrap,
+                    "TEMPORARY: skipMenuToGame — starting at LoadingGame.");
+                _fsm.Start(AppStateId.LoadingGame);
+            }
+            else
+            {
+                GameLog.Info(LogChannel.Bootstrap, "Startup ready (Root). AppFlow started.");
+                _fsm.Start(AppStateId.PressAnyKey);
+            }
         }
 
         void Update()
