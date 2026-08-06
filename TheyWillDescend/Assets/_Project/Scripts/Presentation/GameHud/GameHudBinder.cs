@@ -1,5 +1,7 @@
 using _Project.Scripts.Infrastructure.Logging;
+using _Project.Scripts.Presentation.City;
 using _Project.Scripts.Shell;
+using _Project.Scripts.Simulation.City;
 using _Project.Scripts.Simulation.Session;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,8 +9,7 @@ using UnityEngine.UI;
 namespace _Project.Scripts.Presentation.GameHud
 {
     /// <summary>
-    /// Game-scene overlay HUD. Not shell menu — lives with the session scene.
-    /// Build catalog is Presentation UI; sim freeze goes through <see cref="SimGate"/>.
+    /// Game-scene overlay HUD. Catalog + entry into footprint placing.
     /// </summary>
     public sealed class GameHudBinder : MonoBehaviour, IGameplayEscapeHandler
     {
@@ -17,13 +18,13 @@ namespace _Project.Scripts.Presentation.GameHud
         [SerializeField] Agents.AgentSpawner agentSpawner;
 
         [SerializeField] GameObject buildCatalogPanel;
-        [SerializeField] Button selectCubeButton;
+        [SerializeField] Button selectCube3x6Button;
+        [SerializeField] Button selectCube2x2Button;
+        [SerializeField] BuildPlacementController placement;
 
         bool _catalogOpen;
-        string _selectedBuildingId;
 
         public bool IsCatalogOpen => _catalogOpen;
-        public string SelectedBuildingId => _selectedBuildingId;
 
         void OnEnable()
         {
@@ -44,8 +45,11 @@ namespace _Project.Scripts.Presentation.GameHud
             if (buildModeButton != null)
                 buildModeButton.onClick.AddListener(OnBuildModeClicked);
 
-            if (selectCubeButton != null)
-                selectCubeButton.onClick.AddListener(OnSelectCubeClicked);
+            if (selectCube3x6Button != null)
+                selectCube3x6Button.onClick.AddListener(OnSelectCube3x6);
+
+            if (selectCube2x2Button != null)
+                selectCube2x2Button.onClick.AddListener(OnSelectCube2x2);
 
             SetCatalogVisible(false);
         }
@@ -58,24 +62,31 @@ namespace _Project.Scripts.Presentation.GameHud
             if (buildModeButton != null)
                 buildModeButton.onClick.RemoveListener(OnBuildModeClicked);
 
-            if (selectCubeButton != null)
-                selectCubeButton.onClick.RemoveListener(OnSelectCubeClicked);
+            if (selectCube3x6Button != null)
+                selectCube3x6Button.onClick.RemoveListener(OnSelectCube3x6);
 
-            if (_catalogOpen)
-                CloseCatalog(resumeSim: true);
+            if (selectCube2x2Button != null)
+                selectCube2x2Button.onClick.RemoveListener(OnSelectCube2x2);
+
+            if (_catalogOpen || (placement != null && placement.IsPlacing))
+                ExitBuildUi(resumeSim: true);
         }
 
-        /// <summary>
-        /// Shell calls this when Esc is pressed during Playing.
-        /// Returns true if the catalog consumed Esc (do not open pause).
-        /// </summary>
         public bool TryHandleEscape()
         {
-            if (!_catalogOpen)
-                return false;
+            if (placement != null && placement.IsPlacing)
+            {
+                ExitBuildUi(resumeSim: true);
+                return true;
+            }
 
-            CloseCatalog(resumeSim: true);
-            return true;
+            if (_catalogOpen)
+            {
+                ExitBuildUi(resumeSim: true);
+                return true;
+            }
+
+            return false;
         }
 
         void OnSpawnClicked()
@@ -88,57 +99,70 @@ namespace _Project.Scripts.Presentation.GameHud
 
         void OnBuildModeClicked()
         {
-            if (_catalogOpen)
-                CloseCatalog(resumeSim: true);
+            if (_catalogOpen || (placement != null && placement.IsPlacing))
+                ExitBuildUi(resumeSim: true);
             else
                 OpenCatalog();
         }
 
-        void OnSelectCubeClicked()
+        void OnSelectCube3x6() => BeginPlace(BuildingFootprint.House6x2, "House 6x2");
+
+        void OnSelectCube2x2() => BeginPlace(BuildingFootprint.Cube2x2, "Cube 2x2");
+
+        void BeginPlace(BuildingFootprint footprint, string label)
         {
-            _selectedBuildingId = "StubCube";
-            GameLog.Info(LogChannel.Presentation, "BuildCatalog selected: StubCube (ghost/place next).");
+            EnsurePlacement();
+            placement.SetFootprint(footprint);
+
+            _catalogOpen = false;
+            SetCatalogVisible(false);
+            placement.BeginPlacing();
+
+            GameLog.Info(
+                LogChannel.Presentation,
+                $"Selected {label}. Click to place, Esc cancels.");
         }
 
         void OpenCatalog()
         {
+            EnsurePlacement();
+            placement.CancelPlacing();
+
             _catalogOpen = true;
-            _selectedBuildingId = null;
             SetCatalogVisible(true);
-
-            var gate = SimGate.Active;
-            if (gate == null)
-            {
-                GameLog.Warning(LogChannel.Presentation, "BuildCatalog: SimGate.Active is null.");
-                return;
-            }
-
-            // Catalog open ⇒ world time frozen. App stays in Playing (not PausedState).
-            gate.Set(SimRunMode.Frozen);
-            GameLog.Info(LogChannel.Presentation, "BuildCatalog → open (sim Frozen). Esc closes.");
+            SetSimFrozen(true);
+            GameLog.Info(LogChannel.Presentation, "BuildCatalog → open (sim Frozen).");
         }
 
-        void CloseCatalog(bool resumeSim)
+        void ExitBuildUi(bool resumeSim)
         {
-            if (!_catalogOpen)
-                return;
-
             _catalogOpen = false;
-            _selectedBuildingId = null;
             SetCatalogVisible(false);
+            placement?.CancelPlacing();
 
-            if (!resumeSim)
-                return;
+            if (resumeSim)
+                SetSimFrozen(false);
+        }
 
+        void SetSimFrozen(bool frozen)
+        {
             var gate = SimGate.Active;
             if (gate == null)
             {
-                GameLog.Warning(LogChannel.Presentation, "BuildCatalog: SimGate.Active is null on close.");
+                GameLog.Warning(LogChannel.Presentation, "Build UI: SimGate.Active is null.");
                 return;
             }
 
-            gate.Set(SimRunMode.Running);
-            GameLog.Info(LogChannel.Presentation, "BuildCatalog → closed (sim Running).");
+            gate.Set(frozen ? SimRunMode.Frozen : SimRunMode.Running);
+            GameLog.Info(
+                LogChannel.Presentation,
+                frozen ? "Build UI → sim Frozen." : "Build UI → sim Running.");
+        }
+
+        void EnsurePlacement()
+        {
+            if (placement == null)
+                placement = FindFirstObjectByType<BuildPlacementController>();
         }
 
         void SetCatalogVisible(bool visible)

@@ -3,62 +3,39 @@ using Unity.Mathematics;
 namespace _Project.Scripts.Simulation.City
 {
     /// <summary>
-    /// Pure polar fine-grid math. Convention (fixed):
-    /// angle = atan2(delta.x, delta.z), 0 along +Z, increases toward +X.
-    /// Rings are shared; fine density is angular. Cell center uses (index + 0.5).
+    /// Cluster/ring polar math. No fine micro-grid — roads later can be freer.
     /// </summary>
     public static class RadialGridMath
     {
-        public static bool TryWorldToCell(
-            float3 center,
-            in RadialGridConfig config,
-            float3 world,
-            out RadialCell cell)
-        {
-            cell = default;
-
-            if (!config.IsValid)
-                return false;
-
-            var delta = world - center;
-            var radius = math.length(new float2(delta.x, delta.z));
-
-            if (radius < config.InnerRadius)
-                return false;
-
-            var radialIndex = (int)math.floor((radius - config.InnerRadius) / config.RadialStep);
-            if (radialIndex < 0 || radialIndex >= config.RingCount)
-                return false;
-
-            var angle = math.atan2(delta.x, delta.z); // [-π, π]
-            var turns = angle / (2f * math.PI);
-            if (turns < 0f)
-                turns += 1f;
-
-            var angularIndex = (int)math.floor(turns * config.AngularDivisions);
-            if (angularIndex >= config.AngularDivisions)
-                angularIndex = 0;
-
-            cell = new RadialCell(angularIndex, radialIndex);
-            return true;
-        }
-
-        public static float3 CellToWorld(float3 center, in RadialGridConfig config, RadialCell cell)
-        {
-            var theta = (cell.AngularIndex + 0.5f) * (2f * math.PI / config.AngularDivisions);
-            var radius = config.InnerRadius + (cell.RadialIndex + 0.5f) * config.RadialStep;
-            var offset = new float3(math.sin(theta), 0f, math.cos(theta)) * radius;
-            return new float3(center.x, center.y, center.z) + offset;
-        }
-
         public static float OuterRadius(in RadialGridConfig config) =>
             config.RingLineRadius(config.RingCount);
 
-        /// <summary>Snap fine angular index down to quantum start.</summary>
-        public static int FineAngularToQuantum(int fineAngularIndex, in RadialGridConfig config) =>
-            fineAngularIndex / config.AngularQuantum;
+        public static float NormalizedTurns(float dx, float dz)
+        {
+            var angle = math.atan2(dx, dz);
+            var turns = angle / (2f * math.PI);
+            if (turns < 0f)
+                turns += 1f;
+            return turns;
+        }
 
-        public static int QuantumToFineAngularStart(int quantumIndex, in RadialGridConfig config) =>
-            quantumIndex * config.AngularQuantum;
+        public static int TurnsToCluster(float turns, int clusterCount)
+        {
+            if (clusterCount <= 0)
+                return 0;
+            var index = (int)math.floor(turns * clusterCount);
+            if (index >= clusterCount)
+                index = 0;
+            return index;
+        }
+
+        public static float ClusterCenterTurns(int clusterIndex, int clusterCount) =>
+            (clusterIndex + 0.5f) / clusterCount;
+
+        public static float3 PolarToWorld(float3 center, float turns, float radius)
+        {
+            var theta = turns * 2f * math.PI;
+            return center + new float3(math.sin(theta), 0f, math.cos(theta)) * radius;
+        }
     }
 }

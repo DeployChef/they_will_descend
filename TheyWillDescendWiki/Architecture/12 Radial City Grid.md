@@ -44,82 +44,45 @@ Visual guide (опционально):
     редкие rings (каждый K-й radial или зоны тепла)
 ```
 
-### Конфиг (идея)
+### Конфиг (канон сейчас)
 
 ```text
 RadialGridConfig
-  float               InnerRadius
-  float               RadialStep        // толщина одного кольца (общая)
-  int                 RingCount         // кол-во колец, общее для fine и квантов (напр. 10)
-  int                 AngularDivisions  // fine-клинья по кругу (напр. 240)
-  int                 AngularQuantum    // fine на один квант по углу (напр. 5)
+  InnerRadius, RadialStep (низкие кольца), RingCount (много)
+  InnerBandClusterCount = 66   // кольца 0–1: 11 домов × ширина 6
+
+TargetClusterWorldWidth = 2π * RingMid(0) / 66
+
+GetClusterCount(ring):
+  rings 0–1 → 66
+  дальше → round(2π * RingMid(bandStart) / TargetClusterWorldWidth)
+  (парами колец: 0–1, 2–3, …)
 ```
 
-- **Кольца** — одни и те же для fine и квантов.
-- **Fine** — густые угловые секции на этих кольцах.
-- **Квант** — склейка `AngularQuantum` соседних fine по углу.
-- Подложка в игре рисует кванты; Gizmos в Scene — fine на тех же кольцах.### Формулы
+**Нет fine/micro-grid.** Подложка кластеров — правило для зданий. Дороги позже почти свободны по углу.  
+Размер дома в мире ≈ `WidthClusters * TargetClusterWorldWidth` на любом кольце.
 
-```text
-// world → fine
-delta  = pos - Center
-radius = length(delta.xz)
-angle  = atan2(delta.x, delta.z)   // один раз выбрать convention и не менять
+### Сущности
 
-angularIndex = floor(normalizedAngle / (2π) * AngularDivisions)
-radialIndex  = floor((radius - InnerRadius) / RadialStep)
-
-// fine → world (центр ячейки)
-θ = (angularIndex + 0.5) * (2π / AngularDivisions)
-r = InnerRadius + (radialIndex + 0.5) * RadialStep
-pos = Center + (sin(θ), 0, cos(θ)) * r
-```
-
-### Сущности поверх fine grid
-
-| Что | Как кодируется |
+| Что | Как |
 | --- | --- |
-| Дорога-spoke | почти постоянный `angularIndex`, диапазон `radialIndex` |
-| Дорога-arc | почти постоянный `radialIndex`, диапазон `angularIndex` |
-| Здание | footprint `widthAngular × depthRadial` (+ поворот 90° и т.п.), occupy cells |
-| Снег / void | walk cost без дороги / вне карты |
-| Blocked | cell под зданием |
+| Здание | footprint кластеров якоря × кольца; occupy по дуге якоря |
+| Дорога | позже свободнее, не micro-snap |
+| Blocked | флаги на кластерах / зонах |
 
-Pathfinding (позже): A* / flow **по fine cells** (или dual graph только дорог). Крупные секции в pathfinding не участвуют.
-
-## 5. Слои (когда начнём код)
+## 5. Слои
 
 | Слой | Роль |
 | --- | --- |
-| Presentation | CityCenter transform, optional guide mesh, ghost footprint, hover |
-| Simulation (ECS) | config blob/singleton, occupancy / road / cost buffers |
-| Shell | режимы стройки (дорога / здание) — позже |
+| Presentation | CityCenter, underlay, ghost |
+| Simulation | config, occupancy (позже) |
+| Shell | режимы стройки |
 
-Правило проекта: истина занятости — в симуляции; меш на Game — картинка.
+## 7–8. Статус
 
-## 6. Smart packing (осознанно позже)
-
-В FP соседние здания того же типа могут чуть сжиматься/растягиваться, чтобы заполнить кольцо.  
-**Не делать в первых шагах.** Сначала честный fixed footprint в fine units.
-
-## 7. План заходов (с нуля)
-
-| Шаг | Цель | Код сейчас |
-| --- | --- | --- |
-| **F0** | `RadialGridConfig` + math `world ↔ (angular, radial)` | есть (`Simulation/City`) |
-| **F1** | Редкий visual guide + hover fine cell | guide есть; hover ещё нет |
-| **F2** | Paint road (spoke/arc) со снэпом к fine | нет |
-| **F3** | Ghost building N×M + rotate | нет |
-| **F4** | Place → occupy fine cells | нет |
-| **F5** | Pathfinding по fine + road/snow cost | нет |
-| **F6** | Smart packing (опционально) | нет |
-
-`CircleWalk` агентов — отдельная заглушка движения по кругу; к городской сетке не относится. Pathfinding по дорогам его заменит для «иди на работу».
-
-## 8. Статус репо
-
-- Прототип coarse (`RadialCoords`, `RadialGridView`, hover, materials) — **удалён**.
-- **F0+F1 (в работе):** `RadialGridConfig` / `RadialCell` / `RadialGridMath` в `Simulation/City`; `CityCenter` + `RadialGridGuide` в `Presentation/City`. Центр временно = дом `rpgpp_lt_building_03`. Кольца общие (`RingCount`); fine/квант — только угол. Подложка = кванты; Gizmos = fine. Hover / place — ещё нет.
+- Underlay + place stub (House 6×2 / Cube 2×2) работают.
+- Fine-разметки нет (осознанно, по FP).
+- Between-ring placement / rotate / ECS occupy — дальше.
 
 ---
 

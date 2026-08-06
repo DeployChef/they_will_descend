@@ -6,9 +6,8 @@ using UnityEngine.Rendering;
 namespace _Project.Scripts.Presentation.City
 {
     /// <summary>
-    /// Shared ring radii for fine and quantum.
-    /// Play mesh = quantum underlay (fewer angular spokes).
-    /// Scene gizmos = full fine angular math on the same rings.
+    /// Visual underlay only: rings + per-ring cluster spokes.
+    /// No fine micro-grid (FP has none — roads are freer later).
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -17,16 +16,12 @@ namespace _Project.Scripts.Presentation.City
         [SerializeField] Transform cityCenter;
         [SerializeField] RadialGridConfig config = RadialGridConfig.Default;
 
-        [Header("In-game underlay (quanta on shared rings)")]
+        [Header("Underlay")]
         [SerializeField] float yOffset = 0.08f;
-        [SerializeField] float lineWidth = 0.08f;
+        [SerializeField] float lineWidth = 0.05f;
         [SerializeField] Color underlayColor = new(0.15f, 0.55f, 1f, 1f);
-        [SerializeField] bool underlayVisibleInEditMode = true;
-        [SerializeField] bool underlayVisibleInPlayMode = true;
-
-        [Header("Scene gizmos (fine math, same rings)")]
-        [SerializeField] bool fineGridGizmosInScene = true;
-        [SerializeField] Color fineGizmoColor = new(0.2f, 1f, 0.4f, 0.35f);
+        [SerializeField] bool visibleInEditMode = true;
+        [SerializeField] bool visibleInPlayMode = true;
 
         MeshFilter _meshFilter;
         MeshRenderer _meshRenderer;
@@ -47,7 +42,6 @@ namespace _Project.Scripts.Presentation.City
         {
             if (_mesh == null)
                 return;
-
             if (Application.isPlaying)
                 Destroy(_mesh);
             else
@@ -59,7 +53,6 @@ namespace _Project.Scripts.Presentation.City
         {
             if (_runtimeMaterial == null)
                 return;
-
             if (Application.isPlaying)
                 Destroy(_runtimeMaterial);
             else
@@ -81,35 +74,26 @@ namespace _Project.Scripts.Presentation.City
                 config.RingCount = RadialGridConfig.Default.RingCount;
             if (config.RadialStep <= 0f)
                 config.RadialStep = RadialGridConfig.Default.RadialStep;
-            if (config.AngularDivisions <= 0)
-                config.AngularDivisions = RadialGridConfig.Default.AngularDivisions;
-            if (config.AngularQuantum <= 0)
-                config.AngularQuantum = RadialGridConfig.Default.AngularQuantum;
-
-            if (config.AngularDivisions % config.AngularQuantum != 0)
-                config.AngularDivisions =
-                    (config.AngularDivisions / config.AngularQuantum) * config.AngularQuantum;
-            if (config.AngularDivisions <= 0)
-                config.AngularDivisions = config.AngularQuantum;
+            if (config.InnerBandClusterCount <= 0)
+                config.InnerBandClusterCount = RadialGridConfig.Default.InnerBandClusterCount;
         }
 
         void LateUpdate()
         {
             FollowCenter();
-            var wantUnderlay = Application.isPlaying ? underlayVisibleInPlayMode : underlayVisibleInEditMode;
+            var want = Application.isPlaying ? visibleInPlayMode : visibleInEditMode;
             if (_meshRenderer != null)
-                _meshRenderer.enabled = wantUnderlay && config.IsValid;
-
-            if (wantUnderlay)
+                _meshRenderer.enabled = want && config.IsValid;
+            if (want)
                 RebuildUnderlayMesh(force: false);
         }
 
         void FollowCenter()
         {
-            var center = CenterTransform;
-            if (center == null)
+            var c = CenterTransform;
+            if (c == null)
                 return;
-            transform.position = center.position + Vector3.up * yOffset;
+            transform.position = c.position + Vector3.up * yOffset;
             transform.rotation = Quaternion.identity;
         }
 
@@ -118,11 +102,9 @@ namespace _Project.Scripts.Presentation.City
             _meshFilter = GetComponent<MeshFilter>();
             if (_meshFilter == null)
                 _meshFilter = gameObject.AddComponent<MeshFilter>();
-
             _meshRenderer = GetComponent<MeshRenderer>();
             if (_meshRenderer == null)
                 _meshRenderer = gameObject.AddComponent<MeshRenderer>();
-
             if (_runtimeMaterial == null)
                 _runtimeMaterial = CreateLineMaterial(underlayColor);
 
@@ -149,37 +131,35 @@ namespace _Project.Scripts.Presentation.City
 
             if (_mesh == null)
             {
-                _mesh = new Mesh { name = "RadialQuantumUnderlay" };
+                _mesh = new Mesh { name = "RadialClusterUnderlay" };
                 _mesh.MarkDynamic();
                 _mesh.indexFormat = IndexFormat.UInt32;
             }
             else
-            {
                 _mesh.Clear();
-            }
 
-            // Quantum angular density, SHARED ring radii with fine.
-            var spokeCount = Mathf.Max(1, config.AngularQuantaCount);
-            var ringCount = config.RingCount;
-            var segments = Mathf.Max(64, spokeCount);
-            var inner = config.InnerRadius;
-            var outer = config.RingLineRadius(ringCount);
             var halfW = lineWidth * 0.5f;
+            var verts = new List<Vector3>(8192);
+            var tris = new List<int>(16384);
 
-            var verts = new List<Vector3>(4096);
-            var tris = new List<int>(8192);
-
-            for (var ring = 1; ring <= ringCount; ring++)
+            for (var ring = 1; ring <= config.RingCount; ring++)
             {
                 var radius = config.RingLineRadius(ring);
+                var segments = Mathf.Max(48, config.GetClusterCount(Mathf.Min(ring - 1, config.RingCount - 1)));
                 AppendCircleRibbon(verts, tris, radius, segments, halfW);
             }
 
-            for (var i = 0; i < spokeCount; i++)
+            for (var ring = 0; ring < config.RingCount; ring++)
             {
-                var theta = (i / (float)spokeCount) * Mathf.PI * 2f;
-                var dir = new Vector3(Mathf.Sin(theta), 0f, Mathf.Cos(theta));
-                AppendSegmentRibbon(verts, tris, dir * inner, dir * outer, halfW);
+                var r0 = config.RingLineRadius(ring);
+                var r1 = config.RingLineRadius(ring + 1);
+                var clusters = config.GetClusterCount(ring);
+                for (var i = 0; i < clusters; i++)
+                {
+                    var theta = (i / (float)clusters) * Mathf.PI * 2f;
+                    var dir = new Vector3(Mathf.Sin(theta), 0f, Mathf.Cos(theta));
+                    AppendSegmentRibbon(verts, tris, dir * r0, dir * r1, halfW);
+                }
             }
 
             _mesh.SetVertices(verts);
@@ -187,24 +167,16 @@ namespace _Project.Scripts.Presentation.City
             _mesh.RecalculateBounds();
             _mesh.RecalculateNormals();
             _meshFilter.sharedMesh = _mesh;
-
-            if (_runtimeMaterial != null)
-                ApplyColor(_runtimeMaterial, underlayColor);
+            ApplyColor(_runtimeMaterial, underlayColor);
         }
 
         static void AppendCircleRibbon(
-            List<Vector3> verts,
-            List<int> tris,
-            float radius,
-            int segments,
-            float halfWidth)
+            List<Vector3> verts, List<int> tris, float radius, int segments, float halfWidth)
         {
             for (var i = 0; i < segments; i++)
             {
-                var t0 = (float)i / segments;
-                var t1 = (float)(i + 1) / segments;
-                var a0 = t0 * Mathf.PI * 2f;
-                var a1 = t1 * Mathf.PI * 2f;
+                var a0 = (i / (float)segments) * Mathf.PI * 2f;
+                var a1 = ((i + 1) / (float)segments) * Mathf.PI * 2f;
                 var p0 = new Vector3(Mathf.Sin(a0), 0f, Mathf.Cos(a0)) * radius;
                 var p1 = new Vector3(Mathf.Sin(a1), 0f, Mathf.Cos(a1)) * radius;
                 AppendSegmentRibbon(verts, tris, p0, p1, halfWidth);
@@ -212,22 +184,16 @@ namespace _Project.Scripts.Presentation.City
         }
 
         static void AppendSegmentRibbon(
-            List<Vector3> verts,
-            List<int> tris,
-            Vector3 a,
-            Vector3 b,
-            float halfWidth)
+            List<Vector3> verts, List<int> tris, Vector3 a, Vector3 b, float halfWidth)
         {
             var delta = b - a;
             if (delta.sqrMagnitude < 1e-8f)
                 return;
-
             var perp = Vector3.Cross(delta.normalized, Vector3.up);
             if (perp.sqrMagnitude < 1e-8f)
                 perp = Vector3.right;
             else
                 perp.Normalize();
-
             perp *= halfWidth;
 
             var i0 = verts.Count;
@@ -235,7 +201,6 @@ namespace _Project.Scripts.Presentation.City
             verts.Add(a + perp);
             verts.Add(b + perp);
             verts.Add(b - perp);
-
             tris.Add(i0);
             tris.Add(i0 + 1);
             tris.Add(i0 + 2);
@@ -251,11 +216,8 @@ namespace _Project.Scripts.Presentation.City
                 var h = config.InnerRadius.GetHashCode();
                 h = (h * 397) ^ config.RadialStep.GetHashCode();
                 h = (h * 397) ^ config.RingCount;
-                h = (h * 397) ^ config.AngularDivisions;
-                h = (h * 397) ^ config.AngularQuantum;
-                h = (h * 397) ^ yOffset.GetHashCode();
+                h = (h * 397) ^ config.InnerBandClusterCount;
                 h = (h * 397) ^ lineWidth.GetHashCode();
-                h = (h * 397) ^ underlayColor.GetHashCode();
                 return h;
             }
         }
@@ -266,7 +228,6 @@ namespace _Project.Scripts.Presentation.City
                 Shader.Find("Universal Render Pipeline/Unlit")
                 ?? Shader.Find("Unlit/Color")
                 ?? Shader.Find("Sprites/Default");
-
             var mat = new Material(shader)
             {
                 name = "RadialUnderlay_Runtime",
@@ -284,49 +245,6 @@ namespace _Project.Scripts.Presentation.City
             if (mat.HasProperty("_Color"))
                 mat.SetColor("_Color", color);
             mat.color = color;
-        }
-
-        /// <summary>
-        /// Scene-only fine math: same ring lines, denser angular spokes.
-        /// </summary>
-        void OnDrawGizmos()
-        {
-            if (!fineGridGizmosInScene || !config.IsValid)
-                return;
-
-            EnsureConfigDefaults();
-
-            var center = CenterTransform.position + Vector3.up * yOffset;
-            var inner = config.InnerRadius;
-            var outer = config.RingLineRadius(config.RingCount);
-            var fineSpokes = Mathf.Max(1, config.AngularDivisions);
-            var segments = Mathf.Max(32, Mathf.Min(fineSpokes, 128));
-
-            Gizmos.color = fineGizmoColor;
-
-            // SAME ring radii as underlay.
-            for (var ring = 1; ring <= config.RingCount; ring++)
-                DrawGizmoCircle(center, config.RingLineRadius(ring), segments);
-
-            for (var i = 0; i < fineSpokes; i++)
-            {
-                var theta = (i / (float)fineSpokes) * Mathf.PI * 2f;
-                var dir = new Vector3(Mathf.Sin(theta), 0f, Mathf.Cos(theta));
-                Gizmos.DrawLine(center + dir * inner, center + dir * outer);
-            }
-        }
-
-        static void DrawGizmoCircle(Vector3 center, float radius, int segments)
-        {
-            var prev = center + new Vector3(0f, 0f, radius);
-            for (var i = 1; i <= segments; i++)
-            {
-                var t = (float)i / segments;
-                var a = t * Mathf.PI * 2f;
-                var next = center + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * radius;
-                Gizmos.DrawLine(prev, next);
-                prev = next;
-            }
         }
     }
 }
