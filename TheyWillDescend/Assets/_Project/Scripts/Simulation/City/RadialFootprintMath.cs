@@ -87,7 +87,7 @@ namespace _Project.Scripts.Simulation.City
             return true;
         }
 
-        public static void FootprintToWorldPose(
+        public static void FootprintMarkerPose(
             float3 center,
             in RadialGridConfig config,
             int anchorCluster,
@@ -95,17 +95,11 @@ namespace _Project.Scripts.Simulation.City
             in BuildingFootprint footprint,
             out float3 position,
             out quaternion rotation,
-            out float3 scale)
+            out float stubWorldSize)
         {
             var nAnchor = config.GetClusterCount(anchorRadial);
-            var midCluster = anchorCluster + (footprint.WidthClusters - 1) * 0.5f;
             var midRadial = anchorRadial + (footprint.DepthRadialRings - 1) * 0.5f;
-
-            var turns = RadialGridMath.ClusterCenterTurns(
-                (int)math.floor(midCluster),
-                nAnchor);
-            // Better: interpolate mid of footprint in turns.
-            turns = (anchorCluster + footprint.WidthClusters * 0.5f) / nAnchor;
+            var turns = (anchorCluster + footprint.WidthClusters * 0.5f) / nAnchor;
             var midRadius = config.InnerRadius + (midRadial + 0.5f) * config.RadialStep;
 
             var theta = turns * 2f * math.PI;
@@ -113,14 +107,12 @@ namespace _Project.Scripts.Simulation.City
             position = center + radialDir * midRadius;
             rotation = quaternion.LookRotationSafe(radialDir, new float3(0f, 1f, 0f));
 
-            // Same world size on every ring (calibrated from ring 0).
-            var arcWidth = footprint.WidthClusters * config.TargetClusterWorldWidth;
-            var radialDepth = footprint.DepthRadialRings * config.RadialStep;
-            var height = math.min(arcWidth, radialDepth) * 0.55f;
-            scale = new float3(
-                math.max(0.2f, arcWidth),
-                math.max(0.2f, height),
-                math.max(0.2f, radialDepth));
+            // Zone = full footprint. Stub is a smaller "building" on that pad:
+            // sized by the short side so 6×2 shows lots of zone, 2×2 nearly fills it.
+            var padWidth = footprint.WidthClusters * config.TargetClusterWorldWidth;
+            var padDepth = footprint.DepthRadialRings * config.RadialStep;
+            stubWorldSize = math.min(padWidth, padDepth) * 0.85f;
+            stubWorldSize = math.max(0.35f, stubWorldSize);
         }
     }
 }
