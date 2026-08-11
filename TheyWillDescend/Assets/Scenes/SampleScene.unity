@@ -474,7 +474,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.2
+  near clip plane: 0.01
   far clip plane: 1000
   field of view: 60.000004
   orthographic: 0
@@ -526,13 +526,13 @@ MonoBehaviour:
   IgnoreTimeScale: 0
   WorldUpOverride: {fileID: 0}
   ChannelMask: -1
-  UpdateMethod: 1
+  UpdateMethod: 2
   BlendUpdateMethod: 1
   LensModeOverride:
     Enabled: 0
     DefaultMode: 2
   DefaultBlend:
-    Style: 6
+    Style: 1
     Time: 2
     CustomCurve:
       serializedVersion: 2
@@ -1218,6 +1218,7 @@ GameObject:
   - component: {fileID: 2011732106}
   - component: {fileID: 2011732112}
   - component: {fileID: 2011732113}
+  - component: {fileID: 2011732114}
   m_Layer: 0
   m_Name: RTSCamera
   m_TagString: Untagged
@@ -1239,7 +1240,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineInputAxisController
   ScanRecursively: 1
   SuppressInputWhileBlending: 1
-  IgnoreTimeScale: 0
+  IgnoreTimeScale: 1
   m_ControllerManager:
     Controllers:
     - Name: Look Orbit X
@@ -1305,7 +1306,7 @@ MonoBehaviour:
   TargetOffset: {x: 0, y: 0, z: 0}
   TrackerSettings:
     BindingMode: 4
-    PositionDamping: {x: 1, y: 1, z: 1}
+    PositionDamping: {x: 0, y: 0, z: 0}
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
@@ -1345,8 +1346,8 @@ MonoBehaviour:
     Restrictions: 0
   RadialAxis:
     Value: 15
-    Center: 1
-    Range: {x: 1, y: 15}
+    Center: 8
+    Range: {x: 8, y: 15}
     Wrap: 0
     Recentering:
       Enabled: 0
@@ -1379,7 +1380,7 @@ MonoBehaviour:
   Lens:
     FieldOfView: 60.000004
     OrthographicSize: 5
-    NearClipPlane: 0.2
+    NearClipPlane: 0.01
     FarClipPlane: 1000
     Dutch: 0
     ModeOverride: 0
@@ -1418,7 +1419,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2011732105}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca7de3aefa901374ba29464584a3109a, type: 3}
   m_Name: 
@@ -1440,7 +1441,7 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 1
     MaximumRaycast: 10
-    Damping: 0.5
+    Damping: 0.36
 --- !u!114 &2011732112
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1460,7 +1461,7 @@ MonoBehaviour:
   TransparentLayers:
     serializedVersion: 2
     m_Bits: 0
-  MinimumDistanceFromTarget: 0.3
+  MinimumDistanceFromTarget: 1
   AvoidObstacles:
     Enabled: 1
     DistanceLimit: 0
@@ -1473,7 +1474,7 @@ MonoBehaviour:
     MaximumEffort: 4
     SmoothingTime: 0
     Damping: 0.4
-    DampingWhenOccluded: 0.2
+    DampingWhenOccluded: 0
   ShotQualityEvaluation:
     Enabled: 0
     OptimalDistance: 10
@@ -1493,14 +1494,59 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  zoomAction: {fileID: 8552022565011884605, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprintActionName: Sprint
   camera: {fileID: 2011732109}
-  OrbitalFollow: {fileID: 2011732108}
   cameraTarget: {fileID: 14884075}
+  orbitalFollow: {fileID: 2011732108}
   moveSpeed: 25
   sprintSpeedMultiplier: 4
   acceleration: 10
-  deceleration: 15
+  deceleration: 10
+  minRadius: 8
+  maxRadius: 15
+  radiusStep: 2
+  zoomSmoothness: 10
+  angleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 20
+      inSlope: 0
+      outSlope: 55
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 75
+      inSlope: 55
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  mapCenter: {x: 524.7, y: 0, z: 456}
+  maxMapRadius: 40
+--- !u!114 &2011732114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2011732105}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d75924d76b05344aa410607bc57db98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineConfiner3D
+  BoundingVolume: {fileID: 0}
+  SlowingDistance: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
