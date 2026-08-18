@@ -45,14 +45,12 @@ namespace _Project.Scripts.Shell
 
             if (skipMenuToGameTemporarily)
             {
-                GameLog.Warning(
-                    LogChannel.Bootstrap,
-                    "TEMPORARY: skipMenuToGame — starting at LoadingGame.");
+                GameLog.Warning("TEMPORARY: skipMenuToGame — starting at LoadingGame.");
                 _fsm.Start(AppStateId.LoadingGame);
             }
             else
             {
-                GameLog.Info(LogChannel.Bootstrap, "Startup ready (Root). AppFlow started.");
+                GameLog.Info("Startup ready (Root). AppFlow started.");
                 _fsm.Start(AppStateId.PressAnyKey);
             }
         }

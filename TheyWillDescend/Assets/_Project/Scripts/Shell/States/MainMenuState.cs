@@ -1,5 +1,4 @@
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
 {
@@ -20,10 +19,10 @@ namespace _Project.Scripts.Shell.States
 
         public void Enter()
         {
-            _simGate.Set(SimRunMode.Off);
+            _simGate.SetSessionInGame(false);
             _ui.ShowMainMenu();
             _ui.StartGameClicked += OnStartGameClicked;
-            GameLog.Info(LogChannel.Bootstrap, "Main menu: click Start Game.");
+            GameLog.Info("Main menu: click Start Game.");
         }
 
         public void Exit()

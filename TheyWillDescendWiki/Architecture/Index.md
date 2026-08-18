@@ -23,6 +23,7 @@
 - [[10 Vertical Slice — Shell + ECS Walkers]] — заходы A–D: меню → ECS ходьба → Frozen
 - [[11 Camera & Presentation Scenes]] — одна Main Camera на Root, VCam, что на какой сцене
 - [[12 Radial City Grid]] — полярный cluster underlay + placement (FP-like); ECS occupancy / smart align — позже
+- [[13 Time HUD and Save]] — тулза времени (пауза/x1/x2/x3, часы дня) и однослотовый save/load
 
 ## Связь с GDD
 

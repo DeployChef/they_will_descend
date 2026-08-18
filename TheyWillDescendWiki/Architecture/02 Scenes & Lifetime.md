@@ -31,8 +31,8 @@ Bootstrap (вечный)
 
 ## SimGate
 
-Off на меню/загрузке · Running в Playing · Frozen на паузе.  
-[[09 App Shell]].
+Off на меню/загрузке · Running в Playing · Frozen на паузе. Speed (x1/x2/x3) рядом с Mode.  
+[[09 App Shell]] · тулза и save: [[13 Time HUD and Save]].
 
 ---
 

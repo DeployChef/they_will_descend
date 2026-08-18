@@ -11,20 +11,21 @@ namespace _Project.Scripts.Simulation.Time
             if (!SystemAPI.TryGetSingleton<SimControl>(out var simControl))
                 return;
 
-            if (simControl.Mode != SimRunMode.Running)
-                return;
-
             if (!SystemAPI.TryGetSingletonRW<GameTime>(out var timeRW))
                 return;
 
+            var dt = simControl.DeltaTime;
+            if (dt <= 0f)
+                return;
+
             ref var time = ref timeRW.ValueRW;
-            time.ElapsedInDay += SystemAPI.Time.DeltaTime;
+            time.ElapsedInDay += dt;
 
             while (time.ElapsedInDay >= time.DayDuration)
             {
                 time.ElapsedInDay -= time.DayDuration;
                 time.Day += 1;
-                GameLog.Info(LogChannel.Time, $"Day {time.Day}");
+                GameLog.Info($"Day {time.Day}");
             }
         }
     }

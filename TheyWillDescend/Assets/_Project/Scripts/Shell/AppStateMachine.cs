@@ -27,7 +27,7 @@ namespace _Project.Scripts.Shell
                 throw new InvalidOperationException($"App state '{id}' is not registered.");
 
             _current = next;
-            GameLog.Info(LogChannel.Bootstrap, $"AppFlow Start → {id}");
+            GameLog.Info($"AppFlow Start → {id}");
             _current.Enter();
         }
 
@@ -39,7 +39,7 @@ namespace _Project.Scripts.Shell
             if (!_states.TryGetValue(id, out var next))
                 throw new InvalidOperationException($"App state '{id}' is not registered.");
 
-            GameLog.Info(LogChannel.Bootstrap, $"AppFlow {_current?.Id} → {id}");
+            GameLog.Info($"AppFlow {_current?.Id} → {id}");
             _current?.Exit();
             _current = next;
             _current.Enter();

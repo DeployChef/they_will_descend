@@ -22,19 +22,17 @@ namespace _Project.Scripts.Shell
         {
             if (IsLoaded(sceneName))
             {
-                GameLog.Info(LogChannel.Bootstrap, $"Scene '{sceneName}' already loaded.");
+                GameLog.Info($"Scene '{sceneName}' already loaded.");
                 if (setActive)
                     TrySetActive(sceneName);
                 yield break;
             }
 
-            GameLog.Info(LogChannel.Bootstrap, $"Loading '{sceneName}' additive…");
+            GameLog.Info($"Loading '{sceneName}' additive…");
             var op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
             if (op == null)
             {
-                GameLog.Error(
-                    LogChannel.Bootstrap,
-                    $"Failed to load '{sceneName}'. Add it to Build Settings.");
+                GameLog.Error($"Failed to load '{sceneName}'. Add it to Build Settings.");
                 yield break;
             }
 
@@ -44,7 +42,7 @@ namespace _Project.Scripts.Shell
             if (setActive)
                 TrySetActive(sceneName);
 
-            GameLog.Info(LogChannel.Bootstrap, $"Scene '{sceneName}' loaded.");
+            GameLog.Info($"Scene '{sceneName}' loaded.");
         }
 
         public IEnumerator Unload(string sceneName)
@@ -52,7 +50,7 @@ namespace _Project.Scripts.Shell
             if (!IsLoaded(sceneName))
                 yield break;
 
-            GameLog.Info(LogChannel.Bootstrap, $"Unloading '{sceneName}'…");
+            GameLog.Info($"Unloading '{sceneName}'…");
             var op = SceneManager.UnloadSceneAsync(sceneName);
             if (op == null)
                 yield break;

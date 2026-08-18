@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _Project.Scripts.Infrastructure.Logging;
+using _Project.Scripts.Infrastructure.Save;
 using _Project.Scripts.Simulation.City;
 using Unity.Mathematics;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace _Project.Scripts.Presentation.City
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
         readonly HashSet<(int cluster, int radial)> _occupied = new();
+        readonly List<BuildingSnapshot> _placed = new();
 
         bool _placing;
         bool _canPlace;
@@ -43,6 +45,61 @@ namespace _Project.Scripts.Presentation.City
 
         public bool IsPlacing => _placing;
 
+        public BuildingSnapshot[] CopyPlaced()
+        {
+            return _placed.ToArray();
+        }
+
+        public void ClearPlaced()
+        {
+            _occupied.Clear();
+            _placed.Clear();
+            if (placedRoot == null)
+                return;
+
+            for (var i = placedRoot.childCount - 1; i >= 0; i--)
+                Object.DestroyImmediate(placedRoot.GetChild(i).gameObject);
+        }
+
+        public void RestorePlaced(BuildingSnapshot[] records)
+        {
+            ClearPlaced();
+            if (records == null || records.Length == 0)
+                return;
+
+            EnsureDeps();
+            if (gridGuide == null || CityCenter.Active == null)
+            {
+                GameLog.Error("Cannot restore buildings: grid or CityCenter missing.");
+                return;
+            }
+
+            var savedFootprint = footprint;
+            var center = (float3)CityCenter.Active.Position;
+            var config = gridGuide.Config;
+            for (var i = 0; i < records.Length; i++)
+            {
+                var record = records[i];
+                footprint = new BuildingFootprint
+                {
+                    WidthClusters = record.widthClusters,
+                    DepthRadialRings = record.depthRadialRings
+                };
+                if (!RadialFootprintMath.TryExpandClusters(
+                        config, record.anchorCluster, record.anchorRadial, footprint, _clusters))
+                {
+                    GameLog.Warning($"Skip building record {i}: expand failed.");
+                    continue;
+                }
+
+                _anchorCluster = record.anchorCluster;
+                _anchorRadial = record.anchorRadial;
+                PlaceBuilding(center, config);
+            }
+
+            footprint = savedFootprint;
+        }
+
         public void SetFootprint(BuildingFootprint value)
         {
             footprint = value;
@@ -59,7 +116,6 @@ namespace _Project.Scripts.Presentation.City
             EnsureGhost();
             RecreateGhostBuilding();
             GameLog.Info(
-                LogChannel.Presentation,
                 $"Place mode: {footprint.WidthClusters}x{footprint.DepthRadialRings} — zone + house prefab.");
         }
 
@@ -73,7 +129,7 @@ namespace _Project.Scripts.Presentation.City
                 gridGuide.SetBuildModeActive(false);
             if (_ghostRoot != null)
                 _ghostRoot.gameObject.SetActive(false);
-            GameLog.Info(LogChannel.Presentation, "Place mode cancelled.");
+            GameLog.Info("Place mode cancelled.");
         }
 
         void Update()
@@ -193,8 +249,15 @@ namespace _Project.Scripts.Presentation.City
             for (var i = 0; i < _clusters.Count; i++)
                 _occupied.Add(_clusters[i]);
 
+            _placed.Add(new BuildingSnapshot
+            {
+                widthClusters = footprint.WidthClusters,
+                depthRadialRings = footprint.DepthRadialRings,
+                anchorCluster = _anchorCluster,
+                anchorRadial = _anchorRadial
+            });
+
             GameLog.Info(
-                LogChannel.Presentation,
                 $"Placed house+zone c={_anchorCluster} r={_anchorRadial}, sections={_clusters.Count}.");
         }
 
@@ -261,7 +324,7 @@ namespace _Project.Scripts.Presentation.City
             var prefab = ResolvePrefab();
             if (prefab == null)
             {
-                GameLog.Warning(LogChannel.Presentation, "No house prefab assigned for current footprint.");
+                GameLog.Warning("No house prefab assigned for current footprint.");
                 return;
             }
 

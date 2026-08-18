@@ -3,9 +3,7 @@ using UnityEngine;
 namespace _Project.Scripts.Infrastructure.Logging
 {
     /// <summary>
-    /// Thin logging facade for the project.
-    /// Simulation may call this from managed (non-Burst) systems.
-    /// Do not call from Burst jobs — emit a domain event and log in a managed system instead.
+    /// Thin logging facade. Managed only — not Burst.
     /// </summary>
     public static class GameLog
     {
@@ -17,7 +15,6 @@ namespace _Project.Scripts.Infrastructure.Logging
             Error = 3
         }
 
-        /// <summary>When false, Verbose is discarded.</summary>
         public static bool EnableVerbose =
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             true;
@@ -25,7 +22,6 @@ namespace _Project.Scripts.Infrastructure.Logging
             false;
 #endif
 
-        /// <summary>Minimum level that reaches the sink. Info by default in player builds.</summary>
         public static Level MinimumLevel =
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Level.Verbose;
@@ -33,37 +29,31 @@ namespace _Project.Scripts.Infrastructure.Logging
             Level.Info;
 #endif
 
-        public static void Verbose(string channel, string message) =>
-            Write(Level.Verbose, channel, message);
+        public static void Verbose(string message) => Write(Level.Verbose, message);
 
-        public static void Info(string channel, string message) =>
-            Write(Level.Info, channel, message);
+        public static void Info(string message) => Write(Level.Info, message);
 
-        public static void Warning(string channel, string message) =>
-            Write(Level.Warning, channel, message);
+        public static void Warning(string message) => Write(Level.Warning, message);
 
-        public static void Error(string channel, string message) =>
-            Write(Level.Error, channel, message);
+        public static void Error(string message) => Write(Level.Error, message);
 
-        public static void Write(Level level, string channel, string message)
+        public static void Write(Level level, string message)
         {
             if (level == Level.Verbose && !EnableVerbose)
                 return;
             if (level < MinimumLevel)
                 return;
 
-            var line = $"[{channel}] {message}";
-
             switch (level)
             {
                 case Level.Warning:
-                    Debug.LogWarning(line);
+                    Debug.LogWarning(message);
                     break;
                 case Level.Error:
-                    Debug.LogError(line);
+                    Debug.LogError(message);
                     break;
                 default:
-                    Debug.Log(line);
+                    Debug.Log(message);
                     break;
             }
         }

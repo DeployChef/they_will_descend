@@ -5,21 +5,24 @@ using Unity.Mathematics;
 namespace _Project.Scripts.Simulation.Agents
 {
     /// <summary>
-    /// Advances circle walk only while <see cref="SimRunMode.Running"/>.
+    /// Moves agents that have <see cref="CircleWalk"/> by writing <see cref="AgentPosition"/>.
     /// </summary>
     public partial struct AdvanceCircleWalkSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
         {
-            if (!SystemAPI.TryGetSingleton<SimControl>(out var sim) || sim.Mode != SimRunMode.Running)
+            if (!SystemAPI.TryGetSingleton<SimControl>(out var sim))
                 return;
 
-            var dt = SystemAPI.Time.DeltaTime;
+            var dt = sim.DeltaTime;
+            if (dt <= 0f)
+                return;
 
-            foreach (var walk in SystemAPI.Query<RefRW<CircleWalk>>())
+            foreach (var (walk, position) in SystemAPI.Query<RefRW<CircleWalk>, RefRW<AgentPosition>>())
             {
                 ref var w = ref walk.ValueRW;
                 w.AngleRadians += w.Speed * w.Direction * dt * math.PI * 2f;
+                position.ValueRW = w.ToPosition();
             }
         }
     }

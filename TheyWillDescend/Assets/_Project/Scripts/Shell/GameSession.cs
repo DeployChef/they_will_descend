@@ -43,7 +43,7 @@ namespace _Project.Scripts.Shell
             IsActive = _scenes.IsGameLoaded;
             if (!IsActive)
             {
-                GameLog.Error(LogChannel.Bootstrap, "GameSession.Start failed — Game scene not loaded.");
+                GameLog.Error("GameSession.Start failed — Game scene not loaded.");
                 yield break;
             }
 

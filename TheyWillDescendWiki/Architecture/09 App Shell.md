@@ -56,8 +56,10 @@ GameSession
   «одна попытка сценария»: load/unload контента рана, сброс
 
 SimGate
-  Off | Running | Frozen
-  единственный мост к ECS-тикам
+  Off | Running | Frozen + Speed (x1/x2/x3) + PlayerPaused + BuildLocked
+  владелец желаемого тика; ECS только зеркалит EffectiveMode/Speed
+  единственный мост к ECS-тикам (не timeScale)
+  Слот save/load — [[13 Time HUD and Save]]
 
 SceneLoader (узкий)
   LoadAdditive / Unload — без знания экономики

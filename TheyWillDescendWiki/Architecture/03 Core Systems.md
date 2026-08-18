@@ -10,7 +10,7 @@
 | --- | --- |
 | **AppFlow / AppStateMachine** | FSM продукта: стейты Enter/Exit, переходы |
 | **GameSession** | Start/Dispose одной попытки сценария |
-| **SimGate** | Off / Running / Frozen — мост к ECS-тикам |
+| **SimGate** | Off / Running / Frozen + Speed (x1/x2/x3) — мост к ECS-тикам |
 | **SceneLoader** | узкая загрузка сцен (не бог) |
 | **Shell Event Bus** | UI/audio/flow (позже) |
 | **Audio / FMOD** | на Root, переживает выгрузку Game |
@@ -22,7 +22,7 @@
 
 | Домен | Ответственность |
 | --- | --- |
-| **Time** | singleton `GameTime`, `AdvanceGameTimeSystem` (только при SimGate.Running) |
+| **Time** | singleton `GameTime` + часы/скорость (`SimClock`); тик только при Running; HUD читает проекцию суток. Save/load: [[13 Time HUD and Save]] |
 | Economy / Workforce / … | см. [[04 Simulation]] · [[08 Production ECS]] |
 | Domain events | ECS buffers → Presentation bridge → Shell bus (по мере надобности) |
 
@@ -35,7 +35,7 @@
 | `GameTime` | `Scripts/Simulation/Time/GameTime.cs` |
 | `AdvanceGameTimeSystem` | `Scripts/Simulation/Time/AdvanceGameTimeSystem.cs` |
 | `GameTimeAuthoring` | `Scripts/Authoring/Time/GameTimeAuthoring.cs` |
-| `GameLog` / `LogChannel` | `Scripts/Infrastructure/Logging/` |
+| `GameLog` | `Scripts/Infrastructure/Logging/` |
 
 ## Порядок ответственности при старте рана
 

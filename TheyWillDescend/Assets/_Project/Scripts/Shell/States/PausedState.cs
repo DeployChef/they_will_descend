@@ -1,12 +1,14 @@
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
 {
+    /// <summary>
+    /// Kept registered for later pause-menu overlay. Time pause is <see cref="SimGate.TogglePlayerPause"/>
+    /// while staying in <see cref="PlayingState"/>.
+    /// </summary>
     public sealed class PausedState : IAppState
     {
         readonly AppStateMachine _fsm;
-        readonly SimGate _simGate;
         readonly IShellIntentSource _intents;
 
         public AppStateId Id => AppStateId.Paused;
@@ -14,14 +16,12 @@ namespace _Project.Scripts.Shell.States
         public PausedState(AppStateMachine fsm, SimGate simGate, IShellIntentSource intents)
         {
             _fsm = fsm;
-            _simGate = simGate;
             _intents = intents;
         }
 
         public void Enter()
         {
-            _simGate.Set(SimRunMode.Frozen);
-            GameLog.Info(LogChannel.Bootstrap, "Paused: Esc to resume.");
+            GameLog.Info("Paused app state (unused for clock; Esc uses SimGate).");
         }
 
         public void Exit() { }

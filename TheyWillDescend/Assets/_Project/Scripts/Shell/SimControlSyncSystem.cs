@@ -1,11 +1,11 @@
 using _Project.Scripts.Simulation.Session;
 using Unity.Entities;
+using UnityEngine;
 
 namespace _Project.Scripts.Shell
 {
     /// <summary>
-    /// Bridge: copies Shell <see cref="SimGate"/>.Current into ECS singleton <see cref="SimControl"/>.
-    /// Shell never writes EntityManager; simulation never references Shell types except this seam in Shell asm later.
+    /// Bridge: copies Shell clock policy into ECS <see cref="SimControl"/> every frame (DeltaTime changes).
     /// </summary>
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class SimControlSyncSystem : SystemBase
@@ -19,10 +19,16 @@ namespace _Project.Scripts.Shell
             if (!SystemAPI.TryGetSingletonRW<SimControl>(out var control))
                 return;
 
-            if (control.ValueRO.Mode == gate.Current)
-                return;
+            var mode = gate.EffectiveMode;
+            var speed = gate.Speed;
+            var dt = mode == SimRunMode.Running
+                ? UnityEngine.Time.deltaTime * speed
+                : 0f;
 
-            control.ValueRW.Mode = gate.Current;
+            ref var value = ref control.ValueRW;
+            value.Mode = mode;
+            value.Speed = speed;
+            value.DeltaTime = dt;
         }
     }
 }

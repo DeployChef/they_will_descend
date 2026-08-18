@@ -50,7 +50,8 @@
 | 0 | Entities, SubScene, bake, Entities Hierarchy | done |
 | 1 | `GameTime` singleton + tick + `GameLog` | done |
 | Shell | PressAnyKey → Menu → Playing → Paused + UI | заход A — собрать UI на сцене |
-| 2+ | Resources, workers, workplaces, … | planned (за SimGate) |
+| 2 | Time HUD (pause/x1/x2/x3 + часы) + slot save/load | done ([[13 Time HUD and Save]]) |
+| 3+ | Resources, workers, workplaces, … | planned |
 
 ## Зафиксированные архитектурные решения (обучение)
 
@@ -58,7 +59,7 @@
 - Симуляция: production ECS; DI не в `ISystem`
 - Shell: AppFlow + Director + SimGate; VContainer как в gmtk Root/Game — только снаружи ECS
 - Инкапсуляция: public fields на компонентах; запись — дисциплина systems/commands
-- Логи: `GameLog` / `LogChannel`, не сырой `Debug.Log` в новом коде
+- Логи: `GameLog`, не сырой `Debug.Log` в новом коде
 
 
 ---

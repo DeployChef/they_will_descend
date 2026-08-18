@@ -40,9 +40,7 @@ namespace _Project.Scripts.Shell
             var ui = ResolveShellUi();
             if (ui == null)
             {
-                GameLog.Error(
-                    LogChannel.Bootstrap,
-                    "AppFlowFactory: IShellUi not found. Add ShellUiBinder to MainMenu scene.");
+                GameLog.Error("AppFlowFactory: IShellUi not found. Add ShellUiBinder to MainMenu scene.");
                 return null;
             }
 

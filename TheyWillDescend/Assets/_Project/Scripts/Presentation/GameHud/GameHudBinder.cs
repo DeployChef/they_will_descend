@@ -1,15 +1,19 @@
 using _Project.Scripts.Infrastructure.Logging;
+using _Project.Scripts.Infrastructure.Save;
 using _Project.Scripts.Presentation.City;
 using _Project.Scripts.Shell;
 using _Project.Scripts.Simulation.City;
-using _Project.Scripts.Simulation.Session;
+using _Project.Scripts.Simulation.Time;
+using TMPro;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace _Project.Scripts.Presentation.GameHud
 {
     /// <summary>
-    /// Game-scene overlay HUD. Catalog + entry into footprint placing.
+    /// Game HUD: time tool, catalog, spawn, one-slot save/load.
+    /// Clock buttons talk only to <see cref="SimGate"/> — never Set(Running/Frozen).
     /// </summary>
     public sealed class GameHudBinder : MonoBehaviour, IGameplayEscapeHandler
     {
@@ -22,7 +26,16 @@ namespace _Project.Scripts.Presentation.GameHud
         [SerializeField] Button selectCube2x2Button;
         [SerializeField] BuildPlacementController placement;
 
+        [SerializeField] Button pauseButton;
+        [SerializeField] Button speed1Button;
+        [SerializeField] Button speed2Button;
+        [SerializeField] Button speed3Button;
+        [SerializeField] TMP_Text clockLabel;
+        [SerializeField] Button saveButton;
+        [SerializeField] Button loadButton;
+
         bool _catalogOpen;
+        EntityQuery _timeQuery;
 
         public bool IsCatalogOpen => _catalogOpen;
 
@@ -35,41 +48,43 @@ namespace _Project.Scripts.Presentation.GameHud
         {
             if (GameplayEscapeRouter.Active == this)
                 GameplayEscapeRouter.Active = null;
+            DisposeTimeQuery();
         }
 
         void Awake()
         {
-            if (spawnAgentButton != null)
-                spawnAgentButton.onClick.AddListener(OnSpawnClicked);
-
-            if (buildModeButton != null)
-                buildModeButton.onClick.AddListener(OnBuildModeClicked);
-
-            if (selectCube3x6Button != null)
-                selectCube3x6Button.onClick.AddListener(OnSelectCube3x6);
-
-            if (selectCube2x2Button != null)
-                selectCube2x2Button.onClick.AddListener(OnSelectCube2x2);
-
+            Bind(spawnAgentButton, OnSpawnClicked);
+            Bind(buildModeButton, OnBuildModeClicked);
+            Bind(selectCube3x6Button, OnSelectCube3x6);
+            Bind(selectCube2x2Button, OnSelectCube2x2);
+            Bind(pauseButton, OnPauseClicked);
+            Bind(speed1Button, () => OnSpeedClicked(1));
+            Bind(speed2Button, () => OnSpeedClicked(2));
+            Bind(speed3Button, () => OnSpeedClicked(3));
+            Bind(saveButton, OnSaveClicked);
+            Bind(loadButton, OnLoadClicked);
             SetCatalogVisible(false);
         }
 
         void OnDestroy()
         {
-            if (spawnAgentButton != null)
-                spawnAgentButton.onClick.RemoveListener(OnSpawnClicked);
-
-            if (buildModeButton != null)
-                buildModeButton.onClick.RemoveListener(OnBuildModeClicked);
-
-            if (selectCube3x6Button != null)
-                selectCube3x6Button.onClick.RemoveListener(OnSelectCube3x6);
-
-            if (selectCube2x2Button != null)
-                selectCube2x2Button.onClick.RemoveListener(OnSelectCube2x2);
+            Unbind(spawnAgentButton, OnSpawnClicked);
+            Unbind(buildModeButton, OnBuildModeClicked);
+            Unbind(selectCube3x6Button, OnSelectCube3x6);
+            Unbind(selectCube2x2Button, OnSelectCube2x2);
+            Unbind(pauseButton, OnPauseClicked);
+            Unbind(saveButton, OnSaveClicked);
+            Unbind(loadButton, OnLoadClicked);
 
             if (_catalogOpen || (placement != null && placement.IsPlacing))
                 ExitBuildUi(resumeSim: true);
+
+            DisposeTimeQuery();
+        }
+
+        void Update()
+        {
+            RefreshClockHud();
         }
 
         public bool TryHandleEscape()
@@ -89,11 +104,42 @@ namespace _Project.Scripts.Presentation.GameHud
             return false;
         }
 
+        void OnPauseClicked()
+        {
+            SimGate.Active?.TogglePlayerPause();
+        }
+
+        void OnSpeedClicked(int speed)
+        {
+            SimGate.Active?.SetSpeed(speed);
+        }
+
+        void OnSaveClicked()
+        {
+            if (_catalogOpen || (placement != null && placement.IsPlacing))
+                ExitBuildUi(resumeSim: true);
+
+            EnsurePlacement();
+            var snapshot = RunSessionSnapshot.Capture(placement);
+            RunSnapshotStore.Write(snapshot);
+        }
+
+        void OnLoadClicked()
+        {
+            if (!RunSnapshotStore.TryRead(out var snapshot))
+                return;
+
+            if (_catalogOpen || (placement != null && placement.IsPlacing))
+                ExitBuildUi(resumeSim: true);
+
+            EnsureSpawner();
+            EnsurePlacement();
+            RunSessionSnapshot.Apply(snapshot, agentSpawner, placement);
+        }
+
         void OnSpawnClicked()
         {
-            if (agentSpawner == null)
-                agentSpawner = FindFirstObjectByType<Agents.AgentSpawner>();
-
+            EnsureSpawner();
             agentSpawner?.SpawnRandom();
         }
 
@@ -118,9 +164,7 @@ namespace _Project.Scripts.Presentation.GameHud
             SetCatalogVisible(false);
             placement.BeginPlacing();
 
-            GameLog.Info(
-                LogChannel.Presentation,
-                $"Selected {label}. Click to place, Esc cancels.");
+            GameLog.Info($"Selected {label}. Click to place, Esc cancels.");
         }
 
         void OpenCatalog()
@@ -130,8 +174,8 @@ namespace _Project.Scripts.Presentation.GameHud
 
             _catalogOpen = true;
             SetCatalogVisible(true);
-            SetSimFrozen(true);
-            GameLog.Info(LogChannel.Presentation, "BuildCatalog → open (sim Frozen).");
+            SimGate.Active?.SetBuildLocked(true);
+            GameLog.Info("BuildCatalog open (build locked).");
         }
 
         void ExitBuildUi(bool resumeSim)
@@ -141,22 +185,97 @@ namespace _Project.Scripts.Presentation.GameHud
             placement?.CancelPlacing();
 
             if (resumeSim)
-                SetSimFrozen(false);
+                SimGate.Active?.SetBuildLocked(false);
         }
 
-        void SetSimFrozen(bool frozen)
+        void RefreshClockHud()
         {
             var gate = SimGate.Active;
-            if (gate == null)
+            var buildLocked = gate != null && gate.BuildLocked;
+            SetInteractable(speed1Button, !buildLocked);
+            SetInteractable(speed2Button, !buildLocked);
+            SetInteractable(speed3Button, !buildLocked);
+            SetInteractable(pauseButton, !buildLocked);
+
+            HighlightSpeed(gate != null ? gate.Speed : 1);
+            HighlightPause(gate != null && gate.PlayerPaused);
+
+            if (clockLabel == null)
+                return;
+
+            if (!TryGetGameTime(out var time))
             {
-                GameLog.Warning(LogChannel.Presentation, "Build UI: SimGate.Active is null.");
+                clockLabel.text = "Day --  --:--";
                 return;
             }
 
-            gate.Set(frozen ? SimRunMode.Frozen : SimRunMode.Running);
-            GameLog.Info(
-                LogChannel.Presentation,
-                frozen ? "Build UI → sim Frozen." : "Build UI → sim Running.");
+            clockLabel.text = GameClockFormat.Format(time);
+        }
+
+        World _timeWorld;
+
+        bool TryGetGameTime(out GameTime time)
+        {
+            time = default;
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated)
+                return false;
+
+            if (_timeQuery == default || _timeWorld != world)
+            {
+                DisposeTimeQuery();
+                _timeQuery = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
+                _timeWorld = world;
+            }
+
+            if (_timeQuery.IsEmptyIgnoreFilter)
+                return false;
+
+            time = _timeQuery.GetSingleton<GameTime>();
+            return true;
+        }
+
+        void DisposeTimeQuery()
+        {
+            if (_timeQuery == default)
+                return;
+            _timeQuery.Dispose();
+            _timeQuery = default;
+            _timeWorld = null;
+        }
+
+        void HighlightSpeed(int speed)
+        {
+            Tint(speed1Button, speed == 1);
+            Tint(speed2Button, speed == 2);
+            Tint(speed3Button, speed == 3);
+        }
+
+        void HighlightPause(bool paused)
+        {
+            Tint(pauseButton, paused);
+        }
+
+        static void Tint(Button button, bool on)
+        {
+            if (button == null)
+                return;
+            var colors = button.colors;
+            colors.normalColor = on ? new Color(0.35f, 0.7f, 1f, 1f) : Color.white;
+            colors.selectedColor = colors.normalColor;
+            button.colors = colors;
+        }
+
+        static void SetInteractable(Button button, bool value)
+        {
+            if (button != null)
+                button.interactable = value;
+        }
+
+        void EnsureSpawner()
+        {
+            if (agentSpawner == null)
+                agentSpawner = FindFirstObjectByType<Agents.AgentSpawner>();
         }
 
         void EnsurePlacement()
@@ -169,6 +288,18 @@ namespace _Project.Scripts.Presentation.GameHud
         {
             if (buildCatalogPanel != null)
                 buildCatalogPanel.SetActive(visible);
+        }
+
+        static void Bind(Button button, UnityEngine.Events.UnityAction action)
+        {
+            if (button != null)
+                button.onClick.AddListener(action);
+        }
+
+        static void Unbind(Button button, UnityEngine.Events.UnityAction action)
+        {
+            if (button != null)
+                button.onClick.RemoveListener(action);
         }
     }
 }

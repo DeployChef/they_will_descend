@@ -1,5 +1,4 @@
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
 {
@@ -26,9 +25,9 @@ namespace _Project.Scripts.Shell.States
 
         public void Enter()
         {
-            _simGate.Set(SimRunMode.Off);
+            _simGate.SetSessionInGame(false);
             _ui.HideAll();
-            GameLog.Info(LogChannel.Bootstrap, "Loading game session…");
+            GameLog.Info("Loading game session…");
             _session.Start(() => _fsm.TransitionTo(AppStateId.Playing));
         }
 

@@ -1,11 +1,9 @@
 using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Simulation.Session;
 
 namespace _Project.Scripts.Shell.States
 {
     public sealed class PlayingState : IAppState
     {
-        readonly AppStateMachine _fsm;
         readonly SimGate _simGate;
         readonly IShellIntentSource _intents;
 
@@ -13,15 +11,14 @@ namespace _Project.Scripts.Shell.States
 
         public PlayingState(AppStateMachine fsm, SimGate simGate, IShellIntentSource intents)
         {
-            _fsm = fsm;
             _simGate = simGate;
             _intents = intents;
         }
 
         public void Enter()
         {
-            _simGate.Set(SimRunMode.Running);
-            GameLog.Info(LogChannel.Bootstrap, "Playing: Esc to pause.");
+            _simGate.SetSessionInGame(true);
+            GameLog.Info("Playing: Esc pauses time (stay in Playing).");
         }
 
         public void Exit() { }
@@ -31,11 +28,11 @@ namespace _Project.Scripts.Shell.States
             if (!_intents.ConsumePauseToggle())
                 return;
 
-            // Overlays (build catalog) consume Esc before shell pause.
+            // Overlays (build catalog) consume Esc before time pause.
             if (GameplayEscapeRouter.Active != null && GameplayEscapeRouter.Active.TryHandleEscape())
                 return;
 
-            _fsm.TransitionTo(AppStateId.Paused);
+            _simGate.TogglePlayerPause();
         }
     }
 }
