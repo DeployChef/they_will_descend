@@ -3,7 +3,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Agents
 {
     /// <summary>
-    /// Skinned view only. Does not create entities or own simulation state.
+    /// Skinned view only. Pulls Moving from sim; does not own locomotion.
     /// </summary>
     public sealed class AgentView : MonoBehaviour
     {
@@ -14,14 +14,17 @@ namespace TheyWillDescend.Presentation.Agents
         public void Bind()
         {
             _animator = GetComponent<Animator>();
+            SetMoving(false);
+        }
+
+        public void SetMoving(bool moving)
+        {
+            if (_animator == null)
+                _animator = GetComponent<Animator>();
             if (_animator == null || string.IsNullOrEmpty(walkBoolParameter))
                 return;
 
-            foreach (var p in _animator.parameters)
-            {
-                if (p.type == AnimatorControllerParameterType.Bool)
-                    _animator.SetBool(p.name, p.name == walkBoolParameter);
-            }
+            _animator.SetBool(walkBoolParameter, moving);
         }
 
         public void SetAnimSpeed(float speed)

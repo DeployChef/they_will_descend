@@ -9,13 +9,11 @@ namespace TheyWillDescend.Simulation.Io
     /// </summary>
     public struct SpawnAgentCommand : IBufferElementData
     {
-        public float3 Center;
-        public float Radius;
-        public float Speed;
-        public float Direction;
-        public float AngleRadians;
         public float3 Position;
         public float3 Facing;
+        public float3 Target;
+        public float Speed;
+        public byte Moving;
         public byte HasPose;
         public AgentKind Kind;
     }

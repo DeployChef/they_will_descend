@@ -49,7 +49,8 @@ namespace TheyWillDescend.Authoring.Session
                 // then Instantiate has no pose and SetComponentData throws.
                 var agentPrototype = CreateAdditionalEntity(TransformUsageFlags.Dynamic);
                 AddComponent<Prefab>(agentPrototype);
-                AddComponent(agentPrototype, new CircleWalk());
+                AddComponent(agentPrototype, new AgentLocomotion { Speed = 2f });
+                AddComponent<AgentHousePatrol>(agentPrototype);
                 AddComponent(agentPrototype, new AgentId());
                 AddComponent(agentPrototype, new AgentType { Kind = AgentKind.Worker });
 

@@ -6,10 +6,12 @@ namespace TheyWillDescend.Infrastructure.Save
     public sealed class RunSnapshot
     {
         /// <summary>
+        /// v10: agent motor target is a world point, not a building id.
+        /// v9: agents stored target building id + moving; buildings store Id.
+        /// v8: agents store pose + walk speed.
         /// v7: buildings include built + construction elapsed/duration.
-        /// Older files load houses as already finished.
         /// </summary>
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 10;
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -31,14 +33,11 @@ namespace TheyWillDescend.Infrastructure.Save
         public float fwdX;
         public float fwdY;
         public float fwdZ;
-        // Temporary: circle is a movement behavior, not the character. Drop when pathing exists.
-        public float centerX;
-        public float centerY;
-        public float centerZ;
-        public float radius;
         public float speed;
-        public float direction;
-        public float angleRadians;
+        public float targetX;
+        public float targetY;
+        public float targetZ;
+        public byte moving;
     }
 
     [Serializable]
@@ -48,6 +47,7 @@ namespace TheyWillDescend.Infrastructure.Save
         public int depthRadialRings;
         public int anchorCluster;
         public int anchorRadial;
+        public int id;
         public byte built;
         public float constructionElapsed;
         public float constructionDuration;

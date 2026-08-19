@@ -40,7 +40,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
   ← query какие entity есть
   ← стройка: обводка + бар (pull Construction)
   ← готовый дом: обводка; меш рисует Entities Graphics
-  ← люди: LocalTransform → Mixamo Transform
+  ← люди: LocalTransform + Moving → Mixamo (walk/idle)
 ```
 
 Отказ стройки — `BuildingRejectedEvent` (тост). Спавн/день — не события.
@@ -50,7 +50,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 | Кусок | Слой |
 | --- | --- |
 | `SpawnAgentCommand`, `PlaceBuildingCommand`, `SimIo` | Simulation |
-| `LocalTransform`, `CircleWalk`, `Building`, `OccupiedCell` | Simulation |
+| `LocalTransform`, `AgentLocomotion`, `Building`, `OccupiedCell` | Simulation |
 | Session singleton (Baker `SimControlAuthoring`) | SubScene |
 | `AgentViewBoard` / `BuildingViewBoard` / `TimeWidget` | Presentation **читает** World. Системы сима вью не знают. |
 | Пауза / x1 x2 x3 | `SimGate` (Presentation/Shell) → `SimControl.DeltaTime` |

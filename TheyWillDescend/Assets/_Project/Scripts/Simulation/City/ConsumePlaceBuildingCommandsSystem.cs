@@ -89,10 +89,13 @@ namespace TheyWillDescend.Simulation.City
                 meshSize = isSmall ? catalog.House6x2MeshSize : catalog.House2x2MeshSize;
             var scale = meshSize > 0.001f ? stubWorldSize / meshSize : 1f;
 
-            grid.NextBuildingId += 1;
+            var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
+            if (grid.NextBuildingId < id)
+                grid.NextBuildingId = id;
+
             var building = new Building
             {
-                Id = grid.NextBuildingId,
+                Id = id,
                 WidthClusters = command.WidthClusters,
                 DepthRadialRings = command.DepthRadialRings,
                 AnchorCluster = command.AnchorCluster,

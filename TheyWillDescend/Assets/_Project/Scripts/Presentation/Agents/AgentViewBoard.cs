@@ -11,8 +11,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Agents
 {
     /// <summary>
-    /// Animator is not an Entities Graphics companion. Until workers drop Animator,
-    /// this board instantiates the Mixamo GO and copies LocalTransform.
+    /// Mixamo GO copies LocalTransform and Moving. Animator stays on the GO.
     /// Existence is pulled from the query — no spawn events.
     /// </summary>
     public sealed class AgentViewBoard : MonoBehaviour
@@ -39,6 +38,7 @@ namespace TheyWillDescend.Presentation.Agents
             using var query = world.EntityManager.CreateEntityQuery(
                 ComponentType.ReadOnly<AgentId>(),
                 ComponentType.ReadOnly<AgentType>(),
+                ComponentType.ReadOnly<AgentLocomotion>(),
                 ComponentType.ReadOnly<LocalTransform>());
             Sync(query);
         }
@@ -73,6 +73,7 @@ namespace TheyWillDescend.Presentation.Agents
 
             var ids = query.ToComponentDataArray<AgentId>(Allocator.Temp);
             var types = query.ToComponentDataArray<AgentType>(Allocator.Temp);
+            var motors = query.ToComponentDataArray<AgentLocomotion>(Allocator.Temp);
             var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             var animSpeed = AnimSpeed();
             _seen.Clear();
@@ -85,6 +86,7 @@ namespace TheyWillDescend.Presentation.Agents
                 if (view == null)
                     continue;
                 ApplyPose(view.transform, transforms[i]);
+                view.SetMoving(motors[i].Moving != 0);
                 view.SetAnimSpeed(animSpeed);
             }
 
@@ -103,6 +105,7 @@ namespace TheyWillDescend.Presentation.Agents
 
             ids.Dispose();
             types.Dispose();
+            motors.Dispose();
             transforms.Dispose();
         }
 

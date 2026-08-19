@@ -132,7 +132,7 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 | Деревья, земля Sample | сцена `Game.unity` | нет — это уровень, не ран |
 | `GameTime` (день, прогресс суток) | ECS singleton | **да** |
 | Пауза / скорость | `SimGate` → `SimControl` / `SimClock` | **да** |
-| Челики | ECS: `LocalTransform` + `CircleWalk` + `AgentType` | **да** |
+| Челики | ECS: `LocalTransform` + `AgentLocomotion` + `AgentType` | **да** |
 | Поставленные дома | ECS: `Building` + опционально `Construction` | **да** (якорь, built, elapsed, duration) |
 | Призрак размещения | UI-режим | **нет** — перед save отменить placing |
 | Камера | Presentation | нет в v0 (окно, не мир) |
@@ -170,18 +170,18 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь вроде `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v7
-  version: 7
+SavePayload v10
+  version: 10
   clock:  { speed, playerPaused }
   time:   { day, elapsedInDay, dayDuration }
-  agents: [{ pose (pos+fwd), circle (temporary behavior), agentType }]
-  buildings: [{ width, depth, anchor, built, constructionElapsed, constructionDuration }]
+  agents: [{ pose, speed, target (xyz), moving, agentType }]
+  buildings: [{ id, width, depth, anchor, built, constructionElapsed, constructionDuration }]
 ```
 
 `built = 0` → load создаёт **сайт** (`Building` + `Construction`), без меша, с прогресс-баром.  
 `built = 1` → сразу готовый дом. Файлы старше v7 грузятся как уже построенные.
 
-Канон агента: **`LocalTransform` = где стоит entity**. `CircleWalk` = временный рецепт круга. `AgentType` = кто это (Worker…), не слот Mixamo.
+Канон агента: **`LocalTransform` = где стоит**. `AgentLocomotion` = мотор (скорость, **точка** `Target`, `Moving`). Кто выбрал точку — другое поведение (`AgentHousePatrol` сейчас; охота/разведка потом). `Building.Id` в слоте — идентичность дома, не цель ног. `AgentType` = кто это, не слот Mixamo.
 
 `AgentId` — ключ моста на ран, не `Entity(53,1)`. После перезапуска Unity номера сущностей другие.
 
@@ -194,7 +194,7 @@ SavePayload v7
 | Задача | Инструмент | Живёт в билде? |
 | --- | --- | --- |
 | Понять в Hierarchy, кто это | `EntityManager.SetName(entity, "Walker_Maya")` — editor-debug | обычно нет |
-| Узнать тип в Inspector | компоненты (`CircleWalk`, `GameTime`) | да |
+| Узнать тип в Inspector | компоненты (`AgentLocomotion`, `GameTime`) | да |
 | Пережить save/load | **свой** стабильный id: имя префаба / `BuildingId` / guid рана | да, это поле payload |
 
 Запечённые `GameTime` / `SimControl` уже имеют имя с GameObject SubScene. Безымянные ходоки — потому что `CreateEntity()` без `SetName`. Для слота имени мало: нужен id контента на компоненте, который мы сами пишем при спавне.
@@ -204,7 +204,7 @@ SavePayload v7
 1. UI → intent `SaveSlot0` (не считает экономику).
 2. Отменить ghost-placing, если открыт.
 3. Прочитать синглтоны из ECS.
-4. Собрать агентов из query `LocalTransform` + `CircleWalk` + `AgentType`.
+4. Собрать агентов из query `LocalTransform` + `AgentLocomotion` + `AgentType`.
 5. Собрать дома из ECS: `Building`; если есть `Construction` — `built=0` и таймер стройки.
 6. Атомарно записать файл. Залог `GameLog`.
 
@@ -228,7 +228,7 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 Чтобы агенты переживали слот:
 
 - `LocalTransform` — где стоит  
-- `CircleWalk` — временное поведение круга  
+- `AgentLocomotion` — скорость; `Moving` вид читает как idle/walk  
 - `AgentType` — кто это (`Worker`…). Скин Mixamo выбирает Presentation.
 
 Дома: placement должен уметь **ClearAll** и **PlaceFromRecord**, не только клик мыши. Occupancy восстанавливается из тех же ячеек.

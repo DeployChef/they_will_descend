@@ -54,24 +54,25 @@ namespace TheyWillDescend.Simulation.Agents
             in SpawnAgentCommand command)
         {
             bridge.NextAgentId += 1;
-            var walk = new CircleWalk
-            {
-                Center = command.Center,
-                Radius = command.Radius,
-                Speed = command.Speed,
-                Direction = command.Direction,
-                AngleRadians = command.AngleRadians
-            };
-            var transform = command.HasPose != 0
-                ? LocalTransform.FromPositionRotation(
-                    command.Position,
-                    quaternion.LookRotationSafe(command.Facing, math.up()))
-                : walk.ToLocalTransform();
+            var facing = math.lengthsq(command.Facing) > 0.001f
+                ? command.Facing
+                : new float3(0f, 0f, 1f);
+            var position = command.HasPose != 0 ? command.Position : float3.zero;
+            var transform = LocalTransform.FromPositionRotation(
+                position,
+                quaternion.LookRotationSafe(facing, math.up()));
 
             var entity = em.Instantiate(prototype);
             em.SetComponentData(entity, new AgentId { Value = bridge.NextAgentId });
             em.SetComponentData(entity, new AgentType { Kind = command.Kind });
-            em.SetComponentData(entity, walk);
+            em.SetComponentData(entity, new AgentLocomotion
+            {
+                Speed = command.Speed > 0.001f ? command.Speed : 2f,
+                Target = command.Target,
+                Moving = command.Moving
+            });
+            if (!em.HasComponent<AgentHousePatrol>(entity))
+                em.AddComponent<AgentHousePatrol>(entity);
             SimEntityPose.Apply(em, entity, transform);
 #if UNITY_EDITOR
             em.SetName(entity, $"Agent_{bridge.NextAgentId}");

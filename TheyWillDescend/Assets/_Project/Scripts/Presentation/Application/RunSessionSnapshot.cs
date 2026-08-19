@@ -45,16 +45,15 @@ namespace TheyWillDescend.App
 
             using var agentQuery = em.CreateEntityQuery(
                 ComponentType.ReadOnly<LocalTransform>(),
-                ComponentType.ReadOnly<CircleWalk>(),
+                ComponentType.ReadOnly<AgentLocomotion>(),
                 ComponentType.ReadOnly<AgentType>());
             var transforms = agentQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
-            var walks = agentQuery.ToComponentDataArray<CircleWalk>(Allocator.Temp);
+            var motors = agentQuery.ToComponentDataArray<AgentLocomotion>(Allocator.Temp);
             var types = agentQuery.ToComponentDataArray<AgentType>(Allocator.Temp);
             snapshot.agents = new AgentSnapshot[transforms.Length];
             for (var i = 0; i < transforms.Length; i++)
             {
                 var transform = transforms[i];
-                var walk = walks[i];
                 var forward = math.mul(transform.Rotation, new float3(0f, 0f, 1f));
                 snapshot.agents[i] = new AgentSnapshot
                 {
@@ -65,18 +64,16 @@ namespace TheyWillDescend.App
                     fwdX = forward.x,
                     fwdY = forward.y,
                     fwdZ = forward.z,
-                    centerX = walk.Center.x,
-                    centerY = walk.Center.y,
-                    centerZ = walk.Center.z,
-                    radius = walk.Radius,
-                    speed = walk.Speed,
-                    direction = walk.Direction,
-                    angleRadians = walk.AngleRadians
+                    speed = motors[i].Speed,
+                    targetX = motors[i].Target.x,
+                    targetY = motors[i].Target.y,
+                    targetZ = motors[i].Target.z,
+                    moving = motors[i].Moving
                 };
             }
 
             transforms.Dispose();
-            walks.Dispose();
+            motors.Dispose();
             types.Dispose();
 
             using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
@@ -89,6 +86,7 @@ namespace TheyWillDescend.App
                 var building = buildings[i];
                 var record = new BuildingSnapshot
                 {
+                    id = building.Id,
                     widthClusters = building.WidthClusters,
                     depthRadialRings = building.DepthRadialRings,
                     anchorCluster = building.AnchorCluster,
@@ -131,12 +129,6 @@ namespace TheyWillDescend.App
 
             ApplyGameTime(snapshot);
 
-            if (snapshot.agents != null)
-            {
-                for (var i = 0; i < snapshot.agents.Length; i++)
-                    EnqueueAgent(snapshot.agents[i], snapshot.version);
-            }
-
             if (snapshot.buildings != null)
             {
                 for (var i = 0; i < snapshot.buildings.Length; i++)
@@ -144,6 +136,7 @@ namespace TheyWillDescend.App
                     var record = snapshot.buildings[i];
                     SimIo.TryEnqueuePlaceBuilding(new PlaceBuildingCommand
                     {
+                        BuildingId = snapshot.version >= 9 ? record.id : 0,
                         WidthClusters = record.widthClusters,
                         DepthRadialRings = record.depthRadialRings,
                         AnchorCluster = record.anchorCluster,
@@ -155,6 +148,12 @@ namespace TheyWillDescend.App
                 }
             }
 
+            if (snapshot.agents != null)
+            {
+                for (var i = 0; i < snapshot.agents.Length; i++)
+                    EnqueueAgent(snapshot.agents[i], snapshot.version);
+            }
+
             SimIo.PlaybackCommands();
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
@@ -164,21 +163,13 @@ namespace TheyWillDescend.App
         {
             if (record.built != 0)
                 return 1;
-            if (version >= RunSnapshot.CurrentVersion)
+            if (version >= 7)
                 return 0;
             return record.constructionDuration > 0.001f ? (byte)0 : (byte)1;
         }
 
         static void EnqueueAgent(AgentSnapshot record, int version)
         {
-            var walk = new CircleWalk
-            {
-                Center = new float3(record.centerX, record.centerY, record.centerZ),
-                Radius = record.radius,
-                Speed = record.speed,
-                Direction = record.direction,
-                AngleRadians = record.angleRadians
-            };
             float3 position;
             float3 facing;
             if (version >= 2)
@@ -187,17 +178,24 @@ namespace TheyWillDescend.App
                 facing = new float3(record.fwdX, record.fwdY, record.fwdZ);
             }
             else
-                walk.GetPose(out position, out facing);
+            {
+                position = float3.zero;
+                facing = new float3(0f, 0f, 1f);
+            }
+
+            var speed = version >= 8 && record.speed > 0.001f
+                ? record.speed
+                : 2f;
 
             SimIo.TryEnqueueSpawn(new SpawnAgentCommand
             {
-                Center = walk.Center,
-                Radius = walk.Radius,
-                Speed = walk.Speed,
-                Direction = walk.Direction,
-                AngleRadians = walk.AngleRadians,
                 Position = position,
                 Facing = facing,
+                Target = version >= 10
+                    ? new float3(record.targetX, record.targetY, record.targetZ)
+                    : float3.zero,
+                Speed = speed,
+                Moving = version >= 10 ? record.moving : (byte)0,
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });

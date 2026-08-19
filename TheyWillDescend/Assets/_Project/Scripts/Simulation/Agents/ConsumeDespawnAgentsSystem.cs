@@ -25,9 +25,7 @@ namespace TheyWillDescend.Simulation.Agents
             if (bridge.DespawnAllAgents == 0)
                 return;
 
-            using var agents = em.CreateEntityQuery(
-                ComponentType.ReadOnly<AgentId>(),
-                ComponentType.ReadOnly<CircleWalk>());
+            using var agents = em.CreateEntityQuery(ComponentType.ReadOnly<AgentId>());
             SimEntityDestroy.DestroyQuery(em, agents);
             bridge.DespawnAllAgents = 0;
             em.SetComponentData(session, bridge);
