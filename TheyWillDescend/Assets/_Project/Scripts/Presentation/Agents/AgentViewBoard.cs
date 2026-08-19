@@ -39,6 +39,7 @@ namespace TheyWillDescend.Presentation.Agents
                 ComponentType.ReadOnly<AgentId>(),
                 ComponentType.ReadOnly<AgentType>(),
                 ComponentType.ReadOnly<AgentLocomotion>(),
+                ComponentType.ReadOnly<AgentAssignment>(),
                 ComponentType.ReadOnly<LocalTransform>());
             Sync(query);
         }
@@ -74,6 +75,7 @@ namespace TheyWillDescend.Presentation.Agents
             var ids = query.ToComponentDataArray<AgentId>(Allocator.Temp);
             var types = query.ToComponentDataArray<AgentType>(Allocator.Temp);
             var motors = query.ToComponentDataArray<AgentLocomotion>(Allocator.Temp);
+            var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
             var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             var animSpeed = AnimSpeed();
             _seen.Clear();
@@ -84,6 +86,10 @@ namespace TheyWillDescend.Presentation.Agents
                 if (!_views.TryGetValue(id, out var view) || view == null)
                     view = CreateView(id, types[i].Kind, transforms[i]);
                 if (view == null)
+                    continue;
+                var onField = assignments[i].Arrived == 0;
+                view.SetOnField(onField);
+                if (!onField)
                     continue;
                 ApplyPose(view.transform, transforms[i]);
                 view.SetMoving(motors[i].Moving != 0);
@@ -106,6 +112,7 @@ namespace TheyWillDescend.Presentation.Agents
             ids.Dispose();
             types.Dispose();
             motors.Dispose();
+            assignments.Dispose();
             transforms.Dispose();
         }
 

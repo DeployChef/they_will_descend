@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Presentation.GameHud;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
-using TMPro;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -18,6 +16,7 @@ namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
     /// Footprint zone always. Progress bar while Construction exists.
+    /// Selection opens the HUD inspect panel — not a world-space crew widget.
     /// Finished house mesh is Entities Graphics on the Building entity — not this board.
     /// </summary>
     public sealed class BuildingViewBoard : MonoBehaviour
@@ -38,9 +37,11 @@ namespace TheyWillDescend.Presentation.City
             public MeshRenderer ZoneRenderer;
             public GameObject BarRoot;
             public Image Fill;
-            public GameObject CrewRoot;
-            public TMP_Text CrewLabel;
         }
+
+        public int SelectedBuildingId => _selectedId;
+
+        public void Deselect() => _selectedId = 0;
 
         public void Bind(
             Transform placedRoot,
@@ -168,10 +169,9 @@ namespace TheyWillDescend.Presentation.City
                             view.BarRoot.transform.position - cam.transform.position);
                 }
 
-                var selected = building.Id == _selectedId && !constructing;
+                var selected = building.Id == _selectedId;
                 if (view.ZoneRenderer != null)
                     view.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
-                RefreshCrew(view, building.Id, selected, transforms[i].Position, cam);
             }
 
             if (_views.Count != _seen.Count)
@@ -242,7 +242,6 @@ namespace TheyWillDescend.Presentation.City
 
             var view = new PlacedView { Root = root, ZoneRenderer = zoneRenderer };
             CreateProgressBar(view, root.transform);
-            CreateCrewWidget(view, root.transform, building.Id);
             _views[building.Id] = view;
             return view;
         }
@@ -275,97 +274,6 @@ namespace TheyWillDescend.Presentation.City
             view.BarRoot = bar;
             view.Fill = fill;
             bar.SetActive(false);
-        }
-
-        void CreateCrewWidget(PlacedView view, Transform parent, int buildingId)
-        {
-            var crew = new GameObject("CrewWidget");
-            crew.transform.SetParent(parent, false);
-            var canvas = crew.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = 25;
-            crew.AddComponent<GraphicRaycaster>();
-            var rect = crew.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(220f, 56f);
-            crew.transform.localScale = Vector3.one * 0.02f;
-
-            var bg = CreateBarImage(crew.transform, "Bg", new Color(0.07f, 0.08f, 0.1f, 0.92f));
-            Stretch(bg.rectTransform);
-
-            var minus = CreateCrewButton(crew.transform, "-", new Vector2(18f, 0.5f), () =>
-            {
-                SimIo.TryEnqueueUnassignWorker(buildingId);
-            });
-            var plus = CreateCrewButton(crew.transform, "+", new Vector2(202f, 0.5f), () =>
-            {
-                SimIo.TryEnqueueAssignWorker(buildingId);
-            });
-            ((RectTransform)minus.transform).anchoredPosition = new Vector2(28f, 0f);
-            ((RectTransform)plus.transform).anchoredPosition = new Vector2(-28f, 0f);
-
-            var labelGo = new GameObject("CrewLabel");
-            labelGo.transform.SetParent(crew.transform, false);
-            var label = labelGo.AddComponent<TextMeshProUGUI>();
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = 22;
-            label.color = Color.white;
-            label.text = "0/1";
-            var labelRect = label.rectTransform;
-            labelRect.anchorMin = new Vector2(0.2f, 0f);
-            labelRect.anchorMax = new Vector2(0.8f, 1f);
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-
-            view.CrewRoot = crew;
-            view.CrewLabel = label;
-            crew.SetActive(false);
-        }
-
-        static Button CreateCrewButton(Transform parent, string caption, Vector2 _, UnityEngine.Events.UnityAction click)
-        {
-            var go = new GameObject(caption == "+" ? "Plus" : "Minus");
-            go.transform.SetParent(parent, false);
-            var image = go.AddComponent<Image>();
-            image.sprite = WhiteSprite();
-            image.color = new Color(0.2f, 0.45f, 0.7f, 0.95f);
-            var button = go.AddComponent<Button>();
-            button.targetGraphic = image;
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(caption == "+" ? 1f : 0f, 0.5f);
-            rect.anchorMax = rect.anchorMin;
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(40f, 40f);
-            var textGo = new GameObject("Label");
-            textGo.transform.SetParent(go.transform, false);
-            var text = textGo.AddComponent<TextMeshProUGUI>();
-            text.text = caption;
-            text.alignment = TextAlignmentOptions.Center;
-            text.fontSize = 28;
-            text.color = Color.white;
-            Stretch(text.rectTransform);
-            HudButtons.Bind(button, click);
-            return button;
-        }
-
-        void RefreshCrew(PlacedView view, int buildingId, bool selected, float3 position, Camera cam)
-        {
-            if (view.CrewRoot == null)
-                return;
-            view.CrewRoot.SetActive(selected);
-            if (!selected)
-                return;
-
-            view.CrewRoot.transform.position = (Vector3)position + Vector3.up * 2.6f;
-            if (cam != null)
-                view.CrewRoot.transform.rotation = Quaternion.LookRotation(
-                    view.CrewRoot.transform.position - cam.transform.position);
-
-            var occupied = 0;
-            if (SimIo.TryGetWorkplace(buildingId, out var workplace, out _))
-                occupied = workplace.WorkerAgentId != 0 ? 1 : 0;
-            if (view.CrewLabel != null)
-                view.CrewLabel.text = $"{occupied}/1";
         }
 
         bool TryConsumeClick(out int buildingId)

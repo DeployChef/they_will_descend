@@ -52,18 +52,20 @@ namespace TheyWillDescend.Presentation.City
             EnsureViews();
         }
 
-        public void PumpViews() => EnsureViews().Pump();
+        public void PumpViews() => EnsureViews()?.Pump();
 
         public void RebuildViews()
         {
             var views = EnsureViews();
+            if (views == null)
+                return;
             views.ClearViews();
             views.Pump();
         }
 
         public void WipeViews()
         {
-            EnsureViews().ClearViews();
+            EnsureViews()?.ClearViews();
         }
 
         public void SetFootprint(BuildingFootprint value)
@@ -200,7 +202,10 @@ namespace TheyWillDescend.Presentation.City
 
             _views = GetComponent<BuildingViewBoard>();
             if (_views == null)
-                _views = gameObject.AddComponent<BuildingViewBoard>();
+            {
+                GameLog.Error("BuildPlacement: BuildingViewBoard must be on this object in the scene.");
+                return null;
+            }
             EnsureDeps();
             if (placedRoot == null)
                 placedRoot = new GameObject("PlacedBuildings").transform;

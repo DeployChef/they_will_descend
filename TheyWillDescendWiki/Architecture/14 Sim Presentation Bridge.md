@@ -40,7 +40,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
   ← query какие entity есть
   ← стройка: обводка + бар (pull Construction)
   ← готовый дом: обводка; меш рисует Entities Graphics
-  ← люди: LocalTransform + Moving → Mixamo (walk/idle)
+  ← люди: LocalTransform + Moving → Mixamo (walk/idle); Arrived → меш выключен (в доме)
   ← сток HUD pull ResourceStock
   ← слот дома: виджет +/− → Assign/Unassign command
 ```

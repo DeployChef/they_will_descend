@@ -19,6 +19,12 @@ namespace TheyWillDescend.Presentation.Agents
             SetMoving(false);
         }
 
+        public void SetOnField(bool onField)
+        {
+            if (gameObject.activeSelf != onField)
+                gameObject.SetActive(onField);
+        }
+
         public void SetMoving(bool moving)
         {
             if (_animator == null)
