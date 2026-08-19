@@ -1,5 +1,3 @@
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Shell.States;
 using UnityEngine;
@@ -7,7 +5,8 @@ using UnityEngine;
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Wires Shell graph. Resolves presentation ports after scenes are loaded.
+    /// Composition root helper: registers Shell states. Does not Find UI —
+    /// MainMenu binder registers <see cref="ShellUiPort"/> when that scene is loaded.
     /// </summary>
     public static class AppFlowFactory
     {
@@ -31,17 +30,8 @@ namespace TheyWillDescend.Main
             }
         }
 
-        public static Bundle? Create(MonoBehaviour coroutineHost, SceneLoader scenes = null)
+        public static Bundle Create(MonoBehaviour coroutineHost, SceneLoader scenes)
         {
-            scenes ??= new SceneLoader();
-
-            var ui = ResolveShellUi();
-            if (ui == null)
-            {
-                GameLog.Error("AppFlowFactory: IShellUi not found. Add ShellUiBinder to MainMenu scene.");
-                return null;
-            }
-
             var simGate = new SimGate();
             simGate.BindAsActive();
 
@@ -49,18 +39,12 @@ namespace TheyWillDescend.Main
             var intents = InputSystemShellIntents.CreateDefault();
             var fsm = new AppStateMachine();
 
-            fsm.Register(new PressAnyKeyState(fsm, simGate, intents, ui));
-            fsm.Register(new MainMenuState(fsm, simGate, ui));
-            fsm.Register(new LoadingGameState(fsm, simGate, session, ui));
-            fsm.Register(new PlayingState(fsm, simGate, intents));
-            fsm.Register(new PausedState(fsm, simGate, intents));
+            fsm.Register(new PressAnyKeyState(fsm, simGate, intents));
+            fsm.Register(new MainMenuState(fsm, simGate));
+            fsm.Register(new LoadingGameState(fsm, simGate, session));
+            fsm.Register(new PlayingState(simGate, intents));
 
             return new Bundle(simGate, fsm, intents, session);
-        }
-
-        static IShellUi ResolveShellUi()
-        {
-            return Object.FindFirstObjectByType<ShellUiBinder>();
         }
     }
 }

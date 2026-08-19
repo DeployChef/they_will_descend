@@ -30,7 +30,15 @@ namespace TheyWillDescend.Presentation.City
         int _builtHash;
         bool _buildModeActive;
 
-        public RadialGridConfig Config => config;
+        public RadialGridConfig Config
+        {
+            get
+            {
+                if (Application.isPlaying && SimIo.TryGetCityGrid(out var grid))
+                    return grid.Config;
+                return config;
+            }
+        }
         public Transform CenterTransform => cityCenter != null ? cityCenter : transform;
 
         /// <summary>Game-view mesh underlay only while placing.</summary>
@@ -47,11 +55,16 @@ namespace TheyWillDescend.Presentation.City
             EnsureComponents();
             if (Application.isPlaying)
             {
-                SimIo.SetCityGrid(config, (float3)CenterTransform.position);
+                PushCenter();
                 if (_buildModeActive)
                     RebuildUnderlayMesh(force: true);
             }
             ApplyPlayMeshVisibility();
+        }
+
+        void PushCenter()
+        {
+            SimIo.SetCityCenter((float3)CenterTransform.position);
         }
 
         void OnDisable()
@@ -101,7 +114,6 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             FollowCenter();
-            SimIo.SetCityGrid(config, (float3)CenterTransform.position);
             if (!_buildModeActive)
                 return;
 

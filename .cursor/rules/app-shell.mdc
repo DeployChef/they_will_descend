@@ -5,7 +5,9 @@ alwaysApply: true
 
 # App Shell
 
-Two machines: **Shell** (C# FSM) and **Simulation** (ECS).
+Two machines: **Shell** (C# FSM in the Presentation assembly) and **Simulation** (ECS).
+
+**Main** is the composition root (`Startup`, `AppFlowFactory`) — entry and registration only.
 
 ## Elegant core (prefer this over jam GameDirector)
 
@@ -13,7 +15,7 @@ Two machines: **Shell** (C# FSM) and **Simulation** (ECS).
 - `GameSession` (Start/Dispose one run)
 - `SimGate` Off | Running | Frozen
 - `SceneLoader` (narrow)
-- **Composition Root** wires them with `new` — VContainer optional later, never inside `ISystem`
+- **Composition Root in Main** wires them with `new` — VContainer optional later, never inside `ISystem`
 
 ## Do not treat as canon
 

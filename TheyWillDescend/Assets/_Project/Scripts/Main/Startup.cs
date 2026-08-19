@@ -7,7 +7,7 @@ using UnityEngine;
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root. Lives on Bootstrap. The only assembly that may see both Shell and Presentation.
+    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM, SimGate.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
@@ -30,21 +30,21 @@ namespace TheyWillDescend.Main
         IEnumerator BootRoutine()
         {
             var scenes = new SceneLoader();
-            yield return scenes.LoadMainMenuAdditive();
+            var skipMenu = skipMenuToGameTemporarily;
 
-            var bundle = AppFlowFactory.Create(this, scenes);
-            if (bundle == null)
+            if (!skipMenu)
             {
-                enabled = false;
-                yield break;
+                yield return scenes.LoadMainMenuAdditive();
+                yield return null;
             }
 
-            _fsm = bundle.Value.StateMachine;
-            _intents = bundle.Value.Intents as IDisposable;
+            var bundle = AppFlowFactory.Create(this, scenes);
+            _fsm = bundle.StateMachine;
+            _intents = bundle.Intents as IDisposable;
 
-            if (skipMenuToGameTemporarily)
+            if (skipMenu)
             {
-                GameLog.Warning("TEMPORARY: skipMenuToGame — starting at LoadingGame.");
+                GameLog.Warning("TEMPORARY: skipMenuToGame — starting at LoadingGame (MainMenu not loaded).");
                 _fsm.Start(AppStateId.LoadingGame);
             }
             else

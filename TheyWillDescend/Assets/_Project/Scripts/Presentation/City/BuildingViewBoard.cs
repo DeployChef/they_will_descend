@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
+using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -9,27 +11,24 @@ using UnityEngine.Rendering;
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// House meshes for Building entities. Simulation does not know prefabs.
+    /// Debug footprint zone only. The house mesh is Entities Graphics on the Building entity.
     /// </summary>
     public sealed class BuildingViewBoard : MonoBehaviour
     {
-        GameObject _prefabHouse6x2;
-        GameObject _prefabHouse2x2;
         Transform _placedRoot;
         RadialGridGuide _gridGuide;
         readonly Dictionary<int, GameObject> _views = new();
+        readonly HashSet<int> _seen = new();
         Material _placedZoneMaterial;
         Color _zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+        EntityQuery _query;
+        World _queryWorld;
 
         public void Bind(
-            GameObject prefabHouse6x2,
-            GameObject prefabHouse2x2,
             Transform placedRoot,
             RadialGridGuide gridGuide,
             Color zoneColor)
         {
-            _prefabHouse6x2 = prefabHouse6x2;
-            _prefabHouse2x2 = prefabHouse2x2;
             _placedRoot = placedRoot;
             _gridGuide = gridGuide;
             _zoneColor = zoneColor;
@@ -39,7 +38,8 @@ namespace TheyWillDescend.Presentation.City
 
         public void Pump()
         {
-            DrainEvents();
+            DrainRejected();
+            SyncViews();
         }
 
         public void ClearViews()
@@ -57,6 +57,7 @@ namespace TheyWillDescend.Presentation.City
 
         void OnDisable()
         {
+            DisposeQuery();
             ClearViews();
             if (_placedZoneMaterial == null)
                 return;
@@ -67,39 +68,71 @@ namespace TheyWillDescend.Presentation.City
             _placedZoneMaterial = null;
         }
 
-        void DrainEvents()
+        void DrainRejected()
         {
-            var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
+            var world = World.DefaultGameObjectInjectionWorld;
             if (world == null || !world.IsCreated)
                 return;
 
             var em = world.EntityManager;
-            using var bridgeQuery = em.CreateEntityQuery(
-                Unity.Entities.ComponentType.ReadOnly<SimBridge>());
-            if (bridgeQuery.IsEmptyIgnoreFilter)
+            using var sessionQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimBridge>());
+            if (sessionQuery.IsEmptyIgnoreFilter)
                 return;
 
-            var bridgeEntity = bridgeQuery.GetSingletonEntity();
-            var placed = em.GetBuffer<BuildingPlacedEvent>(bridgeEntity);
-            for (var i = 0; i < placed.Length; i++)
-                CreateView(placed[i]);
-            placed.Clear();
-
-            var despawned = em.GetBuffer<BuildingDespawnedEvent>(bridgeEntity);
-            for (var i = 0; i < despawned.Length; i++)
-                DestroyView(despawned[i].BuildingId);
-            despawned.Clear();
-
-            var rejected = em.GetBuffer<BuildingRejectedEvent>(bridgeEntity);
+            var rejected = em.GetBuffer<BuildingRejectedEvent>(sessionQuery.GetSingletonEntity());
             for (var i = 0; i < rejected.Length; i++)
                 GameLog.Warning($"Building rejected c={rejected[i].AnchorCluster} r={rejected[i].AnchorRadial}.");
             rejected.Clear();
         }
 
-        void CreateView(in BuildingPlacedEvent placed)
+        void SyncViews()
         {
-            if (_views.ContainsKey(placed.BuildingId))
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated)
                 return;
+
+            if (_query == default || _queryWorld != world)
+            {
+                DisposeQuery();
+                _query = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+                _queryWorld = world;
+            }
+
+            if (_query.IsEmptyIgnoreFilter)
+            {
+                if (_views.Count > 0)
+                    ClearViews();
+                return;
+            }
+
+            var buildings = _query.ToComponentDataArray<Building>(Allocator.Temp);
+            _seen.Clear();
+            for (var i = 0; i < buildings.Length; i++)
+            {
+                var building = buildings[i];
+                _seen.Add(building.Id);
+                if (!_views.ContainsKey(building.Id) || _views[building.Id] == null)
+                    CreateView(building);
+            }
+
+            if (_views.Count != _seen.Count)
+            {
+                var stale = new List<int>();
+                foreach (var pair in _views)
+                {
+                    if (!_seen.Contains(pair.Key))
+                        stale.Add(pair.Key);
+                }
+
+                for (var i = 0; i < stale.Count; i++)
+                    DestroyView(stale[i]);
+            }
+
+            buildings.Dispose();
+        }
+
+        void CreateView(in Building building)
+        {
             if (_gridGuide == null || CityCenter.Active == null)
             {
                 GameLog.Error("BuildingViewBoard: grid or CityCenter missing.");
@@ -115,21 +148,21 @@ namespace TheyWillDescend.Presentation.City
             EnsureMaterial();
             var footprint = new BuildingFootprint
             {
-                WidthClusters = placed.WidthClusters,
-                DepthRadialRings = placed.DepthRadialRings
+                WidthClusters = building.WidthClusters,
+                DepthRadialRings = building.DepthRadialRings
             };
             var clusters = new List<(int cluster, int radial)>(32);
             var config = _gridGuide.Config;
             var center = (float3)CityCenter.Active.Position;
             if (!RadialFootprintMath.TryExpandClusters(
-                    config, placed.AnchorCluster, placed.AnchorRadial, footprint, clusters))
+                    config, building.AnchorCluster, building.AnchorRadial, footprint, clusters))
             {
-                GameLog.Warning($"Building view skip id={placed.BuildingId}: expand failed.");
+                GameLog.Warning($"Building view skip id={building.Id}: expand failed.");
                 return;
             }
 
             var root = new GameObject(
-                $"Building_{placed.WidthClusters}x{placed.DepthRadialRings}_{placed.BuildingId}");
+                $"Building_{building.WidthClusters}x{building.DepthRadialRings}_{building.Id}");
             root.transform.SetParent(_placedRoot, true);
 
             var zoneGo = new GameObject("FootprintZone");
@@ -141,11 +174,7 @@ namespace TheyWillDescend.Presentation.City
             zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
             zoneRenderer.receiveShadows = false;
 
-            RadialFootprintMath.FootprintMarkerPose(
-                center, config, placed.AnchorCluster, placed.AnchorRadial, footprint,
-                out var pos, out var rot, out var targetSize);
-            SpawnVisual(root.transform, footprint, (Vector3)pos, (Quaternion)rot, targetSize);
-            _views[placed.BuildingId] = root;
+            _views[building.Id] = root;
         }
 
         void DestroyView(int buildingId)
@@ -157,47 +186,6 @@ namespace TheyWillDescend.Presentation.City
                 return;
             go.SetActive(false);
             Object.DestroyImmediate(go);
-        }
-
-        void SpawnVisual(
-            Transform parent,
-            in BuildingFootprint footprint,
-            Vector3 pos,
-            Quaternion rot,
-            float targetSize)
-        {
-            var prefab = ResolvePrefab(footprint);
-            GameObject instance;
-            if (prefab == null)
-            {
-                instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                var col = instance.GetComponent<Collider>();
-                if (col != null)
-                    Destroy(col);
-            }
-            else
-            {
-                instance = Instantiate(prefab, parent);
-                instance.name = "HouseVisual";
-                var cols = instance.GetComponentsInChildren<Collider>();
-                for (var i = 0; i < cols.Length; i++)
-                    Destroy(cols[i]);
-            }
-
-            instance.transform.SetParent(parent, true);
-            instance.transform.localScale = Vector3.one;
-            instance.transform.SetPositionAndRotation(pos, rot);
-            var size = MeasureHorizontalSize(instance);
-            if (size > 0.001f)
-                instance.transform.localScale = Vector3.one * (targetSize / size);
-            instance.transform.SetPositionAndRotation(pos, rot);
-        }
-
-        GameObject ResolvePrefab(in BuildingFootprint footprint)
-        {
-            if (footprint.WidthClusters == 2 && footprint.DepthRadialRings == 2)
-                return _prefabHouse2x2 != null ? _prefabHouse2x2 : _prefabHouse6x2;
-            return _prefabHouse6x2 != null ? _prefabHouse6x2 : _prefabHouse2x2;
         }
 
         void EnsureMaterial()
@@ -221,15 +209,13 @@ namespace TheyWillDescend.Presentation.City
             _placedZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
         }
 
-        static float MeasureHorizontalSize(GameObject go)
+        void DisposeQuery()
         {
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers == null || renderers.Length == 0)
-                return 1f;
-            var bounds = renderers[0].bounds;
-            for (var i = 1; i < renderers.Length; i++)
-                bounds.Encapsulate(renderers[i].bounds);
-            return Mathf.Max(bounds.size.x, bounds.size.z);
+            if (_query == default)
+                return;
+            _query.Dispose();
+            _query = default;
+            _queryWorld = null;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace TheyWillDescend.Simulation.City
@@ -81,6 +82,24 @@ namespace TheyWillDescend.Simulation.City
             return TryExpandClustersFromTurns(config, turns0, anchorRadial, footprint, clustersOut);
         }
 
+        public static bool TryExpandClusters(
+            in RadialGridConfig config,
+            int anchorCluster,
+            int anchorRadial,
+            in BuildingFootprint footprint,
+            NativeList<OccupiedCell> clustersOut)
+        {
+            var nAnchor = config.GetClusterCount(anchorRadial);
+            if (nAnchor <= 0 || anchorCluster < 0 || anchorCluster >= nAnchor)
+            {
+                clustersOut.Clear();
+                return false;
+            }
+
+            var turns0 = anchorCluster / (float)nAnchor;
+            return TryExpandClustersFromTurns(config, turns0, anchorRadial, footprint, clustersOut);
+        }
+
         /// <summary>
         /// Expand from continuous start angle (turns 0..1). Used when angular snap is off.
         /// </summary>
@@ -118,6 +137,46 @@ namespace TheyWillDescend.Simulation.City
                     if (c < 0)
                         c += n;
                     clustersOut.Add((c, ring));
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryExpandClustersFromTurns(
+            in RadialGridConfig config,
+            float turns0,
+            int anchorRadial,
+            in BuildingFootprint footprint,
+            NativeList<OccupiedCell> clustersOut)
+        {
+            clustersOut.Clear();
+            if (!config.IsValid || !footprint.IsValid)
+                return false;
+
+            if (anchorRadial < 0 || anchorRadial + footprint.DepthRadialRings > config.RingCount)
+                return false;
+
+            var nAnchor = config.GetClusterCount(anchorRadial);
+            if (nAnchor <= 0)
+                return false;
+
+            turns0 = Fract(turns0);
+            var spanTurns = footprint.WidthClusters / (float)nAnchor;
+
+            for (var d = 0; d < footprint.DepthRadialRings; d++)
+            {
+                var ring = anchorRadial + d;
+                var n = config.GetClusterCount(ring);
+                var start = RadialGridMath.TurnsToCluster(turns0, n);
+                var count = math.max(1, (int)math.round(spanTurns * n));
+
+                for (var w = 0; w < count; w++)
+                {
+                    var c = (start + w) % n;
+                    if (c < 0)
+                        c += n;
+                    clustersOut.Add(new OccupiedCell { Cluster = c, Radial = ring });
                 }
             }
 

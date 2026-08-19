@@ -7,26 +7,30 @@ namespace TheyWillDescend.Shell.States
         readonly AppStateMachine _fsm;
         readonly SimGate _simGate;
         readonly IShellIntentSource _intents;
-        readonly IShellUi _ui;
 
         public AppStateId Id => AppStateId.PressAnyKey;
 
         public PressAnyKeyState(
             AppStateMachine fsm,
             SimGate simGate,
-            IShellIntentSource intents,
-            IShellUi ui)
+            IShellIntentSource intents)
         {
             _fsm = fsm;
             _simGate = simGate;
             _intents = intents;
-            _ui = ui;
         }
 
         public void Enter()
         {
             _simGate.SetSessionInGame(false);
-            _ui.ShowPressAnyKey();
+            var ui = ShellUiPort.Current;
+            if (ui == null)
+            {
+                GameLog.Error("PressAnyKeyState: IShellUi not bound. ShellUiBinder must be on a loaded MainMenu.");
+                return;
+            }
+
+            ui.ShowPressAnyKey();
             GameLog.Info("Press any key to continue.");
         }
 

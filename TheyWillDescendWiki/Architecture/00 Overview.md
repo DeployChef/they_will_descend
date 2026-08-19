@@ -8,25 +8,28 @@
 | --- | --- |
 | Engine | Unity 6, URP |
 | Simulation | **DOTS / Entities** — source of truth рана |
-| Shell / App | **AppFlow FSM** + Director + **SimGate**; сцены Root → Game |
-| DI | **VContainer** только Shell/Presentation (паттерн gmtk Root/Game scopes) |
-| Presentation | UI, камера, FMOD; читает ECS / шлёт commands |
+| Shell / App | **AppFlow FSM** + **SimGate** (код в Presentation; вход — Main); сцены Root → Game |
+| DI | **VContainer** позже, только Presentation (не внутри `ISystem`) |
+| Presentation | UI, камера, FMOD, Shell; читает ECS / шлёт commands |
 | Content | Authoring + Baker, blobs, prefabs, таблицы баланса |
-| Logging | `GameLog` + каналы (`Infrastructure/Logging`) |
+| Logging | `GameLog` (`Presentation/Infrastructure/Logging`) |
+| Сборки | четыре стены — [[01 Folder Structure]] |
 
 Подробности: [[08 Production ECS]] · [[09 App Shell]].
 
 ## Слои
 
 ```
-Shell (AppFlow, Director, SimGate, menus)
-        ↓ SessionConfig + SimGate
-Presentation (UI, камера, VFX, FMOD)
+Main (Startup, регистрация)
+        ↓
+Presentation (Shell FSM, SimGate, UI, камера, FMOD)
         ↓ Intent / Commands
 Simulation ECS  ← истина рана
-        ↑ Events / projections
-Content (definitions, bake, баланс)
+        ↑ pull / reject-события
+Content (Authoring, bake, баланс)
 ```
+
+Сборки (стены компилятора) — [[01 Folder Structure]]. Shell — роль и папка, не asmdef.
 
 ## Принципы
 

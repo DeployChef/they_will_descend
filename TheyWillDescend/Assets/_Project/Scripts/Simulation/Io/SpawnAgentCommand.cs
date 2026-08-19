@@ -1,11 +1,11 @@
-using Unity.Collections;
+using TheyWillDescend.Simulation.Agents;
 using Unity.Entities;
 using Unity.Mathematics;
 
 namespace TheyWillDescend.Simulation.Io
 {
     /// <summary>
-    /// Player/load intent: create an agent. VisualId is a catalog key, not a GameObject.
+    /// Player/load intent. Kind is sim identity, not a mesh.
     /// </summary>
     public struct SpawnAgentCommand : IBufferElementData
     {
@@ -17,6 +17,6 @@ namespace TheyWillDescend.Simulation.Io
         public float3 Position;
         public float3 Facing;
         public byte HasPose;
-        public FixedString64Bytes VisualId;
+        public AgentKind Kind;
     }
 }

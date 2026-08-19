@@ -135,7 +135,7 @@ namespace TheyWillDescend.Presentation.GameHud
             EnsureSpawner();
             EnsurePlacement();
             RunSessionSnapshot.Apply(snapshot);
-            agentSpawner?.FlushAndPump();
+            agentSpawner?.PumpViews();
             placement?.PumpViews();
         }
 

@@ -2,25 +2,26 @@ using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.Agents;
-using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace TheyWillDescend.Presentation.Agents
 {
     /// <summary>
-    /// Views for agent entities. Reads events (spawn/despawn) and pulls AgentPosition.
-    /// Owns GameObjects; never writes simulation.
+    /// Animator is not an Entities Graphics companion. Until workers drop Animator,
+    /// this board instantiates the Mixamo GO and copies LocalTransform.
+    /// Existence is pulled from the query — no spawn events.
     /// </summary>
     public sealed class AgentViewBoard : MonoBehaviour
     {
         GameObject[] _prefabs;
         Transform _spawnParent;
         readonly Dictionary<int, AgentView> _views = new();
-        EntityQuery _poseQuery;
+        readonly HashSet<int> _seen = new();
+        EntityQuery _query;
         World _queryWorld;
 
         public void BindCatalog(GameObject[] prefabs, Transform spawnParent)
@@ -33,8 +34,7 @@ namespace TheyWillDescend.Presentation.Agents
 
         public void Pump()
         {
-            DrainEvents();
-            PullPoses();
+            SyncViews();
         }
 
         public void ClearViews()
@@ -57,94 +57,87 @@ namespace TheyWillDescend.Presentation.Agents
             ClearViews();
         }
 
-        void DrainEvents()
+        void SyncViews()
         {
             var world = World.DefaultGameObjectInjectionWorld;
             if (world == null || !world.IsCreated)
                 return;
 
-            var em = world.EntityManager;
-            using var bridgeQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimBridge>());
-            if (bridgeQuery.IsEmptyIgnoreFilter)
-                return;
-
-            var bridgeEntity = bridgeQuery.GetSingletonEntity();
-
-            var spawned = em.GetBuffer<AgentSpawnedEvent>(bridgeEntity);
-            for (var i = 0; i < spawned.Length; i++)
-                CreateView(spawned[i].AgentId, spawned[i].Position, spawned[i].VisualId);
-            spawned.Clear();
-
-            var despawned = em.GetBuffer<AgentDespawnedEvent>(bridgeEntity);
-            for (var i = 0; i < despawned.Length; i++)
-                DestroyView(despawned[i].AgentId);
-            despawned.Clear();
-
-            var days = em.GetBuffer<DayChangedEvent>(bridgeEntity);
-            for (var i = 0; i < days.Length; i++)
-                GameLog.Info($"Day {days[i].Day}");
-            days.Clear();
-        }
-
-        void PullPoses()
-        {
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
-                return;
-
-            if (_poseQuery == default || _queryWorld != world)
+            if (_query == default || _queryWorld != world)
             {
                 DisposeQuery();
-                _poseQuery = world.EntityManager.CreateEntityQuery(
+                _query = world.EntityManager.CreateEntityQuery(
                     ComponentType.ReadOnly<AgentId>(),
-                    ComponentType.ReadOnly<AgentPosition>());
+                    ComponentType.ReadOnly<AgentType>(),
+                    ComponentType.ReadOnly<LocalTransform>());
                 _queryWorld = world;
             }
 
-            if (_poseQuery.IsEmptyIgnoreFilter)
+            if (_query.IsEmptyIgnoreFilter)
+            {
+                if (_views.Count > 0)
+                    ClearViews();
                 return;
+            }
 
-            var ids = _poseQuery.ToComponentDataArray<AgentId>(Allocator.Temp);
-            var poses = _poseQuery.ToComponentDataArray<AgentPosition>(Allocator.Temp);
+            var ids = _query.ToComponentDataArray<AgentId>(Allocator.Temp);
+            var types = _query.ToComponentDataArray<AgentType>(Allocator.Temp);
+            var transforms = _query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             var animSpeed = AnimSpeed();
+            _seen.Clear();
             for (var i = 0; i < ids.Length; i++)
             {
-                if (!_views.TryGetValue(ids[i].Value, out var view) || view == null)
+                var id = ids[i].Value;
+                _seen.Add(id);
+                if (!_views.TryGetValue(id, out var view) || view == null)
+                    view = CreateView(id, types[i].Kind, transforms[i]);
+                if (view == null)
                     continue;
-                ApplyPose(view.transform, poses[i]);
+                ApplyPose(view.transform, transforms[i]);
                 view.SetAnimSpeed(animSpeed);
             }
 
+            if (_views.Count != _seen.Count)
+            {
+                var stale = new List<int>();
+                foreach (var pair in _views)
+                {
+                    if (!_seen.Contains(pair.Key))
+                        stale.Add(pair.Key);
+                }
+
+                for (var i = 0; i < stale.Count; i++)
+                    DestroyView(stale[i]);
+            }
+
             ids.Dispose();
-            poses.Dispose();
+            types.Dispose();
+            transforms.Dispose();
         }
 
-        void CreateView(int agentId, float3 position, FixedString64Bytes visualId)
+        AgentView CreateView(int agentId, AgentKind kind, LocalTransform transform)
         {
-            if (_views.ContainsKey(agentId))
-                return;
-
-            var prefab = ResolvePrefab(visualId);
+            var prefab = ResolvePrefab(kind, agentId);
             if (prefab == null)
             {
                 GameLog.Error("AgentViewBoard: no character prefabs.");
-                return;
+                return null;
             }
 
             var instance = Instantiate(
                 prefab,
-                new Vector3(position.x, position.y, position.z),
-                Quaternion.identity);
+                (Vector3)transform.Position,
+                (Quaternion)transform.Rotation);
             instance.name = $"{prefab.name}_{agentId}";
             if (_spawnParent != null)
                 instance.transform.SetParent(_spawnParent, true);
 
-            StripLegacySim(instance);
             var view = instance.GetComponent<AgentView>();
             if (view == null)
                 view = instance.AddComponent<AgentView>();
             view.Bind();
             _views[agentId] = view;
+            return view;
         }
 
         void DestroyView(int agentId)
@@ -159,33 +152,17 @@ namespace TheyWillDescend.Presentation.Agents
             Object.DestroyImmediate(go);
         }
 
-        GameObject ResolvePrefab(FixedString64Bytes visualId)
+        GameObject ResolvePrefab(AgentKind kind, int agentId)
         {
             if (_prefabs == null || _prefabs.Length == 0)
                 return null;
+            if (kind != AgentKind.Worker)
+                return _prefabs[0];
 
-            var key = visualId.ToString();
-            if (!string.IsNullOrEmpty(key))
-            {
-                for (var i = 0; i < _prefabs.Length; i++)
-                {
-                    var candidate = _prefabs[i];
-                    if (candidate != null && candidate.name == key)
-                        return candidate;
-                }
-
-                GameLog.Warning($"AgentViewBoard: unknown visual '{key}', picking from catalog.");
-            }
-
-            return PickPrefab();
-        }
-
-        GameObject PickPrefab()
-        {
-            if (_prefabs == null || _prefabs.Length == 0)
-                return null;
-            var prefab = _prefabs[UnityEngine.Random.Range(0, _prefabs.Length)];
-            return prefab != null ? prefab : _prefabs[0];
+            var index = agentId % _prefabs.Length;
+            if (index < 0)
+                index += _prefabs.Length;
+            return _prefabs[index] != null ? _prefabs[index] : _prefabs[0];
         }
 
         static float AnimSpeed()
@@ -196,27 +173,17 @@ namespace TheyWillDescend.Presentation.Agents
             return gate.Speed;
         }
 
-        static void ApplyPose(Transform transform, in AgentPosition position)
+        static void ApplyPose(Transform transform, in LocalTransform local)
         {
-            transform.position = new Vector3(position.Value.x, position.Value.y, position.Value.z);
-            if (math.lengthsq(position.Facing) > 0.0001f)
-                transform.rotation = Quaternion.LookRotation(
-                    new Vector3(position.Facing.x, position.Facing.y, position.Facing.z));
-        }
-
-        static void StripLegacySim(GameObject instance)
-        {
-            var legacy = instance.GetComponent("CircleWalkAgent");
-            if (legacy != null)
-                Object.DestroyImmediate(legacy);
+            transform.SetPositionAndRotation((Vector3)local.Position, (Quaternion)local.Rotation);
         }
 
         void DisposeQuery()
         {
-            if (_poseQuery == default)
+            if (_query == default)
                 return;
-            _poseQuery.Dispose();
-            _poseQuery = default;
+            _query.Dispose();
+            _query = default;
             _queryWorld = null;
         }
     }

@@ -6,7 +6,9 @@ using UnityEngine;
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// Gameplay session: load Game, then unload MainMenu (UI port gone — states must not use IShellUi after Start).
+    /// One gameplay run: load Game, unload MainMenu. Menu UI port dies with that scene —
+    /// Playing must not use <see cref="ShellUiPort"/>. After <see cref="Dispose"/>, MainMenu
+    /// is back and the binder binds a fresh port; caller should TransitionTo MainMenu.
     /// </summary>
     public sealed class GameSession
     {
@@ -47,7 +49,6 @@ namespace TheyWillDescend.Shell
                 yield break;
             }
 
-            // Drop menu after Game is up so IShellUi is not used by Playing/Paused.
             yield return _scenes.UnloadMainMenu();
             onReady?.Invoke();
         }
@@ -56,6 +57,7 @@ namespace TheyWillDescend.Shell
         {
             yield return _scenes.UnloadGame();
             yield return _scenes.LoadMainMenuAdditive();
+            yield return null;
             IsActive = false;
             onDone?.Invoke();
         }

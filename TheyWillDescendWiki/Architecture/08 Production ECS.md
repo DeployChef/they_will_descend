@@ -13,14 +13,15 @@ UI / FMOD / камера не считают экономику. Authoring и Sc
 ## Слои
 
 ```
-Presentation     UI, camera, selection, FMOD, VFX
-        ↓ Intent (assign, build, law…)
-Application      тонкий: Intent → Command (без economy math)
+Main             Startup / регистрация FSM
+Presentation     UI, camera, Shell, FMOD; Intent → Command (без economy math)
         ↓ Commands
 Simulation       ECS world — source of truth
-        ↑ Events / projections
+        ↑ pull / редкие reject-события
 Content          Authoring, Baker, blobs, prefabs, balance
 ```
+
+Сборки — [[01 Folder Structure]]. «Application» как тонкий use-case (сейв-снимок) живёт **папкой** в Presentation, не отдельной asmdef.
 
 ## Домены Simulation
 
@@ -59,7 +60,7 @@ ReceiveCommands (`CommandSystemGroup`)
 | Слой | DI |
 | --- | --- |
 | Simulation | **Нет** контейнера. Singletons, queries, ECB, SystemGroups |
-| Presentation / Infra | Опционально тонкий (UI, FMOD, save) |
+| Presentation | Опционально тонкий (UI, FMOD, save) |
 
 Антипаттерн: god-сервис `IEconomyService`, который дергают и UI, и systems.
 

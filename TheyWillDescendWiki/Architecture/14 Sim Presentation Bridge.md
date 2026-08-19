@@ -4,42 +4,41 @@
 
 Закон:
 
-> ECS хранит мир (векторы, id, правила). Presentation хранит виды (Transform, Animator, префаб).  
-> UI меняет мир **командой**. UI узнаёт о фактах **событием** или **pull** числа.
+> Поза в ECS — `LocalTransform`. Дом — испечённый entity-штамп, рисует Entities Graphics.  
+> Человек: `Instantiate(SimPrototypes.Agent)` + `AgentType`; Mixamo GO копирует позу, пока жив Animator.
 
-Не кладём в entity: `Transform`, `Animator`, `GameObject`.  
-Ключ вида (`AgentVisualId` = имя префаба в каталоге) — да: это факт рана для сейва, не ссылка на ассет.
+Не кладём в entity: `Transform`, `Animator`, `GameObject`, слот Mixamo.  
+Тип агента (`AgentType`) — да. Какой FBX — таблица Presentation (`AgentKind` → префабы, скин стабилен от `AgentId`).
 
 ## Потоки
 
 ```text
-HUD / load
-  → SimIo (SpawnAgentCommand / DespawnAll)
-  → CommandSystemGroup → AgentCommandProcessor
-  → entity: AgentId + AgentVisualId + AgentPosition + CircleWalk
-  → буфер AgentSpawnedEvent / AgentDespawnedEvent / DayChangedEvent
+кнопка
+  → SimIo.TryEnqueue… (буфер на испечённом session entity)
+  → CommandSystemGroup (тик, не Flush из UI)
+  → Instantiate(SimPrototypes.Agent / House*) + LocalTransform
 
-AgentViewBoard (LateUpdate)
-  ← drain events: Instantiate / DestroyImmediate вида
-  ← pull AgentPosition → Transform
-  ← SimGate → Animator.speed
+вид (LateUpdate)
+  ← query какие entity есть
+  ← LocalTransform → Transform (только Animator-люди и зона дома)
 
 HUD часов
-  ← pull GameTime (каждый кадр)
+  ← pull GameTime
+
+load
+  → PlaybackCommands() один раз, чтобы слот применился в этом кадре
 ```
 
-`AgentId` — ключ моста на ран, не `Entity(53,1)` и не имя меша. `AgentVisualId` — ключ каталога; `AgentViewBoard` ищет префаб, Random только если ключ пустой/неизвестный.
+Отказ стройки — `BuildingRejectedEvent` (тост). Спавн/день — не события.
 
 ## Что где
 
 | Кусок | Слой |
 | --- | --- |
-| `SpawnAgentCommand`, `SimIo`, `AgentCommandProcessor` | Simulation / тонкий край для UI |
-| `AgentSpawnedEvent`, `DayChangedEvent` | Simulation (факты за тик) |
-| `AgentPosition`, `AgentId`, `AgentVisualId`, `CircleWalk` | Simulation |
-| `AgentViewBoard`, `AgentView`, `AgentSpawner` (intent) | Presentation |
-| Пауза / x1 x2 x3 | Shell `SimGate` — не команда ECS |
-
-Стройка домов пока всё ещё Presentation (occupy). Когда occupancy уйдёт в ECS — тот же паттерн: команда `PlaceBuilding`, event `BuildingPlaced`, вид дома снаружи.
+| `SpawnAgentCommand`, `PlaceBuildingCommand`, `SimIo` | Simulation |
+| `LocalTransform`, `CircleWalk`, `Building`, `OccupiedCell` | Simulation |
+| Session singleton (Baker `SimControlAuthoring`) | SubScene |
+| `AgentViewBoard` / `BuildingViewBoard` | Presentation, pull |
+| Пауза / x1 x2 x3 | `SimGate` (Presentation/Shell) → `SimControl.DeltaTime` |
 
 Связанные: [[08 Production ECS]] · [[10 Vertical Slice — Shell + ECS Walkers]] · [[13 Time HUD and Save]]

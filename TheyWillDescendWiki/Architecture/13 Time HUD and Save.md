@@ -15,15 +15,15 @@
 **Скорость и замки паузы живут в Shell (`SimGate`), не в ECS.** ECS — тупое зеркало EffectiveMode + Speed.  
 Не «запомнить скорость и вызвать её обратно». Speed **не затирают**; тик = функция `(сессия, Speed, PlayerPaused, BuildLocked)`.
 
-Три вещи, которые сейчас смешаны в `Frozen` / `PausedState`, надо развести:
+Три вещи, которые нельзя смешивать:
 
 | Забота | Владелец | Не владелец |
 | --- | --- | --- |
 | Поток продукта (меню / сессия) | `AppStateMachine` | тулза времени |
-| Тулза времени (⏸ x1 x2 x3) | `SimGate` | ECS, `PausedState` |
+| Тулза времени (⏸ x1 x2 x3) | `SimGate` | ECS, отдельный `IAppState` |
 | Модалка стройки | HUD → `SetBuildLocked` | новый `IAppState` |
 
-`PausedState` как «Esc = Frozen» — черновик. Во Frostpunk пауза времени ≠ меню паузы. На этом срезе Esc и кнопка ⏸ — это **Player-lock на вентиле**, стейт остаётся `Playing`. Меню Save/Quit — позже отдельный оверлей, не часы.
+Во Frostpunk пауза времени ≠ меню паузы. Esc и ⏸ — **Player-lock на вентиле**, стейт остаётся `Playing`. Меню Save/Quit — позже оверлей, не часы. `PausedState` в коде нет.
 
 
 ---
@@ -132,7 +132,7 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 | Деревья, земля Sample | сцена `Game.unity` | нет — это уровень, не ран |
 | `GameTime` (день, прогресс суток) | ECS singleton | **да** |
 | Пауза / скорость | `SimGate` → `SimControl` / `SimClock` | **да** |
-| Челики | ECS: `AgentPosition` + `CircleWalk`; вид снаружи | **да: позиция + круг**; скин не в слот |
+| Челики | ECS: `LocalTransform` + `CircleWalk` + `AgentType` | **да** |
 | Поставленные дома | только Presentation (`placedRoot` + `_occupied`) | **да, как записи построек** (временно не ECS) |
 | Призрак размещения | UI-режим | **нет** — перед save отменить placing |
 | Камера | Presentation | нет в v0 (окно, не мир) |
@@ -178,7 +178,7 @@ SavePayload v3
   buildings: [{ width, depth, anchorCluster, anchorRadial }]
 ```
 
-Канон агента: **`AgentPosition` = где стоит entity**. `CircleWalk` = временный рецепт «ходи по кругу». Скин в слот не пишем — вид выбирает префаб при drain `AgentSpawnedEvent`.
+Канон агента: **`LocalTransform` = где стоит entity**. `CircleWalk` = временный рецепт круга. `AgentType` = кто это (Worker…), не слот Mixamo.
 
 `AgentId` — ключ моста на ран, не `Entity(53,1)`. После перезапуска Unity номера сущностей другие.
 
@@ -201,7 +201,7 @@ SavePayload v3
 1. UI → intent `SaveSlot0` (не считает экономику).
 2. Отменить ghost-placing, если открыт.
 3. Прочитать синглтоны из ECS.
-4. Собрать агентов из query `AgentPosition` + `CircleWalk` + `AgentVisualId` (ключ каталога → `prefabId` в JSON).
+4. Собрать агентов из query `LocalTransform` + `CircleWalk` + `AgentType`.
 5. Собрать дома из **явного списка записей**.  
    **Временно:** список живёт у placement (или тонкий `BuildingSandboxRegistry`).  
    **Канон позже:** occupancy/building entity в ECS, save читает только ECS.
@@ -214,7 +214,7 @@ SavePayload v3
 3. Снести **только динамику рана**: spawned agents (GO+entity), placed buildings, occupancy.  
    Не выгружать `Game.unity`, не трогать SubScene authoring.
 4. Записать `GameTime` + Mode/Speed в ECS и в `SimGate` (шелл и симуляция не разъедутся).
-5. Заспавнить агентов тем же пайплайном, что кнопка спавна, но с полями из файла (не Random), включая `prefabId`.
+5. Заспавнить агентов тем же пайплайном, что кнопка спавна, но с полями из файла (не Random), включая `agentType`.
 6. Поставить дома тем же пайплайном, что `PlaceBuilding`, из записей.
 7. Восстановить Mode из файла (если сохраняли Running x2 — после load снова Running x2). Либо оставить Frozen, чтобы осмотреться — выбрать одно в коде и не смешивать. **Предпочтение среза:** восстановить Mode как в файле («тот же кадр»).
 
@@ -226,9 +226,9 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 
 Чтобы агенты переживали слот:
 
-- `AgentPosition` — где стоит (это пишем в слот)  
+- `LocalTransform` — где стоит  
 - `CircleWalk` — временное поведение круга  
-- `AgentVisualId` — какой префаб из каталога (строка в JSON, не GameObject)
+- `AgentType` — кто это (`Worker`…). Скин Mixamo выбирает Presentation.
 
 Дома: placement должен уметь **ClearAll** и **PlaceFromRecord**, не только клик мыши. Occupancy восстанавливается из тех же ячеек.
 
@@ -241,10 +241,10 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 | Кусок | Слой |
 | --- | --- |
 | Кнопки паузы/скорости/save/load, текст часов | Presentation (`GameHudBinder` + разметка Canvas) |
-| `SimGate.Set(Mode/Speed)` | Shell |
-| `SimClock`, `GameTime`, sync | Simulation / существующий sync |
-| Читать/писать файл, версия payload | Infrastructure (`SaveSlot` / `RunSnapshotStore`) |
-| Сбор/применение snapshot | тонкий Application: не экономика, только map ECS+registry ↔ payload |
+| `SimGate.Set(Mode/Speed)` | Presentation / `Shell` (`SimGate`) |
+| `SimClock`, `GameTime` | Simulation |
+| Читать/писать файл, версия payload | Presentation / `Infrastructure` (`RunSnapshotStore`) |
+| Сбор/применение snapshot | Presentation / `Application` (`RunSessionSnapshot`): не экономика, только map ECS ↔ payload |
 
 Антипаттерн: `Button.onClick` → `File.WriteAllText` + `FindObjectsOfType` по всем Transform.  
 Антипаттерн: `ISystem` пишет на диск.

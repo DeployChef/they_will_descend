@@ -17,8 +17,8 @@
 ```text
 Bootstrap (вечный)
   → load MainMenu (additive)   // Press Any Key → кнопки
-  → «Начать» → unload MainMenu (или hide), load Game
-  → Playing / Paused
+  → «Начать» → load Game, unload MainMenu
+  → Playing (пауза часов = SimGate, не другой app-state)
   → выход в меню → unload Game, load MainMenu
 ```
 
@@ -31,7 +31,7 @@ Bootstrap (вечный)
 
 ## SimGate
 
-Off на меню/загрузке · Running в Playing · Frozen на паузе. Speed (x1/x2/x3) рядом с Mode.  
+Off на меню/загрузке · Running в Playing · Frozen когда PlayerPaused или BuildLocked (стейт остаётся Playing). Speed (x1/x2/x3) рядом с Mode.  
 [[09 App Shell]] · тулза и save: [[13 Time HUD and Save]].
 
 ---

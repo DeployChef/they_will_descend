@@ -8,22 +8,21 @@ using Unity.Mathematics;
 namespace TheyWillDescend.Simulation.Io
 {
     /// <summary>
-    /// Only managed entry into simulation. UI/save enqueue data; they do not write stocks or poses.
+    /// UI/save enqueue intents and pull numbers. They do not write Money, poses, or step the world.
+    /// PlaybackCommands is load-only.
     /// </summary>
     public static class SimIo
     {
+        static World _cachedWorld;
+        static Entity _session;
+
         public static void SetClock(SimRunMode mode, int speed, float unscaledDeltaTime)
         {
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return;
 
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<SimControl>());
-            if (query.IsEmptyIgnoreFilter)
-                return;
-
-            var entity = query.GetSingletonEntity();
             var dt = mode == SimRunMode.Running ? unscaledDeltaTime * speed : 0f;
-            em.SetComponentData(entity, new SimControl
+            em.SetComponentData(session, new SimControl
             {
                 Mode = mode,
                 Speed = speed,
@@ -31,17 +30,23 @@ namespace TheyWillDescend.Simulation.Io
             });
         }
 
-        public static void SetCityGrid(in RadialGridConfig config, float3 center)
+        public static void SetCityCenter(float3 center)
         {
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return;
 
-            var entity = SimBridgeAccess.GetOrCreateCityGrid(em);
-            var grid = em.GetComponentData<CityGrid>(entity);
-            grid.Config = config;
+            var grid = em.GetComponentData<CityGrid>(session);
             grid.Center = center;
-            grid.Ready = 1;
-            em.SetComponentData(entity, grid);
+            em.SetComponentData(session, grid);
+        }
+
+        public static bool TryGetCityGrid(out CityGrid grid)
+        {
+            grid = default;
+            if (!TrySession(out var em, out var session))
+                return false;
+            grid = em.GetComponentData<CityGrid>(session);
+            return grid.Ready != 0 && grid.Config.IsValid;
         }
 
         public static bool TryGetGameTime(out GameTime time)
@@ -61,15 +66,10 @@ namespace TheyWillDescend.Simulation.Io
         {
             if (clusters == null || clusters.Count == 0)
                 return false;
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return false;
 
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<OccupiedCell>());
-            if (query.IsEmptyIgnoreFilter)
-                return false;
-
-            var entity = query.GetSingletonEntity();
-            var occupied = em.GetBuffer<OccupiedCell>(entity);
+            var occupied = em.GetBuffer<OccupiedCell>(session);
             for (var i = 0; i < clusters.Count; i++)
             {
                 var cell = clusters[i];
@@ -85,49 +85,73 @@ namespace TheyWillDescend.Simulation.Io
 
         public static bool TryEnqueueSpawn(in SpawnAgentCommand command)
         {
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return false;
-            var bridge = SimBridgeAccess.GetOrCreate(em);
-            em.GetBuffer<SpawnAgentCommand>(bridge).Add(command);
+            em.GetBuffer<SpawnAgentCommand>(session).Add(command);
             return true;
         }
 
         public static bool TryEnqueuePlaceBuilding(in PlaceBuildingCommand command)
         {
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return false;
-            var bridge = SimBridgeAccess.GetOrCreate(em);
-            em.GetBuffer<PlaceBuildingCommand>(bridge).Add(command);
+            em.GetBuffer<PlaceBuildingCommand>(session).Add(command);
             return true;
         }
 
         public static bool TryRequestDespawnAllAgents()
         {
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return false;
-            var bridge = SimBridgeAccess.GetOrCreate(em);
-            var data = em.GetComponentData<SimBridge>(bridge);
+            var data = em.GetComponentData<SimBridge>(session);
             data.DespawnAllAgents = 1;
-            em.SetComponentData(bridge, data);
+            em.SetComponentData(session, data);
             return true;
         }
 
         public static bool TryRequestDespawnAllBuildings()
         {
-            if (!TryManager(out var em))
+            if (!TrySession(out var em, out var session))
                 return false;
-            var bridge = SimBridgeAccess.GetOrCreate(em);
-            var data = em.GetComponentData<SimBridge>(bridge);
+            var data = em.GetComponentData<SimBridge>(session);
             data.DespawnAllBuildings = 1;
-            em.SetComponentData(bridge, data);
+            em.SetComponentData(session, data);
             return true;
         }
 
-        public static void Flush()
+        public static void PlaybackCommands()
         {
             if (!TryManager(out var em))
                 return;
             SimCommandProcessor.Run(em);
+        }
+
+        static bool TrySession(out EntityManager em, out Entity session)
+        {
+            session = default;
+            if (!TryManager(out em))
+            {
+                _cachedWorld = null;
+                _session = default;
+                return false;
+            }
+
+            if (_cachedWorld == em.World && em.Exists(_session))
+            {
+                session = _session;
+                return true;
+            }
+
+            if (!SimBridgeAccess.TryGet(em, out session))
+            {
+                _cachedWorld = null;
+                _session = default;
+                return false;
+            }
+
+            _cachedWorld = em.World;
+            _session = session;
+            return true;
         }
 
         static bool TryManager(out EntityManager em)

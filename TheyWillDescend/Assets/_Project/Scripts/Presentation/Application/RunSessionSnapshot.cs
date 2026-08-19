@@ -7,6 +7,8 @@ using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Time;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace TheyWillDescend.App
 {
@@ -15,7 +17,7 @@ namespace TheyWillDescend.App
     /// </summary>
     public static class RunSessionSnapshot
     {
-        public const int PayloadVersion = 4;
+        public const int PayloadVersion = 6;
 
         public static RunSnapshot Capture()
         {
@@ -42,26 +44,27 @@ namespace TheyWillDescend.App
             }
 
             using var agentQuery = em.CreateEntityQuery(
-                ComponentType.ReadOnly<AgentPosition>(),
+                ComponentType.ReadOnly<LocalTransform>(),
                 ComponentType.ReadOnly<CircleWalk>(),
-                ComponentType.ReadOnly<AgentVisualId>());
-            var positions = agentQuery.ToComponentDataArray<AgentPosition>(Allocator.Temp);
+                ComponentType.ReadOnly<AgentType>());
+            var transforms = agentQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             var walks = agentQuery.ToComponentDataArray<CircleWalk>(Allocator.Temp);
-            var visuals = agentQuery.ToComponentDataArray<AgentVisualId>(Allocator.Temp);
-            snapshot.agents = new AgentSnapshot[positions.Length];
-            for (var i = 0; i < positions.Length; i++)
+            var types = agentQuery.ToComponentDataArray<AgentType>(Allocator.Temp);
+            snapshot.agents = new AgentSnapshot[transforms.Length];
+            for (var i = 0; i < transforms.Length; i++)
             {
-                var position = positions[i];
+                var transform = transforms[i];
                 var walk = walks[i];
+                var forward = math.mul(transform.Rotation, new float3(0f, 0f, 1f));
                 snapshot.agents[i] = new AgentSnapshot
                 {
-                    prefabId = visuals[i].Value.ToString(),
-                    posX = position.Value.x,
-                    posY = position.Value.y,
-                    posZ = position.Value.z,
-                    fwdX = position.Facing.x,
-                    fwdY = position.Facing.y,
-                    fwdZ = position.Facing.z,
+                    agentType = (byte)types[i].Kind,
+                    posX = transform.Position.x,
+                    posY = transform.Position.y,
+                    posZ = transform.Position.z,
+                    fwdX = forward.x,
+                    fwdY = forward.y,
+                    fwdZ = forward.z,
                     centerX = walk.Center.x,
                     centerY = walk.Center.y,
                     centerZ = walk.Center.z,
@@ -72,9 +75,9 @@ namespace TheyWillDescend.App
                 };
             }
 
-            positions.Dispose();
+            transforms.Dispose();
             walks.Dispose();
-            visuals.Dispose();
+            types.Dispose();
 
             using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
             var buildings = buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
@@ -108,7 +111,7 @@ namespace TheyWillDescend.App
 
             SimIo.TryRequestDespawnAllAgents();
             SimIo.TryRequestDespawnAllBuildings();
-            SimIo.Flush();
+            SimIo.PlaybackCommands();
 
             ApplyGameTime(snapshot);
 
@@ -133,7 +136,7 @@ namespace TheyWillDescend.App
                 }
             }
 
-            SimIo.Flush();
+            SimIo.PlaybackCommands();
             GameLog.Info(
                 $"Applied snapshot: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
         }
@@ -142,19 +145,22 @@ namespace TheyWillDescend.App
         {
             var walk = new CircleWalk
             {
-                Center = new Unity.Mathematics.float3(record.centerX, record.centerY, record.centerZ),
+                Center = new float3(record.centerX, record.centerY, record.centerZ),
                 Radius = record.radius,
                 Speed = record.speed,
                 Direction = record.direction,
                 AngleRadians = record.angleRadians
             };
-            var pose = version >= 2
-                ? new AgentPosition
-                {
-                    Value = new Unity.Mathematics.float3(record.posX, record.posY, record.posZ),
-                    Facing = new Unity.Mathematics.float3(record.fwdX, record.fwdY, record.fwdZ)
-                }
-                : walk.ToPosition();
+            float3 position;
+            float3 facing;
+            if (version >= 2)
+            {
+                position = new float3(record.posX, record.posY, record.posZ);
+                facing = new float3(record.fwdX, record.fwdY, record.fwdZ);
+            }
+            else
+                walk.GetPose(out position, out facing);
+
             SimIo.TryEnqueueSpawn(new SpawnAgentCommand
             {
                 Center = walk.Center,
@@ -162,12 +168,10 @@ namespace TheyWillDescend.App
                 Speed = walk.Speed,
                 Direction = walk.Direction,
                 AngleRadians = walk.AngleRadians,
-                Position = pose.Value,
-                Facing = pose.Facing,
+                Position = position,
+                Facing = facing,
                 HasPose = 1,
-                VisualId = string.IsNullOrEmpty(record.prefabId)
-                    ? default
-                    : new FixedString64Bytes(record.prefabId)
+                Kind = (AgentKind)record.agentType
             });
         }
 

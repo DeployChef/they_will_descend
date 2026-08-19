@@ -24,6 +24,10 @@ namespace TheyWillDescend.Presentation.ShellUi
             HideAll();
         }
 
+        void OnEnable() => ShellUiPort.Bind(this);
+
+        void OnDisable() => ShellUiPort.Unbind(this);
+
         public void ShowPressAnyKey()
         {
             SetPanel(pressAnyKeyPanel, true);
@@ -34,11 +38,6 @@ namespace TheyWillDescend.Presentation.ShellUi
         {
             SetPanel(pressAnyKeyPanel, false);
             SetPanel(mainMenuPanel, true);
-        }
-
-        public void ShowGameplayHud()
-        {
-            HideAll();
         }
 
         public void HideAll()

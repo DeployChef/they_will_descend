@@ -148,6 +148,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc2d4984b3ebc214fb9f22638be27126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Authoring.Session.SimControlAuthoring
+  cityGrid:
+    InnerRadius: 5
+    RadialStep: 1.35
+    RingCount: 40
+    InnerBandClusterCount: 66
+  house6x2: {fileID: 1640908652775104, guid: cd87e5026d1695148aabe96121c526ef, type: 3}
+  house2x2: {fileID: 1275909538635612, guid: 2767c12992d890f44b14f433fe854668, type: 3}
 --- !u!4 &568820914
 Transform:
   m_ObjectHideFlags: 0

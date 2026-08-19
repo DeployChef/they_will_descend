@@ -9,7 +9,7 @@ namespace TheyWillDescend.Shell.States
 
         public AppStateId Id => AppStateId.Playing;
 
-        public PlayingState(AppStateMachine fsm, SimGate simGate, IShellIntentSource intents)
+        public PlayingState(SimGate simGate, IShellIntentSource intents)
         {
             _simGate = simGate;
             _intents = intents;

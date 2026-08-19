@@ -5,7 +5,7 @@ namespace TheyWillDescend.Infrastructure.Save
     [Serializable]
     public sealed class RunSnapshot
     {
-        public int version = 4;
+        public int version = 6;
         public int speed = 1;
         public bool playerPaused;
         public int day;
@@ -18,7 +18,7 @@ namespace TheyWillDescend.Infrastructure.Save
     [Serializable]
     public sealed class AgentSnapshot
     {
-        public string prefabId;
+        public byte agentType;
         public float posX;
         public float posY;
         public float posZ;

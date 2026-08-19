@@ -1,17 +1,20 @@
-using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Moves agents that have <see cref="CircleWalk"/> by writing <see cref="AgentPosition"/>.
+    /// Writes LocalTransform. Entities Graphics would draw from this; Animator views copy it.
     /// </summary>
+    [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(CommandSystemGroup))]
+    [UpdateAfter(typeof(Io.CommandSystemGroup))]
     public partial struct AdvanceCircleWalkSystem : ISystem
     {
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             if (!SystemAPI.TryGetSingleton<SimControl>(out var sim))
@@ -21,11 +24,12 @@ namespace TheyWillDescend.Simulation.Agents
             if (dt <= 0f)
                 return;
 
-            foreach (var (walk, position) in SystemAPI.Query<RefRW<CircleWalk>, RefRW<AgentPosition>>())
+            foreach (var (walk, transform) in
+                     SystemAPI.Query<RefRW<CircleWalk>, RefRW<LocalTransform>>())
             {
                 ref var w = ref walk.ValueRW;
                 w.AngleRadians += w.Speed * w.Direction * dt * math.PI * 2f;
-                position.ValueRW = w.ToPosition();
+                transform.ValueRW = w.ToLocalTransform();
             }
         }
     }

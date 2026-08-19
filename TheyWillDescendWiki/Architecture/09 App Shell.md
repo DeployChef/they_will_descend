@@ -33,7 +33,8 @@
 | **Simulation** | ECS | дни, ресурсы, рабочие, законы |
 
 Shell включает/выключает симуляцию. ECS не знает меню.  
-Контейнер DI **не обязателен**. Сначала конструкторы из Composition Root.
+Контейнер DI **не обязателен**. Сначала конструкторы из Composition Root (`TheyWillDescend.Main`).  
+Сборки: [[01 Folder Structure]] — Shell-код в Presentation, вход в Main.
 
 ---
 
@@ -47,9 +48,9 @@ AppStateMachine
   владеет текущим IAppState
   только TransitionTo(stateId) — тонкий
 
-IAppState (Boot, Menu, Cutscene, Briefing, Playing, Paused, Results…)
+IAppState (PressAnyKey, MainMenu, LoadingGame, Playing; позже Cutscene / Briefing / Results / pause-menu)
   Enter / Exit / Tick(optional)
-  каждый стейт сам ставит SimGate и шлёт UI
+  меню-стейты читают ShellUiPort в Enter; не кэшируют UI с boot
 
 GameSession
   Start(SessionConfig) / Dispose
@@ -63,6 +64,10 @@ SimGate
 
 SceneLoader (узкий)
   LoadAdditive / Unload — без знания экономики
+
+ShellUiPort
+  Current биндится сценой MainMenu (OnEnable/OnDisable)
+  стейт читает порт в Enter; не держит ссылку с boot
 ```
 
 ### Почему это лучше GameDirector
@@ -82,26 +87,27 @@ SceneLoader (узкий)
 ## 3. Frostpunk → стейты
 
 ```text
-Boot → PressAnyKey → MainMenu → ScenarioSelect
-  → Cutscene → Briefing → (session.Start) → Playing ⇄ Paused
-  → Results → Menu | Restart (Dispose + Start)
+Boot → PressAnyKey → MainMenu → (позже ScenarioSelect / Cutscene / Briefing)
+  → LoadingGame (session.Start) → Playing
+  → выход в меню: session.Dispose → MainMenu
 ```
+
+Пауза **часов** — не стейт приложения. Esc / ⏸ в Playing зовут `SimGate.TogglePlayerPause()`, FSM остаётся Playing.  
+Меню паузы (Save/Quit) — позже отдельный оверлей или стейт, не путать с Frozen.
 
 | State | SimGate | Заметка |
 | --- | --- | --- |
-| Menu / Select | Off | ECS может не существовать |
-| Cutscene / Briefing | Off | Session уже можно Start (сцена/сабсцена), тиков нет |
-| Playing | Running | экономика идёт |
-| Paused | Frozen | UI паузы; не путать с Briefing |
-| Results | Off или Frozen | по дизайну |
+| PressAnyKey / MainMenu | Off | `IShellUi` жив, пока загружен MainMenu |
+| LoadingGame | Off | грузит Game, выгружает MainMenu (порт UI умирает) |
+| Playing | Running или Frozen | Frozen = PlayerPaused / BuildLocked, не другой `IAppState` |
 
 ---
 
 ## 4. SimGate ↔ ECS
 
-`SimGate` (C#) хранит **желаемый** режим.  
-`SimControlSyncSystem` (Shell, `SystemBase`) копирует его в singleton `SimControl`.  
-Симуляционные systems читают только `SimControl` — Shell **не** пишет в `EntityManager` напрямую.
+`SimGate` (C#, Presentation/Shell) хранит **желаемый** режим.  
+Composition root (`Main.Startup`) каждый кадр зовёт `SimGate.PushClock` → `SimIo.SetClock` на испечённый session entity.  
+Симуляционные systems читают только `SimControl`. Не `timeScale`.
 
 | Режим | Смысл продукта |
 | --- | --- |
@@ -114,16 +120,19 @@ Boot → PressAnyKey → MainMenu → ScenarioSelect
 ## 5. Composition Root (без DI-контейнера)
 
 ```csharp
-// псевдокод Boot
+// Main.Startup — грузит MainMenu только если не skip
+// Main.AppFlowFactory — new + Register, без Find
 var simGate = new SimGate();
-var scenes = new SceneLoader();
-var session = new GameSession(scenes, simGate);
+var session = new GameSession(scenes, coroutineHost);
 var fsm = new AppStateMachine();
-fsm.Register(new BriefingState(fsm, simGate, /* ui */));
-fsm.Register(new PlayingState(fsm, simGate));
-fsm.Register(new PausedState(fsm, simGate));
-fsm.Start(AppStateId.Briefing); // stub: сразу в упрощённый поток
+fsm.Register(new PressAnyKeyState(fsm, simGate, intents));
+fsm.Register(new MainMenuState(fsm, simGate));
+fsm.Register(new LoadingGameState(fsm, simGate, session));
+fsm.Register(new PlayingState(simGate, intents));
 ```
+
+Порт меню: `ShellUiBinder` биндит `ShellUiPort` в OnEnable. Стейты читают `Current` в `Enter`, не кэшируют с boot.  
+`skipMenuToGameTemporarily` **не** грузит MainMenu — LoadingGame не требует UI.
 
 Позже, если граф разрастётся — VContainer *может* регистрировать те же порты. Контейнер = замена ручного new, не новая архитектура.  
 gmtk scopes имеют смысл, когда много hierarchy inject; **не** когда write model в ECS.
@@ -134,11 +143,9 @@ gmtk scopes имеют смысл, когда много hierarchy inject; **н�
 
 | Сцена | Роль |
 | --- | --- |
-| Boot/Root | CompositionRoot, FSM, SimGate, Audio (позже), loading |
-| Game | камера, HUD, SubScene Simulation |
-| MainMenu | рано можно UI-панелями на Boot |
-
-Сейчас: `Bootstrap` ≈ зародыш Game; stub Shell можно повесить прямо на него.
+| Boot/Root | `Startup`, FSM, SimGate, Audio (позже). Без меню-canvas |
+| MainMenu | splash/menu + `ShellUiBinder` → `ShellUiPort` |
+| Game | мир, HUD, SubScene Simulation |
 
 ---
 
@@ -157,9 +164,9 @@ Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в
 
 ## 8. Порядок внедрения
 
-1. **Stub без DI** (сейчас): `SimGate` + `AppStateMachine` + Briefing → Playing → Paused; дни только в Playing.  
-2. `GameSession` когда появится load/unload.  
-3. Настоящее меню / сценарии.  
+1. Ядро есть: `Startup` + `GameSession` + `SimGate`, пауза часов в Playing.  
+2. Выключить `skipMenuToGameTemporarily`, когда пойдёте чинить поток меню.  
+3. Меню паузы / сценарии — позже.  
 4. VContainer — только если Composition Root станет невыносимым.
 
 ---
@@ -171,6 +178,8 @@ Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в
 - `bool paused` на всё подряд  
 - VContainer ради VContainer  
 - AppFlow размазан по кнопкам без FSM  
+- Кэшировать `IShellUi` на boot и выгрузить MainMenu  
+- Грузить MainMenu только ради Find, если skip в Game  
 
 ---
 

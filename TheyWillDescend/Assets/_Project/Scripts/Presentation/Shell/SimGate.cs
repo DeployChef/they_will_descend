@@ -102,6 +102,7 @@ namespace TheyWillDescend.Shell
 
         public void PushClock(float unscaledDeltaTime)
         {
+            // Injector of unscaled dt into SimControl. Not a second simulation.
             SimIo.SetClock(EffectiveMode, Speed, unscaledDeltaTime);
         }
     }

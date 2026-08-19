@@ -183,8 +183,6 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            SimIo.Flush();
-            EnsureViews().Pump();
             GameLog.Info($"Place command c={_anchorCluster} r={_anchorRadial}.");
         }
 
@@ -199,7 +197,7 @@ namespace TheyWillDescend.Presentation.City
             EnsureDeps();
             if (placedRoot == null)
                 placedRoot = new GameObject("PlacedBuildings").transform;
-            _views.Bind(prefabHouse6x2, prefabHouse2x2, placedRoot, gridGuide, zoneValidColor);
+            _views.Bind(placedRoot, gridGuide, zoneValidColor);
             return _views;
         }
 

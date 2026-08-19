@@ -14,9 +14,9 @@
 | **SceneLoader** | узкая загрузка сцен (не бог) |
 | **Shell Event Bus** | UI/audio/flow (позже) |
 | **Audio / FMOD** | на Root, переживает выгрузку Game |
-| **GameLog** | каналы логов (`Infrastructure/Logging`) |
+| **GameLog** | каналы логов (`Presentation/Infrastructure/Logging`) |
 
-Толстый **GameDirector** из gmtk **не канон** — см. [[09 App Shell]]. Composition Root без DI на старте.
+Composition Root без DI на старте — сборка `TheyWillDescend.Main`. Код Shell живёт в Presentation.
 
 ## Simulation (ECS)
 
@@ -35,7 +35,7 @@
 | `GameTime` | `Scripts/Simulation/Time/GameTime.cs` |
 | `AdvanceGameTimeSystem` | `Scripts/Simulation/Time/AdvanceGameTimeSystem.cs` |
 | `GameTimeAuthoring` | `Scripts/Authoring/Time/GameTimeAuthoring.cs` |
-| `GameLog` | `Scripts/Infrastructure/Logging/` |
+| `GameLog` | `Scripts/Presentation/Infrastructure/Logging/` |
 
 ## Порядок ответственности при старте рана
 
