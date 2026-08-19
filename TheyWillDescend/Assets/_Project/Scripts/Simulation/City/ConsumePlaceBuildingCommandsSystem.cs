@@ -127,6 +127,7 @@ namespace TheyWillDescend.Simulation.City
             em.AddComponentData(site, building);
             em.AddComponentData(site, construction);
             em.AddComponentData(site, transform);
+            em.AddComponentData(site, new Workplace());
 #if UNITY_EDITOR
             em.SetName(site, $"BuildingSite_{building.Id}");
 #endif
@@ -142,6 +143,9 @@ namespace TheyWillDescend.Simulation.City
             if (!em.HasComponent<Building>(entity))
                 em.AddComponent<Building>(entity);
             em.SetComponentData(entity, building);
+            if (!em.HasComponent<Workplace>(entity))
+                em.AddComponent<Workplace>(entity);
+            em.SetComponentData(entity, new Workplace());
             SimEntityPose.Apply(em, entity, transform);
 #if UNITY_EDITOR
             em.SetName(entity, $"Building_{building.Id}");

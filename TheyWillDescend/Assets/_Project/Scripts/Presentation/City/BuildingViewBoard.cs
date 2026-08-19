@@ -1,12 +1,16 @@
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.GameHud;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
+using TMPro;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 
@@ -23,13 +27,19 @@ namespace TheyWillDescend.Presentation.City
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
         Material _placedZoneMaterial;
+        Material _selectedZoneMaterial;
         Color _zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+        Color _selectedZoneColor = new(0.95f, 0.82f, 0.2f, 0.55f);
+        int _selectedId;
 
         sealed class PlacedView
         {
             public GameObject Root;
+            public MeshRenderer ZoneRenderer;
             public GameObject BarRoot;
             public Image Fill;
+            public GameObject CrewRoot;
+            public TMP_Text CrewLabel;
         }
 
         public void Bind(
@@ -40,6 +50,13 @@ namespace TheyWillDescend.Presentation.City
             _placedRoot = placedRoot;
             _gridGuide = gridGuide;
             _zoneColor = zoneColor;
+        }
+
+        void Update()
+        {
+            if (!TryConsumeClick(out var hitBuildingId))
+                return;
+            _selectedId = hitBuildingId;
         }
 
         void LateUpdate() => Pump();
@@ -55,7 +72,8 @@ namespace TheyWillDescend.Presentation.City
             DrainRejected(em, sessionQuery);
             using var query = em.CreateEntityQuery(
                 ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<LocalTransform>());
+                ComponentType.ReadOnly<LocalTransform>(),
+                ComponentType.Exclude<Headquarters>());
             Sync(em, query);
         }
 
@@ -70,18 +88,31 @@ namespace TheyWillDescend.Presentation.City
             }
 
             _views.Clear();
+            _selectedId = 0;
         }
 
         void OnDisable()
         {
             ClearViews();
-            if (_placedZoneMaterial == null)
+            if (_placedZoneMaterial == null && _selectedZoneMaterial == null)
                 return;
             if (Application.isPlaying)
-                Destroy(_placedZoneMaterial);
+            {
+                if (_placedZoneMaterial != null)
+                    Destroy(_placedZoneMaterial);
+                if (_selectedZoneMaterial != null)
+                    Destroy(_selectedZoneMaterial);
+            }
             else
-                DestroyImmediate(_placedZoneMaterial);
+            {
+                if (_placedZoneMaterial != null)
+                    DestroyImmediate(_placedZoneMaterial);
+                if (_selectedZoneMaterial != null)
+                    DestroyImmediate(_selectedZoneMaterial);
+            }
+
             _placedZoneMaterial = null;
+            _selectedZoneMaterial = null;
         }
 
         void DrainRejected(EntityManager em, EntityQuery sessionQuery)
@@ -136,6 +167,11 @@ namespace TheyWillDescend.Presentation.City
                         view.BarRoot.transform.rotation = Quaternion.LookRotation(
                             view.BarRoot.transform.position - cam.transform.position);
                 }
+
+                var selected = building.Id == _selectedId && !constructing;
+                if (view.ZoneRenderer != null)
+                    view.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
+                RefreshCrew(view, building.Id, selected, transforms[i].Position, cam);
             }
 
             if (_views.Count != _seen.Count)
@@ -158,9 +194,9 @@ namespace TheyWillDescend.Presentation.City
 
         PlacedView CreateView(in Building building)
         {
-            if (_gridGuide == null || CityCenter.Active == null)
+            if (_gridGuide == null || !SimIo.TryGetCityCenter(out var center))
             {
-                GameLog.Error("BuildingViewBoard: grid or CityCenter missing.");
+                GameLog.Error("BuildingViewBoard: grid or CityGrid.Center missing.");
                 return null;
             }
 
@@ -178,7 +214,6 @@ namespace TheyWillDescend.Presentation.City
             };
             var clusters = new List<(int cluster, int radial)>(32);
             var config = _gridGuide.Config;
-            var center = (float3)CityCenter.Active.Position;
             if (!RadialFootprintMath.TryExpandClusters(
                     config, building.AnchorCluster, building.AnchorRadial, footprint, clusters))
             {
@@ -194,13 +229,20 @@ namespace TheyWillDescend.Presentation.City
             zoneGo.transform.SetParent(root.transform, false);
             var zoneFilter = zoneGo.AddComponent<MeshFilter>();
             var zoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            zoneFilter.sharedMesh = RadialSectorMeshBuilder.BuildClusterZoneMesh(center, config, clusters);
+            var zoneMesh = RadialSectorMeshBuilder.BuildClusterZoneMesh(center, config, clusters);
+            zoneFilter.sharedMesh = zoneMesh;
             zoneRenderer.sharedMaterial = _placedZoneMaterial;
             zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
             zoneRenderer.receiveShadows = false;
+            var collider = zoneGo.AddComponent<MeshCollider>();
+            collider.sharedMesh = zoneMesh;
 
-            var view = new PlacedView { Root = root };
+            var tag = root.AddComponent<BuildingIdTag>();
+            tag.Id = building.Id;
+
+            var view = new PlacedView { Root = root, ZoneRenderer = zoneRenderer };
             CreateProgressBar(view, root.transform);
+            CreateCrewWidget(view, root.transform, building.Id);
             _views[building.Id] = view;
             return view;
         }
@@ -233,6 +275,120 @@ namespace TheyWillDescend.Presentation.City
             view.BarRoot = bar;
             view.Fill = fill;
             bar.SetActive(false);
+        }
+
+        void CreateCrewWidget(PlacedView view, Transform parent, int buildingId)
+        {
+            var crew = new GameObject("CrewWidget");
+            crew.transform.SetParent(parent, false);
+            var canvas = crew.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 25;
+            crew.AddComponent<GraphicRaycaster>();
+            var rect = crew.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(220f, 56f);
+            crew.transform.localScale = Vector3.one * 0.02f;
+
+            var bg = CreateBarImage(crew.transform, "Bg", new Color(0.07f, 0.08f, 0.1f, 0.92f));
+            Stretch(bg.rectTransform);
+
+            var minus = CreateCrewButton(crew.transform, "-", new Vector2(18f, 0.5f), () =>
+            {
+                SimIo.TryEnqueueUnassignWorker(buildingId);
+            });
+            var plus = CreateCrewButton(crew.transform, "+", new Vector2(202f, 0.5f), () =>
+            {
+                SimIo.TryEnqueueAssignWorker(buildingId);
+            });
+            ((RectTransform)minus.transform).anchoredPosition = new Vector2(28f, 0f);
+            ((RectTransform)plus.transform).anchoredPosition = new Vector2(-28f, 0f);
+
+            var labelGo = new GameObject("CrewLabel");
+            labelGo.transform.SetParent(crew.transform, false);
+            var label = labelGo.AddComponent<TextMeshProUGUI>();
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 22;
+            label.color = Color.white;
+            label.text = "0/1";
+            var labelRect = label.rectTransform;
+            labelRect.anchorMin = new Vector2(0.2f, 0f);
+            labelRect.anchorMax = new Vector2(0.8f, 1f);
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            view.CrewRoot = crew;
+            view.CrewLabel = label;
+            crew.SetActive(false);
+        }
+
+        static Button CreateCrewButton(Transform parent, string caption, Vector2 _, UnityEngine.Events.UnityAction click)
+        {
+            var go = new GameObject(caption == "+" ? "Plus" : "Minus");
+            go.transform.SetParent(parent, false);
+            var image = go.AddComponent<Image>();
+            image.sprite = WhiteSprite();
+            image.color = new Color(0.2f, 0.45f, 0.7f, 0.95f);
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(caption == "+" ? 1f : 0f, 0.5f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(40f, 40f);
+            var textGo = new GameObject("Label");
+            textGo.transform.SetParent(go.transform, false);
+            var text = textGo.AddComponent<TextMeshProUGUI>();
+            text.text = caption;
+            text.alignment = TextAlignmentOptions.Center;
+            text.fontSize = 28;
+            text.color = Color.white;
+            Stretch(text.rectTransform);
+            HudButtons.Bind(button, click);
+            return button;
+        }
+
+        void RefreshCrew(PlacedView view, int buildingId, bool selected, float3 position, Camera cam)
+        {
+            if (view.CrewRoot == null)
+                return;
+            view.CrewRoot.SetActive(selected);
+            if (!selected)
+                return;
+
+            view.CrewRoot.transform.position = (Vector3)position + Vector3.up * 2.6f;
+            if (cam != null)
+                view.CrewRoot.transform.rotation = Quaternion.LookRotation(
+                    view.CrewRoot.transform.position - cam.transform.position);
+
+            var occupied = 0;
+            if (SimIo.TryGetWorkplace(buildingId, out var workplace, out _))
+                occupied = workplace.WorkerAgentId != 0 ? 1 : 0;
+            if (view.CrewLabel != null)
+                view.CrewLabel.text = $"{occupied}/1";
+        }
+
+        bool TryConsumeClick(out int buildingId)
+        {
+            buildingId = 0;
+            if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame)
+                return false;
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+                return false;
+            var placement = FindFirstObjectByType<BuildPlacementController>();
+            if (placement != null && placement.IsPlacing)
+                return false;
+
+            var cam = Camera.main;
+            if (cam == null)
+                return false;
+            var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
+            if (!Physics.Raycast(ray, out var hit, 500f))
+                return true;
+
+            var tag = hit.collider.GetComponentInParent<BuildingIdTag>();
+            buildingId = tag != null ? tag.Id : 0;
+            return true;
         }
 
         static Sprite _whiteSprite;
@@ -272,6 +428,8 @@ namespace TheyWillDescend.Presentation.City
 
         void DestroyView(int buildingId)
         {
+            if (buildingId == _selectedId)
+                _selectedId = 0;
             if (!_views.TryGetValue(buildingId, out var view))
                 return;
             _views.Remove(buildingId);
@@ -283,23 +441,35 @@ namespace TheyWillDescend.Presentation.City
 
         void EnsureMaterial()
         {
-            if (_placedZoneMaterial != null)
-                return;
+            if (_placedZoneMaterial == null)
+            {
+                _placedZoneMaterial = CreateZoneMaterial("FootprintZone_Placed", _zoneColor);
+            }
+
+            if (_selectedZoneMaterial == null)
+            {
+                _selectedZoneMaterial = CreateZoneMaterial("FootprintZone_Selected", _selectedZoneColor);
+            }
+        }
+
+        static Material CreateZoneMaterial(string name, Color color)
+        {
             var shader =
                 Shader.Find("Universal Render Pipeline/Unlit")
                 ?? Shader.Find("Unlit/Color")
                 ?? Shader.Find("Sprites/Default");
-            _placedZoneMaterial = new Material(shader)
+            var mat = new Material(shader)
             {
-                name = "FootprintZone_Placed",
+                name = name,
                 hideFlags = HideFlags.HideAndDontSave
             };
-            if (_placedZoneMaterial.HasProperty("_BaseColor"))
-                _placedZoneMaterial.SetColor("_BaseColor", _zoneColor);
-            if (_placedZoneMaterial.HasProperty("_Color"))
-                _placedZoneMaterial.SetColor("_Color", _zoneColor);
-            _placedZoneMaterial.color = _zoneColor;
-            _placedZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
+            if (mat.HasProperty("_BaseColor"))
+                mat.SetColor("_BaseColor", color);
+            if (mat.HasProperty("_Color"))
+                mat.SetColor("_Color", color);
+            mat.color = color;
+            mat.renderQueue = (int)RenderQueue.Transparent + 60;
+            return mat;
         }
     }
 }

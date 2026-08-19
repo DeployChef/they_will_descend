@@ -3,6 +3,7 @@ using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Time;
 using Unity.Collections;
@@ -43,13 +44,27 @@ namespace TheyWillDescend.App
                 snapshot.dayDuration = time.DayDuration;
             }
 
+            if (SimIo.TryGetStock(out var stock))
+            {
+                snapshot.resource1 = stock.Resource1;
+                snapshot.resource2 = stock.Resource2;
+                snapshot.resource3 = stock.Resource3;
+                snapshot.resource4 = stock.Resource4;
+            }
+
             using var agentQuery = em.CreateEntityQuery(
                 ComponentType.ReadOnly<LocalTransform>(),
                 ComponentType.ReadOnly<AgentLocomotion>(),
-                ComponentType.ReadOnly<AgentType>());
+                ComponentType.ReadOnly<AgentType>(),
+                ComponentType.ReadOnly<AgentId>(),
+                ComponentType.ReadOnly<AgentAssignment>(),
+                ComponentType.ReadOnly<AgentPlazaIdle>());
             var transforms = agentQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             var motors = agentQuery.ToComponentDataArray<AgentLocomotion>(Allocator.Temp);
             var types = agentQuery.ToComponentDataArray<AgentType>(Allocator.Temp);
+            var ids = agentQuery.ToComponentDataArray<AgentId>(Allocator.Temp);
+            var assignments = agentQuery.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            var plazas = agentQuery.ToComponentDataArray<AgentPlazaIdle>(Allocator.Temp);
             snapshot.agents = new AgentSnapshot[transforms.Length];
             for (var i = 0; i < transforms.Length; i++)
             {
@@ -58,6 +73,7 @@ namespace TheyWillDescend.App
                 snapshot.agents[i] = new AgentSnapshot
                 {
                     agentType = (byte)types[i].Kind,
+                    agentId = ids[i].Value,
                     posX = transform.Position.x,
                     posY = transform.Position.y,
                     posZ = transform.Position.z,
@@ -68,15 +84,26 @@ namespace TheyWillDescend.App
                     targetX = motors[i].Target.x,
                     targetY = motors[i].Target.y,
                     targetZ = motors[i].Target.z,
-                    moving = motors[i].Moving
+                    moving = motors[i].Moving,
+                    workplaceBuildingId = assignments[i].WorkplaceBuildingId,
+                    arrived = assignments[i].Arrived,
+                    plazaWalking = plazas[i].Walking,
+                    plazaTimer = plazas[i].Timer,
+                    plazaAngle = plazas[i].Angle,
+                    plazaRadius = plazas[i].Radius
                 };
             }
 
             transforms.Dispose();
             motors.Dispose();
             types.Dispose();
+            ids.Dispose();
+            assignments.Dispose();
+            plazas.Dispose();
 
-            using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            using var buildingQuery = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.Exclude<Headquarters>());
             var buildingEntities = buildingQuery.ToEntityArray(Allocator.Temp);
             var buildings = buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
             snapshot.buildings = new BuildingSnapshot[buildings.Length];
@@ -93,6 +120,8 @@ namespace TheyWillDescend.App
                     anchorRadial = building.AnchorRadial,
                     built = 1
                 };
+                if (em.HasComponent<Workplace>(buildingEntities[i]))
+                    record.workerAgentId = em.GetComponentData<Workplace>(buildingEntities[i]).WorkerAgentId;
                 if (em.HasComponent<Construction>(buildingEntities[i]))
                 {
                     var construction = em.GetComponentData<Construction>(buildingEntities[i]);
@@ -128,6 +157,16 @@ namespace TheyWillDescend.App
             SimIo.PlaybackCommands();
 
             ApplyGameTime(snapshot);
+            if (snapshot.version >= 11)
+            {
+                SimIo.SetStock(new ResourceStock
+                {
+                    Resource1 = snapshot.resource1,
+                    Resource2 = snapshot.resource2,
+                    Resource3 = snapshot.resource3,
+                    Resource4 = snapshot.resource4
+                });
+            }
 
             if (snapshot.buildings != null)
             {
@@ -155,6 +194,19 @@ namespace TheyWillDescend.App
             }
 
             SimIo.PlaybackCommands();
+
+            if (snapshot.version >= 11 && snapshot.buildings != null)
+            {
+                for (var i = 0; i < snapshot.buildings.Length; i++)
+                {
+                    var record = snapshot.buildings[i];
+                    if (record.workerAgentId <= 0)
+                        continue;
+                    SimIo.TryEnqueueAssignWorker(record.id, record.workerAgentId);
+                }
+
+                SimIo.PlaybackCommands();
+            }
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
         }
@@ -195,7 +247,14 @@ namespace TheyWillDescend.App
                     ? new float3(record.targetX, record.targetY, record.targetZ)
                     : float3.zero,
                 Speed = speed,
+                AgentId = version >= 11 ? record.agentId : 0,
+                WorkplaceBuildingId = version >= 11 ? record.workplaceBuildingId : 0,
+                Arrived = version >= 11 ? record.arrived : (byte)0,
                 Moving = version >= 10 ? record.moving : (byte)0,
+                PlazaWalking = version >= 11 ? record.plazaWalking : (byte)0,
+                PlazaTimer = version >= 11 ? record.plazaTimer : 0f,
+                PlazaAngle = version >= 11 ? record.plazaAngle : 0f,
+                PlazaRadius = version >= 11 ? record.plazaRadius : 0f,
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });

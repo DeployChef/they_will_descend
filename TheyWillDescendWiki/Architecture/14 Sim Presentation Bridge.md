@@ -41,6 +41,8 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
   ← стройка: обводка + бар (pull Construction)
   ← готовый дом: обводка; меш рисует Entities Graphics
   ← люди: LocalTransform + Moving → Mixamo (walk/idle)
+  ← сток HUD pull ResourceStock
+  ← слот дома: виджет +/− → Assign/Unassign command
 ```
 
 Отказ стройки — `BuildingRejectedEvent` (тост). Спавн/день — не события.
@@ -49,9 +51,11 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 | Кусок | Слой |
 | --- | --- |
-| `SpawnAgentCommand`, `PlaceBuildingCommand`, `SimIo` | Simulation |
-| `LocalTransform`, `AgentLocomotion`, `Building`, `OccupiedCell` | Simulation |
+| `SpawnAgentCommand`, `PlaceBuildingCommand`, `AssignWorkerCommand`, `SimIo` | Simulation |
+| `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceStock` | Simulation |
 | Session singleton (Baker `SimControlAuthoring`) | SubScene |
+| `ResourceStock` (Baker `ResourceStockAuthoring`) | SubScene |
+| Плаза HQ (`Building` + `Headquarters`) | SubScene bake; `CityGrid.Center` с HQ; не `PlaceBuilding` |
 | `AgentViewBoard` / `BuildingViewBoard` / `TimeWidget` | Presentation **читает** World. Системы сима вью не знают. |
 | Пауза / x1 x2 x3 | `SimGate` (Presentation/Shell) → `SimControl.DeltaTime` |
 

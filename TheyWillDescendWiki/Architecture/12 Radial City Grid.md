@@ -63,7 +63,7 @@
 | --- | --- |
 | House 6×2 | `rpgpp_lt_building_01` |
 | House 2×2 | `rpgpp_lt_building_02` |
-| Центр (плаза) | `rpgpp_lt_building_03` + `CityCenter` |
+| Центр (плаза) | `rpgpp_lt_building_03` в Simulation SubScene + `HeadquarterAuthoring`. Центр города = `CityGrid.Center` (bake с HQ). |
 
 Scale: uniform по горизонтальному bounds → короткая сторона pad. Куб остаётся только fallback, если слот prefab пустой.
 
@@ -108,13 +108,13 @@ build plane → snap (cluster, ring)
 → zone mesh по секциям + prefab дома (не на всю зону)
 ```
 
-Центр временно = `rpgpp_lt_building_03` (`CityCenter`).
+Центр = `Headquarters.LocalTransform` → `CityGrid.Center` на bake. Сетка/стройка **читают** World, не пушат Transform.
 
 ## 5. Слои
 
 | Слой | Роль |
 | --- | --- |
-| Presentation | CityCenter, underlay, ghost zone + building prefab |
+| Presentation | underlay, ghost zone + building prefab; центр pull `CityGrid.Center` |
 | Simulation | config / occupancy (позже) |
 | Shell | build catalog, Esc, SimGate.Frozen |
 

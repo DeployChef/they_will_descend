@@ -13,8 +13,15 @@ namespace TheyWillDescend.Simulation.Io
         public float3 Facing;
         public float3 Target;
         public float Speed;
+        public int AgentId;
+        public int WorkplaceBuildingId;
+        public byte Arrived;
         public byte Moving;
         public byte HasPose;
+        public byte PlazaWalking;
+        public float PlazaTimer;
+        public float PlazaAngle;
+        public float PlazaRadius;
         public AgentKind Kind;
     }
 }

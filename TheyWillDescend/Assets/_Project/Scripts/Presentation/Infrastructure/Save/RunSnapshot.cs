@@ -6,12 +6,9 @@ namespace TheyWillDescend.Infrastructure.Save
     public sealed class RunSnapshot
     {
         /// <summary>
-        /// v10: agent motor target is a world point, not a building id.
-        /// v9: agents stored target building id + moving; buildings store Id.
-        /// v8: agents store pose + walk speed.
-        /// v7: buildings include built + construction elapsed/duration.
+        /// v11: stocks, assignment, plaza idle, workplace slot, agent id.
         /// </summary>
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -19,6 +16,10 @@ namespace TheyWillDescend.Infrastructure.Save
         public int day;
         public float elapsedInDay;
         public float dayDuration = 5f;
+        public float resource1;
+        public float resource2;
+        public float resource3;
+        public float resource4;
         public AgentSnapshot[] agents = Array.Empty<AgentSnapshot>();
         public BuildingSnapshot[] buildings = Array.Empty<BuildingSnapshot>();
     }
@@ -27,6 +28,7 @@ namespace TheyWillDescend.Infrastructure.Save
     public sealed class AgentSnapshot
     {
         public byte agentType;
+        public int agentId;
         public float posX;
         public float posY;
         public float posZ;
@@ -38,6 +40,12 @@ namespace TheyWillDescend.Infrastructure.Save
         public float targetY;
         public float targetZ;
         public byte moving;
+        public int workplaceBuildingId;
+        public byte arrived;
+        public byte plazaWalking;
+        public float plazaTimer;
+        public float plazaAngle;
+        public float plazaRadius;
     }
 
     [Serializable]
@@ -51,5 +59,6 @@ namespace TheyWillDescend.Infrastructure.Save
         public byte built;
         public float constructionElapsed;
         public float constructionDuration;
+        public int workerAgentId;
     }
 }

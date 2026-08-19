@@ -28,6 +28,7 @@ namespace TheyWillDescend.Simulation.Agents
             using var agents = em.CreateEntityQuery(ComponentType.ReadOnly<AgentId>());
             SimEntityDestroy.DestroyQuery(em, agents);
             bridge.DespawnAllAgents = 0;
+            bridge.NextAgentId = 0;
             em.SetComponentData(session, bridge);
         }
     }

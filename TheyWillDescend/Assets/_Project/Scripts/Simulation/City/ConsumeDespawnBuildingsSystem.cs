@@ -28,11 +28,13 @@ namespace TheyWillDescend.Simulation.City
             if (bridge.DespawnAllBuildings == 0)
                 return;
 
-            using var buildings = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            using var buildings = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.Exclude<Headquarters>());
             SimEntityDestroy.DestroyQuery(em, buildings);
             em.GetBuffer<OccupiedCell>(session).Clear();
             var grid = em.GetComponentData<CityGrid>(session);
-            grid.NextBuildingId = 0;
+            grid.NextBuildingId = 1;
             em.SetComponentData(session, grid);
             bridge.DespawnAllBuildings = 0;
             em.SetComponentData(session, bridge);

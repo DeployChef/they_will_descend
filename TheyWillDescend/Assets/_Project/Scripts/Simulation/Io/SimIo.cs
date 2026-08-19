@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -30,16 +33,6 @@ namespace TheyWillDescend.Simulation.Io
             });
         }
 
-        public static void SetCityCenter(float3 center)
-        {
-            if (!TrySession(out var em, out var session))
-                return;
-
-            var grid = em.GetComponentData<CityGrid>(session);
-            grid.Center = center;
-            em.SetComponentData(session, grid);
-        }
-
         public static bool TryGetCityGrid(out CityGrid grid)
         {
             grid = default;
@@ -47,6 +40,18 @@ namespace TheyWillDescend.Simulation.Io
                 return false;
             grid = em.GetComponentData<CityGrid>(session);
             return grid.Ready != 0 && grid.Config.IsValid;
+        }
+
+        public static bool TryGetCityCenter(out float3 center)
+        {
+            if (!TryGetCityGrid(out var grid))
+            {
+                center = default;
+                return false;
+            }
+
+            center = grid.Center;
+            return true;
         }
 
         public static bool TryGetGameTime(out GameTime time)
@@ -81,6 +86,91 @@ namespace TheyWillDescend.Simulation.Io
             }
 
             return false;
+        }
+
+        public static bool TryGetStock(out ResourceStock stock)
+        {
+            stock = default;
+            if (!TryManager(out var em))
+                return false;
+
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<ResourceStock>());
+            if (query.IsEmptyIgnoreFilter)
+                return false;
+            stock = query.GetSingleton<ResourceStock>();
+            return true;
+        }
+
+        public static void SetStock(in ResourceStock stock)
+        {
+            if (!TryManager(out var em))
+                return;
+
+            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<ResourceStock>());
+            if (query.IsEmptyIgnoreFilter)
+                return;
+            em.SetComponentData(query.GetSingletonEntity(), stock);
+        }
+
+        public static bool TryGetWorkplace(int buildingId, out Workplace workplace, out bool constructing)
+        {
+            workplace = default;
+            constructing = false;
+            if (buildingId <= 0 || !TryManager(out var em))
+                return false;
+
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            using var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
+            for (var i = 0; i < buildings.Length; i++)
+            {
+                if (buildings[i].Id != buildingId)
+                    continue;
+                constructing = em.HasComponent<Construction>(entities[i]);
+                if (em.HasComponent<Workplace>(entities[i]))
+                    workplace = em.GetComponentData<Workplace>(entities[i]);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static int CountIdleWorkers()
+        {
+            if (!TryManager(out var em))
+                return 0;
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<AgentId>(),
+                ComponentType.ReadOnly<AgentAssignment>());
+            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            var idle = 0;
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                if (assignments[i].WorkplaceBuildingId == 0)
+                    idle++;
+            }
+
+            return idle;
+        }
+
+        public static bool TryEnqueueAssignWorker(int buildingId, int agentId = 0)
+        {
+            if (buildingId <= 0 || !TrySession(out var em, out var session))
+                return false;
+            em.GetBuffer<AssignWorkerCommand>(session).Add(new AssignWorkerCommand
+            {
+                BuildingId = buildingId,
+                AgentId = agentId
+            });
+            return true;
+        }
+
+        public static bool TryEnqueueUnassignWorker(int buildingId)
+        {
+            if (buildingId <= 0 || !TrySession(out var em, out var session))
+                return false;
+            em.GetBuffer<UnassignWorkerCommand>(session).Add(new UnassignWorkerCommand { BuildingId = buildingId });
+            return true;
         }
 
         public static bool TryEnqueueSpawn(in SpawnAgentCommand command)

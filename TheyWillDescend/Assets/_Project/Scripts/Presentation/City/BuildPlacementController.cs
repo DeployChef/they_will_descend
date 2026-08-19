@@ -104,7 +104,7 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             EnsureDeps();
-            if (gridGuide == null || CityCenter.Active == null)
+            if (gridGuide == null || !SimIo.TryGetCityCenter(out var center))
                 return;
 
             var config = gridGuide.Config;
@@ -118,7 +118,6 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            var center = (float3)CityCenter.Active.Position;
             if (!TryResolveGhost(center, config, (float3)world))
             {
                 SetGhostVisible(false);
@@ -388,7 +387,7 @@ namespace TheyWillDescend.Presentation.City
             if (cam == null || Mouse.current == null)
                 return false;
             var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-            var y = CityCenter.Active != null ? CityCenter.Active.Position.y : 0f;
+            var y = SimIo.TryGetCityCenter(out var center) ? center.y : 0f;
             var plane = new Plane(Vector3.up, new Vector3(0f, y, 0f));
             if (!plane.Raycast(ray, out var enter))
                 return false;

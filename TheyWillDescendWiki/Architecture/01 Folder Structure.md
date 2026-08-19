@@ -37,8 +37,8 @@ Simulation и Authoring: `autoReferenced: false` — на них ссылают�
 
 ```
 Assets/_Project/Scripts/
-  Simulation/       Time Agents City Session Io
-  Authoring/        Time Session
+  Simulation/       Time Agents City Session Io Economy
+  Authoring/        Time Session Economy
   Presentation/     Agents City GameHud ShellUi
                     Shell/            FSM, SimGate, сцены
                     Application/      Capture/Apply слота

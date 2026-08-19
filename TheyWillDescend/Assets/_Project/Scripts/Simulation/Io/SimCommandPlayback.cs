@@ -15,6 +15,8 @@ namespace TheyWillDescend.Simulation.Io
             ConsumeDespawnBuildingsSystem.Run(em);
             ConsumeSpawnAgentCommandsSystem.Run(em);
             ConsumePlaceBuildingCommandsSystem.Run(em);
+            ConsumeAssignWorkerCommandsSystem.Run(em);
+            ConsumeUnassignWorkerCommandsSystem.Run(em);
         }
     }
 }

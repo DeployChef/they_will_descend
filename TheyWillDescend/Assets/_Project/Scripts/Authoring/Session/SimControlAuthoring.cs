@@ -36,12 +36,15 @@ namespace TheyWillDescend.Authoring.Session
                     Config = config,
                     Center = float3.zero,
                     Ready = 1,
+                    NextBuildingId = 1,
                     ConstructionDuration = authoring.constructionDuration > 0.001f
                         ? authoring.constructionDuration
                         : 8f
                 });
                 AddBuffer<SpawnAgentCommand>(entity);
                 AddBuffer<PlaceBuildingCommand>(entity);
+                AddBuffer<AssignWorkerCommand>(entity);
+                AddBuffer<UnassignWorkerCommand>(entity);
                 AddBuffer<BuildingRejectedEvent>(entity);
                 AddBuffer<OccupiedCell>(entity);
 
@@ -50,7 +53,8 @@ namespace TheyWillDescend.Authoring.Session
                 var agentPrototype = CreateAdditionalEntity(TransformUsageFlags.Dynamic);
                 AddComponent<Prefab>(agentPrototype);
                 AddComponent(agentPrototype, new AgentLocomotion { Speed = 2f });
-                AddComponent<AgentHousePatrol>(agentPrototype);
+                AddComponent<AgentAssignment>(agentPrototype);
+                AddComponent<AgentPlazaIdle>(agentPrototype);
                 AddComponent(agentPrototype, new AgentId());
                 AddComponent(agentPrototype, new AgentType { Kind = AgentKind.Worker });
 

@@ -38,15 +38,16 @@ Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
 
 | Что | Где | Почему |
 | --- | --- | --- |
-| `GameTime`, `SimControl` | **Simulation SubScene** | bake → singleton entities, данные рана |
-| Статичный уровень (дома, деревья) | **Game** сцена | обычные GO, не симуляция |
+| `GameTime`, `SimControl`, `ResourceStock` | **Simulation SubScene** | bake → singleton entities, данные рана |
+| Плаза HQ | **Simulation SubScene** | bake → `Building` + `Headquarters` + EG-меш; `CityGrid.Center` с его `LocalTransform` |
+| Статичный декор (деревья, скалы) | **Game** сцена | обычные GO, не симуляция |
 | Челики (skinned + Animator) | **Game** + runtime entity | entity в ECS; вид (`AgentViewBoard`) снаружи |
-| Новые челики по кнопке | команда `SpawnAgent` | динамика = симуляция, меш снаружи |
+| Новые челики / дома игрока | команды `SpawnAgent` / `PlaceBuilding` | динамика = `Instantiate`, не bake |
 
 SubScene **нужна** для baked sim-данных (время, контроль, позже здания/рецепты).  
 Она **не обязана** содержать всех агентов. Динамическое население = команда `SpawnAgent` → entity; `AgentViewBoard` ставит меш.
 
-HUD: `GameHudCanvas` на Game (overlay). Часы — `TimeWidget` на `TimeBar`; спавн / стройка / сейв — свои виджеты.
+HUD: `GameHudCanvas` на Game (overlay). Часы — `TimeWidget` на `TimeBar`; сток — `ResourceWidget` там же; спавн / стройка / сейв — свои виджеты.
 
 
 ## Заход B — руками

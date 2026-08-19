@@ -14,6 +14,8 @@ namespace TheyWillDescend.Presentation.Agents
         public void Bind()
         {
             _animator = GetComponent<Animator>();
+            if (_animator != null)
+                _animator.applyRootMotion = false;
             SetMoving(false);
         }
 

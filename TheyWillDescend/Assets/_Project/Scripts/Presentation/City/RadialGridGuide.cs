@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -14,7 +13,6 @@ namespace TheyWillDescend.Presentation.City
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class RadialGridGuide : MonoBehaviour
     {
-        [SerializeField] Transform cityCenter;
         [SerializeField] RadialGridConfig config = RadialGridConfig.Default;
 
         [Header("Underlay")]
@@ -39,7 +37,6 @@ namespace TheyWillDescend.Presentation.City
                 return config;
             }
         }
-        public Transform CenterTransform => cityCenter != null ? cityCenter : transform;
 
         /// <summary>Game-view mesh underlay only while placing.</summary>
         public void SetBuildModeActive(bool active)
@@ -53,18 +50,9 @@ namespace TheyWillDescend.Presentation.City
         void OnEnable()
         {
             EnsureComponents();
-            if (Application.isPlaying)
-            {
-                PushCenter();
-                if (_buildModeActive)
-                    RebuildUnderlayMesh(force: true);
-            }
+            if (Application.isPlaying && _buildModeActive)
+                RebuildUnderlayMesh(force: true);
             ApplyPlayMeshVisibility();
-        }
-
-        void PushCenter()
-        {
-            SimIo.SetCityCenter((float3)CenterTransform.position);
         }
 
         void OnDisable()
@@ -167,18 +155,16 @@ namespace TheyWillDescend.Presentation.City
 
         Vector3 GetDrawOrigin()
         {
-            var c = CenterTransform;
-            if (c == null)
-                return transform.position;
-            return c.position + Vector3.up * yOffset;
+            if (Application.isPlaying && SimIo.TryGetCityCenter(out var center))
+                return (Vector3)center + Vector3.up * yOffset;
+            return transform.position;
         }
 
         void FollowCenter()
         {
-            var c = CenterTransform;
-            if (c == null)
+            if (!Application.isPlaying || !SimIo.TryGetCityCenter(out var center))
                 return;
-            transform.position = c.position + Vector3.up * yOffset;
+            transform.position = (Vector3)center + Vector3.up * yOffset;
             transform.rotation = Quaternion.identity;
         }
 
