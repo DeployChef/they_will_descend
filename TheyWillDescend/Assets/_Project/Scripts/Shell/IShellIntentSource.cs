@@ -1,4 +1,4 @@
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Shell-level intents (not raw keys). States listen to these.

@@ -1,14 +1,14 @@
-using System.Collections.Generic;
-using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Infrastructure.Save;
-using _Project.Scripts.Simulation.Agents;
+using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Simulation.Agents;
+using TheyWillDescend.Simulation.Io;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace _Project.Scripts.Presentation.Agents
+namespace TheyWillDescend.Presentation.Agents
 {
     /// <summary>
-    /// Runtime spawn of hybrid agents (prefab GO + CircleWalkAgent → ECS entity).
+    /// Intent source for agents: HUD/save enqueue commands. Does not instantiate the sim entity.
     /// </summary>
     public sealed class AgentSpawner : MonoBehaviour
     {
@@ -19,125 +19,97 @@ namespace _Project.Scripts.Presentation.Agents
         [SerializeField] Vector2 radiusRange = new(1.5f, 5f);
         [SerializeField] Vector2 speedRange = new(0.08f, 0.2f);
 
-        readonly List<GameObject> _spawned = new();
+        AgentViewBoard _views;
+
+        void Awake()
+        {
+            _views = GetComponent<AgentViewBoard>();
+            if (_views == null)
+                _views = gameObject.AddComponent<AgentViewBoard>();
+            _views.BindCatalog(characterPrefabs, spawnParent);
+        }
 
         public void SpawnRandom()
         {
-            if (characterPrefabs == null || characterPrefabs.Length == 0)
+            var prefab = PickCatalogPrefab();
+            if (prefab == null)
             {
-                GameLog.Error("AgentSpawner: no prefabs assigned.");
+                GameLog.Error("AgentSpawner: no character prefabs.");
                 return;
             }
 
-            var prefab = characterPrefabs[UnityEngine.Random.Range(0, characterPrefabs.Length)];
-            if (prefab == null)
-            {
-                GameLog.Error("AgentSpawner: null prefab in list.");
-                return;
-            }
-            var pos = new Vector3(
+            var center = new float3(
                 spawnAreaCenter.x + UnityEngine.Random.Range(-spawnAreaSize.x * 0.5f, spawnAreaSize.x * 0.5f),
                 0f,
                 spawnAreaCenter.y + UnityEngine.Random.Range(-spawnAreaSize.y * 0.5f, spawnAreaSize.y * 0.5f));
-
-            var radius = UnityEngine.Random.Range(radiusRange.x, radiusRange.y);
-            var speed = UnityEngine.Random.Range(speedRange.x, speedRange.y);
-            var direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-
-            SpawnAt(prefab, pos, radius, speed, direction, 0f, activate: true);
-        }
-
-        public void ClearSpawned()
-        {
-            for (var i = 0; i < _spawned.Count; i++)
+            var walk = new CircleWalk
             {
-                var go = _spawned[i];
-                if (go == null)
-                    continue;
-                go.SetActive(false);
-                Object.DestroyImmediate(go);
-            }
-
-            _spawned.Clear();
-        }
-
-        public void SpawnFromSnapshot(AgentSnapshot record, int version)
-        {
-            var prefab = FindPrefab(record.prefabId);
-            if (prefab == null)
+                Center = center,
+                Radius = UnityEngine.Random.Range(radiusRange.x, radiusRange.y),
+                Speed = UnityEngine.Random.Range(speedRange.x, speedRange.y),
+                Direction = UnityEngine.Random.value < 0.5f ? -1f : 1f,
+                AngleRadians = 0f
+            };
+            var pose = walk.ToPosition();
+            if (!SimIo.TryEnqueueSpawn(ToCommand(walk, pose, hasPose: true, prefab.name)))
             {
-                GameLog.Error($"No prefab for id '{record.prefabId}'.");
+                GameLog.Error("AgentSpawner: sim world not ready.");
                 return;
             }
 
-            var walk = new CircleWalk
+            FlushAndPump();
+            GameLog.Info($"Spawn command {prefab.name} r={walk.Radius:0.0} s={walk.Speed:0.00}");
+        }
+
+        public void WipeAgentsAndViews()
+        {
+            SimIo.TryRequestDespawnAllAgents();
+            SimIo.Flush();
+            var views = EnsureViews();
+            views.Pump();
+            views.ClearViews();
+        }
+
+        public void FlushAndPump()
+        {
+            SimIo.Flush();
+            EnsureViews().Pump();
+        }
+
+        AgentViewBoard EnsureViews()
+        {
+            if (_views == null)
+                Awake();
+            return _views;
+        }
+
+        static SpawnAgentCommand ToCommand(in CircleWalk walk, in AgentPosition pose, byte hasPose, string visualId)
+        {
+            return new SpawnAgentCommand
             {
-                Center = new float3(record.centerX, record.centerY, record.centerZ),
-                Radius = record.radius,
-                Speed = record.speed,
-                Direction = record.direction,
-                AngleRadians = record.angleRadians
+                Center = walk.Center,
+                Radius = walk.Radius,
+                Speed = walk.Speed,
+                Direction = walk.Direction,
+                AngleRadians = walk.AngleRadians,
+                Position = pose.Value,
+                Facing = pose.Facing,
+                HasPose = hasPose,
+                VisualId = string.IsNullOrEmpty(visualId)
+                    ? default
+                    : new FixedString64Bytes(visualId)
             };
-            var position = version >= 2
-                ? new AgentPosition
-                {
-                    Value = new float3(record.posX, record.posY, record.posZ),
-                    Facing = new float3(record.fwdX, record.fwdY, record.fwdZ)
-                }
-                : walk.ToPosition();
-            var p = position.Value;
-            var agent = SpawnAt(
-                prefab,
-                new Vector3(p.x, p.y, p.z),
-                record.radius,
-                record.speed,
-                record.direction,
-                0f,
-                activate: false);
-            agent.ApplyWalk(walk, position);
-            agent.gameObject.SetActive(true);
         }
 
-        CircleWalkAgent SpawnAt(
-            GameObject prefab,
-            Vector3 pos,
-            float radius,
-            float speed,
-            float direction,
-            float heightOffset,
-            bool activate)
+        static SpawnAgentCommand ToCommand(in CircleWalk walk, in AgentPosition pose, bool hasPose, string visualId)
+            => ToCommand(walk, pose, hasPose ? (byte)1 : (byte)0, visualId);
+
+        GameObject PickCatalogPrefab()
         {
-            var instance = Instantiate(prefab, pos, Quaternion.identity);
-            instance.name = $"{prefab.name}_Spawned";
-            if (spawnParent != null)
-                instance.transform.SetParent(spawnParent, true);
-
-            instance.SetActive(false);
-            var agent = instance.GetComponent<CircleWalkAgent>();
-            if (agent == null)
-                agent = instance.AddComponent<CircleWalkAgent>();
-
-            agent.ApplySettings(radius, speed, direction, heightOffset, prefab.name);
-            if (activate)
-                instance.SetActive(true);
-            _spawned.Add(instance);
-            GameLog.Info($"Spawned {instance.name} at {pos} r={radius:0.0} s={speed:0.00}");
-            return agent;
-        }
-
-        GameObject FindPrefab(string id)
-        {
-            if (string.IsNullOrEmpty(id) || characterPrefabs == null)
+            if (characterPrefabs == null || characterPrefabs.Length == 0)
                 return null;
-
-            for (var i = 0; i < characterPrefabs.Length; i++)
-            {
-                var prefab = characterPrefabs[i];
-                if (prefab != null && prefab.name == id)
-                    return prefab;
-            }
-
-            return characterPrefabs.Length > 0 ? characterPrefabs[0] : null;
+            var prefab = characterPrefabs[UnityEngine.Random.Range(0, characterPrefabs.Length)];
+            return prefab != null ? prefab : characterPrefabs[0];
         }
     }
 }

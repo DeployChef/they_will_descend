@@ -1,6 +1,6 @@
 using System;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Port Shell states use for menu/splash presentation.

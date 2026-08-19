@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.InputSystem;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// New Input System map for Shell flow (splash + pause).

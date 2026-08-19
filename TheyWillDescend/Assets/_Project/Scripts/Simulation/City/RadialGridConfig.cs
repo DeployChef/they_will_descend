@@ -1,6 +1,6 @@
 using System;
 
-namespace _Project.Scripts.Simulation.City
+namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
     /// FP-like polar underlay: NO micro fine grid.

@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace _Project.Scripts.Simulation.City
+namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
     /// Cluster/ring polar math. No fine micro-grid — roads later can be freer.

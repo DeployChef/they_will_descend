@@ -1,6 +1,6 @@
 using System;
 
-namespace _Project.Scripts.Simulation.City
+namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
     /// Building size in logical clusters × rings.

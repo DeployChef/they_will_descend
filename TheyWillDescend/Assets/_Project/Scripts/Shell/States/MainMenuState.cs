@@ -1,6 +1,6 @@
-using _Project.Scripts.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Logging;
 
-namespace _Project.Scripts.Shell.States
+namespace TheyWillDescend.Shell.States
 {
     public sealed class MainMenuState : IAppState
     {

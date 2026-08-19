@@ -1,14 +1,14 @@
 using System.Collections.Generic;
-using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Infrastructure.Save;
-using _Project.Scripts.Simulation.City;
+using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Io;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
-namespace _Project.Scripts.Presentation.City
+namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
     /// Place house prefab on polar section zone.
@@ -25,8 +25,8 @@ namespace _Project.Scripts.Presentation.City
         [SerializeField] Transform placedRoot;
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
-        readonly HashSet<(int cluster, int radial)> _occupied = new();
-        readonly List<BuildingSnapshot> _placed = new();
+
+        BuildingViewBoard _views;
 
         bool _placing;
         bool _canPlace;
@@ -41,63 +41,23 @@ namespace _Project.Scripts.Presentation.City
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
-        Material _placedZoneMaterial;
 
         public bool IsPlacing => _placing;
 
-        public BuildingSnapshot[] CopyPlaced()
+        void Awake()
         {
-            return _placed.ToArray();
+            EnsureViews();
         }
 
-        public void ClearPlaced()
+        public void PumpViews()
         {
-            _occupied.Clear();
-            _placed.Clear();
-            if (placedRoot == null)
-                return;
-
-            for (var i = placedRoot.childCount - 1; i >= 0; i--)
-                Object.DestroyImmediate(placedRoot.GetChild(i).gameObject);
+            EnsureViews().Pump();
         }
 
-        public void RestorePlaced(BuildingSnapshot[] records)
+        public void WipeViews()
         {
-            ClearPlaced();
-            if (records == null || records.Length == 0)
-                return;
-
-            EnsureDeps();
-            if (gridGuide == null || CityCenter.Active == null)
-            {
-                GameLog.Error("Cannot restore buildings: grid or CityCenter missing.");
-                return;
-            }
-
-            var savedFootprint = footprint;
-            var center = (float3)CityCenter.Active.Position;
-            var config = gridGuide.Config;
-            for (var i = 0; i < records.Length; i++)
-            {
-                var record = records[i];
-                footprint = new BuildingFootprint
-                {
-                    WidthClusters = record.widthClusters,
-                    DepthRadialRings = record.depthRadialRings
-                };
-                if (!RadialFootprintMath.TryExpandClusters(
-                        config, record.anchorCluster, record.anchorRadial, footprint, _clusters))
-                {
-                    GameLog.Warning($"Skip building record {i}: expand failed.");
-                    continue;
-                }
-
-                _anchorCluster = record.anchorCluster;
-                _anchorRadial = record.anchorRadial;
-                PlaceBuilding(center, config);
-            }
-
-            footprint = savedFootprint;
+            EnsureViews().Pump();
+            EnsureViews().ClearViews();
         }
 
         public void SetFootprint(BuildingFootprint value)
@@ -169,7 +129,7 @@ namespace _Project.Scripts.Presentation.City
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
 
-            PlaceBuilding(center, config);
+            PlaceBuilding();
         }
 
         bool TryResolveGhost(float3 center, in RadialGridConfig config, float3 world)
@@ -183,7 +143,7 @@ namespace _Project.Scripts.Presentation.City
             // Probe: full snap (ring + rays) — can we place here?
             var probeOk = RadialFootprintMath.TryExpandClusters(
                 config, snappedCluster, ring, footprint, _clusters);
-            var probeFree = probeOk && !OverlapsOccupied(_clusters);
+            var probeFree = probeOk && !SimIo.OverlapsOccupied(_clusters);
 
             if (probeFree)
             {
@@ -209,56 +169,38 @@ namespace _Project.Scripts.Presentation.City
             return true;
         }
 
-        bool OverlapsOccupied(List<(int cluster, int radial)> clusters)
+        void PlaceBuilding()
         {
-            for (var i = 0; i < clusters.Count; i++)
+            if (!SimIo.TryEnqueuePlaceBuilding(new PlaceBuildingCommand
+                {
+                    WidthClusters = footprint.WidthClusters,
+                    DepthRadialRings = footprint.DepthRadialRings,
+                    AnchorCluster = _anchorCluster,
+                    AnchorRadial = _anchorRadial
+                }))
             {
-                if (_occupied.Contains(clusters[i]))
-                    return true;
+                GameLog.Error("PlaceBuilding: sim world not ready.");
+                return;
             }
 
-            return false;
+            SimIo.Flush();
+            EnsureViews().Pump();
+            GameLog.Info($"Place command c={_anchorCluster} r={_anchorRadial}.");
         }
 
-        void PlaceBuilding(float3 center, RadialGridConfig config)
+        BuildingViewBoard EnsureViews()
         {
+            if (_views != null)
+                return _views;
+
+            _views = GetComponent<BuildingViewBoard>();
+            if (_views == null)
+                _views = gameObject.AddComponent<BuildingViewBoard>();
+            EnsureDeps();
             if (placedRoot == null)
                 placedRoot = new GameObject("PlacedBuildings").transform;
-
-            var root = new GameObject(
-                $"Building_{footprint.WidthClusters}x{footprint.DepthRadialRings}_c{_anchorCluster}_r{_anchorRadial}");
-            root.transform.SetParent(placedRoot, true);
-
-            EnsureMaterials();
-            var zoneGo = new GameObject("FootprintZone");
-            zoneGo.transform.SetParent(root.transform, false);
-            var zoneFilter = zoneGo.AddComponent<MeshFilter>();
-            var zoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            zoneFilter.sharedMesh = RadialSectorMeshBuilder.BuildClusterZoneMesh(
-                center, config, _clusters);
-            zoneRenderer.sharedMaterial = _placedZoneMaterial;
-            zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            zoneRenderer.receiveShadows = false;
-
-            RadialFootprintMath.FootprintMarkerPose(
-                center, config, _anchorCluster, _anchorRadial, footprint,
-                out var pos, out var rot, out var targetSize);
-
-            SpawnBuildingVisual(root.transform, (Vector3)pos, (Quaternion)rot, targetSize, ghost: false);
-
-            for (var i = 0; i < _clusters.Count; i++)
-                _occupied.Add(_clusters[i]);
-
-            _placed.Add(new BuildingSnapshot
-            {
-                widthClusters = footprint.WidthClusters,
-                depthRadialRings = footprint.DepthRadialRings,
-                anchorCluster = _anchorCluster,
-                anchorRadial = _anchorRadial
-            });
-
-            GameLog.Info(
-                $"Placed house+zone c={_anchorCluster} r={_anchorRadial}, sections={_clusters.Count}.");
+            _views.Bind(prefabHouse6x2, prefabHouse2x2, placedRoot, gridGuide, zoneValidColor);
+            return _views;
         }
 
         void UpdateGhost(float3 center, RadialGridConfig config)
@@ -335,32 +277,6 @@ namespace _Project.Scripts.Presentation.City
             _ghostBuilding.localScale = Vector3.one;
         }
 
-        Transform SpawnBuildingVisual(
-            Transform parent,
-            Vector3 pos,
-            Quaternion rot,
-            float targetSize,
-            bool ghost)
-        {
-            var prefab = ResolvePrefab();
-            if (prefab == null)
-            {
-                var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cube.transform.SetParent(parent, true);
-                ApplyBuildingPose(cube.transform, pos, rot, targetSize);
-                var col = cube.GetComponent<Collider>();
-                if (col != null)
-                    Destroy(col);
-                return cube.transform;
-            }
-
-            var instance = Instantiate(prefab, parent);
-            instance.name = ghost ? "GhostHouse" : "HouseVisual";
-            StripColliders(instance);
-            ApplyBuildingPose(instance.transform, pos, rot, targetSize);
-            return instance.transform;
-        }
-
         void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot, float targetSize)
         {
             t.localScale = Vector3.one;
@@ -431,12 +347,6 @@ namespace _Project.Scripts.Presentation.City
                 _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
                 _ghostZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
             }
-
-            if (_placedZoneMaterial == null)
-            {
-                _placedZoneMaterial = CreateUnlitMaterial("FootprintZone_Placed", zoneValidColor);
-                _placedZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
-            }
         }
 
         static void ApplyColor(Material mat, Color color)
@@ -491,7 +401,6 @@ namespace _Project.Scripts.Presentation.City
             }
 
             DestroyMat(_ghostZoneMaterial);
-            DestroyMat(_placedZoneMaterial);
         }
 
         static void DestroyMat(Material mat)

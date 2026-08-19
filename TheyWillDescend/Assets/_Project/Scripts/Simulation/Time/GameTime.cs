@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace _Project.Scripts.Simulation.Time
+namespace TheyWillDescend.Simulation.Time
 {
     public struct GameTime : IComponentData
     {

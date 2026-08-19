@@ -32,7 +32,7 @@ Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
 | --- | --- | --- |
 | **A** | UI flow на одном Boot | done (эволюционирует в B) |
 | **B** | Три сцены + load по правилам | done |
-| **C+D** | ECS-ходьба + Frozen стопает | **done** (hybrid GO+entity) |
+| **C+D** | ECS-ходьба + Frozen стопает | **done** (entity + view board) |
 
 ## SubScene vs Game vs спавн (важно)
 
@@ -40,11 +40,11 @@ Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
 | --- | --- | --- |
 | `GameTime`, `SimControl` | **Simulation SubScene** | bake → singleton entities, данные рана |
 | Статичный уровень (дома, деревья) | **Game** сцена | обычные GO, не симуляция |
-| Челики (skinned + Animator) | **Game** + runtime entity | hybrid: GO вид, ECS движение |
-| Новые челики по кнопке | `AgentSpawner` Instantiates prefab | динамика = спавн, не bake |
+| Челики (skinned + Animator) | **Game** + runtime entity | entity в ECS; вид (`AgentViewBoard`) снаружи |
+| Новые челики по кнопке | команда `SpawnAgent` | динамика = симуляция, меш снаружи |
 
 SubScene **нужна** для baked sim-данных (время, контроль, позже здания/рецепты).  
-Она **не обязана** содержать всех агентов. Динамическое население = спавн на Game → `CircleWalkAgent` регистрирует entity.
+Она **не обязана** содержать всех агентов. Динамическое население = команда `SpawnAgent` → entity; `AgentViewBoard` ставит меш.
 
 HUD спавна: `GameHudCanvas` на Game (overlay), не MainMenu.
 

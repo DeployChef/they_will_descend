@@ -24,6 +24,7 @@
 - [[11 Camera & Presentation Scenes]] — одна Main Camera на Root, VCam, что на какой сцене
 - [[12 Radial City Grid]] — полярный cluster underlay + placement (FP-like); ECS occupancy / smart align — позже
 - [[13 Time HUD and Save]] — тулза времени (пауза/x1/x2/x3, часы дня) и однослотовый save/load
+- [[14 Sim Presentation Bridge]] — команды в ECS, события наружу, виды без Transform в компонентах
 
 ## Связь с GDD
 

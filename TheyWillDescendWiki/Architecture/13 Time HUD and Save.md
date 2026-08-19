@@ -132,7 +132,7 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 | Деревья, земля Sample | сцена `Game.unity` | нет — это уровень, не ран |
 | `GameTime` (день, прогресс суток) | ECS singleton | **да** |
 | Пауза / скорость | `SimGate` → `SimControl` / `SimClock` | **да** |
-| Челики | hybrid: GO + entity `AgentPosition` + (временно) `CircleWalk` | **да: позиция + id префаба**; круг — пока как ходит |
+| Челики | ECS: `AgentPosition` + `CircleWalk`; вид снаружи | **да: позиция + круг**; скин не в слот |
 | Поставленные дома | только Presentation (`placedRoot` + `_occupied`) | **да, как записи построек** (временно не ECS) |
 | Призрак размещения | UI-режим | **нет** — перед save отменить placing |
 | Камера | Presentation | нет в v0 (окно, не мир) |
@@ -155,7 +155,7 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 
 Официальный DOTS-путь: дамп entities в бинарник.
 
-Сейчас **не берём**: в мире висят managed `AgentPresentation` (Transform/Animator), дома ещё не entities, плюс куча служебных сущностей Unity. Получится хрупкий дамп «всего Default World».
+Сейчас **не берём**: дома ещё не entities, плюс куча служебных сущностей Unity. Получится хрупкий дамп «всего Default World».
 
 Когда write model целиком в ECS (здания, слоты, стоки) — B станет каноном **поверх** тех же границ: сериализуем query динамики, не SubScene-статику.
 
@@ -170,17 +170,17 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь вроде `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v2
-  version: 2
-  clock:  { mode, speed }
+SavePayload v3
+  version: 3
+  clock:  { speed, playerPaused }
   time:   { day, elapsedInDay, dayDuration }
-  agents: [{ prefabId, pose (pos+fwd), circle (temporary behavior) }]
-  buildings: [{ prefabKey, width, depth, anchorCluster, anchorRadial }]
+  agents: [{ pose (pos+fwd), circle (temporary behavior) }]
+  buildings: [{ width, depth, anchorCluster, anchorRadial }]
 ```
 
-Канон агента: **`AgentPosition` = где стоит entity**. `CircleWalk` = временный рецепт «ходи по кругу»; система пишет им позицию. Save пишет позицию. Круг в файле пока нужен, чтобы после load продолжили тот же круг; когда появится другой mover — круговые поля выкинем, позиция останется.
+Канон агента: **`AgentPosition` = где стоит entity**. `CircleWalk` = временный рецепт «ходи по кругу». Скин в слот не пишем — вид выбирает префаб при drain `AgentSpawnedEvent`.
 
-`prefabId` / `prefabKey` — стабильная строка (имя префаба), не `Entity(53,1)` и не instance ID. После перезапуска Unity номера сущностей другие.
+`AgentId` — ключ моста на ран, не `Entity(53,1)`. После перезапуска Unity номера сущностей другие.
 
 ### Идентичность: не `53.1`
 
@@ -201,7 +201,7 @@ SavePayload v2
 1. UI → intent `SaveSlot0` (не считает экономику).
 2. Отменить ghost-placing, если открыт.
 3. Прочитать синглтоны из ECS.
-4. Собрать агентов **из query `AgentPosition` + `AgentPrefabId`** (круг — доп. поля, пока поведение круговое).
+4. Собрать агентов из query `AgentPosition` + `CircleWalk` + `AgentVisualId` (ключ каталога → `prefabId` в JSON).
 5. Собрать дома из **явного списка записей**.  
    **Временно:** список живёт у placement (или тонкий `BuildingSandboxRegistry`).  
    **Канон позже:** occupancy/building entity в ECS, save читает только ECS.
@@ -214,7 +214,7 @@ SavePayload v2
 3. Снести **только динамику рана**: spawned agents (GO+entity), placed buildings, occupancy.  
    Не выгружать `Game.unity`, не трогать SubScene authoring.
 4. Записать `GameTime` + Mode/Speed в ECS и в `SimGate` (шелл и симуляция не разъедутся).
-5. Заспавнить агентов тем же пайплайном, что кнопка спавна, но с полями из файла (не Random).
+5. Заспавнить агентов тем же пайплайном, что кнопка спавна, но с полями из файла (не Random), включая `prefabId`.
 6. Поставить дома тем же пайплайном, что `PlaceBuilding`, из записей.
 7. Восстановить Mode из файла (если сохраняли Running x2 — после load снова Running x2). Либо оставить Frozen, чтобы осмотреться — выбрать одно в коде и не смешивать. **Предпочтение среза:** восстановить Mode как в файле («тот же кадр»).
 
@@ -224,11 +224,11 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 
 ## 5. Дыры, которые надо закрыть в коде (не в UI)
 
-Чтобы агенты переживали слот, entity должна знать **какой префаб**:
+Чтобы агенты переживали слот:
 
-- при спавне: `AddComponent(PrefabRef)` или `FixedString` id  
-- `AgentPosition` — где стоит (это пишем в слот как место)  
-- `CircleWalk` — временное поведение; в слот ещё кладём, чтобы resume круга работал
+- `AgentPosition` — где стоит (это пишем в слот)  
+- `CircleWalk` — временное поведение круга  
+- `AgentVisualId` — какой префаб из каталога (строка в JSON, не GameObject)
 
 Дома: placement должен уметь **ClearAll** и **PlaceFromRecord**, не только клик мыши. Occupancy восстанавливается из тех же ячеек.
 
@@ -257,7 +257,7 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 | --- | --- |
 | JSON один слот | слоты, имя, скриншот, checksum |
 | Дома в registry Presentation | building entities + occupancy в ECS, save только оттуда |
-| Агенты hybrid + prefab id | те же данные, вид всегда снаружи |
+| Агенты: позиция + ключ вида в ECS, меш снаружи | тот же мост, когда появится pathfinding |
 | Свой payload | опционально `SerializeUtility` по query динамики |
 | `DayDuration` короткий | баланс суток |
 | Цифровые HH:MM | при желании кольцо-часы как FP |
@@ -271,7 +271,7 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 1. Верх Game HUD: Pause, x1, x2, x3, текст `Day N  HH:MM`.
 2. Save / Load — две кнопки, без красивого меню.
 3. Play: день на x3 бежит втрое быстрее, чем на x1; пауза стопит часы и ходоков, скорость подсвечена прежняя.
-4. Заспавнить 2 челиков, поставить 1 дом, крутануть день, Save, доспавнить ещё, Load — снова 2 челика, 1 дом, тот же день/угол.
+4. Заспавнить 2 челиков, поставить 1 дом, крутануть день, Save, доспавнить ещё, Load — снова те же 2 челика (те же префабы), 1 дом, тот же день/угол.
 5. Выключить Play, включить снова, Load — слот с диска жив.
 
 Критерий провала: после Load дома на месте, а `_occupied` пустой (можно ставить второе здание в ту же клетку). Occupancy входит в снимок.

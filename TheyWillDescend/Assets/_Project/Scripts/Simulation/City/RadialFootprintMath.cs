@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 
-namespace _Project.Scripts.Simulation.City
+namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
     /// Snap / expand / pose. Building width is locked to TargetClusterWorldWidth

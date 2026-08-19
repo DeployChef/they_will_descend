@@ -1,7 +1,9 @@
-using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Simulation.Session;
+using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Simulation.Io;
+using TheyWillDescend.Simulation.Session;
+using UnityEngine;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Shell clock policy. ECS mirrors EffectiveMode and Speed only.
@@ -96,6 +98,11 @@ namespace _Project.Scripts.Shell
             Speed = speed;
             PlayerPaused = playerPaused;
             GameLog.Info($"SimGate restore x{Speed} paused={playerPaused} → {EffectiveMode}.");
+        }
+
+        public void PushClock(float unscaledDeltaTime)
+        {
+            SimIo.SetClock(EffectiveMode, Speed, unscaledDeltaTime);
         }
     }
 }

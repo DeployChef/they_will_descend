@@ -1,8 +1,8 @@
 using System.Collections;
-using _Project.Scripts.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Logging;
 using UnityEngine.SceneManagement;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Narrow scene port: load/unload shell and session scenes. No economy knowledge.

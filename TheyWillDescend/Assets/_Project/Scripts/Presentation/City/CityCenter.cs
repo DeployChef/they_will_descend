@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _Project.Scripts.Presentation.City
+namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
     /// World anchor for the polar city. Temporary stand-in for the pyramid —

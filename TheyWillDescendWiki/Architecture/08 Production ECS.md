@@ -43,7 +43,7 @@ Content          Authoring, Baker, blobs, prefabs, balance
 ### Порядок тика (pipeline)
 
 ```
-ReceiveCommands
+ReceiveCommands (`CommandSystemGroup`)
   → AdvanceTime
   → Assignment
   → Production
@@ -113,4 +113,4 @@ UI ← читает Stock / domain events
 
 ---
 
-Связанные: [[04 Simulation]] · [[07 Mentorship & Learning]] · [[00 Overview]] · [[02 Scenes & Lifetime]] · [[09 App Shell]]
+Связанные: [[04 Simulation]] · [[07 Mentorship & Learning]] · [[00 Overview]] · [[02 Scenes & Lifetime]] · [[09 App Shell]] · [[14 Sim Presentation Bridge]]

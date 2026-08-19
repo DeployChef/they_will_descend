@@ -1,8 +1,8 @@
-using _Project.Scripts.Simulation.Time;
+using TheyWillDescend.Simulation.Time;
 using Unity.Entities;
 using UnityEngine;
 
-namespace _Project.Scripts.Authoring.Time
+namespace TheyWillDescend.Authoring.Time
 {
     public class GameTimeAuthoring : MonoBehaviour
     {
@@ -10,7 +10,7 @@ namespace _Project.Scripts.Authoring.Time
 
         // Вложенный класс — просто чтобы файл был один.
         // Unity сама находит все Baker<> при bake.
-        class Baker : Baker<GameTimeAuthoring>
+        class GameTimeBaker : Baker<GameTimeAuthoring>
         {
             public override void Bake(GameTimeAuthoring authoring)
             {

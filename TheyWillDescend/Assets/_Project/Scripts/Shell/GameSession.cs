@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
-using _Project.Scripts.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Logging;
 using UnityEngine;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Gameplay session: load Game, then unload MainMenu (UI port gone — states must not use IShellUi after Start).

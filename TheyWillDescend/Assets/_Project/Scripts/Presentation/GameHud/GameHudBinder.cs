@@ -1,15 +1,16 @@
-using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Infrastructure.Save;
-using _Project.Scripts.Presentation.City;
-using _Project.Scripts.Shell;
-using _Project.Scripts.Simulation.City;
-using _Project.Scripts.Simulation.Time;
+using TheyWillDescend.App;
+using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Shell;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Time;
 using TMPro;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _Project.Scripts.Presentation.GameHud
+namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
     /// Game HUD: time tool, catalog, spawn, one-slot save/load.
@@ -119,8 +120,7 @@ namespace _Project.Scripts.Presentation.GameHud
             if (_catalogOpen || (placement != null && placement.IsPlacing))
                 ExitBuildUi(resumeSim: true);
 
-            EnsurePlacement();
-            var snapshot = RunSessionSnapshot.Capture(placement);
+            var snapshot = RunSessionSnapshot.Capture();
             RunSnapshotStore.Write(snapshot);
         }
 
@@ -134,7 +134,9 @@ namespace _Project.Scripts.Presentation.GameHud
 
             EnsureSpawner();
             EnsurePlacement();
-            RunSessionSnapshot.Apply(snapshot, agentSpawner, placement);
+            RunSessionSnapshot.Apply(snapshot);
+            agentSpawner?.FlushAndPump();
+            placement?.PumpViews();
         }
 
         void OnSpawnClicked()

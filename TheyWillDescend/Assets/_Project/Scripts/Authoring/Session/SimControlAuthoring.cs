@@ -1,15 +1,15 @@
-using _Project.Scripts.Simulation.Session;
+using TheyWillDescend.Simulation.Session;
 using Unity.Entities;
 using UnityEngine;
 
-namespace _Project.Scripts.Authoring.Session
+namespace TheyWillDescend.Authoring.Session
 {
     /// <summary>
     /// Bakes the SimControl singleton. Default mode is Off (Shell opens the gate later).
     /// </summary>
     public sealed class SimControlAuthoring : MonoBehaviour
     {
-        class Baker : Baker<SimControlAuthoring>
+        class SimControlBaker : Baker<SimControlAuthoring>
         {
             public override void Bake(SimControlAuthoring authoring)
             {

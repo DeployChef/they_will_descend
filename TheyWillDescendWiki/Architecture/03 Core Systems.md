@@ -24,7 +24,7 @@
 | --- | --- |
 | **Time** | singleton `GameTime` + часы/скорость (`SimClock`); тик только при Running; HUD читает проекцию суток. Save/load: [[13 Time HUD and Save]] |
 | Economy / Workforce / … | см. [[04 Simulation]] · [[08 Production ECS]] |
-| Domain events | ECS buffers → Presentation bridge → Shell bus (по мере надобности) |
+| Domain events | ECS buffers → Presentation drain (`AgentViewBoard`) |
 
 Игровое время **не** живёт в VContainer-сервисе. Истина — компонент в World.
 

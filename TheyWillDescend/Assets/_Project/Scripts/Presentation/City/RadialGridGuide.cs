@@ -1,9 +1,11 @@
 using System.Collections.Generic;
-using _Project.Scripts.Simulation.City;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Io;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace _Project.Scripts.Presentation.City
+namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
     /// Polar underlay: Scene view always via Gizmos; Game view mesh only in build mode.
@@ -43,8 +45,12 @@ namespace _Project.Scripts.Presentation.City
         void OnEnable()
         {
             EnsureComponents();
-            if (Application.isPlaying && _buildModeActive)
-                RebuildUnderlayMesh(force: true);
+            if (Application.isPlaying)
+            {
+                SimIo.SetCityGrid(config, (float3)CenterTransform.position);
+                if (_buildModeActive)
+                    RebuildUnderlayMesh(force: true);
+            }
             ApplyPlayMeshVisibility();
         }
 
@@ -91,10 +97,14 @@ namespace _Project.Scripts.Presentation.City
 
         void LateUpdate()
         {
-            if (!Application.isPlaying || !_buildModeActive)
+            if (!Application.isPlaying)
                 return;
 
             FollowCenter();
+            SimIo.SetCityGrid(config, (float3)CenterTransform.position);
+            if (!_buildModeActive)
+                return;
+
             ApplyPlayMeshVisibility();
             RebuildUnderlayMesh(force: false);
         }

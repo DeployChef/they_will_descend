@@ -1,9 +1,10 @@
-using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Presentation.ShellUi;
-using _Project.Scripts.Shell.States;
+using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.ShellUi;
+using TheyWillDescend.Shell;
+using TheyWillDescend.Shell.States;
 using UnityEngine;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Main
 {
     /// <summary>
     /// Wires Shell graph. Resolves presentation ports after scenes are loaded.
@@ -30,9 +31,6 @@ namespace _Project.Scripts.Shell
             }
         }
 
-        /// <summary>
-        /// Returns null if required presentation ports are missing (e.g. MainMenu not loaded).
-        /// </summary>
         public static Bundle? Create(MonoBehaviour coroutineHost, SceneLoader scenes = null)
         {
             scenes ??= new SceneLoader();
@@ -62,7 +60,6 @@ namespace _Project.Scripts.Shell
 
         static IShellUi ResolveShellUi()
         {
-            // Presentation adapter lives on MainMenu; Shell only sees IShellUi.
             return Object.FindFirstObjectByType<ShellUiBinder>();
         }
     }

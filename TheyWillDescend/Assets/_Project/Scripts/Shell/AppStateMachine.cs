@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using _Project.Scripts.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Logging;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Tiny app flow router. States own Enter/Exit side effects (UI, SimGate).

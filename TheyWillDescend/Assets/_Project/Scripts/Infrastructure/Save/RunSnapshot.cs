@@ -1,11 +1,11 @@
 using System;
 
-namespace _Project.Scripts.Infrastructure.Save
+namespace TheyWillDescend.Infrastructure.Save
 {
     [Serializable]
     public sealed class RunSnapshot
     {
-        public int version = 2;
+        public int version = 4;
         public int speed = 1;
         public bool playerPaused;
         public int day;

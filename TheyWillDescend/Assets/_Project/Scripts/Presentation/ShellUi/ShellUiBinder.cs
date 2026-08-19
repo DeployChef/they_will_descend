@@ -1,9 +1,9 @@
 using System;
-using _Project.Scripts.Shell;
+using TheyWillDescend.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _Project.Scripts.Presentation.ShellUi
+namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
     /// MainMenu-scene implementation of <see cref="IShellUi"/>.

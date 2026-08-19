@@ -1,4 +1,4 @@
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     public enum AppStateId : byte
     {

@@ -1,8 +1,8 @@
-using _Project.Scripts.Infrastructure.Logging;
-using _Project.Scripts.Simulation.Session;
+using TheyWillDescend.Simulation.Io;
+using TheyWillDescend.Simulation.Session;
 using Unity.Entities;
 
-namespace _Project.Scripts.Simulation.Time
+namespace TheyWillDescend.Simulation.Time
 {
     partial struct AdvanceGameTimeSystem : ISystem
     {
@@ -25,7 +25,9 @@ namespace _Project.Scripts.Simulation.Time
             {
                 time.ElapsedInDay -= time.DayDuration;
                 time.Day += 1;
-                GameLog.Info($"Day {time.Day}");
+                if (SystemAPI.HasSingleton<SimBridge>())
+                    SystemAPI.GetSingletonBuffer<DayChangedEvent>().Add(
+                        new DayChangedEvent { Day = time.Day });
             }
         }
     }

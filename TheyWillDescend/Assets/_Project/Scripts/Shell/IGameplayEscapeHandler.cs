@@ -1,4 +1,4 @@
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// Presentation overlays (build catalog, later dialogs) can consume Esc

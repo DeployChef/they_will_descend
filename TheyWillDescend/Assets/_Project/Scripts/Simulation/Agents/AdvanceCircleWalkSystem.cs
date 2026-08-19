@@ -1,12 +1,15 @@
-using _Project.Scripts.Simulation.Session;
+using TheyWillDescend.Simulation.Io;
+using TheyWillDescend.Simulation.Session;
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace _Project.Scripts.Simulation.Agents
+namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
     /// Moves agents that have <see cref="CircleWalk"/> by writing <see cref="AgentPosition"/>.
     /// </summary>
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(CommandSystemGroup))]
     public partial struct AdvanceCircleWalkSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)

@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace _Project.Scripts.Simulation.Agents
+namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
     /// Temporary movement recipe: walk a horizontal circle.

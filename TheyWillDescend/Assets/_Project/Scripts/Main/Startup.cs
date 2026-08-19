@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
-using _Project.Scripts.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Shell;
 using UnityEngine;
 
-namespace _Project.Scripts.Shell
+namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Boot/Root entry. Loads shell scenes and starts AppFlow.
-    /// Does not know concrete UI widgets — only that AppFlowFactory can resolve <see cref="IShellUi"/>.
+    /// Composition root. Lives on Bootstrap. The only assembly that may see both Shell and Presentation.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
@@ -30,7 +30,6 @@ namespace _Project.Scripts.Shell
         IEnumerator BootRoutine()
         {
             var scenes = new SceneLoader();
-            // Still need MainMenu briefly so AppFlowFactory can resolve IShellUi.
             yield return scenes.LoadMainMenuAdditive();
 
             var bundle = AppFlowFactory.Create(this, scenes);
@@ -58,6 +57,7 @@ namespace _Project.Scripts.Shell
         void Update()
         {
             _fsm?.Tick();
+            SimGate.Active?.PushClock(Time.unscaledDeltaTime);
         }
 
         void OnDestroy()

@@ -1,4 +1,4 @@
-namespace _Project.Scripts.Simulation.Session
+namespace TheyWillDescend.Simulation.Session
 {
     /// <summary>
     /// Shell-facing run mode mirrored into ECS as <see cref="SimControl"/>.

@@ -1,0 +1,17 @@
+{
+    "name": "TheyWillDescend.App",
+    "rootNamespace": "TheyWillDescend.App",
+    "references": [
+        "TheyWillDescend.Infrastructure",
+        "TheyWillDescend.Shell",
+        "TheyWillDescend.Simulation",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "autoReferenced": true,
+    "noEngineReferences": false
+}

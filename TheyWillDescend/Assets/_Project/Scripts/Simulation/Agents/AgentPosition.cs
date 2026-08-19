@@ -1,12 +1,10 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace _Project.Scripts.Simulation.Agents
+namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Where the agent entity is. This is the character's location in simulation.
-    /// Movement systems write it; presentation copies it to the mesh Transform.
-    /// Facing is "look direction", not an animation clip.
+    /// Where the agent entity is. Simulation write model. Views pull this; Transform is not stored here.
     /// </summary>
     public struct AgentPosition : IComponentData
     {

@@ -1,7 +1,7 @@
-using _Project.Scripts.Simulation.Time;
+using TheyWillDescend.Simulation.Time;
 using UnityEngine;
 
-namespace _Project.Scripts.Presentation.GameHud
+namespace TheyWillDescend.Presentation.GameHud
 {
     public static class GameClockFormat
     {

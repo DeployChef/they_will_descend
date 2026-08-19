@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using _Project.Scripts.Simulation.City;
+using TheyWillDescend.Simulation.City;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace _Project.Scripts.Presentation.City
+namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
     /// Builds flat annular-sector meshes for cluster footprints (polar "pads").
