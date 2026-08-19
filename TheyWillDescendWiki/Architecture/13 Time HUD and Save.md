@@ -133,7 +133,7 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 | `GameTime` (день, прогресс суток) | ECS singleton | **да** |
 | Пауза / скорость | `SimGate` → `SimControl` / `SimClock` | **да** |
 | Челики | ECS: `LocalTransform` + `CircleWalk` + `AgentType` | **да** |
-| Поставленные дома | только Presentation (`placedRoot` + `_occupied`) | **да, как записи построек** (временно не ECS) |
+| Поставленные дома | ECS: `Building` + опционально `Construction` | **да** (якорь, built, elapsed, duration) |
 | Призрак размещения | UI-режим | **нет** — перед save отменить placing |
 | Камера | Presentation | нет в v0 (окно, не мир) |
 | Служебные Unity entities (`51.1` без ваших компонентов) | Default World | **нет** |
@@ -170,13 +170,16 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь вроде `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v3
-  version: 3
+SavePayload v7
+  version: 7
   clock:  { speed, playerPaused }
   time:   { day, elapsedInDay, dayDuration }
-  agents: [{ pose (pos+fwd), circle (temporary behavior) }]
-  buildings: [{ width, depth, anchorCluster, anchorRadial }]
+  agents: [{ pose (pos+fwd), circle (temporary behavior), agentType }]
+  buildings: [{ width, depth, anchor, built, constructionElapsed, constructionDuration }]
 ```
+
+`built = 0` → load создаёт **сайт** (`Building` + `Construction`), без меша, с прогресс-баром.  
+`built = 1` → сразу готовый дом. Файлы старше v7 грузятся как уже построенные.
 
 Канон агента: **`LocalTransform` = где стоит entity**. `CircleWalk` = временный рецепт круга. `AgentType` = кто это (Worker…), не слот Mixamo.
 
@@ -202,9 +205,7 @@ SavePayload v3
 2. Отменить ghost-placing, если открыт.
 3. Прочитать синглтоны из ECS.
 4. Собрать агентов из query `LocalTransform` + `CircleWalk` + `AgentType`.
-5. Собрать дома из **явного списка записей**.  
-   **Временно:** список живёт у placement (или тонкий `BuildingSandboxRegistry`).  
-   **Канон позже:** occupancy/building entity в ECS, save читает только ECS.
+5. Собрать дома из ECS: `Building`; если есть `Construction` — `built=0` и таймер стройки.
 6. Атомарно записать файл. Залог `GameLog`.
 
 ### Load (последовательность)
@@ -215,7 +216,7 @@ SavePayload v3
    Не выгружать `Game.unity`, не трогать SubScene authoring.
 4. Записать `GameTime` + Mode/Speed в ECS и в `SimGate` (шелл и симуляция не разъедутся).
 5. Заспавнить агентов тем же пайплайном, что кнопка спавна, но с полями из файла (не Random), включая `agentType`.
-6. Поставить дома тем же пайплайном, что `PlaceBuilding`, из записей.
+6. Поставить дома тем же пайплайном, что `PlaceBuilding`: сайт с `Elapsed`, либо готовый штамп.
 7. Восстановить Mode из файла (если сохраняли Running x2 — после load снова Running x2). Либо оставить Frozen, чтобы осмотреться — выбрать одно в коде и не смешивать. **Предпочтение среза:** восстановить Mode как в файле («тот же кадр»).
 
 Load **не** = `GameSession.Dispose` + полный reload сцены, пока слот простой. Reload сцены — ядерный вариант «с нуля», здесь достаточно reset динамики.
@@ -240,7 +241,10 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 
 | Кусок | Слой |
 | --- | --- |
-| Кнопки паузы/скорости/save/load, текст часов | Presentation (`GameHudBinder` + разметка Canvas) |
+| Тулза времени (пауза / x1–x3 / часы) | Presentation (`TimeWidget` на `TimeBar`) |
+| Слот save/load | Presentation (`SaveWidget`) |
+| Спавн агента | Presentation (`SpawnWidget`) |
+| Каталог / ghost стройки | Presentation (`BuildWidget`; Esc и `BuildLocked`) |
 | `SimGate.Set(Mode/Speed)` | Presentation / `Shell` (`SimGate`) |
 | `SimClock`, `GameTime` | Simulation |
 | Читать/писать файл, версия payload | Presentation / `Infrastructure` (`RunSnapshotStore`) |
@@ -256,7 +260,7 @@ Load **не** = `GameSession.Dispose` + полный reload сцены, пока
 | Сейчас (срез) | Позже |
 | --- | --- |
 | JSON один слот | слоты, имя, скриншот, checksum |
-| Дома в registry Presentation | building entities + occupancy в ECS, save только оттуда |
+| Дома в ECS (`Building` + стройка) | тот же мост; occupancy уже в ECS |
 | Агенты: позиция + ключ вида в ECS, меш снаружи | тот же мост, когда появится pathfinding |
 | Свой payload | опционально `SerializeUtility` по query динамики |
 | `DayDuration` короткий | баланс суток |

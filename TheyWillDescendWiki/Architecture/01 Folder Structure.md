@@ -46,6 +46,9 @@ Assets/_Project/Scripts/
   Main/             Startup, AppFlowFactory
 ```
 
-Новая механика: система в `Simulation/<домен>`, команда в `Io` (или рядом с доменом), вид в `Presentation/<домен>`. HUD только `SimIo.TryEnqueue…`.
+Новая механика: система в `Simulation/<домен>`, команда в `Io` (или рядом с доменом), вид в `Presentation/<домен>`.  
+Одна команда / один флаг сноса — **своя система** в `CommandSystemGroup`. Не общий `SimCommandProcessor`. HUD только `SimIo.TryEnqueue…`.
+
+`GameHud` — оверлей: классы-виджеты (`TimeWidget`, `BuildWidget`…). `*View` / `*ViewBoard` — меш в мире следует за entity. `ShellUiBinder` остаётся binder: канвас меню ↔ порт шелла.
 
 Связанные: [[00 Overview]] · [[08 Production ECS]] · [[09 App Shell]] · [[14 Sim Presentation Bridge]]

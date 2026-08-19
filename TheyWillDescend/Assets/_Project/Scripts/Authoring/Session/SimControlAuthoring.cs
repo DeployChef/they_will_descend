@@ -14,6 +14,7 @@ namespace TheyWillDescend.Authoring.Session
     public sealed class SimControlAuthoring : MonoBehaviour
     {
         [SerializeField] RadialGridConfig cityGrid = RadialGridConfig.Default;
+        [SerializeField] float constructionDuration = 8f;
         [SerializeField] GameObject house6x2;
         [SerializeField] GameObject house2x2;
 
@@ -34,7 +35,10 @@ namespace TheyWillDescend.Authoring.Session
                 {
                     Config = config,
                     Center = float3.zero,
-                    Ready = 1
+                    Ready = 1,
+                    ConstructionDuration = authoring.constructionDuration > 0.001f
+                        ? authoring.constructionDuration
+                        : 8f
                 });
                 AddBuffer<SpawnAgentCommand>(entity);
                 AddBuffer<PlaceBuildingCommand>(entity);

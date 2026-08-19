@@ -17,7 +17,7 @@ namespace TheyWillDescend.App
     /// </summary>
     public static class RunSessionSnapshot
     {
-        public const int PayloadVersion = 6;
+        public const int PayloadVersion = RunSnapshot.CurrentVersion;
 
         public static RunSnapshot Capture()
         {
@@ -80,21 +80,37 @@ namespace TheyWillDescend.App
             types.Dispose();
 
             using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            var buildingEntities = buildingQuery.ToEntityArray(Allocator.Temp);
             var buildings = buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
             snapshot.buildings = new BuildingSnapshot[buildings.Length];
+            var constructing = 0;
             for (var i = 0; i < buildings.Length; i++)
             {
                 var building = buildings[i];
-                snapshot.buildings[i] = new BuildingSnapshot
+                var record = new BuildingSnapshot
                 {
                     widthClusters = building.WidthClusters,
                     depthRadialRings = building.DepthRadialRings,
                     anchorCluster = building.AnchorCluster,
-                    anchorRadial = building.AnchorRadial
+                    anchorRadial = building.AnchorRadial,
+                    built = 1
                 };
+                if (em.HasComponent<Construction>(buildingEntities[i]))
+                {
+                    var construction = em.GetComponentData<Construction>(buildingEntities[i]);
+                    record.built = 0;
+                    record.constructionElapsed = construction.Elapsed;
+                    record.constructionDuration = construction.Duration;
+                    constructing++;
+                }
+
+                snapshot.buildings[i] = record;
             }
 
+            buildingEntities.Dispose();
             buildings.Dispose();
+            GameLog.Info(
+                $"Captured snapshot: day {snapshot.day}, agents {snapshot.agents.Length}, buildings {snapshot.buildings.Length} ({constructing} constructing).");
             return snapshot;
         }
 
@@ -131,14 +147,26 @@ namespace TheyWillDescend.App
                         WidthClusters = record.widthClusters,
                         DepthRadialRings = record.depthRadialRings,
                         AnchorCluster = record.anchorCluster,
-                        AnchorRadial = record.anchorRadial
+                        AnchorRadial = record.anchorRadial,
+                        ConstructionElapsed = record.constructionElapsed,
+                        ConstructionDuration = record.constructionDuration,
+                        InstantComplete = InstantCompleteFromRecord(snapshot.version, record)
                     });
                 }
             }
 
             SimIo.PlaybackCommands();
             GameLog.Info(
-                $"Applied snapshot: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
+                $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
+        }
+
+        static byte InstantCompleteFromRecord(int version, BuildingSnapshot record)
+        {
+            if (record.built != 0)
+                return 1;
+            if (version >= RunSnapshot.CurrentVersion)
+                return 0;
+            return record.constructionDuration > 0.001f ? (byte)0 : (byte)1;
         }
 
         static void EnqueueAgent(AgentSnapshot record, int version)

@@ -9,6 +9,8 @@ namespace TheyWillDescend.Simulation.City
         public float3 Center;
         public int NextBuildingId;
         public byte Ready;
+        /// <summary>Sim seconds to finish a house. HUD only displays this.</summary>
+        public float ConstructionDuration;
     }
 
     public struct OccupiedCell : IBufferElementData
@@ -32,5 +34,8 @@ namespace TheyWillDescend.Simulation.City
         public int DepthRadialRings;
         public int AnchorCluster;
         public int AnchorRadial;
+        public float ConstructionElapsed;
+        public float ConstructionDuration;
+        public byte InstantComplete;
     }
 }

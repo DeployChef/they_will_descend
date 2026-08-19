@@ -46,7 +46,7 @@ Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
 SubScene **нужна** для baked sim-данных (время, контроль, позже здания/рецепты).  
 Она **не обязана** содержать всех агентов. Динамическое население = команда `SpawnAgent` → entity; `AgentViewBoard` ставит меш.
 
-HUD спавна: `GameHudCanvas` на Game (overlay), не MainMenu.
+HUD: `GameHudCanvas` на Game (overlay). Часы — `TimeWidget` на `TimeBar`; спавн / стройка / сейв — свои виджеты.
 
 
 ## Заход B — руками

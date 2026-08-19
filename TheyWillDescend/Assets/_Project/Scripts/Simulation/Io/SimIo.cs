@@ -123,7 +123,7 @@ namespace TheyWillDescend.Simulation.Io
         {
             if (!TryManager(out var em))
                 return;
-            SimCommandProcessor.Run(em);
+            SimCommandPlayback.Run(em);
         }
 
         static bool TrySession(out EntityManager em, out Entity session)

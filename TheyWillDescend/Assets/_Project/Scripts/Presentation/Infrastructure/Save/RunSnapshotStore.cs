@@ -9,14 +9,12 @@ namespace TheyWillDescend.Infrastructure.Save
     /// </summary>
     public static class RunSnapshotStore
     {
-        public const int Version = 3;
-
         public static string SlotPath =>
             Path.Combine(Application.persistentDataPath, "run_slot0.json");
 
         public static void Write(RunSnapshot snapshot)
         {
-            snapshot.version = Version;
+            snapshot.version = RunSnapshot.CurrentVersion;
             File.WriteAllText(SlotPath, JsonUtility.ToJson(snapshot, prettyPrint: true));
             GameLog.Info($"Saved slot → {SlotPath}");
         }

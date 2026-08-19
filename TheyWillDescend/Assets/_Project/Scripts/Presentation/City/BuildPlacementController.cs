@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
@@ -44,6 +45,8 @@ namespace TheyWillDescend.Presentation.City
 
         public bool IsPlacing => _placing;
 
+        public event Action Placed;
+
         void Awake()
         {
             EnsureViews();
@@ -52,6 +55,13 @@ namespace TheyWillDescend.Presentation.City
         public void PumpViews()
         {
             EnsureViews().Pump();
+        }
+
+        public void RebuildViews()
+        {
+            var views = EnsureViews();
+            views.ClearViews();
+            views.Pump();
         }
 
         public void WipeViews()
@@ -184,6 +194,8 @@ namespace TheyWillDescend.Presentation.City
             }
 
             GameLog.Info($"Place command c={_anchorCluster} r={_anchorRadial}.");
+            CancelPlacing();
+            Placed?.Invoke();
         }
 
         BuildingViewBoard EnsureViews()

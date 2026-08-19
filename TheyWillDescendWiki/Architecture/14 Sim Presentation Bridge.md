@@ -13,20 +13,18 @@
 ## Потоки
 
 ```text
-кнопка
-  → SimIo.TryEnqueue… (буфер на испечённом session entity)
+кнопка spawn / place
+  → SimIo.TryEnqueue… (буфер на session)
   → CommandSystemGroup (тик, не Flush из UI)
-  → Instantiate(SimPrototypes.Agent / House*) + LocalTransform
+  → агент: Instantiate(SimPrototypes.Agent)
+  → дом: Building + Construction + LocalTransform (меша нет)
+       complete → Instantiate(House)
 
 вид (LateUpdate)
   ← query какие entity есть
-  ← LocalTransform → Transform (только Animator-люди и зона дома)
-
-HUD часов
-  ← pull GameTime
-
-load
-  → PlaybackCommands() один раз, чтобы слот применился в этом кадре
+  ← стройка: обводка + бар (pull Construction)
+  ← готовый дом: обводка; меш рисует Entities Graphics
+  ← люди: LocalTransform → Mixamo Transform
 ```
 
 Отказ стройки — `BuildingRejectedEvent` (тост). Спавн/день — не события.

@@ -5,7 +5,13 @@ namespace TheyWillDescend.Infrastructure.Save
     [Serializable]
     public sealed class RunSnapshot
     {
-        public int version = 6;
+        /// <summary>
+        /// v7: buildings include built + construction elapsed/duration.
+        /// Older files load houses as already finished.
+        /// </summary>
+        public const int CurrentVersion = 7;
+
+        public int version = CurrentVersion;
         public int speed = 1;
         public bool playerPaused;
         public int day;
@@ -42,5 +48,8 @@ namespace TheyWillDescend.Infrastructure.Save
         public int depthRadialRings;
         public int anchorCluster;
         public int anchorRadial;
+        public byte built;
+        public float constructionElapsed;
+        public float constructionDuration;
     }
 }
