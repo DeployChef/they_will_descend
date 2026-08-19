@@ -2,7 +2,7 @@ using VContainer;
 using Futboloid.Core.Audio;
 using Futboloid.Main.Audio;
 
-namespace Futboloid.Core.Infrastructure
+namespace Futboloid.Infrastructure
 {
     /// <summary>
     /// DI-регистрации для Core (singleton, не зависит от сцены).
