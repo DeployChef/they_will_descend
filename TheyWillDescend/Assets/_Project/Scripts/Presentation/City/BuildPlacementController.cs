@@ -52,10 +52,7 @@ namespace TheyWillDescend.Presentation.City
             EnsureViews();
         }
 
-        public void PumpViews()
-        {
-            EnsureViews().Pump();
-        }
+        public void PumpViews() => EnsureViews().Pump();
 
         public void RebuildViews()
         {
@@ -66,7 +63,6 @@ namespace TheyWillDescend.Presentation.City
 
         public void WipeViews()
         {
-            EnsureViews().Pump();
             EnsureViews().ClearViews();
         }
 

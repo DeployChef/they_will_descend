@@ -8,8 +8,7 @@ using UnityEngine.UI;
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Top clock: pause / x1 / x2 / x3 and day label. Talks only to
-    /// <see cref="SimGate"/> — never Set(Running/Frozen).
+    /// Clock buttons → SimGate. Day label pulls GameTime (read-only).
     /// </summary>
     public sealed class TimeWidget : MonoBehaviour
     {
@@ -18,9 +17,6 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button speed2Button;
         [SerializeField] Button speed3Button;
         [SerializeField] TMP_Text clockLabel;
-
-        EntityQuery _timeQuery;
-        World _timeWorld;
 
         void Awake()
         {
@@ -33,12 +29,6 @@ namespace TheyWillDescend.Presentation.GameHud
         void OnDestroy()
         {
             HudButtons.Unbind(pauseButton, OnPauseClicked);
-            DisposeTimeQuery();
-        }
-
-        void OnDisable()
-        {
-            DisposeTimeQuery();
         }
 
         void Update()
@@ -73,34 +63,19 @@ namespace TheyWillDescend.Presentation.GameHud
             SimGate.Active?.SetSpeed(speed);
         }
 
-        bool TryGetGameTime(out GameTime time)
+        static bool TryGetGameTime(out GameTime time)
         {
             time = default;
             var world = World.DefaultGameObjectInjectionWorld;
             if (world == null || !world.IsCreated)
                 return false;
 
-            if (_timeQuery == default || _timeWorld != world)
-            {
-                DisposeTimeQuery();
-                _timeQuery = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-                _timeWorld = world;
-            }
-
-            if (_timeQuery.IsEmptyIgnoreFilter)
+            using var query = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
+            if (query.IsEmptyIgnoreFilter)
                 return false;
 
-            time = _timeQuery.GetSingleton<GameTime>();
+            time = query.GetSingleton<GameTime>();
             return true;
-        }
-
-        void DisposeTimeQuery()
-        {
-            if (_timeQuery == default)
-                return;
-            _timeQuery.Dispose();
-            _timeQuery = default;
-            _timeWorld = null;
         }
     }
 }

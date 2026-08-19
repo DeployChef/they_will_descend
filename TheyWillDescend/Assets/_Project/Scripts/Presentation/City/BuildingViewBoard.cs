@@ -24,8 +24,6 @@ namespace TheyWillDescend.Presentation.City
         readonly HashSet<int> _seen = new();
         Material _placedZoneMaterial;
         Color _zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
-        EntityQuery _query;
-        World _queryWorld;
 
         sealed class PlacedView
         {
@@ -44,12 +42,21 @@ namespace TheyWillDescend.Presentation.City
             _zoneColor = zoneColor;
         }
 
-        public void LateUpdate() => Pump();
+        void LateUpdate() => Pump();
 
         public void Pump()
         {
-            DrainRejected();
-            SyncViews();
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated)
+                return;
+
+            var em = world.EntityManager;
+            using var sessionQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimBridge>());
+            DrainRejected(em, sessionQuery);
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadOnly<LocalTransform>());
+            Sync(em, query);
         }
 
         public void ClearViews()
@@ -67,7 +74,6 @@ namespace TheyWillDescend.Presentation.City
 
         void OnDisable()
         {
-            DisposeQuery();
             ClearViews();
             if (_placedZoneMaterial == null)
                 return;
@@ -78,14 +84,8 @@ namespace TheyWillDescend.Presentation.City
             _placedZoneMaterial = null;
         }
 
-        void DrainRejected()
+        void DrainRejected(EntityManager em, EntityQuery sessionQuery)
         {
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
-                return;
-
-            var em = world.EntityManager;
-            using var sessionQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimBridge>());
             if (sessionQuery.IsEmptyIgnoreFilter)
                 return;
 
@@ -95,32 +95,18 @@ namespace TheyWillDescend.Presentation.City
             rejected.Clear();
         }
 
-        void SyncViews()
+        void Sync(EntityManager em, EntityQuery query)
         {
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
-                return;
-
-            if (_query == default || _queryWorld != world)
-            {
-                DisposeQuery();
-                _query = world.EntityManager.CreateEntityQuery(
-                    ComponentType.ReadOnly<Building>(),
-                    ComponentType.ReadOnly<LocalTransform>());
-                _queryWorld = world;
-            }
-
-            if (_query.IsEmptyIgnoreFilter)
+            if (query.IsEmptyIgnoreFilter)
             {
                 if (_views.Count > 0)
                     ClearViews();
                 return;
             }
 
-            var em = world.EntityManager;
-            var entities = _query.ToEntityArray(Allocator.Temp);
-            var buildings = _query.ToComponentDataArray<Building>(Allocator.Temp);
-            var transforms = _query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+            var entities = query.ToEntityArray(Allocator.Temp);
+            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
+            var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             _seen.Clear();
             var cam = Camera.main;
             for (var i = 0; i < buildings.Length; i++)
@@ -314,15 +300,6 @@ namespace TheyWillDescend.Presentation.City
                 _placedZoneMaterial.SetColor("_Color", _zoneColor);
             _placedZoneMaterial.color = _zoneColor;
             _placedZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
-        }
-
-        void DisposeQuery()
-        {
-            if (_query == default)
-                return;
-            _query.Dispose();
-            _query = default;
-            _queryWorld = null;
         }
     }
 }

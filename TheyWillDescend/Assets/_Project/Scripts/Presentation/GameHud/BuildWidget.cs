@@ -73,10 +73,14 @@ namespace TheyWillDescend.Presentation.GameHud
         public void PumpViews()
         {
             EnsurePlacement();
-            placement?.RebuildViews();
+            placement?.PumpViews();
         }
 
-        public void RebuildViews() => PumpViews();
+        public void RebuildViews()
+        {
+            EnsurePlacement();
+            placement?.RebuildViews();
+        }
 
         void OnBuildModeClicked()
         {

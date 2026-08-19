@@ -21,8 +21,6 @@ namespace TheyWillDescend.Presentation.Agents
         Transform _spawnParent;
         readonly Dictionary<int, AgentView> _views = new();
         readonly HashSet<int> _seen = new();
-        EntityQuery _query;
-        World _queryWorld;
 
         public void BindCatalog(GameObject[] prefabs, Transform spawnParent)
         {
@@ -30,11 +28,24 @@ namespace TheyWillDescend.Presentation.Agents
             _spawnParent = spawnParent;
         }
 
-        public void LateUpdate() => Pump();
+        void LateUpdate() => Pump();
 
         public void Pump()
         {
-            SyncViews();
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated)
+                return;
+
+            using var query = world.EntityManager.CreateEntityQuery(
+                ComponentType.ReadOnly<AgentId>(),
+                ComponentType.ReadOnly<AgentType>(),
+                ComponentType.ReadOnly<LocalTransform>());
+            Sync(query);
+        }
+
+        void OnDisable()
+        {
+            ClearViews();
         }
 
         public void ClearViews()
@@ -51,38 +62,18 @@ namespace TheyWillDescend.Presentation.Agents
             _views.Clear();
         }
 
-        void OnDisable()
+        void Sync(EntityQuery query)
         {
-            DisposeQuery();
-            ClearViews();
-        }
-
-        void SyncViews()
-        {
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
-                return;
-
-            if (_query == default || _queryWorld != world)
-            {
-                DisposeQuery();
-                _query = world.EntityManager.CreateEntityQuery(
-                    ComponentType.ReadOnly<AgentId>(),
-                    ComponentType.ReadOnly<AgentType>(),
-                    ComponentType.ReadOnly<LocalTransform>());
-                _queryWorld = world;
-            }
-
-            if (_query.IsEmptyIgnoreFilter)
+            if (query.IsEmptyIgnoreFilter)
             {
                 if (_views.Count > 0)
                     ClearViews();
                 return;
             }
 
-            var ids = _query.ToComponentDataArray<AgentId>(Allocator.Temp);
-            var types = _query.ToComponentDataArray<AgentType>(Allocator.Temp);
-            var transforms = _query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+            var ids = query.ToComponentDataArray<AgentId>(Allocator.Temp);
+            var types = query.ToComponentDataArray<AgentType>(Allocator.Temp);
+            var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             var animSpeed = AnimSpeed();
             _seen.Clear();
             for (var i = 0; i < ids.Length; i++)
@@ -176,15 +167,6 @@ namespace TheyWillDescend.Presentation.Agents
         static void ApplyPose(Transform transform, in LocalTransform local)
         {
             transform.SetPositionAndRotation((Vector3)local.Position, (Quaternion)local.Rotation);
-        }
-
-        void DisposeQuery()
-        {
-            if (_query == default)
-                return;
-            _query.Dispose();
-            _query = default;
-            _queryWorld = null;
         }
     }
 }

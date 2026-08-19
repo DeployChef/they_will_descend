@@ -98,6 +98,7 @@ UI ← читает Stock / domain events
 - Rich OO aggregates с логикой на entity
 - SO как runtime write model
 - Burst/ISystem → прямые вызовы UI/FMOD
+- Presentation `SystemBase`, который держит `TimeWidget` / `*ViewBoard` (вид **pull**, не push)
 - Копирование card-архитектуры джема в core
 - Симуляция тикает на меню/брифинге без SimGate
 - VContainer-сервис как write model экономики

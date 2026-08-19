@@ -25,7 +25,7 @@ Simulation и Authoring: `autoReferenced: false` — на них ссылают�
 | --- | --- | --- |
 | `TheyWillDescend.Simulation` | компоненты, системы, `SimIo`, сетка, occupancy | UI, виды, `SimGate`, диск |
 | `TheyWillDescend.Authoring` | Baker’ы SubScene | runtime UI |
-| `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, `SimGate`, JSON-сейв, `GameLog` | `ISystem`; писать стоки/occupy в обход команд |
+| `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, `SimGate`, JSON-сейв, `GameLog` | `ISystem` / `SystemBase` на виджеты; писать стоки/occupy в обход команд |
 | `TheyWillDescend.Main` | `Startup`, `AppFlowFactory` — вход и регистрация | экономика, `EntityManager` |
 
 Домены Shell / Application / Infrastructure — **папки** в Presentation, не отдельные сборки.  
