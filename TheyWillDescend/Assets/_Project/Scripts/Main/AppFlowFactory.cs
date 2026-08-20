@@ -1,3 +1,4 @@
+using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Shell.States;
 using UnityEngine;
@@ -30,7 +31,7 @@ namespace TheyWillDescend.Main
             }
         }
 
-        public static Bundle Create(MonoBehaviour coroutineHost, SceneLoader scenes)
+        public static Bundle Create(MonoBehaviour coroutineHost, SceneLoader scenes, GameAudio audio)
         {
             var simGate = new SimGate();
             simGate.BindAsActive();
@@ -42,7 +43,7 @@ namespace TheyWillDescend.Main
             fsm.Register(new PressAnyKeyState(fsm, simGate, intents));
             fsm.Register(new MainMenuState(fsm, simGate));
             fsm.Register(new LoadingGameState(fsm, simGate, session));
-            fsm.Register(new PlayingState(simGate, intents));
+            fsm.Register(new PlayingState(simGate, intents, audio));
 
             return new Bundle(simGate, fsm, intents, session);
         }

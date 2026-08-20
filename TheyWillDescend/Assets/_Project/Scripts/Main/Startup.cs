@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using UnityEngine;
 
@@ -38,7 +39,11 @@ namespace TheyWillDescend.Main
                 yield return null;
             }
 
-            var bundle = AppFlowFactory.Create(this, scenes);
+            var audio = GetComponent<GameAudio>();
+            if (audio == null)
+                audio = gameObject.AddComponent<GameAudio>();
+
+            var bundle = AppFlowFactory.Create(this, scenes, audio);
             _fsm = bundle.StateMachine;
             _intents = bundle.Intents as IDisposable;
 
