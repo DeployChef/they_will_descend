@@ -20,6 +20,42 @@ MonoBehaviour:
   - Name: Desktop
     Value: 506
   Exists: 1
+--- !u!114 &-5205210692398712933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Main_theme.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Main_theme.bank
+  Name: Main_theme
+  StudioPath: bank:/Main_theme
+  lastModified: 639228539098296041
+  FileSizes: []
+  Exists: 1
+--- !u!114 &-4253044864188614951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Master.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.bank
+  Name: Master
+  StudioPath: bank:/Master
+  lastModified: 639228539098351282
+  FileSizes: []
+  Exists: 1
 --- !u!114 &-3486965941906708464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91,18 +127,21 @@ MonoBehaviour:
   m_Name: FMODStudioCache
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EventCache
   EditorBanks:
-  - {fileID: 8140012149444986886}
-  - {fileID: 690622466387477900}
-  - {fileID: 5519549426623185463}
-  EditorEvents: []
+  - {fileID: 6289055830777138674}
+  - {fileID: -5205210692398712933}
+  - {fileID: -4253044864188614951}
+  EditorEvents:
+  - {fileID: 2837765788686147200}
   EditorParameters: []
   MasterBanks:
-  - {fileID: 5519549426623185463}
+  - {fileID: -4253044864188614951}
   StringsBanks:
-  - {fileID: 8140012149444986886}
+  - {fileID: 6289055830777138674}
   cacheVersion: 131857
-  cacheTime: 639213933180522065
-  SerializableEventsDict: []
+  cacheTime: 639228539098371283
+  SerializableEventsDict:
+  - key: event:/main_soundtrack
+    index: 0
 --- !u!114 &231108389930646969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,6 +182,30 @@ MonoBehaviour:
   - Name: Desktop
     Value: 506
   Exists: 1
+--- !u!114 &737571192633683853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/main_soundtrack/Parameter 1
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Parameter 1
+  StudioPath: 
+  Min: 0
+  Max: 100
+  Default: 0
+  ID:
+    data1: 2831926291
+    data2: 1257349732
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
 --- !u!114 &1314020623150703559
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,6 +244,34 @@ MonoBehaviour:
   lastModified: 639213933180473347
   FileSizes: []
   Exists: 1
+--- !u!114 &2837765788686147200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/main_soundtrack
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/main_soundtrack
+  Guid:
+    Data1: -695404810
+    Data2: 1200613135
+    Data3: -1731062901
+    Data4: 1383649775
+  Banks:
+  - {fileID: -5205210692398712933}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 737571192633683853}
+  MinDistance: 0
+  MaxDistance: 9800
+  Length: 236808
 --- !u!114 &5519549426623185463
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,6 +291,26 @@ MonoBehaviour:
   FileSizes:
   - Name: Desktop
     Value: 1074
+  Exists: 1
+--- !u!114 &6289055830777138674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Master.strings.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank
+  Name: Master.strings
+  StudioPath: bank:/Master.strings
+  lastModified: 639228539098371283
+  FileSizes:
+  - Name: 
+    Value: 880
   Exists: 1
 --- !u!114 &8140012149444986886
 MonoBehaviour:

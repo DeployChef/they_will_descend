@@ -208,6 +208,7 @@ GameObject:
   m_Component:
   - component: {fileID: 767140481}
   - component: {fileID: 767140480}
+  - component: {fileID: 767140482}
   m_Layer: 0
   m_Name: Startup
   m_TagString: Untagged
@@ -226,8 +227,27 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e093e17b030f4524e839a55cc633bf96, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Shell.CompositionRoot
+  m_EditorClassIdentifier: TheyWillDescend.Main::TheyWillDescend.Main.Startup
   skipMenuToGameTemporarily: 1
+--- !u!114 &767140482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 767140479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f2c8a1b47d64e0f9c3e5a7b1d8f4c6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Audio.GameAudio
+  musicEvent:
+    Guid:
+      Data1: -695404810
+      Data2: 1200613135
+      Data3: -1731062901
+      Data4: 1383649775
+    Path: event:/main_soundtrack
 --- !u!4 &767140481
 Transform:
   m_ObjectHideFlags: 0
