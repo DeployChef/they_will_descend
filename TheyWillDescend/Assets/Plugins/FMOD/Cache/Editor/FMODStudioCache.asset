@@ -35,7 +35,25 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Main_theme.bank
   Name: Main_theme
   StudioPath: bank:/Main_theme
-  lastModified: 639228539098296041
+  lastModified: 639227868462092065
+  FileSizes: []
+  Exists: 1
+--- !u!114 &-4854169222813555011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/atmos_wind.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/atmos_wind.bank
+  Name: atmos_wind
+  StudioPath: bank:/Atmos/atmos_wind
+  lastModified: 639229536512777290
   FileSizes: []
   Exists: 1
 --- !u!114 &-4253044864188614951
@@ -53,7 +71,7 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639228539098351282
+  lastModified: 639229536512617238
   FileSizes: []
   Exists: 1
 --- !u!114 &-3486965941906708464
@@ -130,18 +148,22 @@ MonoBehaviour:
   - {fileID: 6289055830777138674}
   - {fileID: -5205210692398712933}
   - {fileID: -4253044864188614951}
+  - {fileID: -4854169222813555011}
   EditorEvents:
   - {fileID: 2837765788686147200}
+  - {fileID: 3873455408145546494}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4253044864188614951}
   StringsBanks:
   - {fileID: 6289055830777138674}
   cacheVersion: 131857
-  cacheTime: 639228539098371283
+  cacheTime: 639229536512777290
   SerializableEventsDict:
   - key: event:/main_soundtrack
     index: 0
+  - key: event:/wind_range
+    index: 1
 --- !u!114 &231108389930646969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272,6 +294,33 @@ MonoBehaviour:
   MinDistance: 0
   MaxDistance: 9800
   Length: 236808
+--- !u!114 &3873455408145546494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/wind_range
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/wind_range
+  Guid:
+    Data1: -2119407437
+    Data2: 1113700767
+    Data3: -1897003389
+    Data4: 853395227
+  Banks:
+  - {fileID: -4854169222813555011}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 150
+  Length: 16000
 --- !u!114 &5519549426623185463
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,10 +356,10 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639228539098371283
+  lastModified: 639229536512637232
   FileSizes:
   - Name: 
-    Value: 880
+    Value: 1044
   Exists: 1
 --- !u!114 &8140012149444986886
 MonoBehaviour:
