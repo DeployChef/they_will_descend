@@ -45,9 +45,25 @@ public class RTSCameraController : MonoBehaviour
             orbitalFollow = camera.GetComponent<CinemachineOrbitalFollow>();
     }
 
+    private void OnEnable()
+    {
+        EnableMap(moveAction);
+        EnableMap(zoomAction);
+    }
+
+    private static void EnableMap(InputActionReference reference)
+    {
+        var action = reference != null ? reference.action : null;
+        action?.actionMap?.Enable();
+        action?.Enable();
+    }
+
     private void Awake()
     {
-        sprintAction = InputSystem.actions.FindAction(sprintActionName);
+        sprintAction = InputSystem.actions != null
+            ? InputSystem.actions.FindAction(sprintActionName)
+            : null;
+        sprintAction?.Enable();
     }
 
     private void Start()

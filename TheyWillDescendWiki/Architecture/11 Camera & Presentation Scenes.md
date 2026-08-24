@@ -15,7 +15,7 @@
 
 | Объект | Да / нет | Почему |
 | --- | --- | --- |
-| Main Camera | **да** | единственный вывод в кадр; позже `CinemachineBrain` |
+| Main Camera | **да** | единственный вывод в кадр; `CinemachineBrain` + `AudioListener` |
 | AudioListener | **да** (на Main Camera) | один на игру |
 | EventSystem | **да** | UI input глобально |
 | Startup | **да** | composition / AppFlow |
@@ -50,10 +50,33 @@
 | Где | Компонент |
 | --- | --- |
 | Bootstrap Main Camera | `CinemachineBrain` + `AudioListener` |
-| Game | `CinemachineCamera` (VCam_Gameplay), **без** Main Camera |
+| Game | `VCam_Gameplay` (`CinemachineCamera`) + `RTSCameraTarget`. **Без** Main Camera |
 | MainMenu | позже VCam меню при 3D-фоне |
 
 До VCam на меню Overlay UI достаточно Root-камеры (чистый/нейтральный clear).
+
+### RTS-риг на Game
+
+Brain на Root смотрит на виртуальную камеру. Сама VCam не рендерит — она задаёт позу и линзу.
+
+| Объект | Роль |
+| --- | --- |
+| `RTSCameraTarget` | точка, вокруг которой орбита; пан WASD двигает её по земле. Старт: плаза `(0, 2, 0)` |
+| `VCam_Gameplay` | `CinemachineCamera` + `CinemachineOrbitalFollow` + `CinemachineHardLookAt` + `CinemachineInputAxisController` + `RTSCameraController` |
+
+Управление:
+
+| Ввод | Что делает |
+| --- | --- |
+| WASD | пан цели по XZ относительно взгляда |
+| Shift | спринт пан |
+| колёсико | зум: радиус 14–42, угол по параболе 20°→75° |
+| ПКМ / СКМ + мышь | орбита по yaw вокруг цели |
+
+Лимит пана: круг `maxMapRadius = 75` вокруг `(0,0,0)` (внешнее кольцо города ≈ 59).  
+Pitch от зума, не от мыши — иначе контроллер и ось Y орбиты дерутся каждый кадр.
+
+`RTSCameraController` пока в `Assets/Scripts` (Assembly-CSharp, наследие Sample). Канон позже — Presentation.
 
 
 ## Play Mode vs Editor (обязательно)

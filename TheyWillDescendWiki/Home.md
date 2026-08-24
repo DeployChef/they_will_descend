@@ -30,7 +30,7 @@
 - [[Architecture/02 Scenes & Lifetime|02 Scenes & Lifetime]] — Root/Game, SubScene, SimGate
 - [[Architecture/03 Core Systems|03 Core Systems]] — AppFlow, Director, Time, GameLog
 - [[Architecture/04 Simulation|04 Simulation]] — город, люди, экономика, тепло
-- [[Architecture/05 Content Pipeline|05 Content Pipeline]] — Authoring/Baker, баланс
+- [[Architecture/05 Content Pipeline|05 Content Pipeline]] — здания, ресурсы, сценарий (гайд)
 - [[Architecture/06 FMOD Audio|06 FMOD Audio]] — FMOD Studio 2.03
 - [[Architecture/07 Mentorship & Learning|07 Mentorship & Learning]] — ментор, уроки, прогресс
 - [[Architecture/08 Production ECS|08 Production ECS]] — production ECS, расширение

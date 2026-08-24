@@ -1,42 +1,19 @@
+using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 
 namespace TheyWillDescend.Simulation.City
 {
-    public struct CityGrid : IComponentData
-    {
-        public RadialGridConfig Config;
-        public float3 Center;
-        public int NextBuildingId;
-        public byte Ready;
-        /// <summary>Sim seconds to finish a house. HUD only displays this.</summary>
-        public float ConstructionDuration;
-    }
-
-    public struct OccupiedCell : IBufferElementData
-    {
-        public int Cluster;
-        public int Radial;
-    }
-
+    /// <summary>
+    /// Instance on the grid. Size and recipe live on <see cref="BuildingType"/> / catalog.
+    /// Width/depth are copied at Place so occupancy/views do not resolve the catalog.
+    /// </summary>
     public struct Building : IComponentData
     {
         public int Id;
+        public FixedString64Bytes TypeId;
         public int WidthClusters;
         public int DepthRadialRings;
         public int AnchorCluster;
         public int AnchorRadial;
-    }
-
-    public struct PlaceBuildingCommand : IBufferElementData
-    {
-        public int WidthClusters;
-        public int DepthRadialRings;
-        public int AnchorCluster;
-        public int AnchorRadial;
-        public float ConstructionElapsed;
-        public float ConstructionDuration;
-        public byte InstantComplete;
-        public int BuildingId;
     }
 }

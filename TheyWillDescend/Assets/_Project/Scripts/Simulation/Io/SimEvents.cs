@@ -8,7 +8,13 @@ namespace TheyWillDescend.Simulation.Io
     /// </summary>
     public struct BuildingRejectedEvent : IBufferElementData
     {
+        public const byte UnknownType = 1;
+        public const byte InvalidCell = 2;
+        public const byte Overlap = 3;
+        public const byte Unaffordable = 4;
+
         public int AnchorCluster;
         public int AnchorRadial;
+        public byte Reason;
     }
 }

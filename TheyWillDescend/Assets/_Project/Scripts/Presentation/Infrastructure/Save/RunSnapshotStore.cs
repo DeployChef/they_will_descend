@@ -19,6 +19,14 @@ namespace TheyWillDescend.Infrastructure.Save
             GameLog.Info($"Saved slot → {SlotPath}");
         }
 
+        public static void DeleteSlot()
+        {
+            if (!File.Exists(SlotPath))
+                return;
+            File.Delete(SlotPath);
+            GameLog.Info($"Deleted slot → {SlotPath}");
+        }
+
         public static bool TryRead(out RunSnapshot snapshot)
         {
             snapshot = null;
@@ -33,6 +41,16 @@ namespace TheyWillDescend.Infrastructure.Save
             if (snapshot == null)
             {
                 GameLog.Error("Slot JSON failed to parse.");
+                DeleteSlot();
+                return false;
+            }
+
+            if (snapshot.version != RunSnapshot.CurrentVersion)
+            {
+                GameLog.Warning(
+                    $"Slot v{snapshot.version} != current v{RunSnapshot.CurrentVersion}; deleting {SlotPath}.");
+                DeleteSlot();
+                snapshot = null;
                 return false;
             }
 

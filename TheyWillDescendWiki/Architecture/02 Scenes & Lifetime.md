@@ -8,7 +8,7 @@
 
 | Сцена | Живёт | Содержимое |
 | --- | --- | --- |
-| **Bootstrap** (Root) | всегда | `Startup`, **одна** Main Camera (+ Cinemachine Brain позже), EventSystem. Без мира, без меню-UI, без gameplay-света |
+| **Bootstrap** (Root) | всегда | `Startup`, **одна** Main Camera + `CinemachineBrain` + `AudioListener`, EventSystem. Без мира, без меню-UI, без gameplay-света |
 | **MainMenu** | пока в меню | Canvas splash/menu, `ShellUiBinder`, опционально VCam/меню-свет |
 | **Game** | сессия рана | уровень, Directional Light, VCam геймплея, SubScene Simulation. **Без** второй Main Camera |
 

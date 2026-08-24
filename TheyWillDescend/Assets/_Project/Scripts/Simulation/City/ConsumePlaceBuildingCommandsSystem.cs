@@ -1,4 +1,5 @@
 using TheyWillDescend.Simulation.Agents;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
 using Unity.Collections;
 using Unity.Entities;
@@ -33,11 +34,19 @@ namespace TheyWillDescend.Simulation.City
                 return;
 
             var grid = em.GetComponentData<CityGrid>(session);
-            var catalog = em.GetComponentData<SimPrototypes>(session);
+            if (!em.HasBuffer<BuildingPrototype>(session))
+            {
+                commands.Clear();
+                return;
+            }
+
             var copy = commands.ToNativeArray(Allocator.Temp);
             commands.Clear();
             for (var i = 0; i < copy.Length; i++)
+            {
+                var catalog = em.GetBuffer<BuildingPrototype>(session);
                 Place(em, session, ref grid, catalog, copy[i]);
+            }
             copy.Dispose();
             em.SetComponentData(session, grid);
         }
@@ -46,23 +55,25 @@ namespace TheyWillDescend.Simulation.City
             EntityManager em,
             Entity session,
             ref CityGrid grid,
-            in SimPrototypes catalog,
+            DynamicBuffer<BuildingPrototype> catalog,
             in PlaceBuildingCommand command)
         {
-            var footprint = new BuildingFootprint
+            if (!BuildingCatalog.TryResolve(
+                    catalog, command.TypeId, command.WidthClusters, command.DepthRadialRings, out var prototype))
             {
-                WidthClusters = command.WidthClusters,
-                DepthRadialRings = command.DepthRadialRings
-            };
-            var prefab = ResolveHousePrefab(catalog, command.WidthClusters, command.DepthRadialRings);
+                Reject(em, session, command, BuildingRejectedEvent.UnknownType);
+                return;
+            }
 
+            var footprint = prototype.Footprint;
+            var prefab = prototype.Prefab;
             var clusters = new NativeList<OccupiedCell>(64, Allocator.Temp);
             if (grid.Ready == 0
                 || prefab == Entity.Null
                 || !RadialFootprintMath.TryExpandClusters(
                     grid.Config, command.AnchorCluster, command.AnchorRadial, footprint, clusters))
             {
-                Reject(em, session, command);
+                Reject(em, session, command, BuildingRejectedEvent.InvalidCell);
                 clusters.Dispose();
                 return;
             }
@@ -70,7 +81,14 @@ namespace TheyWillDescend.Simulation.City
             var occupied = em.GetBuffer<OccupiedCell>(session);
             if (Overlaps(occupied, clusters))
             {
-                Reject(em, session, command);
+                Reject(em, session, command, BuildingRejectedEvent.Overlap);
+                clusters.Dispose();
+                return;
+            }
+
+            if (!TryPay(em, session, prototype.TypeId, command))
+            {
+                Reject(em, session, command, BuildingRejectedEvent.Unaffordable);
                 clusters.Dispose();
                 return;
             }
@@ -83,10 +101,7 @@ namespace TheyWillDescend.Simulation.City
                 grid.Center, grid.Config, command.AnchorCluster, command.AnchorRadial, footprint,
                 out var position, out var rotation, out var stubWorldSize);
 
-            var isSmall = footprint.WidthClusters == 2 && footprint.DepthRadialRings == 2;
-            var meshSize = isSmall ? catalog.House2x2MeshSize : catalog.House6x2MeshSize;
-            if (meshSize <= 0.001f)
-                meshSize = isSmall ? catalog.House6x2MeshSize : catalog.House2x2MeshSize;
+            var meshSize = prototype.MeshSize;
             var scale = meshSize > 0.001f ? stubWorldSize / meshSize : 1f;
 
             var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
@@ -96,15 +111,18 @@ namespace TheyWillDescend.Simulation.City
             var building = new Building
             {
                 Id = id,
-                WidthClusters = command.WidthClusters,
-                DepthRadialRings = command.DepthRadialRings,
+                TypeId = prototype.TypeId,
+                WidthClusters = footprint.WidthClusters,
+                DepthRadialRings = footprint.DepthRadialRings,
                 AnchorCluster = command.AnchorCluster,
                 AnchorRadial = command.AnchorRadial
             };
             var transform = LocalTransform.FromPositionRotationScale(position, rotation, scale);
             var duration = command.ConstructionDuration > 0.001f
                 ? command.ConstructionDuration
-                : (grid.ConstructionDuration > 0.001f ? grid.ConstructionDuration : 8f);
+                : (prototype.ConstructionDuration > 0.001f
+                    ? prototype.ConstructionDuration
+                    : (grid.ConstructionDuration > 0.001f ? grid.ConstructionDuration : 8f));
 
             if (command.InstantComplete != 0)
             {
@@ -127,7 +145,8 @@ namespace TheyWillDescend.Simulation.City
             em.AddComponentData(site, building);
             em.AddComponentData(site, construction);
             em.AddComponentData(site, transform);
-            em.AddComponentData(site, new Workplace());
+            if (prototype.WorkplaceSlots > 0)
+                em.AddComponentData(site, new Workplace());
 #if UNITY_EDITOR
             em.SetName(site, $"BuildingSite_{building.Id}");
 #endif
@@ -153,23 +172,67 @@ namespace TheyWillDescend.Simulation.City
         }
 
         public static Entity ResolveHousePrefab(
-            in SimPrototypes catalog,
+            DynamicBuffer<BuildingPrototype> catalog,
+            in FixedString64Bytes typeId,
             int widthClusters,
             int depthRadialRings)
         {
-            var isSmall = widthClusters == 2 && depthRadialRings == 2;
-            var prefab = isSmall ? catalog.House2x2 : catalog.House6x2;
-            if (prefab == Entity.Null)
-                prefab = catalog.House6x2 != Entity.Null ? catalog.House6x2 : catalog.House2x2;
-            return prefab;
+            return BuildingCatalog.TryResolve(catalog, typeId, widthClusters, depthRadialRings, out var prototype)
+                ? prototype.Prefab
+                : Entity.Null;
         }
 
-        static void Reject(EntityManager em, Entity session, in PlaceBuildingCommand command)
+        static bool TryPay(
+            EntityManager em,
+            Entity session,
+            in FixedString64Bytes typeId,
+            in PlaceBuildingCommand command)
+        {
+            if (command.InstantComplete != 0 || command.BuildingId > 0)
+                return true;
+            if (!em.HasBuffer<BuildingCost>(session))
+                return true;
+
+            var costs = em.GetBuffer<BuildingCost>(session);
+            if (!em.HasBuffer<ResourceAmount>(session))
+            {
+                for (var i = 0; i < costs.Length; i++)
+                {
+                    if (costs[i].TypeId == typeId && costs[i].Amount > 0.0001f)
+                        return false;
+                }
+
+                return true;
+            }
+
+            var stock = em.GetBuffer<ResourceAmount>(session);
+            for (var i = 0; i < costs.Length; i++)
+            {
+                var cost = costs[i];
+                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
+                    continue;
+                if (!ResourceLedger.Has(stock, cost.ResourceId, cost.Amount))
+                    return false;
+            }
+
+            for (var i = 0; i < costs.Length; i++)
+            {
+                var cost = costs[i];
+                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
+                    continue;
+                ResourceLedger.Add(stock, cost.ResourceId, -cost.Amount);
+            }
+
+            return true;
+        }
+
+        static void Reject(EntityManager em, Entity session, in PlaceBuildingCommand command, byte reason)
         {
             em.GetBuffer<BuildingRejectedEvent>(session).Add(new BuildingRejectedEvent
             {
                 AnchorCluster = command.AnchorCluster,
-                AnchorRadial = command.AnchorRadial
+                AnchorRadial = command.AnchorRadial,
+                Reason = reason
             });
         }
 

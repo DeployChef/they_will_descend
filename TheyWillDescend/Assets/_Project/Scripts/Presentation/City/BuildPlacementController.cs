@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Io;
 using Unity.Mathematics;
 using UnityEngine;
@@ -12,22 +13,22 @@ using UnityEngine.Rendering;
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Place house prefab on polar section zone.
-    /// Valid = cyan + full snap (ring + rays). Invalid = red + ring snap only (rays free).
+    /// Play aiming: ghost zone + catalog mesh, polar snap, click → PlaceBuildingCommand.
+    /// Does not own house types, live meshes, or BuildingViewBoard.
     /// </summary>
     public sealed class BuildPlacementController : MonoBehaviour
     {
         [SerializeField] RadialGridGuide gridGuide;
-        [SerializeField] BuildingFootprint footprint = BuildingFootprint.House6x2;
-        [SerializeField] GameObject prefabHouse6x2;
-        [SerializeField] GameObject prefabHouse2x2;
+        [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] Color zoneValidColor = new(0.15f, 0.75f, 1f, 0.45f);
         [SerializeField] Color zoneInvalidColor = new(0.95f, 0.2f, 0.15f, 0.5f);
-        [SerializeField] Transform placedRoot;
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
 
-        BuildingViewBoard _views;
+        string _typeId;
+        BuildingFootprint _footprint;
+        float _meshSize = 1f;
+        GameObject _ghostPrefab;
 
         bool _placing;
         bool _canPlace;
@@ -43,48 +44,36 @@ namespace TheyWillDescend.Presentation.City
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
 
+        public static bool IsPlacingActive { get; private set; }
+
         public bool IsPlacing => _placing;
 
         public event Action Placed;
 
-        void Awake()
+        public void BeginPlacing(string typeId)
         {
-            EnsureViews();
-        }
-
-        public void PumpViews() => EnsureViews()?.Pump();
-
-        public void RebuildViews()
-        {
-            var views = EnsureViews();
-            if (views == null)
+            if (!SimIo.TryGetBuilding(typeId, out var entry) || !entry.Footprint.IsValid)
+            {
+                GameLog.Error($"Place mode: unknown building type {typeId}.");
                 return;
-            views.ClearViews();
-            views.Pump();
-        }
+            }
 
-        public void WipeViews()
-        {
-            EnsureViews()?.ClearViews();
-        }
+            if (gridGuide == null)
+            {
+                GameLog.Error("BuildPlacementController: RadialGridGuide is not assigned.");
+                return;
+            }
 
-        public void SetFootprint(BuildingFootprint value)
-        {
-            footprint = value;
-            if (_ghostRoot != null)
-                RecreateGhostBuilding();
-        }
-
-        public void BeginPlacing()
-        {
-            EnsureDeps();
+            _typeId = entry.TypeId;
+            _footprint = entry.Footprint;
+            _meshSize = entry.MeshSize > 0.001f ? entry.MeshSize : 1f;
+            _ghostPrefab = ResolveGhostPrefab(typeId);
             _placing = true;
-            if (gridGuide != null)
-                gridGuide.SetBuildModeActive(true);
+            IsPlacingActive = true;
+            gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
-            GameLog.Info(
-                $"Place mode: {footprint.WidthClusters}x{footprint.DepthRadialRings} — zone + house prefab.");
+            GameLog.Info($"Place mode: {entry.DisplayName}.");
         }
 
         public void CancelPlacing()
@@ -92,6 +81,7 @@ namespace TheyWillDescend.Presentation.City
             if (!_placing)
                 return;
             _placing = false;
+            IsPlacingActive = false;
             _canPlace = false;
             if (gridGuide != null)
                 gridGuide.SetBuildModeActive(false);
@@ -105,7 +95,6 @@ namespace TheyWillDescend.Presentation.City
             if (!_placing)
                 return;
 
-            EnsureDeps();
             if (gridGuide == null || !SimIo.TryGetCityCenter(out var center))
                 return;
 
@@ -147,12 +136,12 @@ namespace TheyWillDescend.Presentation.City
             var n = config.GetClusterCount(ring);
             var snappedCluster = RadialGridMath.TurnsToCluster(turns, n);
 
-            // Probe: full snap (ring + rays) — can we place here?
             var probeOk = RadialFootprintMath.TryExpandClusters(
-                config, snappedCluster, ring, footprint, _clusters);
+                config, snappedCluster, ring, _footprint, _clusters);
             var probeFree = probeOk && !SimIo.OverlapsOccupied(_clusters);
+            var affordable = SimIo.CanAfford(_typeId);
 
-            if (probeFree)
+            if (probeFree && affordable)
             {
                 _canPlace = true;
                 _angularSnapped = true;
@@ -162,26 +151,23 @@ namespace TheyWillDescend.Presentation.City
                 return true;
             }
 
-            // Invalid: ring snap stays, angular (ray) snap off — follow cursor angle.
             _canPlace = false;
             _angularSnapped = false;
             _anchorRadial = ring;
             _anchorTurns0 = turns;
             _anchorCluster = snappedCluster;
 
-            if (!RadialFootprintMath.TryExpandClustersFromTurns(
-                    config, turns, ring, footprint, _clusters))
-                return false;
-
-            return true;
+            return RadialFootprintMath.TryExpandClustersFromTurns(
+                config, turns, ring, _footprint, _clusters);
         }
 
         void PlaceBuilding()
         {
             if (!SimIo.TryEnqueuePlaceBuilding(new PlaceBuildingCommand
                 {
-                    WidthClusters = footprint.WidthClusters,
-                    DepthRadialRings = footprint.DepthRadialRings,
+                    TypeId = _typeId,
+                    WidthClusters = _footprint.WidthClusters,
+                    DepthRadialRings = _footprint.DepthRadialRings,
                     AnchorCluster = _anchorCluster,
                     AnchorRadial = _anchorRadial
                 }))
@@ -190,27 +176,9 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            GameLog.Info($"Place command c={_anchorCluster} r={_anchorRadial}.");
+            GameLog.Info($"Place command type={_typeId} c={_anchorCluster} r={_anchorRadial}.");
             CancelPlacing();
             Placed?.Invoke();
-        }
-
-        BuildingViewBoard EnsureViews()
-        {
-            if (_views != null)
-                return _views;
-
-            _views = GetComponent<BuildingViewBoard>();
-            if (_views == null)
-            {
-                GameLog.Error("BuildPlacement: BuildingViewBoard must be on this object in the scene.");
-                return null;
-            }
-            EnsureDeps();
-            if (placedRoot == null)
-                placedRoot = new GameObject("PlacedBuildings").transform;
-            _views.Bind(placedRoot, gridGuide, zoneValidColor);
-            return _views;
         }
 
         void UpdateGhost(float3 center, RadialGridConfig config)
@@ -225,18 +193,20 @@ namespace TheyWillDescend.Presentation.City
 
             if (_ghostBuilding == null)
                 RecreateGhostBuilding();
+            if (_ghostBuilding == null)
+                return;
 
             if (_angularSnapped)
             {
                 RadialFootprintMath.FootprintMarkerPose(
-                    center, config, _anchorCluster, _anchorRadial, footprint,
+                    center, config, _anchorCluster, _anchorRadial, _footprint,
                     out var pos, out var rot, out var targetSize);
                 ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot, targetSize);
             }
             else
             {
                 RadialFootprintMath.FootprintMarkerPoseFromTurns(
-                    center, config, _anchorTurns0, _anchorRadial, footprint,
+                    center, config, _anchorTurns0, _anchorRadial, _footprint,
                     out var pos, out var rot, out var targetSize);
                 ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot, targetSize);
             }
@@ -273,14 +243,10 @@ namespace TheyWillDescend.Presentation.City
                 _ghostBuilding = null;
             }
 
-            var prefab = ResolvePrefab();
-            if (prefab == null)
-            {
-                GameLog.Warning("No house prefab assigned for current footprint.");
+            if (_ghostPrefab == null)
                 return;
-            }
 
-            var instance = Instantiate(prefab, _ghostRoot);
+            var instance = Instantiate(_ghostPrefab, _ghostRoot);
             instance.name = "GhostHouse";
             StripColliders(instance);
             _ghostBuilding = instance.transform;
@@ -292,24 +258,12 @@ namespace TheyWillDescend.Presentation.City
             t.localScale = Vector3.one;
             t.SetPositionAndRotation(pos, rot);
 
-            var size = MeasureHorizontalSize(t.gameObject);
+            var size = _meshSize > 0.001f ? _meshSize : MeasureHorizontalSize(t.gameObject);
             if (size > 0.001f)
-            {
-                var s = targetSize / size;
-                t.localScale = Vector3.one * s;
-            }
+                t.localScale = Vector3.one * (targetSize / size);
 
             t.position = pos;
             t.rotation = rot;
-        }
-
-        GameObject ResolvePrefab()
-        {
-            if (footprint.WidthClusters == 6 && footprint.DepthRadialRings == 2)
-                return prefabHouse6x2 != null ? prefabHouse6x2 : prefabHouse2x2;
-            if (footprint.WidthClusters == 2 && footprint.DepthRadialRings == 2)
-                return prefabHouse2x2 != null ? prefabHouse2x2 : prefabHouse6x2;
-            return prefabHouse6x2 != null ? prefabHouse6x2 : prefabHouse2x2;
         }
 
         static void StripColliders(GameObject go)
@@ -344,19 +298,17 @@ namespace TheyWillDescend.Presentation.City
             ApplyColor(_ghostZoneMaterial, color);
         }
 
-        void EnsureDeps()
+        GameObject ResolveGhostPrefab(string typeId)
         {
-            if (gridGuide == null)
-                gridGuide = FindFirstObjectByType<RadialGridGuide>();
+            return catalog != null ? catalog.FindPrefab(typeId) : null;
         }
 
         void EnsureMaterials()
         {
-            if (_ghostZoneMaterial == null)
-            {
-                _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
-                _ghostZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
-            }
+            if (_ghostZoneMaterial != null)
+                return;
+            _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
+            _ghostZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
         }
 
         static void ApplyColor(Material mat, Color color)
@@ -400,8 +352,16 @@ namespace TheyWillDescend.Presentation.City
             return true;
         }
 
+        void OnDisable()
+        {
+            if (_placing)
+                CancelPlacing();
+        }
+
         void OnDestroy()
         {
+            if (_placing)
+                IsPlacingActive = false;
             if (_ghostZoneMesh != null)
             {
                 if (Application.isPlaying)

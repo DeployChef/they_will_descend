@@ -21,13 +21,14 @@ namespace TheyWillDescend.Presentation.City
     /// </summary>
     public sealed class BuildingViewBoard : MonoBehaviour
     {
-        Transform _placedRoot;
-        RadialGridGuide _gridGuide;
+        [SerializeField] RadialGridGuide gridGuide;
+        [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+
+        Transform _overlayRoot;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
         Material _placedZoneMaterial;
         Material _selectedZoneMaterial;
-        Color _zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
         Color _selectedZoneColor = new(0.95f, 0.82f, 0.2f, 0.55f);
         int _selectedId;
 
@@ -43,15 +44,13 @@ namespace TheyWillDescend.Presentation.City
 
         public void Deselect() => _selectedId = 0;
 
-        public void Bind(
-            Transform placedRoot,
-            RadialGridGuide gridGuide,
-            Color zoneColor)
+        public void RebuildViews()
         {
-            _placedRoot = placedRoot;
-            _gridGuide = gridGuide;
-            _zoneColor = zoneColor;
+            ClearViews();
+            Pump();
         }
+
+        void Awake() => EnsureReady();
 
         void Update()
         {
@@ -64,6 +63,7 @@ namespace TheyWillDescend.Presentation.City
 
         public void Pump()
         {
+            EnsureReady();
             var world = World.DefaultGameObjectInjectionWorld;
             if (world == null || !world.IsCreated)
                 return;
@@ -123,8 +123,24 @@ namespace TheyWillDescend.Presentation.City
 
             var rejected = em.GetBuffer<BuildingRejectedEvent>(sessionQuery.GetSingletonEntity());
             for (var i = 0; i < rejected.Length; i++)
-                GameLog.Warning($"Building rejected c={rejected[i].AnchorCluster} r={rejected[i].AnchorRadial}.");
+            {
+                var row = rejected[i];
+                GameLog.Warning(
+                    $"Building rejected ({ReasonText(row.Reason)}) c={row.AnchorCluster} r={row.AnchorRadial}.");
+            }
             rejected.Clear();
+        }
+
+        static string ReasonText(byte reason)
+        {
+            return reason switch
+            {
+                BuildingRejectedEvent.UnknownType => "unknown type",
+                BuildingRejectedEvent.InvalidCell => "invalid cell",
+                BuildingRejectedEvent.Overlap => "overlap",
+                BuildingRejectedEvent.Unaffordable => "not enough resources",
+                _ => "rejected"
+            };
         }
 
         void Sync(EntityManager em, EntityQuery query)
@@ -194,16 +210,11 @@ namespace TheyWillDescend.Presentation.City
 
         PlacedView CreateView(in Building building)
         {
-            if (_gridGuide == null || !SimIo.TryGetCityCenter(out var center))
+            EnsureReady();
+            if (gridGuide == null || !SimIo.TryGetCityCenter(out var center))
             {
                 GameLog.Error("BuildingViewBoard: grid or CityGrid.Center missing.");
                 return null;
-            }
-
-            if (_placedRoot == null)
-            {
-                var rootGo = new GameObject("PlacedBuildings");
-                _placedRoot = rootGo.transform;
             }
 
             EnsureMaterial();
@@ -213,7 +224,7 @@ namespace TheyWillDescend.Presentation.City
                 DepthRadialRings = building.DepthRadialRings
             };
             var clusters = new List<(int cluster, int radial)>(32);
-            var config = _gridGuide.Config;
+            var config = gridGuide.Config;
             if (!RadialFootprintMath.TryExpandClusters(
                     config, building.AnchorCluster, building.AnchorRadial, footprint, clusters))
             {
@@ -223,7 +234,7 @@ namespace TheyWillDescend.Presentation.City
 
             var root = new GameObject(
                 $"Building_{building.WidthClusters}x{building.DepthRadialRings}_{building.Id}");
-            root.transform.SetParent(_placedRoot, true);
+            root.transform.SetParent(_overlayRoot, true);
 
             var zoneGo = new GameObject("FootprintZone");
             zoneGo.transform.SetParent(root.transform, false);
@@ -283,8 +294,7 @@ namespace TheyWillDescend.Presentation.City
                 return false;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return false;
-            var placement = FindFirstObjectByType<BuildPlacementController>();
-            if (placement != null && placement.IsPlacing)
+            if (BuildPlacementController.IsPlacingActive)
                 return false;
 
             var cam = Camera.main;
@@ -351,7 +361,7 @@ namespace TheyWillDescend.Presentation.City
         {
             if (_placedZoneMaterial == null)
             {
-                _placedZoneMaterial = CreateZoneMaterial("FootprintZone_Placed", _zoneColor);
+                _placedZoneMaterial = CreateZoneMaterial("FootprintZone_Placed", zoneColor);
             }
 
             if (_selectedZoneMaterial == null)
@@ -378,6 +388,15 @@ namespace TheyWillDescend.Presentation.City
             mat.color = color;
             mat.renderQueue = (int)RenderQueue.Transparent + 60;
             return mat;
+        }
+
+        void EnsureReady()
+        {
+            if (_overlayRoot != null)
+                return;
+            var go = new GameObject("BuildingOverlays");
+            go.transform.SetParent(transform, false);
+            _overlayRoot = go.transform;
         }
     }
 }

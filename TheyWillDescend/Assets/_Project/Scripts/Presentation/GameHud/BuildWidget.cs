@@ -1,26 +1,33 @@
+using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Shell;
-using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Io;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Catalog + ghost placement. Owns BuildLocked; Esc closes this overlay
-    /// before Playing toggles player pause.
+    /// Build catalog from the session building buffer via <see cref="SimIo"/>.
+    /// Esc closes this overlay before Playing toggles player pause.
     /// </summary>
     public sealed class BuildWidget : MonoBehaviour, IGameplayEscapeHandler
     {
         [SerializeField] Button buildModeButton;
         [SerializeField] GameObject buildCatalogPanel;
-        [SerializeField] Button selectCube3x6Button;
-        [SerializeField] Button selectCube2x2Button;
+        [SerializeField, FormerlySerializedAs("selectCube3x6Button")] Button catalogButtonTemplate;
+        [SerializeField, FormerlySerializedAs("selectCube2x2Button")] Button unusedLegacyCatalogButton;
         [SerializeField] BuildPlacementController placement;
+
+        readonly List<BuildingCatalogEntry> _catalog = new(8);
+        readonly List<Button> _spawnedButtons = new(8);
 
         bool _catalogOpen;
         bool _placedBound;
+        Transform _buttonRoot;
 
         public bool IsBusy => _catalogOpen || (placement != null && placement.IsPlacing);
 
@@ -38,8 +45,7 @@ namespace TheyWillDescend.Presentation.GameHud
         void Awake()
         {
             HudButtons.Bind(buildModeButton, OnBuildModeClicked);
-            HudButtons.Bind(selectCube3x6Button, OnSelectCube3x6);
-            HudButtons.Bind(selectCube2x2Button, OnSelectCube2x2);
+            HideLegacyButtons();
             SetCatalogVisible(false);
             BindPlacement();
         }
@@ -47,8 +53,7 @@ namespace TheyWillDescend.Presentation.GameHud
         void OnDestroy()
         {
             HudButtons.Unbind(buildModeButton, OnBuildModeClicked);
-            HudButtons.Unbind(selectCube3x6Button, OnSelectCube3x6);
-            HudButtons.Unbind(selectCube2x2Button, OnSelectCube2x2);
+            ClearSpawnedButtons();
 
             if (IsBusy)
                 Close(resumeSim: true);
@@ -70,18 +75,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 Close(resumeSim: true);
         }
 
-        public void PumpViews()
-        {
-            EnsurePlacement();
-            placement?.PumpViews();
-        }
-
-        public void RebuildViews()
-        {
-            EnsurePlacement();
-            placement?.RebuildViews();
-        }
-
         void OnBuildModeClicked()
         {
             if (IsBusy)
@@ -90,26 +83,24 @@ namespace TheyWillDescend.Presentation.GameHud
                 OpenCatalog();
         }
 
-        void OnSelectCube3x6() => BeginPlace(BuildingFootprint.House6x2, "House 6x2");
-
-        void OnSelectCube2x2() => BeginPlace(BuildingFootprint.Cube2x2, "House 2x2");
-
-        void BeginPlace(BuildingFootprint footprint, string label)
+        void BeginPlace(string typeId)
         {
             EnsurePlacement();
-            placement.SetFootprint(footprint);
+            if (placement == null)
+                return;
 
             _catalogOpen = false;
             SetCatalogVisible(false);
-            placement.BeginPlacing();
-
-            GameLog.Info($"Selected {label}. Click to place, Esc cancels.");
+            placement.BeginPlacing(typeId);
+            if (!placement.IsPlacing)
+                Close(resumeSim: true);
         }
 
         void OpenCatalog()
         {
             EnsurePlacement();
-            placement.CancelPlacing();
+            placement?.CancelPlacing();
+            RebuildCatalogButtons();
 
             _catalogOpen = true;
             SetCatalogVisible(true);
@@ -127,10 +118,110 @@ namespace TheyWillDescend.Presentation.GameHud
                 SimGate.Active?.SetBuildLocked(false);
         }
 
+        void RebuildCatalogButtons()
+        {
+            HideLegacyButtons();
+            ClearSpawnedButtons();
+            EnsureButtonRoot();
+            if (_buttonRoot == null || catalogButtonTemplate == null)
+            {
+                GameLog.Error("BuildWidget: catalog button template missing.");
+                return;
+            }
+
+            SimIo.CopyBuildingCatalog(_catalog);
+            if (_catalog.Count == 0)
+            {
+                GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
+                return;
+            }
+
+            for (var i = 0; i < _catalog.Count; i++)
+            {
+                var entry = _catalog[i];
+                var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
+                go.name = $"Catalog_{entry.TypeId}";
+                go.SetActive(true);
+                var button = go.GetComponent<Button>();
+                var typeId = entry.TypeId;
+                var cost = SimIo.FormatBuildingCost(typeId);
+                var title = string.IsNullOrEmpty(entry.DisplayName)
+                    ? $"{entry.WidthClusters}×{entry.DepthRadialRings}"
+                    : entry.DisplayName;
+                SetButtonLabel(button, string.IsNullOrEmpty(cost) ? title : $"{title}\n{cost}");
+                HudButtons.Bind(button, () => BeginPlace(typeId));
+                _spawnedButtons.Add(button);
+            }
+        }
+
+        void EnsureButtonRoot()
+        {
+            if (_buttonRoot != null || buildCatalogPanel == null || catalogButtonTemplate == null)
+                return;
+
+            var root = new GameObject("CatalogEntries", typeof(RectTransform));
+            root.transform.SetParent(buildCatalogPanel.transform, false);
+            var rt = root.GetComponent<RectTransform>();
+            var templateRt = catalogButtonTemplate.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = templateRt != null
+                ? templateRt.anchoredPosition
+                : new Vector2(140f, 120f);
+            rt.sizeDelta = new Vector2(templateRt != null ? templateRt.sizeDelta.x : 240f, 0f);
+
+            var layout = root.AddComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.spacing = 12f;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childControlWidth = true;
+            layout.childControlHeight = false;
+
+            var fitter = root.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            _buttonRoot = root.transform;
+        }
+
+        void HideLegacyButtons()
+        {
+            if (catalogButtonTemplate != null)
+                catalogButtonTemplate.gameObject.SetActive(false);
+            if (unusedLegacyCatalogButton != null)
+                unusedLegacyCatalogButton.gameObject.SetActive(false);
+        }
+
+        void ClearSpawnedButtons()
+        {
+            for (var i = 0; i < _spawnedButtons.Count; i++)
+            {
+                var button = _spawnedButtons[i];
+                if (button == null)
+                    continue;
+                Destroy(button.gameObject);
+            }
+
+            _spawnedButtons.Clear();
+        }
+
+        static void SetButtonLabel(Button button, string label)
+        {
+            if (button == null)
+                return;
+            var tmp = button.GetComponentInChildren<TMP_Text>(true);
+            if (tmp != null)
+                tmp.text = label;
+        }
+
         void EnsurePlacement()
         {
             if (placement == null)
-                placement = FindFirstObjectByType<BuildPlacementController>();
+            {
+                GameLog.Error("BuildWidget: BuildPlacementController is not assigned.");
+                return;
+            }
+
             BindPlacement();
         }
 

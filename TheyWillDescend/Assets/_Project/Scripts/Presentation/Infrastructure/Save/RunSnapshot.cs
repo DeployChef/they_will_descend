@@ -6,9 +6,9 @@ namespace TheyWillDescend.Infrastructure.Save
     public sealed class RunSnapshot
     {
         /// <summary>
-        /// v11: stocks, assignment, plaza idle, workplace slot, agent id.
+        /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 11;
+        public const int CurrentVersion = 15;
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -16,12 +16,16 @@ namespace TheyWillDescend.Infrastructure.Save
         public int day;
         public float elapsedInDay;
         public float dayDuration = 5f;
-        public float resource1;
-        public float resource2;
-        public float resource3;
-        public float resource4;
+        public ResourceSnapshot[] resources = Array.Empty<ResourceSnapshot>();
         public AgentSnapshot[] agents = Array.Empty<AgentSnapshot>();
         public BuildingSnapshot[] buildings = Array.Empty<BuildingSnapshot>();
+    }
+
+    [Serializable]
+    public sealed class ResourceSnapshot
+    {
+        public string resourceId;
+        public float amount;
     }
 
     [Serializable]
@@ -56,6 +60,7 @@ namespace TheyWillDescend.Infrastructure.Save
         public int anchorCluster;
         public int anchorRadial;
         public int id;
+        public string typeId;
         public byte built;
         public float constructionElapsed;
         public float constructionDuration;

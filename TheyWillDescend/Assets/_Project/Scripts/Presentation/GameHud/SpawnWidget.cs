@@ -1,3 +1,4 @@
+using TheyWillDescend.Infrastructure.Logging;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +15,9 @@ namespace TheyWillDescend.Presentation.GameHud
         void Awake()
         {
             if (spawnAgentButton == null)
-                spawnAgentButton = GetComponent<Button>();
+                GameLog.Error("SpawnWidget: spawn button is not assigned.");
+            if (agentSpawner == null)
+                GameLog.Error("SpawnWidget: AgentSpawner is not assigned.");
             HudButtons.Bind(spawnAgentButton, OnSpawnClicked);
         }
 
@@ -25,20 +28,12 @@ namespace TheyWillDescend.Presentation.GameHud
 
         public void PumpViews()
         {
-            EnsureSpawner();
             agentSpawner?.PumpViews();
         }
 
         void OnSpawnClicked()
         {
-            EnsureSpawner();
             agentSpawner?.SpawnRandom();
-        }
-
-        void EnsureSpawner()
-        {
-            if (agentSpawner == null)
-                agentSpawner = FindFirstObjectByType<Agents.AgentSpawner>();
         }
     }
 }

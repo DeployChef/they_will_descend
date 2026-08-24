@@ -114,7 +114,7 @@ build plane → snap (cluster, ring)
 
 | Слой | Роль |
 | --- | --- |
-| Presentation | underlay, ghost zone + building prefab; центр pull `CityGrid.Center` |
+| Presentation | underlay, ghost zone + catalog mesh; центр pull `CityGrid.Center` |
 | Simulation | config / occupancy (позже) |
 | Shell | build catalog, Esc, SimGate.Frozen |
 

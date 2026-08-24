@@ -170,17 +170,20 @@ HUD **читает** `GameTime` + `SimClock` (или через тонкий bin
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь вроде `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v11
-  version: 11
-  clock, time, stocks { r1..r4 }
+SavePayload v15
+  version: 15
+  clock, time
+  resources: [{ resourceId: "wood", amount }]
   agents: [{ id, pose, motor, assignment, plaza idle }]
-  buildings: [{ id, footprint, built, construction, workerAgentId }]
+  buildings: [{ id, typeId: "sawmill", footprint, built, construction, workerAgentId }]
 ```
 
-`built = 0` → load создаёт **сайт** (`Building` + `Construction`), без меша, с прогресс-баром.  
-`built = 1` → сразу готовый дом. Файлы старше v7 грузятся как уже построенные.
+Пока разрабатываем — **миграций нет**. Слот с другим `version` удаляется при load. Новый сейв пишется уже текущей версией.
 
-Канон агента: **`LocalTransform` = где стоит**. Мотор = `AgentLocomotion`. Без работы — `AgentPlazaIdle` у центра. На слоте — `AgentAssignment`. Сток — `ResourceStock`.
+`built = 0` → load создаёт **сайт** (`Building` + `Construction`), без меша, с прогресс-баром.  
+`built = 1` → сразу готовый дом.
+
+Канон агента: **`LocalTransform` = где стоит**. Мотор = `AgentLocomotion`. Без работы — `AgentPlazaIdle` у центра. На слоте — `AgentAssignment`. Сток — `ResourceAmount` на session.
 
 `AgentId` — ключ моста на ран, не `Entity(53,1)`. После перезапуска Unity номера сущностей другие.
 

@@ -25,6 +25,7 @@
 ## Артефакты
 
 - Заметки тюнинга — здесь
-- Таблицы (xlsx) — рядом, когда появятся
+- Живые числа среза — [[../Architecture/05 Content Pipeline|05 Content Pipeline]] (`BuildingDefinition` / `ScenarioDefinition`)
+- Таблицы (xlsx / Sheet) — рядом, когда появятся
 
 > Референс джема: `gmtk_2026/wiki/Balance/`

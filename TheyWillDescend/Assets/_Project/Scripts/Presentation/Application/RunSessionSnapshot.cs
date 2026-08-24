@@ -3,7 +3,6 @@ using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Time;
 using Unity.Collections;
@@ -44,12 +43,19 @@ namespace TheyWillDescend.App
                 snapshot.dayDuration = time.DayDuration;
             }
 
-            if (SimIo.TryGetStock(out var stock))
+            var ledger = new System.Collections.Generic.List<ResourceView>(8);
+            if (SimIo.CopyResourceLedger(ledger) > 0)
             {
-                snapshot.resource1 = stock.Resource1;
-                snapshot.resource2 = stock.Resource2;
-                snapshot.resource3 = stock.Resource3;
-                snapshot.resource4 = stock.Resource4;
+                snapshot.resources = new ResourceSnapshot[ledger.Count];
+                for (var i = 0; i < ledger.Count; i++)
+                {
+                    var row = ledger[i];
+                    snapshot.resources[i] = new ResourceSnapshot
+                    {
+                        resourceId = row.ResourceId,
+                        amount = row.Amount
+                    };
+                }
             }
 
             using var agentQuery = em.CreateEntityQuery(
@@ -114,6 +120,7 @@ namespace TheyWillDescend.App
                 var record = new BuildingSnapshot
                 {
                     id = building.Id,
+                    typeId = building.TypeId.ToString(),
                     widthClusters = building.WidthClusters,
                     depthRadialRings = building.DepthRadialRings,
                     anchorCluster = building.AnchorCluster,
@@ -157,16 +164,6 @@ namespace TheyWillDescend.App
             SimIo.PlaybackCommands();
 
             ApplyGameTime(snapshot);
-            if (snapshot.version >= 11)
-            {
-                SimIo.SetStock(new ResourceStock
-                {
-                    Resource1 = snapshot.resource1,
-                    Resource2 = snapshot.resource2,
-                    Resource3 = snapshot.resource3,
-                    Resource4 = snapshot.resource4
-                });
-            }
 
             if (snapshot.buildings != null)
             {
@@ -175,14 +172,15 @@ namespace TheyWillDescend.App
                     var record = snapshot.buildings[i];
                     SimIo.TryEnqueuePlaceBuilding(new PlaceBuildingCommand
                     {
-                        BuildingId = snapshot.version >= 9 ? record.id : 0,
+                        BuildingId = record.id,
+                        TypeId = record.typeId,
                         WidthClusters = record.widthClusters,
                         DepthRadialRings = record.depthRadialRings,
                         AnchorCluster = record.anchorCluster,
                         AnchorRadial = record.anchorRadial,
                         ConstructionElapsed = record.constructionElapsed,
                         ConstructionDuration = record.constructionDuration,
-                        InstantComplete = InstantCompleteFromRecord(snapshot.version, record)
+                        InstantComplete = record.built != 0 ? (byte)1 : (byte)0
                     });
                 }
             }
@@ -190,12 +188,13 @@ namespace TheyWillDescend.App
             if (snapshot.agents != null)
             {
                 for (var i = 0; i < snapshot.agents.Length; i++)
-                    EnqueueAgent(snapshot.agents[i], snapshot.version);
+                    EnqueueAgent(snapshot.agents[i]);
             }
 
             SimIo.PlaybackCommands();
+            ApplyResources(snapshot);
 
-            if (snapshot.version >= 11 && snapshot.buildings != null)
+            if (snapshot.buildings != null)
             {
                 for (var i = 0; i < snapshot.buildings.Length; i++)
                 {
@@ -211,50 +210,36 @@ namespace TheyWillDescend.App
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
         }
 
-        static byte InstantCompleteFromRecord(int version, BuildingSnapshot record)
+        static void ApplyResources(RunSnapshot snapshot)
         {
-            if (record.built != 0)
-                return 1;
-            if (version >= 7)
-                return 0;
-            return record.constructionDuration > 0.001f ? (byte)0 : (byte)1;
+            if (snapshot.resources == null)
+                return;
+
+            for (var i = 0; i < snapshot.resources.Length; i++)
+            {
+                var row = snapshot.resources[i];
+                if (string.IsNullOrWhiteSpace(row.resourceId))
+                    continue;
+                SimIo.SetResourceAmount(row.resourceId, row.amount);
+            }
         }
 
-        static void EnqueueAgent(AgentSnapshot record, int version)
+        static void EnqueueAgent(AgentSnapshot record)
         {
-            float3 position;
-            float3 facing;
-            if (version >= 2)
-            {
-                position = new float3(record.posX, record.posY, record.posZ);
-                facing = new float3(record.fwdX, record.fwdY, record.fwdZ);
-            }
-            else
-            {
-                position = float3.zero;
-                facing = new float3(0f, 0f, 1f);
-            }
-
-            var speed = version >= 8 && record.speed > 0.001f
-                ? record.speed
-                : 2f;
-
             SimIo.TryEnqueueSpawn(new SpawnAgentCommand
             {
-                Position = position,
-                Facing = facing,
-                Target = version >= 10
-                    ? new float3(record.targetX, record.targetY, record.targetZ)
-                    : float3.zero,
-                Speed = speed,
-                AgentId = version >= 11 ? record.agentId : 0,
-                WorkplaceBuildingId = version >= 11 ? record.workplaceBuildingId : 0,
-                Arrived = version >= 11 ? record.arrived : (byte)0,
-                Moving = version >= 10 ? record.moving : (byte)0,
-                PlazaWalking = version >= 11 ? record.plazaWalking : (byte)0,
-                PlazaTimer = version >= 11 ? record.plazaTimer : 0f,
-                PlazaAngle = version >= 11 ? record.plazaAngle : 0f,
-                PlazaRadius = version >= 11 ? record.plazaRadius : 0f,
+                Position = new float3(record.posX, record.posY, record.posZ),
+                Facing = new float3(record.fwdX, record.fwdY, record.fwdZ),
+                Target = new float3(record.targetX, record.targetY, record.targetZ),
+                Speed = record.speed > 0.001f ? record.speed : 2f,
+                AgentId = record.agentId,
+                WorkplaceBuildingId = record.workplaceBuildingId,
+                Arrived = record.arrived,
+                Moving = record.moving,
+                PlazaWalking = record.plazaWalking,
+                PlazaTimer = record.plazaTimer,
+                PlazaAngle = record.plazaAngle,
+                PlazaRadius = record.plazaRadius,
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });

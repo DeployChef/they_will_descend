@@ -30,6 +30,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 ```text
 кнопка spawn / place
+  → HUD каталог из `BuildingPrototype`
   → SimIo.TryEnqueue… (буфер на session)
   → CommandSystemGroup (тик, не Flush из UI)
   → агент: Instantiate(SimPrototypes.Agent)
@@ -41,7 +42,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
   ← стройка: обводка + бар (pull Construction)
   ← готовый дом: обводка; меш рисует Entities Graphics
   ← люди: LocalTransform + Moving → Mixamo (walk/idle); Arrived → меш выключен (в доме)
-  ← сток HUD pull ResourceStock
+  ← сток HUD pull ResourceAmount + ResourceInfo
   ← слот дома: виджет +/− → Assign/Unassign command
 ```
 
@@ -52,9 +53,9 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 | Кусок | Слой |
 | --- | --- |
 | `SpawnAgentCommand`, `PlaceBuildingCommand`, `AssignWorkerCommand`, `SimIo` | Simulation |
-| `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceStock` | Simulation |
+| `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceAmount` | Simulation |
 | Session singleton (Baker `SimControlAuthoring`) | SubScene |
-| `ResourceStock` (Baker `ResourceStockAuthoring`) | SubScene |
+| `ResourceAmount` / `ResourceInfo` (Baker `ResourceCatalogAuthoring` на SimControl) | SubScene |
 | Плаза HQ (`Building` + `Headquarters`) | SubScene bake; `CityGrid.Center` с HQ; не `PlaceBuilding` |
 | `AgentViewBoard` / `BuildingViewBoard` / `TimeWidget` | Presentation **читает** World. Системы сима вью не знают. |
 | Пауза / x1 x2 x3 | `SimGate` (Presentation/Shell) → `SimControl.DeltaTime` |

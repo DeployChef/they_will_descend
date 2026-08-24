@@ -7,22 +7,10 @@ using UnityEngine.UI;
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Right-dock building card. Scene-authored. Pulls workplace; sends assign commands.
+    /// Right-dock building card. Pulls workplace and catalog name; sends assign commands.
     /// </summary>
     public sealed class BuildingInspectPanel : MonoBehaviour
     {
-        static readonly string[] Titles =
-        {
-            "Timber Yard",
-            "Cookhouse",
-            "Hunter's Hut",
-            "Gathering Post",
-            "Workshop",
-            "Sawmill",
-            "Charcoal Kiln",
-            "Infirmary"
-        };
-
         [SerializeField] BuildingViewBoard board;
         [SerializeField] GameObject card;
         [SerializeField] TMP_Text title;
@@ -74,20 +62,26 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Show(int id)
         {
+            if (!SimIo.TryGetBuildingInspect(id, out var inspect))
+            {
+                Hide();
+                return;
+            }
+
             if (card != null)
                 card.SetActive(true);
             if (title != null)
-                title.text = TitleFor(id);
+                title.text = inspect.DisplayName;
 
-            var known = SimIo.TryGetWorkplace(id, out var workplace, out var constructing);
-            var occupied = known && workplace.WorkerAgentId != 0 ? 1 : 0;
+            var occupied = inspect.Workplace.WorkerAgentId != 0 ? 1 : 0;
+            var slots = inspect.WorkplaceSlots > 0 ? inspect.WorkplaceSlots : 1;
             var idleCount = SimIo.CountIdleWorkers();
             if (workers != null)
-                workers.text = $"{occupied} / 1";
+                workers.text = $"{occupied} / {slots}";
             if (idle != null)
                 idle.text = $"Idle workers  {idleCount}";
 
-            if (constructing)
+            if (inspect.Constructing)
             {
                 if (subtitle != null)
                     subtitle.text = "Under construction";
@@ -99,19 +93,20 @@ namespace TheyWillDescend.Presentation.GameHud
             else
             {
                 if (subtitle != null)
-                    subtitle.text = "House";
+                    subtitle.text = inspect.WorkplaceSlots > 0 ? "Workplace" : "Building";
                 if (status != null)
                     status.text = occupied == 0
                         ? "No one assigned."
-                        : workplace.Working != 0
+                        : inspect.Workplace.Working != 0
                             ? "Worker on site."
                             : "Worker walking in.";
                 if (workFill != null)
                     workFill.fillAmount = occupied == 0 ? 0f : 1f;
             }
 
-            HudButtons.SetInteractable(plusButton, !constructing && occupied == 0 && idleCount > 0);
-            HudButtons.SetInteractable(minusButton, !constructing && occupied != 0);
+            var canAssign = !inspect.Constructing && inspect.WorkplaceSlots > 0;
+            HudButtons.SetInteractable(plusButton, canAssign && occupied == 0 && idleCount > 0);
+            HudButtons.SetInteractable(minusButton, canAssign && occupied != 0);
         }
 
         void OnMinus()
@@ -130,12 +125,6 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             board?.Deselect();
             Hide();
-        }
-
-        static string TitleFor(int buildingId)
-        {
-            var index = (int)((uint)buildingId * 2654435761u % (uint)Titles.Length);
-            return Titles[index];
         }
     }
 }

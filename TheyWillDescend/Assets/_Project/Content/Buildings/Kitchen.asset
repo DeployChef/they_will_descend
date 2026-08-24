@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdc81b62e9e3372419e593ce035327e2, type: 3}
+  m_Name: Kitchen
+  m_EditorClassIdentifier: TheyWillDescend.Simulation::TheyWillDescend.Simulation.Content.BuildingDefinition
+  typeId: kitchen
+  displayName: Kitchen
+  widthClusters: 2
+  depthRadialRings: 2
+  constructionDuration: 0
+  workplaceSlots: 1
+  produceResource: {fileID: 11400000, guid: 8f5d2b0c3e9a5f7b0d2c4e6a8b0f3d51, type: 2}
+  producePerSecond: 1
+  buildCost:
+  - Resource: {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    Amount: 8
+  prefab: {fileID: 1275909538635612, guid: 2767c12992d890f44b14f433fe854668, type: 3}

@@ -1,5 +1,7 @@
 using TheyWillDescend.App;
+using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.City;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -15,6 +17,7 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button loadButton;
         [SerializeField, FormerlySerializedAs("buildHud")] BuildWidget buildWidget;
         [SerializeField, FormerlySerializedAs("spawnHud")] SpawnWidget spawnWidget;
+        [SerializeField] BuildingViewBoard buildingViewBoard;
 
         void Awake()
         {
@@ -30,7 +33,6 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnSaveClicked()
         {
-            EnsureWidgetRefs();
             buildWidget?.CloseIfBusy();
 
             var snapshot = RunSessionSnapshot.Capture();
@@ -42,20 +44,14 @@ namespace TheyWillDescend.Presentation.GameHud
             if (!RunSnapshotStore.TryRead(out var snapshot))
                 return;
 
-            EnsureWidgetRefs();
             buildWidget?.CloseIfBusy();
 
             RunSessionSnapshot.Apply(snapshot);
             spawnWidget?.PumpViews();
-            buildWidget?.RebuildViews();
-        }
-
-        void EnsureWidgetRefs()
-        {
-            if (buildWidget == null)
-                buildWidget = FindFirstObjectByType<BuildWidget>();
-            if (spawnWidget == null)
-                spawnWidget = FindFirstObjectByType<SpawnWidget>();
+            if (buildingViewBoard == null)
+                GameLog.Error("SaveWidget: BuildingViewBoard is not assigned.");
+            else
+                buildingViewBoard.RebuildViews();
         }
     }
 }

@@ -24,7 +24,7 @@ Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
 | --- | --- |
 | `Bootstrap` | Startup, одна Main Camera (+ AudioListener), EventSystem |
 | `MainMenu` | Canvas splash/menu, ShellUiBinder |
-| `Game` | мир Sample, свет, SubScene Simulation; Main Camera — временно до Cinemachine |
+| `Game` | мир, свет, SubScene Simulation, `VCam_Gameplay` + `RTSCameraTarget` |
 
 ## Заходы
 
@@ -38,7 +38,7 @@ Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
 
 | Что | Где | Почему |
 | --- | --- | --- |
-| `GameTime`, `SimControl`, `ResourceStock` | **Simulation SubScene** | bake → singleton entities, данные рана |
+| `GameTime`, `SimControl`, `ResourceAmount` | **Simulation SubScene** | bake → session entity, данные рана |
 | Плаза HQ | **Simulation SubScene** | bake → `Building` + `Headquarters` + EG-меш; `CityGrid.Center` с его `LocalTransform` |
 | Статичный декор (деревья, скалы) | **Game** сцена | обычные GO, не симуляция |
 | Челики (skinned + Animator) | **Game** + runtime entity | entity в ECS; вид (`AgentViewBoard`) снаружи |
@@ -59,7 +59,7 @@ HUD: `GameHudCanvas` на Game (overlay). Часы — `TimeWidget` на `TimeBa
 5. Build Settings: Bootstrap (0), MainMenu, Game.  
 6. Play с Bootstrap.
 
-**Временно:** камера на Game до Cinemachine; челики MB до C.
+**Временно:** челики-вид — MB board, не C.
 
 ---
 

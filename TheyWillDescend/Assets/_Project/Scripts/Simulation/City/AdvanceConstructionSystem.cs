@@ -32,9 +32,10 @@ namespace TheyWillDescend.Simulation.City
             if (dt <= 0f)
                 return;
 
-            var catalog = em.HasComponent<SimPrototypes>(session)
-                ? em.GetComponentData<SimPrototypes>(session)
-                : default;
+            if (!em.HasBuffer<BuildingPrototype>(session))
+                return;
+
+            var catalog = em.GetBuffer<BuildingPrototype>(session);
 
             using var query = em.CreateEntityQuery(
                 ComponentType.ReadWrite<Construction>(),
@@ -61,7 +62,7 @@ namespace TheyWillDescend.Simulation.City
             finished.Dispose();
         }
 
-        static void FinishSite(EntityManager em, in SimPrototypes catalog, Entity site)
+        static void FinishSite(EntityManager em, DynamicBuffer<BuildingPrototype> catalog, Entity site)
         {
             if (!em.Exists(site) || !em.HasComponent<Building>(site))
                 return;
@@ -71,7 +72,7 @@ namespace TheyWillDescend.Simulation.City
                 ? em.GetComponentData<LocalTransform>(site)
                 : LocalTransform.Identity;
             var prefab = ConsumePlaceBuildingCommandsSystem.ResolveHousePrefab(
-                catalog, building.WidthClusters, building.DepthRadialRings);
+                catalog, building.TypeId, building.WidthClusters, building.DepthRadialRings);
             em.DestroyEntity(site);
             if (prefab == Entity.Null)
                 return;

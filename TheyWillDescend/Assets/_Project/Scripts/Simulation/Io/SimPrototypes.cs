@@ -4,14 +4,10 @@ namespace TheyWillDescend.Simulation.Io
 {
     /// <summary>
     /// Baked entity stamps for Instantiate. Not GameObject prefabs.
-    /// Agent is a blank sim body; houses are Entities Graphics meshes.
+    /// Agent is a blank sim body. Houses live in <see cref="TheyWillDescend.Simulation.City.BuildingPrototype"/> on the same session.
     /// </summary>
     public struct SimPrototypes : IComponentData
     {
         public Entity Agent;
-        public Entity House6x2;
-        public Entity House2x2;
-        public float House6x2MeshSize;
-        public float House2x2MeshSize;
     }
 }
