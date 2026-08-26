@@ -36,7 +36,7 @@ namespace TheyWillDescend.Presentation.Agents
                 spawnAreaCenter.y + UnityEngine.Random.Range(-spawnAreaSize.y * 0.5f, spawnAreaSize.y * 0.5f));
             var facing = new float3(0f, 0f, 1f);
             var speed = UnityEngine.Random.Range(walkSpeedRange.x, walkSpeedRange.y);
-            if (!SimIo.TryEnqueueSpawn(new SpawnAgentCommand
+            if (!SimCommands.TryPost(new SpawnAgentCommand
                 {
                     Position = position,
                     Facing = facing,
@@ -54,7 +54,7 @@ namespace TheyWillDescend.Presentation.Agents
 
         public void WipeAgentsAndViews()
         {
-            SimIo.TryRequestDespawnAllAgents();
+            SimCommands.TryRequestDespawnAllAgents();
             EnsureViews().ClearViews();
         }
 

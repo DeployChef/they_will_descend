@@ -168,9 +168,10 @@ namespace TheyWillDescend.Presentation.Agents
 
         static float AnimSpeed()
         {
-            if (!SimIo.TryGetSimControl(out var control) || !control.IsRunning)
+            if (!SimWorld.TryGet(out var em, out var bag))
                 return 0f;
-            return control.Speed;
+            var control = em.GetComponentData<SimControl>(bag);
+            return control.IsRunning ? control.Speed : 0f;
         }
 
         static void ApplyPose(Transform transform, in LocalTransform local)

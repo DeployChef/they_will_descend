@@ -2,8 +2,13 @@ using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Shell;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
 using TMPro;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -11,7 +16,7 @@ using UnityEngine.UI;
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Build catalog from the session building buffer via <see cref="SimIo"/>.
+    /// Build catalog from the building prototype buffer.
     /// Esc closes this overlay before Playing toggles player pause.
     /// </summary>
     public sealed class BuildWidget : MonoBehaviour, IGameplayEscapeHandler
@@ -22,7 +27,6 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField, FormerlySerializedAs("selectCube2x2Button")] Button unusedLegacyCatalogButton;
         [SerializeField] BuildPlacementController placement;
 
-        readonly List<BuildingCatalogEntry> _catalog = new(8);
         readonly List<Button> _spawnedButtons = new(8);
 
         bool _catalogOpen;
@@ -104,7 +108,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
             _catalogOpen = true;
             SetCatalogVisible(true);
-            SimIo.TryEnqueueBuildLocked(true);
+            SimCommands.TryPost(SimClockCommand.BuildLocked(true));
             GameLog.Info("BuildCatalog open (build locked).");
         }
 
@@ -115,7 +119,7 @@ namespace TheyWillDescend.Presentation.GameHud
             placement?.CancelPlacing();
 
             if (resumeSim)
-                SimIo.TryEnqueueBuildLocked(false);
+                SimCommands.TryPost(SimClockCommand.BuildLocked(false));
         }
 
         void RebuildCatalogButtons()
@@ -129,29 +133,38 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
             }
 
-            SimIo.CopyBuildingCatalog(_catalog);
-            if (_catalog.Count == 0)
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasBuffer<BuildingPrototype>(bag))
             {
                 GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
                 return;
             }
 
-            for (var i = 0; i < _catalog.Count; i++)
+            var catalog = em.GetBuffer<BuildingPrototype>(bag);
+            var costs = em.HasBuffer<BuildingCost>(bag) ? em.GetBuffer<BuildingCost>(bag) : default;
+            var names = em.HasBuffer<ResourceInfo>(bag) ? em.GetBuffer<ResourceInfo>(bag) : default;
+            var count = 0;
+            for (var i = 0; i < catalog.Length; i++)
             {
-                var entry = _catalog[i];
+                var prototype = catalog[i];
+                if (prototype.Prefab == Entity.Null || prototype.TypeId.IsEmpty)
+                    continue;
+                count++;
                 var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
-                go.name = $"Catalog_{entry.TypeId}";
+                var typeId = prototype.TypeId.ToString();
+                go.name = $"Catalog_{typeId}";
                 go.SetActive(true);
                 var button = go.GetComponent<Button>();
-                var typeId = entry.TypeId;
-                var cost = SimIo.FormatBuildingCost(typeId);
-                var title = string.IsNullOrEmpty(entry.DisplayName)
-                    ? $"{entry.WidthClusters}×{entry.DepthRadialRings}"
-                    : entry.DisplayName;
+                var cost = FormatBuildingCost(costs, names, prototype.TypeId);
+                var title = prototype.DisplayName.IsEmpty
+                    ? $"{prototype.WidthClusters}×{prototype.DepthRadialRings}"
+                    : prototype.DisplayName.ToString();
                 SetButtonLabel(button, string.IsNullOrEmpty(cost) ? title : $"{title}\n{cost}");
                 HudButtons.Bind(button, () => BeginPlace(typeId));
                 _spawnedButtons.Add(button);
             }
+
+            if (count == 0)
+                GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
         }
 
         void EnsureButtonRoot()
@@ -250,6 +263,40 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (buildCatalogPanel != null)
                 buildCatalogPanel.SetActive(visible);
+        }
+
+        static string FormatBuildingCost(
+            DynamicBuffer<BuildingCost> costs,
+            DynamicBuffer<ResourceInfo> names,
+            in FixedString64Bytes typeId)
+        {
+            if (typeId.IsEmpty || !costs.IsCreated)
+                return string.Empty;
+
+            var parts = new List<string>(4);
+            for (var i = 0; i < costs.Length; i++)
+            {
+                var cost = costs[i];
+                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
+                    continue;
+                parts.Add($"{(int)math.ceil(cost.Amount)} {ResourceDisplayName(names, cost.ResourceId)}");
+            }
+
+            return parts.Count == 0 ? string.Empty : string.Join(", ", parts);
+        }
+
+        static string ResourceDisplayName(DynamicBuffer<ResourceInfo> names, in FixedString64Bytes resourceId)
+        {
+            if (names.IsCreated)
+            {
+                for (var i = 0; i < names.Length; i++)
+                {
+                    if (names[i].ResourceId == resourceId)
+                        return names[i].DisplayName.ToString();
+                }
+            }
+
+            return resourceId.ToString();
         }
     }
 }

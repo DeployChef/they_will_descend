@@ -211,7 +211,7 @@ namespace TheyWillDescend.Presentation.City
         PlacedView CreateView(in Building building)
         {
             EnsureReady();
-            if (gridGuide == null || !SimIo.TryGetCityCenter(out var center))
+            if (gridGuide == null || !TryGetCityCenter(out var center))
             {
                 GameLog.Error("BuildingViewBoard: grid or CityGrid.Center missing.");
                 return null;
@@ -397,6 +397,18 @@ namespace TheyWillDescend.Presentation.City
             var go = new GameObject("BuildingOverlays");
             go.transform.SetParent(transform, false);
             _overlayRoot = go.transform;
+        }
+
+        static bool TryGetCityCenter(out float3 center)
+        {
+            center = default;
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<CityGrid>(bag))
+                return false;
+            var grid = em.GetComponentData<CityGrid>(bag);
+            if (grid.Ready == 0)
+                return false;
+            center = grid.Center;
+            return true;
         }
     }
 }

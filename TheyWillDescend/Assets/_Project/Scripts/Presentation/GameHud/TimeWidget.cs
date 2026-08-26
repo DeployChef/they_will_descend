@@ -2,13 +2,14 @@ using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using TMPro;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Clock buttons enqueue sim clock commands. Day label pulls GameTime.
+    /// Clock buttons post clock commands. Day label pulls GameTime.
     /// </summary>
     public sealed class TimeWidget : MonoBehaviour
     {
@@ -33,7 +34,8 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Update()
         {
-            var hasControl = SimIo.TryGetSimControl(out var control);
+            var hasControl = SimWorld.TryGet(out var em, out var bag);
+            var control = hasControl ? em.GetComponentData<SimControl>(bag) : default;
             var buildLocked = hasControl && control.BuildLocked != 0;
             HudButtons.SetInteractable(speed1Button, !buildLocked);
             HudButtons.SetInteractable(speed2Button, !buildLocked);
@@ -48,19 +50,32 @@ namespace TheyWillDescend.Presentation.GameHud
             if (clockLabel == null)
                 return;
 
-            clockLabel.text = SimIo.TryGetGameTime(out var time)
+            clockLabel.text = hasControl && TryGetGameTime(em, out var time)
                 ? GameClockFormat.Format(time)
                 : "Day --  --:--";
         }
 
+        static bool TryGetGameTime(EntityManager em, out GameTime time)
+        {
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
+            if (query.IsEmptyIgnoreFilter)
+            {
+                time = default;
+                return false;
+            }
+
+            time = query.GetSingleton<GameTime>();
+            return true;
+        }
+
         static void OnPauseClicked()
         {
-            SimIo.TryEnqueueTogglePlayerPause();
+            SimCommands.TryPost(SimClockCommand.TogglePause());
         }
 
         static void OnSpeedClicked(int speed)
         {
-            SimIo.TryEnqueueSimSpeed(speed);
+            SimCommands.TryPost(SimClockCommand.Speed(speed));
         }
     }
 }

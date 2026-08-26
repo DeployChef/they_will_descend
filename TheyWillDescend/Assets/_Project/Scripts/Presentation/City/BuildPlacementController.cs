@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -52,7 +54,7 @@ namespace TheyWillDescend.Presentation.City
 
         public void BeginPlacing(string typeId)
         {
-            if (!SimIo.TryGetBuilding(typeId, out var entry) || !entry.Footprint.IsValid)
+            if (!TryResolvePrototype(typeId, out var prototype) || !prototype.Footprint.IsValid)
             {
                 GameLog.Error($"Place mode: unknown building type {typeId}.");
                 return;
@@ -64,16 +66,16 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            _typeId = entry.TypeId;
-            _footprint = entry.Footprint;
-            _meshSize = entry.MeshSize > 0.001f ? entry.MeshSize : 1f;
-            _ghostPrefab = ResolveGhostPrefab(typeId);
+            _typeId = prototype.TypeId.ToString();
+            _footprint = prototype.Footprint;
+            _meshSize = prototype.MeshSize > 0.001f ? prototype.MeshSize : 1f;
+            _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
             IsPlacingActive = true;
             gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
-            GameLog.Info($"Place mode: {entry.DisplayName}.");
+            GameLog.Info($"Place mode: {prototype.DisplayName}.");
         }
 
         public void CancelPlacing()
@@ -95,7 +97,7 @@ namespace TheyWillDescend.Presentation.City
             if (!_placing)
                 return;
 
-            if (gridGuide == null || !SimIo.TryGetCityCenter(out var center))
+            if (gridGuide == null || !TryGetCityCenter(out var center))
                 return;
 
             var config = gridGuide.Config;
@@ -138,8 +140,8 @@ namespace TheyWillDescend.Presentation.City
 
             var probeOk = RadialFootprintMath.TryExpandClusters(
                 config, snappedCluster, ring, _footprint, _clusters);
-            var probeFree = probeOk && !SimIo.OverlapsOccupied(_clusters);
-            var affordable = SimIo.CanAfford(_typeId);
+            var probeFree = probeOk && !OverlapsOccupied(_clusters);
+            var affordable = CanAfford(_typeId);
 
             if (probeFree && affordable)
             {
@@ -163,7 +165,7 @@ namespace TheyWillDescend.Presentation.City
 
         void PlaceBuilding()
         {
-            if (!SimIo.TryEnqueuePlaceBuilding(new PlaceBuildingCommand
+            if (!SimCommands.TryPost(new PlaceBuildingCommand
                 {
                     TypeId = _typeId,
                     WidthClusters = _footprint.WidthClusters,
@@ -344,12 +346,68 @@ namespace TheyWillDescend.Presentation.City
             if (cam == null || Mouse.current == null)
                 return false;
             var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-            var y = SimIo.TryGetCityCenter(out var center) ? center.y : 0f;
+            var y = TryGetCityCenter(out var center) ? center.y : 0f;
             var plane = new Plane(Vector3.up, new Vector3(0f, y, 0f));
             if (!plane.Raycast(ray, out var enter))
                 return false;
             world = ray.GetPoint(enter);
             return true;
+        }
+
+        static bool TryGetCityCenter(out float3 center)
+        {
+            center = default;
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<CityGrid>(bag))
+                return false;
+            var grid = em.GetComponentData<CityGrid>(bag);
+            if (grid.Ready == 0 || !grid.Config.IsValid)
+                return false;
+            center = grid.Center;
+            return true;
+        }
+
+        static bool TryResolvePrototype(string typeId, out BuildingPrototype prototype)
+        {
+            prototype = default;
+            var id = ContentId.EncodeOrEmpty(typeId);
+            if (id.IsEmpty
+                || !SimWorld.TryGet(out var em, out var bag)
+                || !em.HasBuffer<BuildingPrototype>(bag))
+                return false;
+            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, 0, 0, out prototype);
+        }
+
+        static bool OverlapsOccupied(List<(int cluster, int radial)> clusters)
+        {
+            if (clusters == null || clusters.Count == 0)
+                return false;
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasBuffer<OccupiedCell>(bag))
+                return false;
+            var occupied = em.GetBuffer<OccupiedCell>(bag);
+            for (var i = 0; i < clusters.Count; i++)
+            {
+                var cell = clusters[i];
+                for (var j = 0; j < occupied.Length; j++)
+                {
+                    if (occupied[j].Cluster == cell.cluster && occupied[j].Radial == cell.radial)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        static bool CanAfford(string typeId)
+        {
+            var id = ContentId.EncodeOrEmpty(typeId);
+            if (id.IsEmpty
+                || !SimWorld.TryGet(out var em, out var bag)
+                || !em.HasBuffer<BuildingCost>(bag))
+                return true;
+            var costs = em.GetBuffer<BuildingCost>(bag);
+            if (!em.HasBuffer<ResourceAmount>(bag))
+                return !BuildingCosts.HasCost(costs, id);
+            return BuildingCosts.CanAfford(costs, em.GetBuffer<ResourceAmount>(bag), id);
         }
 
         void OnDisable()

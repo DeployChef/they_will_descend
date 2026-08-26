@@ -18,7 +18,7 @@ namespace TheyWillDescend.Shell.States
 
         public void Enter()
         {
-            SimIo.TryEnqueueSessionInGame(false);
+            SimCommands.TryPost(SimClockCommand.InGame(false));
             GameLog.Info("Loading game session…");
             _session.Start(() => _fsm.TransitionTo(AppStateId.Playing));
         }

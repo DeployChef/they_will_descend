@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
 using TMPro;
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Pulls the session resource catalog into scene-authored chips. Does not build UI.
+    /// Pulls resource buffers into scene-authored chips. Does not build UI.
     /// Matches a chip by parent name (Wood / Food); unused chips hide.
     /// </summary>
     public sealed class ResourceWidget : MonoBehaviour
@@ -16,25 +16,35 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] TMP_Text resource3Label;
         [SerializeField] TMP_Text resource4Label;
 
-        readonly List<ResourceView> _rows = new(8);
-
         void Update()
         {
-            if (SimIo.CopyResourceLedger(_rows) == 0)
+            if (!SimWorld.TryGet(out var em, out var bag)
+                || !em.HasBuffer<ResourceAmount>(bag)
+                || !em.HasBuffer<ResourceInfo>(bag))
+                return;
+
+            var stock = em.GetBuffer<ResourceAmount>(bag);
+            var info = em.GetBuffer<ResourceInfo>(bag);
+            if (info.Length == 0)
                 return;
 
             var labels = new[] { resource1Label, resource2Label, resource3Label, resource4Label };
             var used = new bool[labels.Length];
-            for (var i = 0; i < _rows.Count; i++)
+            for (var i = 0; i < info.Length; i++)
             {
-                var row = _rows[i];
-                var slot = IndexOfName(labels, row.DisplayName, used);
+                var row = info[i];
+                var displayName = row.DisplayName.ToString();
+                var slot = IndexOfName(labels, displayName, used);
                 if (slot < 0)
                     slot = FirstFree(used);
                 if (slot < 0)
                     continue;
                 used[slot] = true;
-                Paint(labels[slot], row);
+                Paint(
+                    labels[slot],
+                    displayName,
+                    row.ResourceId.ToString(),
+                    ResourceLedger.Get(stock, row.ResourceId));
             }
 
             for (var i = 0; i < labels.Length; i++)
@@ -71,15 +81,15 @@ namespace TheyWillDescend.Presentation.GameHud
             return -1;
         }
 
-        static void Paint(TMP_Text valueLabel, in ResourceView row)
+        static void Paint(TMP_Text valueLabel, string displayName, string resourceId, float amount)
         {
             if (valueLabel == null)
                 return;
             SetChipVisible(valueLabel, true);
-            valueLabel.text = Mathf.FloorToInt(row.Amount).ToString();
+            valueLabel.text = Mathf.FloorToInt(amount).ToString();
             var title = FindTitle(valueLabel);
             if (title != null)
-                title.text = string.IsNullOrEmpty(row.DisplayName) ? row.ResourceId : row.DisplayName;
+                title.text = string.IsNullOrEmpty(displayName) ? resourceId : displayName;
         }
 
         static TMP_Text FindTitle(TMP_Text valueLabel)

@@ -1,6 +1,8 @@
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Simulation.Io;
+using TheyWillDescend.Simulation.Session;
+using Unity.Entities;
 
 namespace TheyWillDescend.Shell.States
 {
@@ -26,13 +28,14 @@ namespace TheyWillDescend.Shell.States
 
         public void Exit()
         {
-            SimIo.TryEnqueueSessionInGame(false);
+            SimCommands.TryPost(SimClockCommand.InGame(false));
             _audio?.StopSessionMusic();
         }
 
         public void Tick()
         {
-            if (!SimIo.TryGetSimControl(out var control) || control.SessionInGame == 0)
+            if (!SimWorld.TryGet(out var em, out var bag)
+                || em.GetComponentData<SimControl>(bag).SessionInGame == 0)
                 TryBeginSession();
 
             if (!_intents.ConsumePauseToggle())
@@ -41,12 +44,12 @@ namespace TheyWillDescend.Shell.States
             if (GameplayEscapeRouter.Active != null && GameplayEscapeRouter.Active.TryHandleEscape())
                 return;
 
-            SimIo.TryEnqueueTogglePlayerPause();
+            SimCommands.TryPost(SimClockCommand.TogglePause());
         }
 
         static void TryBeginSession()
         {
-            SimIo.TryEnqueueSessionInGame(true);
+            SimCommands.TryPost(SimClockCommand.InGame(true));
         }
     }
 }

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
+using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -32,7 +34,7 @@ namespace TheyWillDescend.Presentation.City
         {
             get
             {
-                if (Application.isPlaying && SimIo.TryGetCityGrid(out var grid))
+                if (Application.isPlaying && TryGetSimGrid(out var grid))
                     return grid.Config;
                 return config;
             }
@@ -155,14 +157,14 @@ namespace TheyWillDescend.Presentation.City
 
         Vector3 GetDrawOrigin()
         {
-            if (Application.isPlaying && SimIo.TryGetCityCenter(out var center))
+            if (Application.isPlaying && TryGetSimCenter(out var center))
                 return (Vector3)center + Vector3.up * yOffset;
             return transform.position;
         }
 
         void FollowCenter()
         {
-            if (!Application.isPlaying || !SimIo.TryGetCityCenter(out var center))
+            if (!Application.isPlaying || !TryGetSimCenter(out var center))
                 return;
             transform.position = (Vector3)center + Vector3.up * yOffset;
             transform.rotation = Quaternion.identity;
@@ -328,6 +330,27 @@ namespace TheyWillDescend.Presentation.City
             if (mat.HasProperty("_Color"))
                 mat.SetColor("_Color", color);
             mat.color = color;
+        }
+
+        static bool TryGetSimGrid(out CityGrid grid)
+        {
+            grid = default;
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<CityGrid>(bag))
+                return false;
+            grid = em.GetComponentData<CityGrid>(bag);
+            return grid.Ready != 0 && grid.Config.IsValid;
+        }
+
+        static bool TryGetSimCenter(out float3 center)
+        {
+            if (!TryGetSimGrid(out var grid))
+            {
+                center = default;
+                return false;
+            }
+
+            center = grid.Center;
+            return true;
         }
     }
 }

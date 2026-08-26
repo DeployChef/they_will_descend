@@ -1,13 +1,17 @@
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Simulation.Agents;
+using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
 using TMPro;
+using Unity.Collections;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Right-dock building card. Pulls workplace and catalog name; sends assign commands.
+    /// Right-dock building card. Pulls workplace from the building entity; sends assign commands.
     /// </summary>
     public sealed class BuildingInspectPanel : MonoBehaviour
     {
@@ -62,26 +66,46 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Show(int id)
         {
-            if (!SimIo.TryGetBuildingInspect(id, out var inspect))
+            if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
             {
                 Hide();
                 return;
             }
 
+            var constructing = em.HasComponent<Construction>(entity);
+            var workplace = em.HasComponent<Workplace>(entity)
+                ? em.GetComponentData<Workplace>(entity)
+                : default;
+            var displayName = building.TypeId.ToString();
+            var slots = em.HasComponent<Workplace>(entity) ? 1 : 0;
+            if (em.HasBuffer<BuildingPrototype>(bag)
+                && BuildingCatalog.TryResolve(
+                    em.GetBuffer<BuildingPrototype>(bag),
+                    building.TypeId,
+                    0,
+                    0,
+                    out var prototype))
+            {
+                displayName = prototype.DisplayName.ToString();
+                if (prototype.WorkplaceSlots > 0)
+                    slots = prototype.WorkplaceSlots;
+            }
+
             if (card != null)
                 card.SetActive(true);
             if (title != null)
-                title.text = inspect.DisplayName;
+                title.text = string.IsNullOrEmpty(displayName) ? $"Building {building.TypeId}" : displayName;
 
-            var occupied = inspect.Workplace.WorkerAgentId != 0 ? 1 : 0;
-            var slots = inspect.WorkplaceSlots > 0 ? inspect.WorkplaceSlots : 1;
-            var idleCount = SimIo.CountIdleWorkers();
+            var occupied = workplace.WorkerAgentId != 0 ? 1 : 0;
+            if (slots <= 0)
+                slots = 1;
+            var idleCount = CountIdleWorkers(em);
             if (workers != null)
                 workers.text = $"{occupied} / {slots}";
             if (idle != null)
                 idle.text = $"Idle workers  {idleCount}";
 
-            if (inspect.Constructing)
+            if (constructing)
             {
                 if (subtitle != null)
                     subtitle.text = "Under construction";
@@ -93,32 +117,70 @@ namespace TheyWillDescend.Presentation.GameHud
             else
             {
                 if (subtitle != null)
-                    subtitle.text = inspect.WorkplaceSlots > 0 ? "Workplace" : "Building";
+                    subtitle.text = slots > 0 ? "Workplace" : "Building";
                 if (status != null)
                     status.text = occupied == 0
                         ? "No one assigned."
-                        : inspect.Workplace.Working != 0
+                        : workplace.Working != 0
                             ? "Worker on site."
                             : "Worker walking in.";
                 if (workFill != null)
                     workFill.fillAmount = occupied == 0 ? 0f : 1f;
             }
 
-            var canAssign = !inspect.Constructing && inspect.WorkplaceSlots > 0;
+            var canAssign = !constructing && slots > 0;
             HudButtons.SetInteractable(plusButton, canAssign && occupied == 0 && idleCount > 0);
             HudButtons.SetInteractable(minusButton, canAssign && occupied != 0);
+        }
+
+        static bool TryFindBuilding(EntityManager em, int id, out Entity entity, out Building building)
+        {
+            entity = Entity.Null;
+            building = default;
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            using var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
+            for (var i = 0; i < buildings.Length; i++)
+            {
+                if (buildings[i].Id != id)
+                    continue;
+                entity = entities[i];
+                building = buildings[i];
+                return true;
+            }
+
+            return false;
+        }
+
+        static int CountIdleWorkers(EntityManager em)
+        {
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<AgentId>(),
+                ComponentType.ReadOnly<AgentAssignment>());
+            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            var idle = 0;
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                if (assignments[i].WorkplaceBuildingId == 0)
+                    idle++;
+            }
+
+            return idle;
         }
 
         void OnMinus()
         {
             if (board != null && board.SelectedBuildingId > 0)
-                SimIo.TryEnqueueUnassignWorker(board.SelectedBuildingId);
+                SimCommands.TryPost(new UnassignWorkerCommand { BuildingId = board.SelectedBuildingId });
         }
 
         void OnPlus()
         {
             if (board != null && board.SelectedBuildingId > 0)
-                SimIo.TryEnqueueAssignWorker(board.SelectedBuildingId);
+                SimCommands.TryPost(new AssignWorkerCommand
+                {
+                    BuildingId = board.SelectedBuildingId
+                });
         }
 
         void OnClose()

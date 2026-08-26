@@ -2,7 +2,10 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Io;
+using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using Unity.Collections;
 using Unity.Entities;
@@ -21,17 +24,13 @@ namespace TheyWillDescend.App
         public static RunSnapshot Capture()
         {
             var snapshot = new RunSnapshot { version = PayloadVersion };
-            if (SimIo.TryGetSimControl(out var control))
-            {
-                snapshot.speed = control.Speed;
-                snapshot.playerPaused = control.PlayerPaused != 0;
-            }
-
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
+            if (!SimWorld.TryGet(out var em, out var bag))
                 return snapshot;
 
-            var em = world.EntityManager;
+            var control = em.GetComponentData<SimControl>(bag);
+            snapshot.speed = control.Speed;
+            snapshot.playerPaused = control.PlayerPaused != 0;
+
             using var timeQuery = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
             if (!timeQuery.IsEmptyIgnoreFilter)
             {
@@ -41,17 +40,18 @@ namespace TheyWillDescend.App
                 snapshot.dayDuration = time.DayDuration;
             }
 
-            var ledger = new System.Collections.Generic.List<ResourceView>(8);
-            if (SimIo.CopyResourceLedger(ledger) > 0)
+            if (em.HasBuffer<ResourceAmount>(bag) && em.HasBuffer<ResourceInfo>(bag))
             {
-                snapshot.resources = new ResourceSnapshot[ledger.Count];
-                for (var i = 0; i < ledger.Count; i++)
+                var stock = em.GetBuffer<ResourceAmount>(bag);
+                var info = em.GetBuffer<ResourceInfo>(bag);
+                snapshot.resources = new ResourceSnapshot[info.Length];
+                for (var i = 0; i < info.Length; i++)
                 {
-                    var row = ledger[i];
+                    var row = info[i];
                     snapshot.resources[i] = new ResourceSnapshot
                     {
-                        resourceId = row.ResourceId,
-                        amount = row.Amount
+                        resourceId = row.ResourceId.ToString(),
+                        amount = ResourceLedger.Get(stock, row.ResourceId)
                     };
                 }
             }
@@ -155,11 +155,11 @@ namespace TheyWillDescend.App
             if (world != null && world.IsCreated)
                 world.EntityManager.CompleteAllTrackedJobs();
 
-            SimIo.TryEnqueueRestoreClock(snapshot.speed, playerPaused: true);
+            SimCommands.TryPost(SimClockCommand.Restore(snapshot.speed, playerPaused: true));
 
-            SimIo.TryRequestDespawnAllAgents();
-            SimIo.TryRequestDespawnAllBuildings();
-            SimIo.PlaybackCommands();
+            SimCommands.TryRequestDespawnAllAgents();
+            SimCommands.TryRequestDespawnAllBuildings();
+            SimCommands.Playback();
 
             ApplyGameTime(snapshot);
 
@@ -168,7 +168,7 @@ namespace TheyWillDescend.App
                 for (var i = 0; i < snapshot.buildings.Length; i++)
                 {
                     var record = snapshot.buildings[i];
-                    SimIo.TryEnqueuePlaceBuilding(new PlaceBuildingCommand
+                    SimCommands.TryPost(new PlaceBuildingCommand
                     {
                         BuildingId = record.id,
                         TypeId = record.typeId,
@@ -189,7 +189,7 @@ namespace TheyWillDescend.App
                     EnqueueAgent(snapshot.agents[i]);
             }
 
-            SimIo.PlaybackCommands();
+            SimCommands.Playback();
             ApplyResources(snapshot);
 
             if (snapshot.buildings != null)
@@ -199,10 +199,14 @@ namespace TheyWillDescend.App
                     var record = snapshot.buildings[i];
                     if (record.workerAgentId <= 0)
                         continue;
-                    SimIo.TryEnqueueAssignWorker(record.id, record.workerAgentId);
+                    SimCommands.TryPost(new AssignWorkerCommand
+                    {
+                        BuildingId = record.id,
+                        AgentId = record.workerAgentId
+                    });
                 }
 
-                SimIo.PlaybackCommands();
+                SimCommands.Playback();
             }
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
@@ -210,21 +214,24 @@ namespace TheyWillDescend.App
 
         static void ApplyResources(RunSnapshot snapshot)
         {
-            if (snapshot.resources == null)
+            if (snapshot.resources == null || !SimWorld.TryGet(out var em, out var bag)
+                || !em.HasBuffer<ResourceAmount>(bag))
                 return;
+
+            var stock = em.GetBuffer<ResourceAmount>(bag);
 
             for (var i = 0; i < snapshot.resources.Length; i++)
             {
                 var row = snapshot.resources[i];
                 if (string.IsNullOrWhiteSpace(row.resourceId))
                     continue;
-                SimIo.SetResourceAmount(row.resourceId, row.amount);
+                ResourceLedger.Set(stock, ContentId.EncodeOrEmpty(row.resourceId), row.amount);
             }
         }
 
         static void EnqueueAgent(AgentSnapshot record)
         {
-            SimIo.TryEnqueueSpawn(new SpawnAgentCommand
+            SimCommands.TryPost(new SpawnAgentCommand
             {
                 Position = new float3(record.posX, record.posY, record.posZ),
                 Facing = new float3(record.fwdX, record.fwdY, record.fwdZ),
