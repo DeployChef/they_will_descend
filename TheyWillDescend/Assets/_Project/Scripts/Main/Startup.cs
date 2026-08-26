@@ -4,11 +4,12 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM.
+    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM, input asset.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
@@ -16,8 +17,11 @@ namespace TheyWillDescend.Main
         [Tooltip("Skip PressAnyKey/MainMenu and load Game immediately. Turn OFF before shipping flow work.")]
         [SerializeField] bool skipMenuToGameTemporarily = true;
 
+        [Header("Input")]
+        [SerializeField] InputActionAsset inputActions;
+
         AppStateMachine _fsm;
-        IDisposable _intents;
+        GameInput _input;
         bool _started;
 
         void Awake()
@@ -47,9 +51,17 @@ namespace TheyWillDescend.Main
                     "Bootstrap is missing GameAudio. Add it on the scene, not from Startup.");
             }
 
-            var bundle = AppFlowFactory.Create(this, scenes, audio);
+            if (inputActions == null)
+            {
+                GameLog.Error(
+                    "Startup: Input Action Asset must be assigned on Bootstrap (TheyWillDescend.inputactions).");
+                throw new InvalidOperationException(
+                    "Bootstrap is missing Input Action Asset. Assign Assets/_Project/Input/TheyWillDescend.inputactions.");
+            }
+
+            var bundle = AppFlowFactory.Create(this, scenes, audio, inputActions);
             _fsm = bundle.StateMachine;
-            _intents = bundle.Intents as IDisposable;
+            _input = bundle.Input;
 
             if (skipMenu)
             {
@@ -65,12 +77,14 @@ namespace TheyWillDescend.Main
 
         void Update()
         {
+            // Not input: Playing retries SessionInGame until the SubScene bag exists.
             _fsm?.Tick();
         }
 
         void OnDestroy()
         {
-            _intents?.Dispose();
+            _input?.Dispose();
+            _input = null;
         }
     }
 }

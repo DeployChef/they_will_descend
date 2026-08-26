@@ -2,6 +2,7 @@ using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Shell.States;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace TheyWillDescend.Main
 {
@@ -14,32 +15,33 @@ namespace TheyWillDescend.Main
         public readonly struct Bundle
         {
             public readonly AppStateMachine StateMachine;
-            public readonly IShellIntentSource Intents;
+            public readonly GameInput Input;
             public readonly GameSession Session;
 
-            public Bundle(
-                AppStateMachine stateMachine,
-                IShellIntentSource intents,
-                GameSession session)
+            public Bundle(AppStateMachine stateMachine, GameInput input, GameSession session)
             {
                 StateMachine = stateMachine;
-                Intents = intents;
+                Input = input;
                 Session = session;
             }
         }
 
-        public static Bundle Create(MonoBehaviour coroutineHost, SceneLoader scenes, GameAudio audio)
+        public static Bundle Create(
+            MonoBehaviour coroutineHost,
+            SceneLoader scenes,
+            GameAudio audio,
+            InputActionAsset inputActions)
         {
             var session = new GameSession(scenes, coroutineHost);
-            var intents = InputSystemShellIntents.CreateDefault();
+            var input = new GameInput(inputActions);
             var fsm = new AppStateMachine();
 
-            fsm.Register(new PressAnyKeyState(fsm, intents));
-            fsm.Register(new MainMenuState(fsm));
-            fsm.Register(new LoadingGameState(fsm, session));
-            fsm.Register(new PlayingState(intents, audio));
+            fsm.Register(new PressAnyKeyState(fsm, input));
+            fsm.Register(new MainMenuState(fsm, input));
+            fsm.Register(new LoadingGameState(fsm, session, input));
+            fsm.Register(new PlayingState(input, audio));
 
-            return new Bundle(fsm, intents, session);
+            return new Bundle(fsm, input, session);
         }
     }
 }

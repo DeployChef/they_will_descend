@@ -8,14 +8,14 @@ namespace TheyWillDescend.Shell.States
 {
     public sealed class PlayingState : IAppState
     {
-        readonly IShellIntentSource _intents;
+        readonly GameInput _input;
         readonly GameAudio _audio;
 
         public AppStateId Id => AppStateId.Playing;
 
-        public PlayingState(IShellIntentSource intents, GameAudio audio)
+        public PlayingState(GameInput input, GameAudio audio)
         {
-            _intents = intents;
+            _input = input;
             _audio = audio;
         }
 
@@ -23,11 +23,15 @@ namespace TheyWillDescend.Shell.States
         {
             TryBeginSession();
             _audio?.StartSessionMusic();
+            _input.PausePressed += OnPausePressed;
+            _input.EnableGame();
             GameLog.Info("Playing: Esc pauses the city (stay in Playing).");
         }
 
         public void Exit()
         {
+            _input.PausePressed -= OnPausePressed;
+            _input.Disable();
             SimCommands.TryPost(SimClockCommand.InGame(false));
             _audio?.StopSessionMusic();
         }
@@ -37,10 +41,10 @@ namespace TheyWillDescend.Shell.States
             if (!SimWorld.TryGet(out var em, out var bag)
                 || em.GetComponentData<SimControl>(bag).SessionInGame == 0)
                 TryBeginSession();
+        }
 
-            if (!_intents.ConsumePauseToggle())
-                return;
-
+        void OnPausePressed()
+        {
             if (GameplayEscapeRouter.Active != null && GameplayEscapeRouter.Active.TryHandleEscape())
                 return;
 

@@ -5,17 +5,20 @@ namespace TheyWillDescend.Shell.States
     public sealed class MainMenuState : IAppState
     {
         readonly AppStateMachine _fsm;
+        readonly GameInput _input;
         IShellUi _ui;
 
         public AppStateId Id => AppStateId.MainMenu;
 
-        public MainMenuState(AppStateMachine fsm)
+        public MainMenuState(AppStateMachine fsm, GameInput input)
         {
             _fsm = fsm;
+            _input = input;
         }
 
         public void Enter()
         {
+            _input.Disable();
             _ui = ShellUiPort.Current;
             if (_ui == null)
             {

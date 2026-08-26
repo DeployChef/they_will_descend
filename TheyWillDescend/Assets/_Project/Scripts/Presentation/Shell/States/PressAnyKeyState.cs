@@ -5,14 +5,14 @@ namespace TheyWillDescend.Shell.States
     public sealed class PressAnyKeyState : IAppState
     {
         readonly AppStateMachine _fsm;
-        readonly IShellIntentSource _intents;
+        readonly GameInput _input;
 
         public AppStateId Id => AppStateId.PressAnyKey;
 
-        public PressAnyKeyState(AppStateMachine fsm, IShellIntentSource intents)
+        public PressAnyKeyState(AppStateMachine fsm, GameInput input)
         {
             _fsm = fsm;
-            _intents = intents;
+            _input = input;
         }
 
         public void Enter()
@@ -25,15 +25,22 @@ namespace TheyWillDescend.Shell.States
             }
 
             ui.ShowPressAnyKey();
+            _input.Proceeded += OnProceeded;
+            _input.EnableMenu();
             GameLog.Info("Press any key to continue.");
         }
 
-        public void Exit() { }
-
-        public void Tick()
+        public void Exit()
         {
-            if (_intents.ConsumeProceed())
-                _fsm.TransitionTo(AppStateId.MainMenu);
+            _input.Proceeded -= OnProceeded;
+            _input.Disable();
+        }
+
+        public void Tick() { }
+
+        void OnProceeded()
+        {
+            _fsm.TransitionTo(AppStateId.MainMenu);
         }
     }
 }
