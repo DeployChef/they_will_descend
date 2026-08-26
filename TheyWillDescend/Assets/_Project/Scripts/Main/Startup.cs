@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
@@ -22,6 +22,7 @@ namespace TheyWillDescend.Main
 
         AppStateMachine _fsm;
         GameInput _input;
+        GameSession _session;
         bool _started;
 
         void Awake()
@@ -29,19 +30,17 @@ namespace TheyWillDescend.Main
             if (_started)
                 return;
             _started = true;
-            StartCoroutine(BootRoutine());
+            BootAsync().Forget();
         }
 
-        IEnumerator BootRoutine()
+        async UniTaskVoid BootAsync()
         {
             var scenes = new SceneLoader();
             var skipMenu = skipMenuToGameTemporarily;
+            var ct = this.GetCancellationTokenOnDestroy();
 
             if (!skipMenu)
-            {
-                yield return scenes.LoadMainMenuAdditive();
-                yield return null;
-            }
+                await scenes.LoadMainMenuAdditive(ct);
 
             var audio = GetComponent<GameAudio>();
             if (audio == null)
@@ -59,9 +58,10 @@ namespace TheyWillDescend.Main
                     "Bootstrap is missing Input Action Asset. Assign Assets/_Project/Input/TheyWillDescend.inputactions.");
             }
 
-            var bundle = AppFlowFactory.Create(this, scenes, audio, inputActions);
+            var bundle = AppFlowFactory.Create(scenes, audio, inputActions);
             _fsm = bundle.StateMachine;
             _input = bundle.Input;
+            _session = bundle.Session;
 
             if (skipMenu)
             {
@@ -77,6 +77,8 @@ namespace TheyWillDescend.Main
 
         void OnDestroy()
         {
+            _session?.Cancel();
+            _session = null;
             _input?.Dispose();
             _input = null;
         }

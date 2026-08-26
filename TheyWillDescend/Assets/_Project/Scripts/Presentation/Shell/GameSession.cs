@@ -1,88 +1,86 @@
 using System;
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.Io;
-using UnityEngine;
 
 namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// One gameplay run: show Loading, load Game, wait until simulation exists, then hide Loading.
-    /// Menu UI port dies with MainMenu — Playing must not use <see cref="ShellUiPort"/>.
-    /// After <see cref="Dispose"/>, MainMenu is back; caller should TransitionTo MainMenu.
+    /// Not a scene object — it owns the lifetime of Game, so it cannot live on Game.
+    /// After <see cref="DisposeAsync"/>, MainMenu is back; caller should TransitionTo MainMenu.
     /// </summary>
     public sealed class GameSession
     {
         const float SimulationReadyTimeoutSeconds = 30f;
 
         readonly SceneLoader _scenes;
-        readonly MonoBehaviour _coroutines;
+        CancellationTokenSource _runCts;
 
         public bool IsActive { get; private set; }
 
-        public GameSession(SceneLoader scenes, MonoBehaviour coroutineHost)
+        public GameSession(SceneLoader scenes)
         {
             _scenes = scenes;
-            _coroutines = coroutineHost;
         }
 
-        public void Start(Action onReady)
+        public async UniTask StartAsync(CancellationToken cancellationToken = default)
         {
             if (IsActive)
+                return;
+
+            Cancel();
+            _runCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var ct = _runCts.Token;
+
+            await _scenes.LoadLoadingAdditive(ct);
+            await _scenes.UnloadMainMenu(ct);
+            await _scenes.LoadGameAdditive(ct);
+
+            if (!_scenes.IsGameLoaded)
             {
-                onReady?.Invoke();
+                GameLog.Error("GameSession.Start failed — Game scene not loaded.");
                 return;
             }
 
-            _coroutines.StartCoroutine(StartRoutine(onReady));
+            await WaitUntilSimulationReady(ct);
+            await _scenes.UnloadLoading(ct);
+            IsActive = true;
         }
 
-        public void Dispose(Action onDone = null)
+        public async UniTask DisposeAsync(CancellationToken cancellationToken = default)
         {
-            _coroutines.StartCoroutine(DisposeRoutine(onDone));
-        }
-
-        IEnumerator StartRoutine(Action onReady)
-        {
-            yield return _scenes.LoadLoadingAdditive();
-            yield return _scenes.UnloadMainMenu();
-            yield return _scenes.LoadGameAdditive();
-            IsActive = _scenes.IsGameLoaded;
-            if (!IsActive)
-            {
-                GameLog.Error("GameSession.Start failed — Game scene not loaded.");
-                yield break;
-            }
-
-            yield return WaitUntilSimulationReady();
-            yield return _scenes.UnloadLoading();
-            onReady?.Invoke();
-        }
-
-        IEnumerator DisposeRoutine(Action onDone)
-        {
-            yield return _scenes.UnloadLoading();
-            yield return _scenes.UnloadGame();
-            yield return _scenes.LoadMainMenuAdditive();
-            yield return null;
+            Cancel();
+            await _scenes.UnloadLoading(cancellationToken);
+            await _scenes.UnloadGame(cancellationToken);
+            await _scenes.LoadMainMenuAdditive(cancellationToken);
             IsActive = false;
-            onDone?.Invoke();
         }
 
-        static IEnumerator WaitUntilSimulationReady()
+        public void Cancel()
         {
-            var t0 = Time.realtimeSinceStartup;
-            while (!SimWorld.TryGet(out _, out _))
-            {
-                if (Time.realtimeSinceStartup - t0 > SimulationReadyTimeoutSeconds)
-                {
-                    GameLog.Error(
-                        "GameSession: SimControl never appeared (SubScene bake). " +
-                        "Check Simulation SubScene is in Game and in Play Mode.");
-                    yield break;
-                }
+            if (_runCts == null)
+                return;
+            _runCts.Cancel();
+            _runCts.Dispose();
+            _runCts = null;
+        }
 
-                yield return null;
+        static async UniTask WaitUntilSimulationReady(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await UniTask.WaitUntil(
+                        () => SimWorld.TryGet(out _, out _),
+                        cancellationToken: cancellationToken)
+                    .Timeout(TimeSpan.FromSeconds(SimulationReadyTimeoutSeconds));
+            }
+            catch (TimeoutException)
+            {
+                GameLog.Error(
+                    "GameSession: SimControl never appeared (SubScene bake). " +
+                    "Check Simulation SubScene is in Game and in Play Mode.");
             }
         }
     }

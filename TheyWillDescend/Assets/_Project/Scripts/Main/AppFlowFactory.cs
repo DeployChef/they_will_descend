@@ -1,7 +1,6 @@
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Shell.States;
-using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace TheyWillDescend.Main
@@ -26,13 +25,9 @@ namespace TheyWillDescend.Main
             }
         }
 
-        public static Bundle Create(
-            MonoBehaviour coroutineHost,
-            SceneLoader scenes,
-            GameAudio audio,
-            InputActionAsset inputActions)
+        public static Bundle Create(SceneLoader scenes, GameAudio audio, InputActionAsset inputActions)
         {
-            var session = new GameSession(scenes, coroutineHost);
+            var session = new GameSession(scenes);
             var input = new GameInput(inputActions);
             var fsm = new AppStateMachine();
 

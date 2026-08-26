@@ -1,4 +1,8 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Shell;
 
 namespace TheyWillDescend.Shell.States
 {
@@ -7,6 +11,7 @@ namespace TheyWillDescend.Shell.States
         readonly AppStateMachine _fsm;
         readonly GameSession _session;
         readonly GameInput _input;
+        CancellationTokenSource _loadCts;
 
         public AppStateId Id => AppStateId.LoadingGame;
 
@@ -21,9 +26,30 @@ namespace TheyWillDescend.Shell.States
         {
             _input.Disable();
             GameLog.Info("Loading game session…");
-            _session.Start(() => _fsm.TransitionTo(AppStateId.Playing));
+            _loadCts = new CancellationTokenSource();
+            LoadThenPlay(_loadCts.Token).Forget();
         }
 
-        public void Exit() { }
+        public void Exit()
+        {
+            if (!_session.IsActive)
+                _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = null;
+        }
+
+        async UniTaskVoid LoadThenPlay(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _session.StartAsync(cancellationToken);
+                if (cancellationToken.IsCancellationRequested || !_session.IsActive)
+                    return;
+                _fsm.TransitionTo(AppStateId.Playing);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
     }
 }

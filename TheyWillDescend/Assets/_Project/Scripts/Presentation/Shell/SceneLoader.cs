@@ -1,4 +1,5 @@
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
 using UnityEngine.SceneManagement;
 
@@ -19,14 +20,17 @@ namespace TheyWillDescend.Shell
         public bool IsMainMenuLoaded => IsLoaded(GameScenes.MainMenu);
         public bool IsLoadingLoaded => IsLoaded(GameScenes.Loading);
 
-        public IEnumerator LoadAdditive(string sceneName, bool setActive = false)
+        public async UniTask LoadAdditive(
+            string sceneName,
+            bool setActive = false,
+            CancellationToken cancellationToken = default)
         {
             if (IsLoaded(sceneName))
             {
                 GameLog.Info($"Scene '{sceneName}' already loaded.");
                 if (setActive)
                     TrySetActive(sceneName);
-                yield break;
+                return;
             }
 
             GameLog.Info($"Loading '{sceneName}' additive…");
@@ -34,11 +38,10 @@ namespace TheyWillDescend.Shell
             if (op == null)
             {
                 GameLog.Error($"Failed to load '{sceneName}'. Add it to Build Settings.");
-                yield break;
+                return;
             }
 
-            while (!op.isDone)
-                yield return null;
+            await op.ToUniTask(cancellationToken: cancellationToken);
 
             if (setActive)
                 TrySetActive(sceneName);
@@ -46,31 +49,36 @@ namespace TheyWillDescend.Shell
             GameLog.Info($"Scene '{sceneName}' loaded.");
         }
 
-        public IEnumerator Unload(string sceneName)
+        public async UniTask Unload(string sceneName, CancellationToken cancellationToken = default)
         {
             if (!IsLoaded(sceneName))
-                yield break;
+                return;
 
             GameLog.Info($"Unloading '{sceneName}'…");
             var op = SceneManager.UnloadSceneAsync(sceneName);
             if (op == null)
-                yield break;
+                return;
 
-            while (!op.isDone)
-                yield return null;
+            await op.ToUniTask(cancellationToken: cancellationToken);
         }
 
-        public IEnumerator LoadGameAdditive() => LoadAdditive(GameScenes.Game, setActive: true);
+        public UniTask LoadGameAdditive(CancellationToken cancellationToken = default) =>
+            LoadAdditive(GameScenes.Game, setActive: true, cancellationToken);
 
-        public IEnumerator UnloadGame() => Unload(GameScenes.Game);
+        public UniTask UnloadGame(CancellationToken cancellationToken = default) =>
+            Unload(GameScenes.Game, cancellationToken);
 
-        public IEnumerator LoadMainMenuAdditive() => LoadAdditive(GameScenes.MainMenu, setActive: false);
+        public UniTask LoadMainMenuAdditive(CancellationToken cancellationToken = default) =>
+            LoadAdditive(GameScenes.MainMenu, setActive: false, cancellationToken);
 
-        public IEnumerator UnloadMainMenu() => Unload(GameScenes.MainMenu);
+        public UniTask UnloadMainMenu(CancellationToken cancellationToken = default) =>
+            Unload(GameScenes.MainMenu, cancellationToken);
 
-        public IEnumerator LoadLoadingAdditive() => LoadAdditive(GameScenes.Loading, setActive: false);
+        public UniTask LoadLoadingAdditive(CancellationToken cancellationToken = default) =>
+            LoadAdditive(GameScenes.Loading, setActive: false, cancellationToken);
 
-        public IEnumerator UnloadLoading() => Unload(GameScenes.Loading);
+        public UniTask UnloadLoading(CancellationToken cancellationToken = default) =>
+            Unload(GameScenes.Loading, cancellationToken);
 
         static void TrySetActive(string sceneName)
         {
