@@ -1,5 +1,4 @@
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Simulation.Io;
 
 namespace TheyWillDescend.Shell.States
 {
@@ -21,13 +20,10 @@ namespace TheyWillDescend.Shell.States
         public void Enter()
         {
             _input.Disable();
-            SimCommands.TryPost(SimClockCommand.InGame(false));
             GameLog.Info("Loading game session…");
             _session.Start(() => _fsm.TransitionTo(AppStateId.Playing));
         }
 
         public void Exit() { }
-
-        public void Tick() { }
     }
 }

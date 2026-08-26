@@ -5,6 +5,5 @@ namespace TheyWillDescend.Shell
         AppStateId Id { get; }
         void Enter();
         void Exit();
-        void Tick();
     }
 }

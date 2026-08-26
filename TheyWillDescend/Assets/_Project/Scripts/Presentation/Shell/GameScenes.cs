@@ -7,6 +7,7 @@ namespace TheyWillDescend.Shell
     {
         public const string Boot = "Bootstrap";
         public const string MainMenu = "MainMenu";
+        public const string Loading = "Loading";
         public const string Game = "Game";
     }
 }

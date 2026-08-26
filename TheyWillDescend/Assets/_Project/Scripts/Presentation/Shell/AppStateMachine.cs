@@ -44,10 +44,5 @@ namespace TheyWillDescend.Shell
             _current = next;
             _current.Enter();
         }
-
-        public void Tick()
-        {
-            _current?.Tick();
-        }
     }
 }

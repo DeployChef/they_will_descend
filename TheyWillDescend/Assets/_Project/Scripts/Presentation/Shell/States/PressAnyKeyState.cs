@@ -36,8 +36,6 @@ namespace TheyWillDescend.Shell.States
             _input.Disable();
         }
 
-        public void Tick() { }
-
         void OnProceeded()
         {
             _fsm.TransitionTo(AppStateId.MainMenu);

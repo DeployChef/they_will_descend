@@ -38,8 +38,6 @@ namespace TheyWillDescend.Shell.States
             _ui = null;
         }
 
-        public void Tick() { }
-
         void OnStartGameClicked()
         {
             _fsm.TransitionTo(AppStateId.LoadingGame);

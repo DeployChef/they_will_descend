@@ -17,6 +17,7 @@ namespace TheyWillDescend.Shell
 
         public bool IsGameLoaded => IsLoaded(GameScenes.Game);
         public bool IsMainMenuLoaded => IsLoaded(GameScenes.MainMenu);
+        public bool IsLoadingLoaded => IsLoaded(GameScenes.Loading);
 
         public IEnumerator LoadAdditive(string sceneName, bool setActive = false)
         {
@@ -66,6 +67,10 @@ namespace TheyWillDescend.Shell
         public IEnumerator LoadMainMenuAdditive() => LoadAdditive(GameScenes.MainMenu, setActive: false);
 
         public IEnumerator UnloadMainMenu() => Unload(GameScenes.MainMenu);
+
+        public IEnumerator LoadLoadingAdditive() => LoadAdditive(GameScenes.Loading, setActive: false);
+
+        public IEnumerator UnloadLoading() => Unload(GameScenes.Loading);
 
         static void TrySetActive(string sceneName)
         {

@@ -1,17 +1,20 @@
 using System;
 using System.Collections;
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Simulation.Io;
 using UnityEngine;
 
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// One gameplay run: load Game, unload MainMenu. Menu UI port dies with that scene —
-    /// Playing must not use <see cref="ShellUiPort"/>. After <see cref="Dispose"/>, MainMenu
-    /// is back and the binder binds a fresh port; caller should TransitionTo MainMenu.
+    /// One gameplay run: show Loading, load Game, wait until simulation exists, then hide Loading.
+    /// Menu UI port dies with MainMenu — Playing must not use <see cref="ShellUiPort"/>.
+    /// After <see cref="Dispose"/>, MainMenu is back; caller should TransitionTo MainMenu.
     /// </summary>
     public sealed class GameSession
     {
+        const float SimulationReadyTimeoutSeconds = 30f;
+
         readonly SceneLoader _scenes;
         readonly MonoBehaviour _coroutines;
 
@@ -41,6 +44,8 @@ namespace TheyWillDescend.Shell
 
         IEnumerator StartRoutine(Action onReady)
         {
+            yield return _scenes.LoadLoadingAdditive();
+            yield return _scenes.UnloadMainMenu();
             yield return _scenes.LoadGameAdditive();
             IsActive = _scenes.IsGameLoaded;
             if (!IsActive)
@@ -49,17 +54,36 @@ namespace TheyWillDescend.Shell
                 yield break;
             }
 
-            yield return _scenes.UnloadMainMenu();
+            yield return WaitUntilSimulationReady();
+            yield return _scenes.UnloadLoading();
             onReady?.Invoke();
         }
 
         IEnumerator DisposeRoutine(Action onDone)
         {
+            yield return _scenes.UnloadLoading();
             yield return _scenes.UnloadGame();
             yield return _scenes.LoadMainMenuAdditive();
             yield return null;
             IsActive = false;
             onDone?.Invoke();
+        }
+
+        static IEnumerator WaitUntilSimulationReady()
+        {
+            var t0 = Time.realtimeSinceStartup;
+            while (!SimWorld.TryGet(out _, out _))
+            {
+                if (Time.realtimeSinceStartup - t0 > SimulationReadyTimeoutSeconds)
+                {
+                    GameLog.Error(
+                        "GameSession: SimControl never appeared (SubScene bake). " +
+                        "Check Simulation SubScene is in Game and in Play Mode.");
+                    yield break;
+                }
+
+                yield return null;
+            }
         }
     }
 }

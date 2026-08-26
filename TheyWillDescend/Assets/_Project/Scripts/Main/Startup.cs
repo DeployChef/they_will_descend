@@ -75,12 +75,6 @@ namespace TheyWillDescend.Main
             }
         }
 
-        void Update()
-        {
-            // Not input: Playing retries SessionInGame until the SubScene bag exists.
-            _fsm?.Tick();
-        }
-
         void OnDestroy()
         {
             _input?.Dispose();
