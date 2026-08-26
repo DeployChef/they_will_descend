@@ -8,7 +8,7 @@ using UnityEngine;
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM, SimGate.
+    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
@@ -41,7 +41,11 @@ namespace TheyWillDescend.Main
 
             var audio = GetComponent<GameAudio>();
             if (audio == null)
-                audio = gameObject.AddComponent<GameAudio>();
+            {
+                GameLog.Error("Startup: GameAudio must be on Bootstrap. Do not AddComponent it from code.");
+                throw new InvalidOperationException(
+                    "Bootstrap is missing GameAudio. Add it on the scene, not from Startup.");
+            }
 
             var bundle = AppFlowFactory.Create(this, scenes, audio);
             _fsm = bundle.StateMachine;
@@ -62,13 +66,11 @@ namespace TheyWillDescend.Main
         void Update()
         {
             _fsm?.Tick();
-            SimGate.Active?.PushClock(Time.unscaledDeltaTime);
         }
 
         void OnDestroy()
         {
             _intents?.Dispose();
-            SimGate.ClearActive();
         }
     }
 }

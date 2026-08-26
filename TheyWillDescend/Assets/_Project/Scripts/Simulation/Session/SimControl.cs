@@ -3,13 +3,18 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Session
 {
     /// <summary>
-    /// ECS mirror of Shell clock policy. Written via <c>SimIo.SetClock</c> from the composition root.
-    /// Systems consume <see cref="DeltaTime"/> — they do not interpret pause reasons.
+    /// Session clock. UI writes via <c>SimClockCommand</c>; systems read Mode / Speed / DeltaTime.
+    /// <see cref="DeltaTime"/> is frame length times Speed — not zeroed on pause.
     /// </summary>
     public struct SimControl : IComponentData
     {
         public SimRunMode Mode;
         public int Speed;
         public float DeltaTime;
+        public byte SessionInGame;
+        public byte PlayerPaused;
+        public byte BuildLocked;
+
+        public bool IsRunning => Mode == SimRunMode.Running;
     }
 }

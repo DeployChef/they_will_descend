@@ -24,7 +24,10 @@ namespace TheyWillDescend.Simulation.Agents
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var dt = SystemAPI.GetSingleton<SimControl>().DeltaTime;
+            var control = SystemAPI.GetSingleton<SimControl>();
+            if (!control.IsRunning)
+                return;
+            var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;
 

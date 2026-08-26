@@ -23,9 +23,10 @@ namespace TheyWillDescend.Simulation.Economy
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            if (!SystemAPI.HasSingleton<SimControl>())
+            var control = SystemAPI.GetSingleton<SimControl>();
+            if (!control.IsRunning)
                 return;
-            var dt = SystemAPI.GetSingleton<SimControl>().DeltaTime;
+            var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;
 

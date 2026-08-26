@@ -1,14 +1,14 @@
-using TheyWillDescend.Shell;
+using TheyWillDescend.Simulation.Io;
+using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using TMPro;
-using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Clock buttons → SimGate. Day label pulls GameTime (read-only).
+    /// Clock buttons enqueue sim clock commands. Day label pulls GameTime.
     /// </summary>
     public sealed class TimeWidget : MonoBehaviour
     {
@@ -33,49 +33,34 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Update()
         {
-            var gate = SimGate.Active;
-            var buildLocked = gate != null && gate.BuildLocked;
+            var hasControl = SimIo.TryGetSimControl(out var control);
+            var buildLocked = hasControl && control.BuildLocked != 0;
             HudButtons.SetInteractable(speed1Button, !buildLocked);
             HudButtons.SetInteractable(speed2Button, !buildLocked);
             HudButtons.SetInteractable(speed3Button, !buildLocked);
             HudButtons.SetInteractable(pauseButton, !buildLocked);
 
-            HudButtons.Tint(speed1Button, gate != null && gate.Speed == 1);
-            HudButtons.Tint(speed2Button, gate != null && gate.Speed == 2);
-            HudButtons.Tint(speed3Button, gate != null && gate.Speed == 3);
-            HudButtons.Tint(pauseButton, gate != null && gate.PlayerPaused);
+            HudButtons.Tint(speed1Button, hasControl && control.Speed == 1);
+            HudButtons.Tint(speed2Button, hasControl && control.Speed == 2);
+            HudButtons.Tint(speed3Button, hasControl && control.Speed == 3);
+            HudButtons.Tint(pauseButton, hasControl && control.PlayerPaused != 0);
 
             if (clockLabel == null)
                 return;
 
-            clockLabel.text = TryGetGameTime(out var time)
+            clockLabel.text = SimIo.TryGetGameTime(out var time)
                 ? GameClockFormat.Format(time)
                 : "Day --  --:--";
         }
 
         static void OnPauseClicked()
         {
-            SimGate.Active?.TogglePlayerPause();
+            SimIo.TryEnqueueTogglePlayerPause();
         }
 
         static void OnSpeedClicked(int speed)
         {
-            SimGate.Active?.SetSpeed(speed);
-        }
-
-        static bool TryGetGameTime(out GameTime time)
-        {
-            time = default;
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
-                return false;
-
-            using var query = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-                return false;
-
-            time = query.GetSingleton<GameTime>();
-            return true;
+            SimIo.TryEnqueueSimSpeed(speed);
         }
     }
 }

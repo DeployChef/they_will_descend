@@ -28,6 +28,8 @@ namespace TheyWillDescend.Simulation.City
                 return;
 
             var control = em.GetComponentData<SimControl>(session);
+            if (!control.IsRunning)
+                return;
             var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;

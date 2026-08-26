@@ -5,20 +5,17 @@ namespace TheyWillDescend.Shell.States
     public sealed class MainMenuState : IAppState
     {
         readonly AppStateMachine _fsm;
-        readonly SimGate _simGate;
         IShellUi _ui;
 
         public AppStateId Id => AppStateId.MainMenu;
 
-        public MainMenuState(AppStateMachine fsm, SimGate simGate)
+        public MainMenuState(AppStateMachine fsm)
         {
             _fsm = fsm;
-            _simGate = simGate;
         }
 
         public void Enter()
         {
-            _simGate.SetSessionInGame(false);
             _ui = ShellUiPort.Current;
             if (_ui == null)
             {

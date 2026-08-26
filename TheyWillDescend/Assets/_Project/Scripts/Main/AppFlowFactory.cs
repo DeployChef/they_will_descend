@@ -13,18 +13,15 @@ namespace TheyWillDescend.Main
     {
         public readonly struct Bundle
         {
-            public readonly SimGate SimGate;
             public readonly AppStateMachine StateMachine;
             public readonly IShellIntentSource Intents;
             public readonly GameSession Session;
 
             public Bundle(
-                SimGate simGate,
                 AppStateMachine stateMachine,
                 IShellIntentSource intents,
                 GameSession session)
             {
-                SimGate = simGate;
                 StateMachine = stateMachine;
                 Intents = intents;
                 Session = session;
@@ -33,19 +30,16 @@ namespace TheyWillDescend.Main
 
         public static Bundle Create(MonoBehaviour coroutineHost, SceneLoader scenes, GameAudio audio)
         {
-            var simGate = new SimGate();
-            simGate.BindAsActive();
-
             var session = new GameSession(scenes, coroutineHost);
             var intents = InputSystemShellIntents.CreateDefault();
             var fsm = new AppStateMachine();
 
-            fsm.Register(new PressAnyKeyState(fsm, simGate, intents));
-            fsm.Register(new MainMenuState(fsm, simGate));
-            fsm.Register(new LoadingGameState(fsm, simGate, session));
-            fsm.Register(new PlayingState(simGate, intents, audio));
+            fsm.Register(new PressAnyKeyState(fsm, intents));
+            fsm.Register(new MainMenuState(fsm));
+            fsm.Register(new LoadingGameState(fsm, session));
+            fsm.Register(new PlayingState(intents, audio));
 
-            return new Bundle(simGate, fsm, intents, session);
+            return new Bundle(fsm, intents, session);
         }
     }
 }

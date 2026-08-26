@@ -5,24 +5,18 @@ namespace TheyWillDescend.Shell.States
     public sealed class PressAnyKeyState : IAppState
     {
         readonly AppStateMachine _fsm;
-        readonly SimGate _simGate;
         readonly IShellIntentSource _intents;
 
         public AppStateId Id => AppStateId.PressAnyKey;
 
-        public PressAnyKeyState(
-            AppStateMachine fsm,
-            SimGate simGate,
-            IShellIntentSource intents)
+        public PressAnyKeyState(AppStateMachine fsm, IShellIntentSource intents)
         {
             _fsm = fsm;
-            _simGate = simGate;
             _intents = intents;
         }
 
         public void Enter()
         {
-            _simGate.SetSessionInGame(false);
             var ui = ShellUiPort.Current;
             if (ui == null)
             {

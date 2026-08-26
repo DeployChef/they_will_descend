@@ -50,26 +50,73 @@ namespace TheyWillDescend.Simulation.Io
     }
 
     /// <summary>
-    /// UI/save enqueue intents and pull numbers. They do not write Money, poses, or step the world.
-    /// PlaybackCommands is load-only.
+    /// UI/save enqueue intents and pull numbers. They do not write stocks, poses, or step the world.
     /// </summary>
     public static class SimIo
     {
         static World _cachedWorld;
         static Entity _session;
 
-        public static void SetClock(SimRunMode mode, int speed, float unscaledDeltaTime)
+        public static bool TryGetSimControl(out SimControl control)
+        {
+            control = default;
+            if (!TrySession(out var em, out var session) || !em.HasComponent<SimControl>(session))
+                return false;
+            control = em.GetComponentData<SimControl>(session);
+            return true;
+        }
+
+        public static bool TryEnqueueSessionInGame(bool inGame)
+        {
+            return TryEnqueueClock(new SimClockCommand
+            {
+                Kind = SimClockCommandKind.SetSessionInGame,
+                Value = inGame ? 1 : 0
+            });
+        }
+
+        public static bool TryEnqueueTogglePlayerPause()
+        {
+            return TryEnqueueClock(new SimClockCommand { Kind = SimClockCommandKind.TogglePlayerPause });
+        }
+
+        public static bool TryEnqueueSimSpeed(int speed)
+        {
+            return TryEnqueueClock(new SimClockCommand
+            {
+                Kind = SimClockCommandKind.SetSpeed,
+                Value = speed
+            });
+        }
+
+        public static bool TryEnqueueBuildLocked(bool locked)
+        {
+            return TryEnqueueClock(new SimClockCommand
+            {
+                Kind = SimClockCommandKind.SetBuildLocked,
+                Value = locked ? 1 : 0
+            });
+        }
+
+        public static bool TryEnqueueRestoreClock(int speed, bool playerPaused)
+        {
+            return TryEnqueueClock(new SimClockCommand
+            {
+                Kind = SimClockCommandKind.Restore,
+                Value = speed,
+                Secondary = playerPaused ? 1 : 0
+            });
+        }
+
+        static bool TryEnqueueClock(in SimClockCommand command)
         {
             if (!TrySession(out var em, out var session))
-                return;
-
-            var dt = mode == SimRunMode.Running ? unscaledDeltaTime * speed : 0f;
-            em.SetComponentData(session, new SimControl
-            {
-                Mode = mode,
-                Speed = speed,
-                DeltaTime = dt
-            });
+                return false;
+            if (!em.HasBuffer<SimClockCommand>(session))
+                em.AddBuffer<SimClockCommand>(session);
+            em.GetBuffer<SimClockCommand>(session).Add(command);
+            ConsumeSimClockCommandsSystem.Run(em);
+            return true;
         }
 
         public static bool TryGetCityGrid(out CityGrid grid)

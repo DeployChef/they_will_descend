@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.Agents;
+using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
@@ -168,10 +168,9 @@ namespace TheyWillDescend.Presentation.Agents
 
         static float AnimSpeed()
         {
-            var gate = SimGate.Active;
-            if (gate == null || gate.EffectiveMode != SimRunMode.Running)
+            if (!SimIo.TryGetSimControl(out var control) || !control.IsRunning)
                 return 0f;
-            return gate.Speed;
+            return control.Speed;
         }
 
         static void ApplyPose(Transform transform, in LocalTransform local)

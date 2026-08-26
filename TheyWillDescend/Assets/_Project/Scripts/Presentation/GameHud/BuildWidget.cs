@@ -104,7 +104,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
             _catalogOpen = true;
             SetCatalogVisible(true);
-            SimGate.Active?.SetBuildLocked(true);
+            SimIo.TryEnqueueBuildLocked(true);
             GameLog.Info("BuildCatalog open (build locked).");
         }
 
@@ -115,7 +115,7 @@ namespace TheyWillDescend.Presentation.GameHud
             placement?.CancelPlacing();
 
             if (resumeSim)
-                SimGate.Active?.SetBuildLocked(false);
+                SimIo.TryEnqueueBuildLocked(false);
         }
 
         void RebuildCatalogButtons()

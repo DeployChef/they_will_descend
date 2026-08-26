@@ -18,6 +18,9 @@ namespace TheyWillDescend.Simulation.Time
             if (!SystemAPI.TryGetSingletonRW<GameTime>(out var timeRW))
                 return;
 
+            if (!simControl.IsRunning)
+                return;
+
             var dt = simControl.DeltaTime;
             if (dt <= 0f)
                 return;

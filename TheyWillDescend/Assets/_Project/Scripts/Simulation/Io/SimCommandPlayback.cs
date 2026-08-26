@@ -11,6 +11,7 @@ namespace TheyWillDescend.Simulation.Io
     {
         public static void Run(EntityManager em)
         {
+            ConsumeSimClockCommandsSystem.Run(em);
             ConsumeDespawnAgentsSystem.Run(em);
             ConsumeDespawnBuildingsSystem.Run(em);
             ConsumeSpawnAgentCommandsSystem.Run(em);

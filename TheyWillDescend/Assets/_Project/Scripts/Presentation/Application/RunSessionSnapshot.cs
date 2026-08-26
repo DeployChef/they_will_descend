@@ -1,6 +1,5 @@
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
-using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Io;
@@ -22,11 +21,10 @@ namespace TheyWillDescend.App
         public static RunSnapshot Capture()
         {
             var snapshot = new RunSnapshot { version = PayloadVersion };
-            var gate = SimGate.Active;
-            if (gate != null)
+            if (SimIo.TryGetSimControl(out var control))
             {
-                snapshot.speed = gate.Speed;
-                snapshot.playerPaused = gate.PlayerPaused;
+                snapshot.speed = control.Speed;
+                snapshot.playerPaused = control.PlayerPaused != 0;
             }
 
             var world = World.DefaultGameObjectInjectionWorld;
@@ -157,7 +155,7 @@ namespace TheyWillDescend.App
             if (world != null && world.IsCreated)
                 world.EntityManager.CompleteAllTrackedJobs();
 
-            SimGate.Active?.RestoreFromSnapshot(snapshot.speed, playerPaused: true);
+            SimIo.TryEnqueueRestoreClock(snapshot.speed, playerPaused: true);
 
             SimIo.TryRequestDespawnAllAgents();
             SimIo.TryRequestDespawnAllBuildings();

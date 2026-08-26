@@ -11,7 +11,7 @@ namespace TheyWillDescend.Shell
     }
 
     /// <summary>
-    /// Temporary Active router (same pattern as <see cref="SimGate"/>.Active).
+    /// Temporary Active router for overlays.
     /// Replace with composition-root injection when HUD/overlays grow.
     /// </summary>
     public static class GameplayEscapeRouter

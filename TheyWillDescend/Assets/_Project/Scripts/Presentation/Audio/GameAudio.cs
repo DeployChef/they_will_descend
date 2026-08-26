@@ -1,14 +1,14 @@
 using FMOD.Studio;
 using FMODUnity;
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Shell;
+using TheyWillDescend.Simulation.Io;
 using UnityEngine;
 
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
     /// FMOD host on Bootstrap. Lives with Root (camera + AudioListener).
-    /// Simulation never calls this. Player pause follows <see cref="SimGate.PlayerPaused"/>.
+    /// Simulation never calls this. Player pause follows <see cref="TheyWillDescend.Simulation.Session.SimControl.PlayerPaused"/>.
     /// </summary>
     public sealed class GameAudio : MonoBehaviour
     {
@@ -66,7 +66,7 @@ namespace TheyWillDescend.Presentation.Audio
             if (!_music.isValid())
                 return;
 
-            var paused = SimGate.Active != null && SimGate.Active.PlayerPaused;
+            var paused = SimIo.TryGetSimControl(out var control) && control.PlayerPaused != 0;
             if (paused == _lastPaused)
                 return;
 

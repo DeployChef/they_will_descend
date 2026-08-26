@@ -26,6 +26,7 @@ namespace TheyWillDescend.Authoring.Session
                     DeltaTime = 0f
                 });
                 AddComponent(entity, new SimBridge());
+                AddBuffer<SimClockCommand>(entity);
                 AddBuffer<SpawnAgentCommand>(entity);
                 AddBuffer<PlaceBuildingCommand>(entity);
                 AddBuffer<AssignWorkerCommand>(entity);

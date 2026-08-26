@@ -5,7 +5,7 @@ using TheyWillDescend.Infrastructure.Logging;
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// Tiny app flow router. States own Enter/Exit side effects (UI, SimGate).
+    /// Tiny app flow router. States own Enter/Exit side effects (UI, scenes).
     /// </summary>
     public sealed class AppStateMachine
     {

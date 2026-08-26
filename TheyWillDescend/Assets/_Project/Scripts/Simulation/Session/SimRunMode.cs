@@ -1,7 +1,7 @@
 namespace TheyWillDescend.Simulation.Session
 {
     /// <summary>
-    /// Shell-facing run mode mirrored into ECS as <see cref="SimControl"/>.
+    /// Session run mode on <see cref="SimControl"/>.
     /// Simulation systems may run gameplay logic only when <see cref="Running"/>.
     /// </summary>
     public enum SimRunMode : byte
