@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
-using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
@@ -19,7 +18,7 @@ namespace TheyWillDescend.Presentation.GameHud
     /// Build catalog from the building prototype buffer.
     /// Esc closes this overlay before Playing toggles player pause.
     /// </summary>
-    public sealed class BuildWidget : MonoBehaviour, IGameplayEscapeHandler
+    public sealed class BuildWidget : MonoBehaviour
     {
         [SerializeField] Button buildModeButton;
         [SerializeField] GameObject buildCatalogPanel;
@@ -33,21 +32,13 @@ namespace TheyWillDescend.Presentation.GameHud
         bool _placedBound;
         Transform _buttonRoot;
 
+        public static BuildWidget Current { get; private set; }
+
         public bool IsBusy => _catalogOpen || (placement != null && placement.IsPlacing);
-
-        void OnEnable()
-        {
-            GameplayEscapeRouter.Active = this;
-        }
-
-        void OnDisable()
-        {
-            if (GameplayEscapeRouter.Active == this)
-                GameplayEscapeRouter.Active = null;
-        }
 
         void Awake()
         {
+            Current = this;
             HudButtons.Bind(buildModeButton, OnBuildModeClicked);
             HideLegacyButtons();
             SetCatalogVisible(false);
@@ -56,6 +47,8 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnDestroy()
         {
+            if (Current == this)
+                Current = null;
             HudButtons.Unbind(buildModeButton, OnBuildModeClicked);
             ClearSpawnedButtons();
 
@@ -242,7 +235,7 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (_placedBound || placement == null)
                 return;
-            placement.Placed += OnBuildingPlaced;
+            placement.Finished += OnPlacementFinished;
             _placedBound = true;
         }
 
@@ -250,11 +243,11 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (!_placedBound || placement == null)
                 return;
-            placement.Placed -= OnBuildingPlaced;
+            placement.Finished -= OnPlacementFinished;
             _placedBound = false;
         }
 
-        void OnBuildingPlaced()
+        void OnPlacementFinished()
         {
             Close(resumeSim: true);
         }

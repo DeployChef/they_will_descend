@@ -1604,7 +1604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cab45f78966f85f43a8d17189282cf0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.GameHud.BuildingInspectPanel
-  board: {fileID: 1884302427}
+  selection: {fileID: 1884302428}
   card: {fileID: 53282519}
   title: {fileID: 1419706605}
   subtitle: {fileID: 1838927088}
@@ -6199,8 +6199,8 @@ MonoBehaviour:
   saveButton: {fileID: 456631526}
   loadButton: {fileID: 492153122}
   buildWidget: {fileID: 1531915643}
-  spawnWidget: {fileID: 1200401187}
   buildingViewBoard: {fileID: 1884302427}
+  agentViewBoard: {fileID: 1921033254}
 --- !u!114 &1511022222
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7688,6 +7688,8 @@ GameObject:
   - component: {fileID: 1884302426}
   - component: {fileID: 1884302425}
   - component: {fileID: 1884302427}
+  - component: {fileID: 1884302428}
+  - component: {fileID: 1884302429}
   m_Layer: 0
   m_Name: BuildPlacement
   m_TagString: Untagged
@@ -7739,7 +7741,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingViewBoard
   gridGuide: {fileID: 1180480264}
+  selection: {fileID: 1884302428}
   zoneColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
+--- !u!114 &1884302428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884302424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e8f1c4a92b54d6e8f0a1c2d3e4f5a6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingSelection
+  placement: {fileID: 1884302425}
+--- !u!114 &1884302429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884302424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f9a2d5b03c65e7f9a1b2c3d4e5f6a7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingRejectLog
 --- !u!1 &1906677730
 GameObject:
   m_ObjectHideFlags: 0
@@ -7887,6 +7915,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1921033253}
   - component: {fileID: 1921033252}
+  - component: {fileID: 1921033254}
   m_Layer: 0
   m_Name: AgentSpawner
   m_TagString: Untagged
@@ -7906,11 +7935,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00bc47ee82452244e9104c4e77c54cb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Presentation.Agents.AgentSpawner
-  characterPrefabs:
-  - {fileID: 5223745084245430153, guid: c905d19030dcbd34b913a6c1eb6d1339, type: 3}
-  - {fileID: 1248034492796962311, guid: 046a8b99269c56d4695a59176f7f52d3, type: 3}
-  - {fileID: 4302800613566262353, guid: 7cba05ecd843ef74eb102fd18db22938, type: 3}
-  spawnParent: {fileID: 1841494878}
   spawnAreaCenter: {x: 0, y: 0}
   spawnAreaSize: {x: 20, y: 20}
   walkSpeedRange: {x: 1.5, y: 2.5}
@@ -7929,6 +7953,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1921033254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1921033251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9c77aba934f88656cb04fd2a0b285bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Agents.AgentViewBoard
+  characterPrefabs:
+  - {fileID: 5223745084245430153, guid: c905d19030dcbd34b913a6c1eb6d1339, type: 3}
+  - {fileID: 1248034492796962311, guid: 046a8b99269c56d4695a59176f7f52d3, type: 3}
+  - {fileID: 4302800613566262353, guid: 7cba05ecd843ef74eb102fd18db22938, type: 3}
+  spawnParent: {fileID: 1841494878}
 --- !u!1 &1932948764
 GameObject:
   m_ObjectHideFlags: 0

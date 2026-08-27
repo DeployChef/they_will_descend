@@ -26,11 +26,6 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.Unbind(spawnAgentButton, OnSpawnClicked);
         }
 
-        public void PumpViews()
-        {
-            agentSpawner?.PumpViews();
-        }
-
         void OnSpawnClicked()
         {
             agentSpawner?.SpawnRandom();

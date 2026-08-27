@@ -46,11 +46,9 @@ namespace TheyWillDescend.Presentation.City
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
 
-        public static bool IsPlacingActive { get; private set; }
-
         public bool IsPlacing => _placing;
 
-        public event Action Placed;
+        public event Action Finished;
 
         public void BeginPlacing(string typeId)
         {
@@ -71,7 +69,6 @@ namespace TheyWillDescend.Presentation.City
             _meshSize = prototype.MeshSize > 0.001f ? prototype.MeshSize : 1f;
             _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
-            IsPlacingActive = true;
             gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
@@ -83,7 +80,6 @@ namespace TheyWillDescend.Presentation.City
             if (!_placing)
                 return;
             _placing = false;
-            IsPlacingActive = false;
             _canPlace = false;
             if (gridGuide != null)
                 gridGuide.SetBuildModeActive(false);
@@ -96,6 +92,15 @@ namespace TheyWillDescend.Presentation.City
         {
             if (!_placing)
                 return;
+
+            if (Mouse.current != null
+                && Mouse.current.rightButton.wasPressedThisFrame
+                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
+            {
+                CancelPlacing();
+                Finished?.Invoke();
+                return;
+            }
 
             if (gridGuide == null || !TryGetCityCenter(out var center))
                 return;
@@ -179,8 +184,12 @@ namespace TheyWillDescend.Presentation.City
             }
 
             GameLog.Info($"Place command type={_typeId} c={_anchorCluster} r={_anchorRadial}.");
+            SimCommands.Playback();
+            if (CanAfford(_typeId))
+                return;
+
             CancelPlacing();
-            Placed?.Invoke();
+            Finished?.Invoke();
         }
 
         void UpdateGhost(float3 center, RadialGridConfig config)
@@ -418,8 +427,6 @@ namespace TheyWillDescend.Presentation.City
 
         void OnDestroy()
         {
-            if (_placing)
-                IsPlacingActive = false;
             if (_ghostZoneMesh != null)
             {
                 if (Application.isPlaying)

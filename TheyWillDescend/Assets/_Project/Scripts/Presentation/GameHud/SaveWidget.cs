@@ -1,6 +1,7 @@
 using TheyWillDescend.App;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.Agents;
 using TheyWillDescend.Presentation.City;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -16,8 +17,8 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button saveButton;
         [SerializeField] Button loadButton;
         [SerializeField, FormerlySerializedAs("buildHud")] BuildWidget buildWidget;
-        [SerializeField, FormerlySerializedAs("spawnHud")] SpawnWidget spawnWidget;
         [SerializeField] BuildingViewBoard buildingViewBoard;
+        [SerializeField] AgentViewBoard agentViewBoard;
 
         void Awake()
         {
@@ -47,7 +48,7 @@ namespace TheyWillDescend.Presentation.GameHud
             buildWidget?.CloseIfBusy();
 
             RunSessionSnapshot.Apply(snapshot);
-            spawnWidget?.PumpViews();
+            agentViewBoard?.Pump();
             if (buildingViewBoard == null)
                 GameLog.Error("SaveWidget: BuildingViewBoard is not assigned.");
             else

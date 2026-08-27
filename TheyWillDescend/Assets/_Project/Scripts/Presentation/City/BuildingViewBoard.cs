@@ -7,8 +7,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 
@@ -16,12 +14,12 @@ namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
     /// Footprint zone always. Progress bar while Construction exists.
-    /// Selection opens the HUD inspect panel — not a world-space crew widget.
     /// Finished house mesh is Entities Graphics on the Building entity — not this board.
     /// </summary>
     public sealed class BuildingViewBoard : MonoBehaviour
     {
         [SerializeField] RadialGridGuide gridGuide;
+        [SerializeField] BuildingSelection selection;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
 
         Transform _overlayRoot;
@@ -30,7 +28,6 @@ namespace TheyWillDescend.Presentation.City
         Material _placedZoneMaterial;
         Material _selectedZoneMaterial;
         Color _selectedZoneColor = new(0.95f, 0.82f, 0.2f, 0.55f);
-        int _selectedId;
 
         sealed class PlacedView
         {
@@ -40,10 +37,6 @@ namespace TheyWillDescend.Presentation.City
             public Image Fill;
         }
 
-        public int SelectedBuildingId => _selectedId;
-
-        public void Deselect() => _selectedId = 0;
-
         public void RebuildViews()
         {
             ClearViews();
@@ -51,13 +44,6 @@ namespace TheyWillDescend.Presentation.City
         }
 
         void Awake() => EnsureReady();
-
-        void Update()
-        {
-            if (!TryConsumeClick(out var hitBuildingId))
-                return;
-            _selectedId = hitBuildingId;
-        }
 
         void LateUpdate() => Pump();
 
@@ -69,8 +55,6 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             var em = world.EntityManager;
-            using var sessionQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimBridge>());
-            DrainRejected(em, sessionQuery);
             using var query = em.CreateEntityQuery(
                 ComponentType.ReadOnly<Building>(),
                 ComponentType.ReadOnly<LocalTransform>(),
@@ -89,7 +73,7 @@ namespace TheyWillDescend.Presentation.City
             }
 
             _views.Clear();
-            _selectedId = 0;
+            selection?.Deselect();
         }
 
         void OnDisable()
@@ -114,33 +98,6 @@ namespace TheyWillDescend.Presentation.City
 
             _placedZoneMaterial = null;
             _selectedZoneMaterial = null;
-        }
-
-        void DrainRejected(EntityManager em, EntityQuery sessionQuery)
-        {
-            if (sessionQuery.IsEmptyIgnoreFilter)
-                return;
-
-            var rejected = em.GetBuffer<BuildingRejectedEvent>(sessionQuery.GetSingletonEntity());
-            for (var i = 0; i < rejected.Length; i++)
-            {
-                var row = rejected[i];
-                GameLog.Warning(
-                    $"Building rejected ({ReasonText(row.Reason)}) c={row.AnchorCluster} r={row.AnchorRadial}.");
-            }
-            rejected.Clear();
-        }
-
-        static string ReasonText(byte reason)
-        {
-            return reason switch
-            {
-                BuildingRejectedEvent.UnknownType => "unknown type",
-                BuildingRejectedEvent.InvalidCell => "invalid cell",
-                BuildingRejectedEvent.Overlap => "overlap",
-                BuildingRejectedEvent.Unaffordable => "not enough resources",
-                _ => "rejected"
-            };
         }
 
         void Sync(EntityManager em, EntityQuery query)
@@ -185,7 +142,7 @@ namespace TheyWillDescend.Presentation.City
                             view.BarRoot.transform.position - cam.transform.position);
                 }
 
-                var selected = building.Id == _selectedId;
+                var selected = selection != null && building.Id == selection.SelectedBuildingId;
                 if (view.ZoneRenderer != null)
                     view.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
             }
@@ -287,28 +244,6 @@ namespace TheyWillDescend.Presentation.City
             bar.SetActive(false);
         }
 
-        bool TryConsumeClick(out int buildingId)
-        {
-            buildingId = 0;
-            if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame)
-                return false;
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-                return false;
-            if (BuildPlacementController.IsPlacingActive)
-                return false;
-
-            var cam = Camera.main;
-            if (cam == null)
-                return false;
-            var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (!Physics.Raycast(ray, out var hit, 500f))
-                return true;
-
-            var tag = hit.collider.GetComponentInParent<BuildingIdTag>();
-            buildingId = tag != null ? tag.Id : 0;
-            return true;
-        }
-
         static Sprite _whiteSprite;
 
         static Image CreateBarImage(Transform parent, string name, Color color)
@@ -346,8 +281,7 @@ namespace TheyWillDescend.Presentation.City
 
         void DestroyView(int buildingId)
         {
-            if (buildingId == _selectedId)
-                _selectedId = 0;
+            selection?.ClearIf(buildingId);
             if (!_views.TryGetValue(buildingId, out var view))
                 return;
             _views.Remove(buildingId);

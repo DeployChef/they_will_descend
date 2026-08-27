@@ -15,16 +15,11 @@ namespace TheyWillDescend.Presentation.Agents
     /// </summary>
     public sealed class AgentViewBoard : MonoBehaviour
     {
-        GameObject[] _prefabs;
-        Transform _spawnParent;
+        [SerializeField] GameObject[] characterPrefabs;
+        [SerializeField] Transform spawnParent;
+
         readonly Dictionary<int, AgentView> _views = new();
         readonly HashSet<int> _seen = new();
-
-        public void BindCatalog(GameObject[] prefabs, Transform spawnParent)
-        {
-            _prefabs = prefabs;
-            _spawnParent = spawnParent;
-        }
 
         void LateUpdate() => Pump();
 
@@ -129,8 +124,8 @@ namespace TheyWillDescend.Presentation.Agents
                 (Vector3)transform.Position,
                 (Quaternion)transform.Rotation);
             instance.name = $"{prefab.name}_{agentId}";
-            if (_spawnParent != null)
-                instance.transform.SetParent(_spawnParent, true);
+            if (spawnParent != null)
+                instance.transform.SetParent(spawnParent, true);
 
             var view = instance.GetComponent<AgentView>();
             if (view == null)
@@ -154,15 +149,15 @@ namespace TheyWillDescend.Presentation.Agents
 
         GameObject ResolvePrefab(AgentKind kind, int agentId)
         {
-            if (_prefabs == null || _prefabs.Length == 0)
+            if (characterPrefabs == null || characterPrefabs.Length == 0)
                 return null;
             if (kind != AgentKind.Worker)
-                return _prefabs[0];
+                return characterPrefabs[0];
 
-            var index = agentId % _prefabs.Length;
+            var index = agentId % characterPrefabs.Length;
             if (index < 0)
-                index += _prefabs.Length;
-            return _prefabs[index] != null ? _prefabs[index] : _prefabs[0];
+                index += characterPrefabs.Length;
+            return characterPrefabs[index] != null ? characterPrefabs[index] : characterPrefabs[0];
         }
 
         static float AnimSpeed()

@@ -14,7 +14,7 @@ namespace TheyWillDescend.Main
     {
         [Header("Temporary debug")]
         [Tooltip("Skip PressAnyKey/MainMenu and load Game immediately. Turn OFF before shipping flow work.")]
-        [SerializeField] bool skipMenuToGameTemporarily = true;
+        [SerializeField] bool skipMenuToGameTemporarily;
 
         [SerializeField] GameAudio gameAudio;
         [SerializeField] GameInput gameInput;

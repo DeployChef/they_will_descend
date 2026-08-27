@@ -15,7 +15,7 @@ namespace TheyWillDescend.Presentation.GameHud
     /// </summary>
     public sealed class BuildingInspectPanel : MonoBehaviour
     {
-        [SerializeField] BuildingViewBoard board;
+        [SerializeField] BuildingSelection selection;
         [SerializeField] GameObject card;
         [SerializeField] TMP_Text title;
         [SerializeField] TMP_Text subtitle;
@@ -45,10 +45,10 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Update()
         {
-            if (board == null)
+            if (selection == null)
                 return;
 
-            var id = board.SelectedBuildingId;
+            var id = selection.SelectedBuildingId;
             if (id <= 0)
             {
                 Hide();
@@ -170,22 +170,22 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnMinus()
         {
-            if (board != null && board.SelectedBuildingId > 0)
-                SimCommands.TryPost(new UnassignWorkerCommand { BuildingId = board.SelectedBuildingId });
+            if (selection != null && selection.SelectedBuildingId > 0)
+                SimCommands.TryPost(new UnassignWorkerCommand { BuildingId = selection.SelectedBuildingId });
         }
 
         void OnPlus()
         {
-            if (board != null && board.SelectedBuildingId > 0)
+            if (selection != null && selection.SelectedBuildingId > 0)
                 SimCommands.TryPost(new AssignWorkerCommand
                 {
-                    BuildingId = board.SelectedBuildingId
+                    BuildingId = selection.SelectedBuildingId
                 });
         }
 
         void OnClose()
         {
-            board?.Deselect();
+            selection?.Deselect();
             Hide();
         }
     }

@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace TheyWillDescend.Authoring.Session
+namespace TheyWillDescend.Authoring.City
 {
     /// <summary>
     /// Polar grid + occupancy on the session entity. Must sit on the same GO as
@@ -34,6 +34,9 @@ namespace TheyWillDescend.Authoring.Session
                         : 8f
                 });
                 AddBuffer<OccupiedCell>(entity);
+                AddBuffer<PlaceBuildingCommand>(entity);
+                AddBuffer<BuildingRejectedEvent>(entity);
+                AddBuffer<PendingScenarioPlace>(entity);
             }
         }
     }

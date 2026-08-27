@@ -137,6 +137,7 @@ GameObject:
   - component: {fileID: 568820916}
   - component: {fileID: 568820915}
   - component: {fileID: 568820917}
+  - component: {fileID: 568820918}
   m_Layer: 0
   m_Name: SimControl
   m_TagString: Untagged
@@ -195,7 +196,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 88818e7e62e07dc4ab977c0c1b994c4c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Session.CityGridAuthoring
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.CityGridAuthoring
   cityGrid:
     InnerRadius: 5
     RadialStep: 1.35
@@ -215,6 +216,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Economy.ResourceCatalogAuthoring
   catalog: {fileID: 11400000, guid: 9a6e3c1d4f0b6a8c1e3d5f7b9c1a4e62, type: 2}
+--- !u!114 &568820918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568820912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9d5f3b27e4a5f8b0d2e6f9a3b5c7d8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Agents.AgentSessionAuthoring
 --- !u!1 &615145529
 GameObject:
   m_ObjectHideFlags: 0

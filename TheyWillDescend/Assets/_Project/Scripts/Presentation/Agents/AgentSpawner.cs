@@ -12,21 +12,9 @@ namespace TheyWillDescend.Presentation.Agents
     /// </summary>
     public sealed class AgentSpawner : MonoBehaviour
     {
-        [SerializeField] GameObject[] characterPrefabs;
-        [SerializeField] Transform spawnParent;
         [SerializeField] Vector2 spawnAreaCenter = Vector2.zero;
         [SerializeField] Vector2 spawnAreaSize = new(20f, 20f);
         [SerializeField] Vector2 walkSpeedRange = new(1.5f, 2.5f);
-
-        AgentViewBoard _views;
-
-        void Awake()
-        {
-            _views = GetComponent<AgentViewBoard>();
-            if (_views == null)
-                _views = gameObject.AddComponent<AgentViewBoard>();
-            _views.BindCatalog(characterPrefabs, spawnParent);
-        }
 
         public void SpawnRandom()
         {
@@ -50,21 +38,6 @@ namespace TheyWillDescend.Presentation.Agents
             }
 
             GameLog.Info($"Spawn command Worker speed={speed:0.00}");
-        }
-
-        public void WipeAgentsAndViews()
-        {
-            SimCommands.TryRequestDespawnAllAgents();
-            EnsureViews().ClearViews();
-        }
-
-        public void PumpViews() => EnsureViews().Pump();
-
-        AgentViewBoard EnsureViews()
-        {
-            if (_views == null)
-                Awake();
-            return _views;
         }
     }
 }

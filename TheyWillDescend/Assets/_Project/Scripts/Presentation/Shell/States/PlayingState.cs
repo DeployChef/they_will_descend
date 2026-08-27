@@ -1,5 +1,6 @@
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.GameHud;
 using TheyWillDescend.Simulation.Session;
 
 namespace TheyWillDescend.Shell.States
@@ -36,7 +37,7 @@ namespace TheyWillDescend.Shell.States
 
         void OnPausePressed()
         {
-            if (GameplayEscapeRouter.Active != null && GameplayEscapeRouter.Active.TryHandleEscape())
+            if (BuildWidget.Current != null && BuildWidget.Current.TryHandleEscape())
                 return;
 
             SimCommands.TryPost(SimClockCommand.TogglePause());
