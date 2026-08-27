@@ -6,7 +6,7 @@ namespace TheyWillDescend.Authoring.Time
 {
     public class GameTimeAuthoring : MonoBehaviour
     {
-        [SerializeField] private float dayDuration = 5;
+        [SerializeField] private float dayDuration = 60;
 
         // Вложенный класс — просто чтобы файл был один.
         // Unity сама находит все Baker<> при bake.

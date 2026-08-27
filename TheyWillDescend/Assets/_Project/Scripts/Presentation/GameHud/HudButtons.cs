@@ -24,6 +24,15 @@ namespace TheyWillDescend.Presentation.GameHud
                 button.interactable = value;
         }
 
+        public static void SetLabel(Button button, string text)
+        {
+            if (button == null)
+                return;
+            var tmp = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (tmp != null)
+                tmp.text = text;
+        }
+
         public static void Tint(Button button, bool on)
         {
             if (button == null)

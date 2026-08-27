@@ -28,18 +28,28 @@ namespace TheyWillDescend.Simulation.Agents
             var copy = commands.ToNativeArray(Allocator.Temp);
             commands.Clear();
             for (var i = 0; i < copy.Length; i++)
-                Assign(em, copy[i].BuildingId, copy[i].AgentId);
+            {
+                var command = copy[i];
+                var repeats = command.Count < 1 ? 1 : command.Count;
+                var preferred = command.AgentId;
+                for (var n = 0; n < repeats; n++)
+                {
+                    if (!Assign(em, command.BuildingId, preferred))
+                        break;
+                    preferred = 0;
+                }
+            }
             copy.Dispose();
         }
 
-        static void Assign(EntityManager em, int buildingId, int preferredAgentId)
+        static bool Assign(EntityManager em, int buildingId, int preferredAgentId)
         {
             if (buildingId <= 0)
-                return;
+                return false;
             if (!TryGetBuilding(em, buildingId, out var buildingEntity))
-                return;
+                return false;
             if (em.HasComponent<Construction>(buildingEntity) || em.HasComponent<Headquarters>(buildingEntity))
-                return;
+                return false;
 
             var workplace = em.HasComponent<Workplace>(buildingEntity)
                 ? em.GetComponentData<Workplace>(buildingEntity)
@@ -48,23 +58,23 @@ namespace TheyWillDescend.Simulation.Agents
                 ? em.GetComponentData<BuildingType>(buildingEntity).WorkplaceSlots
                 : 0;
             if (slots <= 0)
-                return;
+                return false;
             if (workplace.AssignedCount >= slots)
-                return;
+                return false;
 
             Entity agentEntity;
             int agentId;
             if (preferredAgentId > 0)
             {
                 if (!TryGetAgent(em, preferredAgentId, out agentEntity, out agentId))
-                    return;
+                    return false;
                 if (em.HasComponent<AgentAssignment>(agentEntity)
                     && em.GetComponentData<AgentAssignment>(agentEntity).WorkplaceBuildingId != 0)
-                    return;
+                    return false;
             }
             else if (!TryGetIdleAgent(em, out agentEntity, out agentId))
             {
-                return;
+                return false;
             }
 
             if (!em.HasComponent<Workplace>(buildingEntity))
@@ -79,6 +89,7 @@ namespace TheyWillDescend.Simulation.Agents
                 WorkplaceBuildingId = buildingId,
                 Arrived = 0
             });
+            return true;
         }
 
         static bool TryGetBuilding(EntityManager em, int buildingId, out Entity entity)

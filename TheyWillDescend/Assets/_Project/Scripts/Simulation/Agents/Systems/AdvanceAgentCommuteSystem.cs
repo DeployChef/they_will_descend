@@ -1,5 +1,6 @@
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Time;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -9,7 +10,7 @@ using Unity.Transforms;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Assigned workers walk to the house; arrived is counted by SyncWorkplaceLoadSystem.
+    /// On shift, assigned workers walk to the house. Off shift they stay assigned and plaza takes over.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -23,6 +24,7 @@ namespace TheyWillDescend.Simulation.Agents
         {
             state.RequireForUpdate<SimControl>();
             state.RequireForUpdate<AgentAssignment>();
+            state.RequireForUpdate<GameTime>();
         }
 
         [BurstCompile]
@@ -34,6 +36,17 @@ namespace TheyWillDescend.Simulation.Agents
             var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;
+            if (!SystemAPI.GetSingleton<GameTime>().IsWorkShift)
+            {
+                foreach (var assignment in SystemAPI.Query<RefRW<AgentAssignment>>().WithAll<AgentId>())
+                {
+                    if (assignment.ValueRO.WorkplaceBuildingId == 0 || assignment.ValueRO.Arrived == 0)
+                        continue;
+                    assignment.ValueRW.Arrived = 0;
+                }
+
+                return;
+            }
 
             var houses = new NativeList<HouseRef>(8, state.WorldUpdateAllocator);
             foreach (var (building, transform) in

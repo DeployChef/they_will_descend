@@ -10,6 +10,10 @@ namespace TheyWillDescend.Simulation.City
     {
         public int AssignedCount;
         public int WorkingCount;
+        /// <summary>0 = operating. 1 = recipe halted; assigned workers stay.</summary>
+        public byte Paused;
+
+        public bool IsPaused => Paused != 0;
 
         public static float Load01(int count, int slots)
         {

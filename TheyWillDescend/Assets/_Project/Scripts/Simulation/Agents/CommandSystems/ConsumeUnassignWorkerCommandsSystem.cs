@@ -28,14 +28,21 @@ namespace TheyWillDescend.Simulation.Agents
             var copy = commands.ToNativeArray(Allocator.Temp);
             commands.Clear();
             for (var i = 0; i < copy.Length; i++)
-                Unassign(em, copy[i].BuildingId);
+            {
+                var repeats = copy[i].Count < 1 ? 1 : copy[i].Count;
+                for (var n = 0; n < repeats; n++)
+                {
+                    if (!UnassignOne(em, copy[i].BuildingId))
+                        break;
+                }
+            }
             copy.Dispose();
         }
 
-        static void Unassign(EntityManager em, int buildingId)
+        public static bool UnassignOne(EntityManager em, int buildingId)
         {
             if (buildingId <= 0)
-                return;
+                return false;
 
             using var agents = em.CreateEntityQuery(
                 ComponentType.ReadOnly<AgentId>(),
@@ -54,7 +61,7 @@ namespace TheyWillDescend.Simulation.Agents
 
             assignments.Dispose();
             if (!removed)
-                return;
+                return false;
 
             using var buildings = em.CreateEntityQuery(
                 ComponentType.ReadOnly<Building>(),
@@ -75,6 +82,7 @@ namespace TheyWillDescend.Simulation.Agents
             }
 
             buildingData.Dispose();
+            return true;
         }
     }
 }

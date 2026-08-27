@@ -32,7 +32,10 @@ namespace TheyWillDescend.Simulation.Economy
             if (dt <= 0f)
                 return;
 
-            var dayDuration = SystemAPI.GetSingleton<GameTime>().DayDuration;
+            var time = SystemAPI.GetSingleton<GameTime>();
+            if (!time.IsWorkShift)
+                return;
+            var dayDuration = time.DayDuration;
             var stock = SystemAPI.GetSingletonBuffer<ResourceAmount>();
             var recipes = SystemAPI.GetSingletonBuffer<BuildingRecipeLine>(true);
 
@@ -41,7 +44,7 @@ namespace TheyWillDescend.Simulation.Economy
                          .WithAll<Building>()
                          .WithNone<Construction, Headquarters>())
             {
-                if (workplace.ValueRO.WorkingCount <= 0)
+                if (workplace.ValueRO.IsPaused || workplace.ValueRO.WorkingCount <= 0)
                     continue;
                 var slots = type.ValueRO.WorkplaceSlots;
                 var load = Workplace.Load01(workplace.ValueRO.WorkingCount, slots);

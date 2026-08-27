@@ -139,13 +139,17 @@ namespace TheyWillDescend.Presentation.City
                 }
                 else if (view.Fill != null)
                 {
+                    var paused = em.HasComponent<Workplace>(entities[i])
+                        && em.GetComponentData<Workplace>(entities[i]).IsPaused;
                     var slots = em.HasComponent<BuildingType>(entities[i])
                         ? em.GetComponentData<BuildingType>(entities[i]).WorkplaceSlots
                         : 0;
                     var assigned = em.HasComponent<Workplace>(entities[i])
                         ? em.GetComponentData<Workplace>(entities[i]).AssignedCount
                         : 0;
-                    view.Fill.color = _loadFill;
+                    view.Fill.color = paused
+                        ? new Color(0.45f, 0.45f, 0.48f, 0.9f)
+                        : _loadFill;
                     view.Fill.fillAmount = Workplace.Load01(assigned, slots);
                     if (slots <= 0 && view.BarRoot != null)
                         view.BarRoot.SetActive(false);

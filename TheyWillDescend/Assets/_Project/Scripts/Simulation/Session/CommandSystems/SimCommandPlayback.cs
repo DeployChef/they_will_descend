@@ -18,6 +18,7 @@ namespace TheyWillDescend.Simulation.Session
             ConsumePlaceBuildingCommandsSystem.Run(em);
             ConsumeAssignWorkerCommandsSystem.Run(em);
             ConsumeUnassignWorkerCommandsSystem.Run(em);
+            ConsumeSetWorkplacePausedCommandsSystem.Run(em);
         }
     }
 }

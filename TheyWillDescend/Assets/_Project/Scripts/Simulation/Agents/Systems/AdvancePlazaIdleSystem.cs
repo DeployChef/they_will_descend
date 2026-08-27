@@ -1,5 +1,6 @@
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Time;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -8,7 +9,7 @@ using Unity.Transforms;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Unassigned: stand or walk a ring around CityGrid.Center.
+    /// Unassigned, or assigned off-shift: stand or walk a ring around CityGrid.Center.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -25,6 +26,7 @@ namespace TheyWillDescend.Simulation.Agents
             state.RequireForUpdate<SimControl>();
             state.RequireForUpdate<CityGrid>();
             state.RequireForUpdate<AgentPlazaIdle>();
+            state.RequireForUpdate<GameTime>();
         }
 
         [BurstCompile]
@@ -38,12 +40,13 @@ namespace TheyWillDescend.Simulation.Agents
                 return;
 
             var center = SystemAPI.GetSingleton<CityGrid>().Center;
+            var onShift = SystemAPI.GetSingleton<GameTime>().IsWorkShift;
 
             foreach (var (idleRef, assignment, locomotion, transform, id) in
                      SystemAPI.Query<RefRW<AgentPlazaIdle>, RefRO<AgentAssignment>, RefRW<AgentLocomotion>,
                          RefRO<LocalTransform>, RefRO<AgentId>>())
             {
-                if (assignment.ValueRO.WorkplaceBuildingId != 0)
+                if (assignment.ValueRO.WorkplaceBuildingId != 0 && onShift)
                     continue;
 
                 var idle = idleRef.ValueRO;

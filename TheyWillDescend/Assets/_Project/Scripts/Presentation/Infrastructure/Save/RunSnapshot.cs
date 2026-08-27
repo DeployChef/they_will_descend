@@ -8,14 +8,14 @@ namespace TheyWillDescend.Infrastructure.Save
         /// <summary>
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 16;
+        public const int CurrentVersion = 18;
 
         public int version = CurrentVersion;
         public int speed = 1;
         public bool playerPaused;
         public int day;
         public float elapsedInDay;
-        public float dayDuration = 5f;
+        public float dayDuration = 60f;
         public ResourceSnapshot[] resources = Array.Empty<ResourceSnapshot>();
         public AgentSnapshot[] agents = Array.Empty<AgentSnapshot>();
         public BuildingSnapshot[] buildings = Array.Empty<BuildingSnapshot>();
@@ -65,5 +65,6 @@ namespace TheyWillDescend.Infrastructure.Save
         public float constructionElapsed;
         public float constructionDuration;
         public int workerAgentId;
+        public byte paused;
     }
 }

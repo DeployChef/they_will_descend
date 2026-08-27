@@ -3,6 +3,7 @@ using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Time;
 using TMPro;
 using Unity.Collections;
 using Unity.Entities;
@@ -25,13 +26,20 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] TMP_Text status;
         [SerializeField] Button minusButton;
         [SerializeField] Button plusButton;
+        [SerializeField] Button maxMinusButton;
+        [SerializeField] Button maxPlusButton;
+        [SerializeField] Button powerButton;
         [SerializeField] Button closeButton;
         [SerializeField] Image workFill;
 
         void Awake()
         {
+            EnsureExtraButtons();
             HudButtons.Bind(minusButton, OnMinus);
             HudButtons.Bind(plusButton, OnPlus);
+            HudButtons.Bind(maxMinusButton, OnMaxMinus);
+            HudButtons.Bind(maxPlusButton, OnMaxPlus);
+            HudButtons.Bind(powerButton, OnPower);
             HudButtons.Bind(closeButton, OnClose);
             if (Application.isPlaying)
                 Hide();
@@ -41,7 +49,122 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             HudButtons.Unbind(minusButton, OnMinus);
             HudButtons.Unbind(plusButton, OnPlus);
+            HudButtons.Unbind(maxMinusButton, OnMaxMinus);
+            HudButtons.Unbind(maxPlusButton, OnMaxPlus);
+            HudButtons.Unbind(powerButton, OnPower);
             HudButtons.Unbind(closeButton, OnClose);
+        }
+
+        void EnsureExtraButtons()
+        {
+            if (maxMinusButton == null && minusButton != null)
+                maxMinusButton = CloneButton(minusButton, "MaxMinusButton", "Max");
+            else
+                HudButtons.SetLabel(maxMinusButton, "Max");
+
+            if (maxPlusButton == null && plusButton != null)
+                maxPlusButton = CloneButton(plusButton, "MaxPlusButton", "Max");
+            else
+                HudButtons.SetLabel(maxPlusButton, "Max");
+
+            if (powerButton == null && plusButton != null)
+                powerButton = CloneButton(plusButton, "PowerButton", "Stop");
+
+            LayoutStaffButtons();
+        }
+
+        static Button CloneButton(Button source, string name, string label)
+        {
+            var go = Object.Instantiate(source.gameObject, source.transform.parent);
+            go.name = name;
+            var button = go.GetComponent<Button>();
+            button.onClick.RemoveAllListeners();
+            HudButtons.SetLabel(button, label);
+            return button;
+        }
+
+        void LayoutStaffButtons()
+        {
+            const float edge = 16f;
+            const float gap = 6f;
+            const float maxWidth = 56f;
+            var rowY = minusButton != null
+                ? minusButton.GetComponent<RectTransform>().anchoredPosition.y
+                : -232f;
+            var rowH = minusButton != null
+                ? minusButton.GetComponent<RectTransform>().sizeDelta.y
+                : 40f;
+
+            PlaceOnLeft(maxMinusButton, edge, rowY, maxWidth, rowH);
+            PlaceOnLeft(minusButton, edge + maxWidth + gap, rowY, 48f, rowH);
+            PlaceOnRight(maxPlusButton, edge, rowY, maxWidth, rowH);
+            PlaceOnRight(plusButton, edge + maxWidth + gap, rowY, 48f, rowH);
+            PlacePowerRow(powerButton, rowY, rowH);
+
+            if (workers != null)
+            {
+                var rt = workers.rectTransform;
+                rt.sizeDelta = new Vector2(-268f, rt.sizeDelta.y);
+            }
+
+            var powerRt = powerButton != null ? powerButton.GetComponent<RectTransform>() : null;
+            var idleRt = idle != null ? idle.rectTransform : null;
+            var statusRt = status != null ? status.rectTransform : null;
+            var barRt = workFill != null && workFill.transform.parent != null
+                ? workFill.transform.parent as RectTransform
+                : null;
+            PushBelow(idleRt, powerRt, 8f);
+            PushBelow(statusRt, idleRt, 8f);
+            PushBelow(barRt, statusRt, 12f);
+        }
+
+        static void PlaceOnLeft(Button button, float x, float y, float width, float height)
+        {
+            if (button == null)
+                return;
+
+            var rt = button.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = new Vector2(x, y);
+            rt.sizeDelta = new Vector2(width, height);
+        }
+
+        static void PlaceOnRight(Button button, float xFromRight, float y, float width, float height)
+        {
+            if (button == null)
+                return;
+
+            var rt = button.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(1f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+            rt.anchoredPosition = new Vector2(-xFromRight, y);
+            rt.sizeDelta = new Vector2(width, height);
+        }
+
+        static void PlacePowerRow(Button power, float rowY, float rowH)
+        {
+            if (power == null)
+                return;
+
+            var rt = power.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.anchoredPosition = new Vector2(0f, rowY - rowH - 8f);
+            rt.sizeDelta = new Vector2(-32f, 40f);
+        }
+
+        static void PushBelow(RectTransform target, RectTransform above, float gap)
+        {
+            if (target == null || above == null)
+                return;
+
+            var needed = above.anchoredPosition.y - above.sizeDelta.y - gap;
+            if (target.anchoredPosition.y > needed)
+                target.anchoredPosition = new Vector2(target.anchoredPosition.x, needed);
         }
 
         void Update()
@@ -101,6 +224,8 @@ namespace TheyWillDescend.Presentation.GameHud
 
             var occupied = workplace.AssignedCount;
             var working = workplace.WorkingCount;
+            var paused = workplace.IsPaused;
+            var onShift = TryGetGameTime(em, out var time) && time.IsWorkShift;
             if (slots < 0)
                 slots = 0;
             var idleCount = CountIdleWorkers(em);
@@ -117,6 +242,34 @@ namespace TheyWillDescend.Presentation.GameHud
                     status.text = "Crew locked until the house stands.";
                 if (workFill != null)
                     workFill.fillAmount = 0.35f;
+            }
+            else if (!onShift)
+            {
+                if (subtitle != null)
+                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                if (status != null)
+                {
+                    if (occupied == 0)
+                        status.text = "Off shift (06:00–18:00). No one assigned.";
+                    else
+                        status.text = paused
+                            ? "Off shift. Crew at the pyramid. Production is stopped."
+                            : "Off shift. Crew walks around the pyramid.";
+                }
+
+                if (workFill != null)
+                    workFill.fillAmount = Workplace.Load01(occupied, slots);
+            }
+            else if (paused)
+            {
+                if (subtitle != null)
+                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                if (status != null)
+                    status.text = occupied == 0
+                        ? "Production stopped. No one assigned."
+                        : "Production stopped. Crew stays assigned.";
+                if (workFill != null)
+                    workFill.fillAmount = Workplace.Load01(occupied, slots);
             }
             else
             {
@@ -137,9 +290,14 @@ namespace TheyWillDescend.Presentation.GameHud
                     workFill.fillAmount = Workplace.Load01(occupied, slots);
             }
 
-            var canAssign = !constructing && slots > 0;
-            HudButtons.SetInteractable(plusButton, canAssign && occupied < slots && idleCount > 0);
-            HudButtons.SetInteractable(minusButton, canAssign && occupied > 0);
+            var canStaff = !constructing && slots > 0;
+            HudButtons.SetInteractable(plusButton, canStaff && occupied < slots && idleCount > 0);
+            HudButtons.SetInteractable(minusButton, canStaff && occupied > 0);
+            HudButtons.SetInteractable(maxPlusButton, canStaff && occupied < slots && idleCount > 0);
+            HudButtons.SetInteractable(maxMinusButton, canStaff && occupied > 0);
+            HudButtons.SetInteractable(powerButton, !constructing && slots > 0);
+            HudButtons.SetLabel(powerButton, paused ? "Start" : "Stop");
+            HudButtons.Tint(powerButton, !paused);
         }
 
         static bool TryFindBuilding(EntityManager em, int id, out Entity entity, out Building building)
@@ -159,6 +317,19 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             return false;
+        }
+
+        static bool TryGetGameTime(EntityManager em, out GameTime time)
+        {
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
+            if (query.IsEmptyIgnoreFilter)
+            {
+                time = default;
+                return false;
+            }
+
+            time = query.GetSingleton<GameTime>();
+            return true;
         }
 
         static string FormatRecipeSubtitle(
@@ -247,6 +418,45 @@ namespace TheyWillDescend.Presentation.GameHud
                 {
                     BuildingId = selection.SelectedBuildingId
                 });
+        }
+
+        void OnMaxMinus()
+        {
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            SimCommands.TryPost(new UnassignWorkerCommand
+            {
+                BuildingId = selection.SelectedBuildingId,
+                Count = 256
+            });
+            SimCommands.Playback();
+        }
+
+        void OnMaxPlus()
+        {
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            SimCommands.TryPost(new AssignWorkerCommand
+            {
+                BuildingId = selection.SelectedBuildingId,
+                Count = 256
+            });
+            SimCommands.Playback();
+        }
+
+        void OnPower()
+        {
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            var paused = em.HasComponent<Workplace>(entity) && em.GetComponentData<Workplace>(entity).IsPaused;
+            SimCommands.TryPost(new SetWorkplacePausedCommand
+            {
+                BuildingId = selection.SelectedBuildingId,
+                Paused = paused ? (byte)0 : (byte)1
+            });
+            SimCommands.Playback();
         }
 
         void OnClose()

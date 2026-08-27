@@ -19,6 +19,7 @@ namespace TheyWillDescend.Authoring.Agents
                 AddBuffer<SpawnAgentCommand>(entity);
                 AddBuffer<AssignWorkerCommand>(entity);
                 AddBuffer<UnassignWorkerCommand>(entity);
+                AddBuffer<SetWorkplacePausedCommand>(entity);
 
                 var agentPrototype = CreateAdditionalEntity(TransformUsageFlags.Dynamic);
                 AddComponent<Prefab>(agentPrototype);

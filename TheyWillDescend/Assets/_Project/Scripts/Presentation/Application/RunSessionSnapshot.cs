@@ -124,6 +124,8 @@ namespace TheyWillDescend.App
                     anchorRadial = building.AnchorRadial,
                     built = 1
                 };
+                if (em.HasComponent<Workplace>(buildingEntities[i]))
+                    record.paused = em.GetComponentData<Workplace>(buildingEntities[i]).Paused;
                 if (em.HasComponent<Construction>(buildingEntities[i]))
                 {
                     var construction = em.GetComponentData<Construction>(buildingEntities[i]);
@@ -187,9 +189,33 @@ namespace TheyWillDescend.App
             }
 
             SimCommands.Playback();
+            ApplyPausedBuildings(snapshot);
             ApplyResources(snapshot);
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
+        }
+
+        static void ApplyPausedBuildings(RunSnapshot snapshot)
+        {
+            if (snapshot.buildings == null)
+                return;
+
+            var any = false;
+            for (var i = 0; i < snapshot.buildings.Length; i++)
+            {
+                var record = snapshot.buildings[i];
+                if (record.paused == 0)
+                    continue;
+                SimCommands.TryPost(new SetWorkplacePausedCommand
+                {
+                    BuildingId = record.id,
+                    Paused = 1
+                });
+                any = true;
+            }
+
+            if (any)
+                SimCommands.Playback();
         }
 
         static void ApplyResources(RunSnapshot snapshot)
@@ -246,7 +272,7 @@ namespace TheyWillDescend.App
             {
                 Day = snapshot.day,
                 ElapsedInDay = snapshot.elapsedInDay,
-                DayDuration = snapshot.dayDuration > 0f ? snapshot.dayDuration : 5f
+                DayDuration = snapshot.dayDuration > 0f ? snapshot.dayDuration : 60f
             });
         }
     }

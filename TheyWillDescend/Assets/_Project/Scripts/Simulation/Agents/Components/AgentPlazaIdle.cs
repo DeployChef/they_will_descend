@@ -3,7 +3,7 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Unassigned idle around city center: stand or walk the ring.
+    /// Ring around city center: unassigned always, assigned crew after 18:00.
     /// </summary>
     public struct AgentPlazaIdle : IComponentData
     {
