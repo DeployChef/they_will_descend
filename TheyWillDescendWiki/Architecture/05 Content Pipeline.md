@@ -25,7 +25,7 @@
 ```text
 SO + префаб  →  Baker
                  ↓
-session: BuildingPrototype + BuildingCost + ResourceAmount
+session: BuildingPrototype + BuildingCost + BuildingRecipeLine + ResourceAmount
 house stamp: BuildingType (числа типа)
 Play: PlaceBuildingCommand.TypeId = "sawmill"
 ```
@@ -95,7 +95,7 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 6. HUD: чип ищется по **имени дочернего GO** на ResourceBar (`Wood`, `Food`). Новый `Heat` либо получает свободный чип (сейчас лишние — Coal/Steel), либо нужен чип с именем `Heat`.
 7. Стартовое количество — **не** на каталоге. Строка в `DefaultScenario` → Starting Stock.
 
-Каталог печёт леджер с amount **0**. Сценарий потом пишет 50 wood / 20 food.
+Каталог печёт леджер с amount **0**. Сценарий потом пишет стартовый запас (сейчас 1000 wood / 1000 food).
 
 Не клади стартовый запас в `ResourceDefinition`. Это документ типа, не рана.
 
@@ -103,7 +103,7 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 
 ## 5. Здание
 
-Сейчас: `sawmill` (6×2, 15 wood, выпускает wood 1/с) и `kitchen` (2×2, 8 wood, выпускает food 1/с).
+Сейчас: `sawmill` (6×2, 15 wood, +12 Wood/ч) и `kitchen` (2×2, 8 wood, −6 Wood/ч → +12 Food/ч).
 
 ### 5.1 Документ
 
@@ -117,15 +117,15 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 | Width Clusters | дуги сетки | как в [[12 Radial City Grid]] |
 | Depth Radial Rings | кольца вглубь | обычно 2 |
 | Construction Duration | секунды стройки; **0 = взять с CityGrid** (сейчас 8) | 0 ок |
-| Workplace Slots | слоты; срез = 1 | 1 |
-| Produce Resource | какой `ResourceDefinition` тикает | Wood |
-| Produce Per Second | при работающем рабочем | 1 |
-| Build Cost | список (ресурс + amount) | 15 Wood |
+| Workplace Slots | рабочие на доме; рецепт при 10/10 = 100% | 10 |
+| Recipe Inputs | что ест **за игровой час**, пока рабочий на месте | Kitchen: 6 Wood |
+| Recipe Outputs | что даёт **за игровой час** | Sawmill: 12 Wood; Kitchen: 12 Food |
+| Build Cost | список (ресурс + amount), один раз при Place | 15 Wood |
 | Prefab | меш-префаб, см. ниже | |
 
 Кост пустой → дом бесплатный. Несколько строк коста — все должны быть в наличии, списываются вместе.
 
-Выпуск — **заглушка среза**: одно поле, не рецепт. Heat / нужды / несколько выходов — позже, не размазывай второе поле «на всякий».
+Рецепт — справочник типа (каталог на session), не поле на каждом доме. Пустые оба списка → дом не варит (HQ). Нет входа на кадр → дом стоит, ничего не ест и не производит. Симуляция: `perHour * dt * 24 / DayDuration`.
 
 ### 5.2 Префаб
 
@@ -218,7 +218,7 @@ Build HUD читает session-каталог → кнопка с именем �
 
 Сценарий и load (`BuildingId > 0` или `InstantComplete`) кост не берут.
 
-Производство: готовый дом, не стройка, не HQ, на слоте есть рабочий и `Working`. Тикает `Produce Resource` × dt.
+Производство: готовый дом, не стройка, не HQ, на слоте есть рабочий и `Working`. Рецепт из каталога (`BuildingRecipeLine`), единица — игровой час.
 
 Инспектор дома берёт **Display Name из каталога**, не `Building_17`.
 
@@ -250,7 +250,7 @@ Build HUD читает session-каталог → кнопка с именем �
 Таблица **не** хранит Unity-ссылку. Когда вынесете баланс:
 
 ```text
-Sheet  →  typeId, footprint, cost, produce
+Sheet  →  typeId, footprint, cost, recipe in/out per hour
 Unity registry  →  typeId → Prefab (иконка, FMOD)
 Baker склеивает по typeId
 ```
@@ -267,9 +267,9 @@ Baker склеивает по typeId
 4. Призрак садится на сетку нужного размера.
 5. Постановка списывает wood; при нехватке — красный призрак и reject.
 6. Сценарий с этим типом (если добавил) ставит дом без списания.
-7. Рабочий на готовом доме тикает выбранный ресурс.
+7. Рабочий на готовом доме варит по рецепту (кухня без wood стоит).
 
-Не канон среза (не чини «на всякий»): один выход вместо рецепта; HUD-чипы ресурсов заведены сценой, не спавнятся из каталога.
+Не канон среза (не чини «на всякий»): HUD-чипы ресурсов заведены сценой, не спавнятся из каталога.
 
 ---
 

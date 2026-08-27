@@ -9,7 +9,7 @@ using Unity.Transforms;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Assigned workers walk to the house; arrived → stand and mark Workplace.Working.
+    /// Assigned workers walk to the house; arrived is counted by SyncWorkplaceLoadSystem.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -36,17 +36,15 @@ namespace TheyWillDescend.Simulation.Agents
                 return;
 
             var houses = new NativeList<HouseRef>(8, state.WorldUpdateAllocator);
-            foreach (var (building, transform, entity) in
+            foreach (var (building, transform) in
                      SystemAPI.Query<RefRO<Building>, RefRO<LocalTransform>>()
                          .WithAll<Workplace>()
-                         .WithNone<Construction, Headquarters>()
-                         .WithEntityAccess())
+                         .WithNone<Construction, Headquarters>())
             {
                 houses.Add(new HouseRef
                 {
                     Id = building.ValueRO.Id,
-                    Position = transform.ValueRO.Position,
-                    Entity = entity
+                    Position = transform.ValueRO.Position
                 });
             }
 
@@ -87,12 +85,6 @@ namespace TheyWillDescend.Simulation.Agents
                 motor.Moving = arrived ? (byte)0 : (byte)1;
                 assignment.ValueRW = job;
                 locomotion.ValueRW = motor;
-
-                if (!SystemAPI.HasComponent<Workplace>(house.Entity))
-                    continue;
-
-                var workplace = SystemAPI.GetComponentRW<Workplace>(house.Entity);
-                workplace.ValueRW.Working = arrived ? (byte)1 : (byte)0;
             }
         }
 
@@ -100,7 +92,6 @@ namespace TheyWillDescend.Simulation.Agents
         {
             public int Id;
             public float3 Position;
-            public Entity Entity;
         }
     }
 }

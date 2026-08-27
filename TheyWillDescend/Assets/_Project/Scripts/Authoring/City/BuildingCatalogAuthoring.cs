@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
@@ -30,6 +31,7 @@ namespace TheyWillDescend.Authoring.City
                 var entity = GetEntity(TransformUsageFlags.None);
                 var buffer = AddBuffer<BuildingPrototype>(entity);
                 var costs = AddBuffer<BuildingCost>(entity);
+                var recipes = AddBuffer<BuildingRecipeLine>(entity);
                 var so = authoring.catalog;
                 if (so == null)
                 {
@@ -41,12 +43,13 @@ namespace TheyWillDescend.Authoring.City
                 var seen = new HashSet<string>(System.StringComparer.Ordinal);
                 var buildings = so.Buildings;
                 for (var i = 0; i < buildings.Count; i++)
-                    BakeEntry(buffer, costs, seen, buildings[i], authoring);
+                    BakeEntry(buffer, costs, recipes, seen, buildings[i], authoring);
             }
 
             void BakeEntry(
                 DynamicBuffer<BuildingPrototype> buffer,
                 DynamicBuffer<BuildingCost> costs,
+                DynamicBuffer<BuildingRecipeLine> recipes,
                 HashSet<string> seen,
                 BuildingDefinition definition,
                 BuildingCatalogAuthoring host)
@@ -58,8 +61,8 @@ namespace TheyWillDescend.Authoring.City
                 }
 
                 DependsOn(definition);
-                if (definition.ProduceResource != null)
-                    DependsOn(definition.ProduceResource);
+                DependsOnRates(definition.RecipeInputs);
+                DependsOnRates(definition.RecipeOutputs);
                 var typeId = definition.TypeId;
                 if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
                 {
@@ -103,9 +106,7 @@ namespace TheyWillDescend.Authoring.City
                     DepthRadialRings = definition.DepthRadialRings,
                     MeshSize = BuildingPrefabMetrics.HorizontalSize(prefab),
                     ConstructionDuration = definition.ConstructionDuration,
-                    WorkplaceSlots = definition.WorkplaceSlots,
-                    ProduceResourceId = ContentId.EncodeOrEmpty(definition.ProduceResourceId),
-                    ProducePerSecond = definition.ProducePerSecond
+                    WorkplaceSlots = definition.WorkplaceSlots
                 });
 
                 var costList = definition.BuildCost;
@@ -121,6 +122,43 @@ namespace TheyWillDescend.Authoring.City
                         ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
                         Amount = entry.Amount
                     });
+                }
+
+                BakeRecipe(recipes, typeKey, definition.RecipeInputs, BuildingRecipeKind.Input);
+                BakeRecipe(recipes, typeKey, definition.RecipeOutputs, BuildingRecipeKind.Output);
+            }
+
+            void BakeRecipe(
+                DynamicBuffer<BuildingRecipeLine> recipes,
+                FixedString64Bytes typeKey,
+                ResourceRate[] rates,
+                BuildingRecipeKind kind)
+            {
+                if (rates == null)
+                    return;
+                for (var i = 0; i < rates.Length; i++)
+                {
+                    var entry = rates[i];
+                    if (entry.Resource == null || entry.PerHour <= 0.0001f)
+                        continue;
+                    recipes.Add(new BuildingRecipeLine
+                    {
+                        TypeId = typeKey,
+                        Kind = kind,
+                        ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
+                        PerHour = entry.PerHour
+                    });
+                }
+            }
+
+            void DependsOnRates(ResourceRate[] rates)
+            {
+                if (rates == null)
+                    return;
+                for (var i = 0; i < rates.Length; i++)
+                {
+                    if (rates[i].Resource != null)
+                        DependsOn(rates[i].Resource);
                 }
             }
         }

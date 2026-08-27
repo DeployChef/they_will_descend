@@ -21,6 +21,8 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingSelection selection;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+        readonly Color _constructionFill = new(0.25f, 0.85f, 0.45f, 0.95f);
+        readonly Color _loadFill = new(0.95f, 0.72f, 0.18f, 0.95f);
 
         Transform _overlayRoot;
         readonly Dictionary<int, PlacedView> _views = new();
@@ -125,15 +127,31 @@ namespace TheyWillDescend.Presentation.City
                     continue;
 
                 var constructing = em.HasComponent<Construction>(entities[i]);
-                if (view.BarRoot != null)
-                    view.BarRoot.SetActive(constructing);
+                var barOn = view.BarRoot != null;
+                if (barOn)
+                    view.BarRoot.SetActive(true);
+
                 if (constructing && view.Fill != null)
                 {
                     var construction = em.GetComponentData<Construction>(entities[i]);
+                    view.Fill.color = _constructionFill;
                     view.Fill.fillAmount = construction.Normalized;
                 }
+                else if (view.Fill != null)
+                {
+                    var slots = em.HasComponent<BuildingType>(entities[i])
+                        ? em.GetComponentData<BuildingType>(entities[i]).WorkplaceSlots
+                        : 0;
+                    var assigned = em.HasComponent<Workplace>(entities[i])
+                        ? em.GetComponentData<Workplace>(entities[i]).AssignedCount
+                        : 0;
+                    view.Fill.color = _loadFill;
+                    view.Fill.fillAmount = Workplace.Load01(assigned, slots);
+                    if (slots <= 0 && view.BarRoot != null)
+                        view.BarRoot.SetActive(false);
+                }
 
-                if (constructing && view.BarRoot != null)
+                if (view.BarRoot != null && view.BarRoot.activeSelf)
                 {
                     var pos = (Vector3)transforms[i].Position + Vector3.up * 2.2f;
                     view.BarRoot.transform.position = pos;

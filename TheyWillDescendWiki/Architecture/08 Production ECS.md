@@ -33,7 +33,7 @@ Content          Authoring, Baker, prefabs, balance
 | Session | `SimControl`, команды, despawn-флаги | да |
 | City | здания, стройка, сетка, occupy | да |
 | Agents | рабочие, assignment, commute | да (без pathfinding) |
-| Economy | склады, производство | да (один выход на тип) |
+| Economy | склады, производство | да (рецепт на типе) |
 | Survival | голод, cold/heat | нет |
 | Society | hope/discontent, законы | нет |
 | Gods | дань, фазы, гнев | нет |

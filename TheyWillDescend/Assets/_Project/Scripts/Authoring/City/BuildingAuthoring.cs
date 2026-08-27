@@ -27,8 +27,8 @@ namespace TheyWillDescend.Authoring.City
                 }
 
                 DependsOn(so);
-                if (so.ProduceResource != null)
-                    DependsOn(so.ProduceResource);
+                DependsOnRates(so.RecipeInputs);
+                DependsOnRates(so.RecipeOutputs);
                 var entity = GetEntity(TransformUsageFlags.Dynamic);
                 AddComponent(entity, new BuildingType
                 {
@@ -36,12 +36,21 @@ namespace TheyWillDescend.Authoring.City
                     WidthClusters = so.WidthClusters,
                     DepthRadialRings = so.DepthRadialRings,
                     ConstructionDuration = so.ConstructionDuration,
-                    WorkplaceSlots = so.WorkplaceSlots,
-                    ProduceResourceId = so.ProduceResourceId,
-                    ProducePerSecond = so.ProducePerSecond
+                    WorkplaceSlots = so.WorkplaceSlots
                 });
                 if (so.WorkplaceSlots > 0)
                     AddComponent<Workplace>(entity);
+            }
+
+            void DependsOnRates(ResourceRate[] rates)
+            {
+                if (rates == null)
+                    return;
+                for (var i = 0; i < rates.Length; i++)
+                {
+                    if (rates[i].Resource != null)
+                        DependsOn(rates[i].Resource);
+                }
             }
         }
     }

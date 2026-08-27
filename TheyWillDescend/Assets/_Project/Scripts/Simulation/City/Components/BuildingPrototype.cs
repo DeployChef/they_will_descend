@@ -17,8 +17,6 @@ namespace TheyWillDescend.Simulation.City
         public float MeshSize;
         public float ConstructionDuration;
         public int WorkplaceSlots;
-        public FixedString64Bytes ProduceResourceId;
-        public float ProducePerSecond;
 
         public BuildingFootprint Footprint => new()
         {

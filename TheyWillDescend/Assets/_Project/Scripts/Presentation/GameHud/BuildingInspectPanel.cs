@@ -1,6 +1,7 @@
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
 using TMPro;
 using Unity.Collections;
@@ -77,7 +78,9 @@ namespace TheyWillDescend.Presentation.GameHud
                 ? em.GetComponentData<Workplace>(entity)
                 : default;
             var displayName = building.TypeId.ToString();
-            var slots = em.HasComponent<Workplace>(entity) ? 1 : 0;
+            var slots = em.HasComponent<BuildingType>(entity)
+                ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
+                : 0;
             if (em.HasBuffer<BuildingPrototype>(bag)
                 && BuildingCatalog.TryResolve(
                     em.GetBuffer<BuildingPrototype>(bag),
@@ -87,7 +90,7 @@ namespace TheyWillDescend.Presentation.GameHud
                     out var prototype))
             {
                 displayName = prototype.DisplayName.ToString();
-                if (prototype.WorkplaceSlots > 0)
+                if (slots <= 0)
                     slots = prototype.WorkplaceSlots;
             }
 
@@ -96,9 +99,10 @@ namespace TheyWillDescend.Presentation.GameHud
             if (title != null)
                 title.text = string.IsNullOrEmpty(displayName) ? $"Building {building.TypeId}" : displayName;
 
-            var occupied = workplace.WorkerAgentId != 0 ? 1 : 0;
-            if (slots <= 0)
-                slots = 1;
+            var occupied = workplace.AssignedCount;
+            var working = workplace.WorkingCount;
+            if (slots < 0)
+                slots = 0;
             var idleCount = CountIdleWorkers(em);
             if (workers != null)
                 workers.text = $"{occupied} / {slots}";
@@ -116,21 +120,26 @@ namespace TheyWillDescend.Presentation.GameHud
             }
             else
             {
+                var productionLoad = Workplace.Load01(working, slots);
                 if (subtitle != null)
-                    subtitle.text = slots > 0 ? "Workplace" : "Building";
+                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, productionLoad);
                 if (status != null)
-                    status.text = occupied == 0
-                        ? "No one assigned."
-                        : workplace.Working != 0
-                            ? "Worker on site."
-                            : "Worker walking in.";
+                {
+                    if (occupied == 0)
+                        status.text = "No one assigned.";
+                    else if (working >= occupied)
+                        status.text = "All workers on site.";
+                    else
+                        status.text = $"{working} on site, {occupied - working} walking.";
+                }
+
                 if (workFill != null)
-                    workFill.fillAmount = occupied == 0 ? 0f : 1f;
+                    workFill.fillAmount = Workplace.Load01(occupied, slots);
             }
 
             var canAssign = !constructing && slots > 0;
-            HudButtons.SetInteractable(plusButton, canAssign && occupied == 0 && idleCount > 0);
-            HudButtons.SetInteractable(minusButton, canAssign && occupied != 0);
+            HudButtons.SetInteractable(plusButton, canAssign && occupied < slots && idleCount > 0);
+            HudButtons.SetInteractable(minusButton, canAssign && occupied > 0);
         }
 
         static bool TryFindBuilding(EntityManager em, int id, out Entity entity, out Building building)
@@ -150,6 +159,63 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             return false;
+        }
+
+        static string FormatRecipeSubtitle(
+            EntityManager em,
+            Entity session,
+            FixedString64Bytes typeId,
+            int slots,
+            float productionLoad)
+        {
+            var role = slots > 0 ? "Workplace" : "Building";
+            if (!em.HasBuffer<BuildingRecipeLine>(session))
+                return role;
+
+            var recipes = em.GetBuffer<BuildingRecipeLine>(session);
+            var hasNames = em.HasBuffer<ResourceInfo>(session);
+            var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
+            var parts = new System.Text.StringBuilder(role);
+            var any = false;
+            for (var i = 0; i < recipes.Length; i++)
+            {
+                var line = recipes[i];
+                if (line.TypeId != typeId || line.PerHour <= 0.0001f)
+                    continue;
+                if (!any)
+                {
+                    parts.Append("  ·  ");
+                    any = true;
+                }
+                else
+                    parts.Append("  ");
+
+                var name = hasNames
+                    ? DisplayName(names, line.ResourceId)
+                    : line.ResourceId.ToString();
+                var sign = line.Kind == BuildingRecipeKind.Input ? "−" : "+";
+                var current = line.PerHour * productionLoad;
+                parts.Append(name);
+                parts.Append(' ');
+                parts.Append(sign);
+                parts.Append(current.ToString("0.##"));
+                parts.Append("/h");
+            }
+
+            return parts.ToString();
+        }
+
+        static string DisplayName(DynamicBuffer<ResourceInfo> names, FixedString64Bytes resourceId)
+        {
+            for (var i = 0; i < names.Length; i++)
+            {
+                if (names[i].ResourceId != resourceId)
+                    continue;
+                var display = names[i].DisplayName.ToString();
+                return string.IsNullOrEmpty(display) ? resourceId.ToString() : display;
+            }
+
+            return resourceId.ToString();
         }
 
         static int CountIdleWorkers(EntityManager em)

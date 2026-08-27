@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | City / Buildings | сетка, occupy, footprint, стройка, HQ | апгрейды, ротация |
 | Agents / Workforce | спавн, plaza idle, commute, assign/unassign | pathfinding, нужды |
-| Economy | ledger `ResourceAmount`, один выход на тип здания | рецепты, склады, логистика |
+| Economy | ledger `ResourceAmount`, рецепт на типе здания | склады, логистика |
 | Survival pressure | — | тепло/жизнь, голод |
 | Gods | — | дань, гнев, фазы |
 | Laws | — | модификаторы |
@@ -32,11 +32,10 @@ Presentation отображает и шлёт Intent/Commands вниз. Обол
 
 ## Временное (явно)
 
-- Один слот рабочего на здание
-- Один выход (`ProduceResourceId` + rate) на `BuildingType` — не рецепт
+- Один слот save JSON
 - Имя `SimBridge` на session — флаги despawn + `NextAgentId`, не «мост UI»
 
-Производство идёт, только если `Workplace.Working` (рабочий **дошёл**), не просто assigned.
+Производство: `WorkingCount / WorkplaceSlots` × рецепт (дошедшие). Бар над домом: `AssignedCount / слоты` (кого назначил).
 
 ---
 

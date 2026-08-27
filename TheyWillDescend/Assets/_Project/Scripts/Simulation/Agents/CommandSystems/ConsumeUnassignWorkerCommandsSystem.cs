@@ -37,42 +37,44 @@ namespace TheyWillDescend.Simulation.Agents
             if (buildingId <= 0)
                 return;
 
+            using var agents = em.CreateEntityQuery(
+                ComponentType.ReadOnly<AgentId>(),
+                ComponentType.ReadWrite<AgentAssignment>());
+            using var agentEntities = agents.ToEntityArray(Allocator.Temp);
+            var assignments = agents.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            var removed = false;
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                if (assignments[i].WorkplaceBuildingId != buildingId)
+                    continue;
+                em.SetComponentData(agentEntities[i], new AgentAssignment());
+                removed = true;
+                break;
+            }
+
+            assignments.Dispose();
+            if (!removed)
+                return;
+
             using var buildings = em.CreateEntityQuery(
                 ComponentType.ReadOnly<Building>(),
                 ComponentType.ReadWrite<Workplace>());
             using var buildingEntities = buildings.ToEntityArray(Allocator.Temp);
             var buildingData = buildings.ToComponentDataArray<Building>(Allocator.Temp);
-            var workerId = 0;
             for (var i = 0; i < buildingData.Length; i++)
             {
                 if (buildingData[i].Id != buildingId)
                     continue;
                 var workplace = em.GetComponentData<Workplace>(buildingEntities[i]);
-                workerId = workplace.WorkerAgentId;
-                workplace.WorkerAgentId = 0;
-                workplace.Working = 0;
+                if (workplace.AssignedCount > 0)
+                    workplace.AssignedCount--;
+                if (workplace.WorkingCount > workplace.AssignedCount)
+                    workplace.WorkingCount = workplace.AssignedCount;
                 em.SetComponentData(buildingEntities[i], workplace);
                 break;
             }
 
             buildingData.Dispose();
-            if (workerId == 0)
-                return;
-
-            using var agents = em.CreateEntityQuery(
-                ComponentType.ReadOnly<AgentId>(),
-                ComponentType.ReadWrite<AgentAssignment>());
-            using var agentEntities = agents.ToEntityArray(Allocator.Temp);
-            var ids = agents.ToComponentDataArray<AgentId>(Allocator.Temp);
-            for (var i = 0; i < ids.Length; i++)
-            {
-                if (ids[i].Value != workerId)
-                    continue;
-                em.SetComponentData(agentEntities[i], new AgentAssignment());
-                break;
-            }
-
-            ids.Dispose();
         }
     }
 }

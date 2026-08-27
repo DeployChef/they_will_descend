@@ -12,8 +12,19 @@ namespace TheyWillDescend.Simulation.Content
     }
 
     /// <summary>
-    /// Design-time building type. Baker copies numbers onto <see cref="City.BuildingType"/>
-    /// and the session catalog. Prefab is mesh only — not the live house.
+    /// Recipe rate on a building type. Unit is <b>per game hour</b> (HUD metric).
+    /// Not place cost — that is <see cref="BuildingCostEntry"/>.
+    /// </summary>
+    [Serializable]
+    public struct ResourceRate
+    {
+        public ResourceDefinition Resource;
+        [Min(0f)] public float PerHour;
+    }
+
+    /// <summary>
+    /// Design-time building type. Baker copies numbers onto the session catalog
+    /// and the house stamp. Prefab is mesh only — not the live house.
     /// </summary>
     [CreateAssetMenu(
         fileName = "BuildingDefinition",
@@ -25,9 +36,9 @@ namespace TheyWillDescend.Simulation.Content
         [SerializeField] int widthClusters = 6;
         [SerializeField] int depthRadialRings = 2;
         [SerializeField] [Min(0f)] float constructionDuration;
-        [SerializeField] [Min(0)] int workplaceSlots = 1;
-        [SerializeField] ResourceDefinition produceResource;
-        [SerializeField] [Min(0f)] float producePerSecond = 1f;
+        [SerializeField] [Min(0)] int workplaceSlots = 10;
+        [SerializeField] ResourceRate[] recipeInputs = Array.Empty<ResourceRate>();
+        [SerializeField] ResourceRate[] recipeOutputs = Array.Empty<ResourceRate>();
         [SerializeField] BuildingCostEntry[] buildCost = Array.Empty<BuildingCostEntry>();
         [SerializeField] GameObject prefab;
 
@@ -37,9 +48,8 @@ namespace TheyWillDescend.Simulation.Content
         public int DepthRadialRings => depthRadialRings > 0 ? depthRadialRings : 1;
         public float ConstructionDuration => constructionDuration;
         public int WorkplaceSlots => workplaceSlots < 0 ? 0 : workplaceSlots;
-        public ResourceDefinition ProduceResource => produceResource;
-        public string ProduceResourceId => produceResource != null ? produceResource.ResourceId : string.Empty;
-        public float ProducePerSecond => producePerSecond;
+        public ResourceRate[] RecipeInputs => recipeInputs ?? Array.Empty<ResourceRate>();
+        public ResourceRate[] RecipeOutputs => recipeOutputs ?? Array.Empty<ResourceRate>();
         public BuildingCostEntry[] BuildCost => buildCost ?? Array.Empty<BuildingCostEntry>();
         public GameObject Prefab => prefab;
 

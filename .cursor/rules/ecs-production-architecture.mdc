@@ -32,8 +32,8 @@ Tick: Commands → commute/construction → production → day clock. Needs/Laws
 - Singletons for global state (`GameTime`, `SimControl`, ledgers) — not VContainer in core
 - DI only optional in Presentation (UI, FMOD, save)
 - ScriptableObjects/authoring = design-time; runtime truth = entities
-- Workers are **agents** with assignment and commute; pathfinding later. One slot per building is temporary
-- Production only if `Workplace.Working` (arrived), not merely assigned
+- Workers are **agents** with assignment and commute; pathfinding later
+- Production scales with `WorkingCount / WorkplaceSlots` (recipe is the 100% rate)
 - Prefer data-driven content for new buildings/resources/laws
 
 ## Anti-patterns

@@ -1,23 +1,25 @@
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Time;
 using Unity.Burst;
 using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Economy
 {
     /// <summary>
-    /// TEMPORARY: one output field on <see cref="BuildingType"/> ticks the session ledger.
-    /// Replace with a recipe blob before heat / needs / multi-output.
+    /// Production tick: working buildings run their catalog recipe (consume / produce per game hour).
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(TheyWillDescend.Simulation.Agents.AdvanceAgentCommuteSystem))]
-    public partial struct ProduceResourceSystem : ISystem
+    [UpdateAfter(typeof(TheyWillDescend.Simulation.Agents.SyncWorkplaceLoadSystem))]
+    public partial struct BuildingProductionSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<SimControl>();
             state.RequireForUpdate<ResourceAmount>();
+            state.RequireForUpdate<BuildingRecipeLine>();
+            state.RequireForUpdate<GameTime>();
         }
 
         [BurstCompile]
@@ -30,19 +32,25 @@ namespace TheyWillDescend.Simulation.Economy
             if (dt <= 0f)
                 return;
 
+            var dayDuration = SystemAPI.GetSingleton<GameTime>().DayDuration;
             var stock = SystemAPI.GetSingletonBuffer<ResourceAmount>();
+            var recipes = SystemAPI.GetSingletonBuffer<BuildingRecipeLine>(true);
+
             foreach (var (workplace, type) in
                      SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>>()
                          .WithAll<Building>()
                          .WithNone<Construction, Headquarters>())
             {
-                if (workplace.ValueRO.Working == 0 || workplace.ValueRO.WorkerAgentId == 0)
+                if (workplace.ValueRO.WorkingCount <= 0)
                     continue;
-                var resourceId = type.ValueRO.ProduceResourceId;
-                var rate = type.ValueRO.ProducePerSecond;
-                if (resourceId.IsEmpty || rate <= 0f)
+                var slots = type.ValueRO.WorkplaceSlots;
+                var load = Workplace.Load01(workplace.ValueRO.WorkingCount, slots);
+                if (load <= 0f)
                     continue;
-                ResourceLedger.Add(stock, resourceId, rate * dt);
+                var typeId = type.ValueRO.TypeId;
+                if (!BuildingRecipes.HasLines(recipes, typeId))
+                    continue;
+                BuildingRecipes.Apply(recipes, stock, typeId, dt, dayDuration, load);
             }
         }
     }

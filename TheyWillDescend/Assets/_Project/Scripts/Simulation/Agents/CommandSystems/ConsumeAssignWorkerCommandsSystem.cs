@@ -44,7 +44,12 @@ namespace TheyWillDescend.Simulation.Agents
             var workplace = em.HasComponent<Workplace>(buildingEntity)
                 ? em.GetComponentData<Workplace>(buildingEntity)
                 : default;
-            if (workplace.WorkerAgentId != 0)
+            var slots = em.HasComponent<BuildingType>(buildingEntity)
+                ? em.GetComponentData<BuildingType>(buildingEntity).WorkplaceSlots
+                : 0;
+            if (slots <= 0)
+                return;
+            if (workplace.AssignedCount >= slots)
                 return;
 
             Entity agentEntity;
@@ -52,6 +57,9 @@ namespace TheyWillDescend.Simulation.Agents
             if (preferredAgentId > 0)
             {
                 if (!TryGetAgent(em, preferredAgentId, out agentEntity, out agentId))
+                    return;
+                if (em.HasComponent<AgentAssignment>(agentEntity)
+                    && em.GetComponentData<AgentAssignment>(agentEntity).WorkplaceBuildingId != 0)
                     return;
             }
             else if (!TryGetIdleAgent(em, out agentEntity, out agentId))
@@ -61,11 +69,8 @@ namespace TheyWillDescend.Simulation.Agents
 
             if (!em.HasComponent<Workplace>(buildingEntity))
                 em.AddComponent<Workplace>(buildingEntity);
-            em.SetComponentData(buildingEntity, new Workplace
-            {
-                WorkerAgentId = agentId,
-                Working = 0
-            });
+            workplace.AssignedCount += 1;
+            em.SetComponentData(buildingEntity, workplace);
 
             if (!em.HasComponent<AgentAssignment>(agentEntity))
                 em.AddComponent<AgentAssignment>(agentEntity);

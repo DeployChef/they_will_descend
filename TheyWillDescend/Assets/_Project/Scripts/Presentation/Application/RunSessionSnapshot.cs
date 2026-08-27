@@ -124,8 +124,6 @@ namespace TheyWillDescend.App
                     anchorRadial = building.AnchorRadial,
                     built = 1
                 };
-                if (em.HasComponent<Workplace>(buildingEntities[i]))
-                    record.workerAgentId = em.GetComponentData<Workplace>(buildingEntities[i]).WorkerAgentId;
                 if (em.HasComponent<Construction>(buildingEntities[i]))
                 {
                     var construction = em.GetComponentData<Construction>(buildingEntities[i]);
@@ -190,23 +188,6 @@ namespace TheyWillDescend.App
 
             SimCommands.Playback();
             ApplyResources(snapshot);
-
-            if (snapshot.buildings != null)
-            {
-                for (var i = 0; i < snapshot.buildings.Length; i++)
-                {
-                    var record = snapshot.buildings[i];
-                    if (record.workerAgentId <= 0)
-                        continue;
-                    SimCommands.TryPost(new AssignWorkerCommand
-                    {
-                        BuildingId = record.id,
-                        AgentId = record.workerAgentId
-                    });
-                }
-
-                SimCommands.Playback();
-            }
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
         }

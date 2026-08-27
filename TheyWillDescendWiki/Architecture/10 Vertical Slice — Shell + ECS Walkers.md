@@ -38,7 +38,7 @@ Build list: Bootstrap (0), MainMenu, Loading, Game.
 | Пауза / x1 x2 x3 + часы HUD | done |
 | Сток wood/food | done |
 | Стройка на полярной сетке + occupy ECS | done |
-| Назначение рабочего (один слот) | done |
+| Назначение рабочих (до 10 на дом; производство × нагрузка) | done |
 | Сценарий bake (стартовый запас + дома + люди) | done |
 | Save/load слот JSON | done |
 | Нужды / кризис / win-lose | нет — следующий рост петли |
