@@ -1,4 +1,5 @@
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.ShellUi;
 
 namespace TheyWillDescend.Shell.States
 {
@@ -6,7 +7,7 @@ namespace TheyWillDescend.Shell.States
     {
         readonly AppStateMachine _fsm;
         readonly GameInput _input;
-        IShellUi _ui;
+        MainMenuScreen _screen;
 
         public AppStateId Id => AppStateId.MainMenu;
 
@@ -19,26 +20,30 @@ namespace TheyWillDescend.Shell.States
         public void Enter()
         {
             _input.Disable();
-            _ui = ShellUiPort.Current;
-            if (_ui == null)
+            _screen = MainMenuScreen.Current;
+            if (_screen == null)
             {
-                GameLog.Error("MainMenuState: IShellUi not bound. ShellUiBinder must be on a loaded MainMenu.");
+                GameLog.Error("MainMenuState: MainMenuScreen missing. Put it on MainMenuPanel in MainMenu.");
                 return;
             }
 
-            _ui.ShowMainMenu();
-            _ui.StartGameClicked += OnStartGameClicked;
+            _screen.Show();
+            _screen.StartClicked += OnStartClicked;
             GameLog.Info("Main menu: click Start Game.");
         }
 
         public void Exit()
         {
-            if (_ui != null)
-                _ui.StartGameClicked -= OnStartGameClicked;
-            _ui = null;
+            if (_screen != null)
+            {
+                _screen.StartClicked -= OnStartClicked;
+                _screen.Hide();
+            }
+
+            _screen = null;
         }
 
-        void OnStartGameClicked()
+        void OnStartClicked()
         {
             _fsm.TransitionTo(AppStateId.LoadingGame);
         }

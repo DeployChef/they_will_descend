@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 404740522}
   - component: {fileID: 404740524}
   - component: {fileID: 404740523}
+  - component: {fileID: 404740525}
   m_Layer: 5
   m_Name: MainMenuPanel
   m_TagString: Untagged
@@ -195,6 +196,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 404740521}
   m_CullTransparentMesh: 1
+--- !u!114 &404740525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 404740521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Presentation.ShellUi.MainMenuScreen
+  startGameButton: {fileID: 1261790235}
 --- !u!1 &974055473
 GameObject:
   m_ObjectHideFlags: 0
@@ -207,7 +221,6 @@ GameObject:
   - component: {fileID: 974055476}
   - component: {fileID: 974055475}
   - component: {fileID: 974055474}
-  - component: {fileID: 974055478}
   m_Layer: 5
   m_Name: UI
   m_TagString: Untagged
@@ -300,21 +313,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &974055478
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 974055473}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c720f64d362ba0a4b9ba88ed13c047b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Presentation.ShellUi.ShellUiBinder
-  pressAnyKeyPanel: {fileID: 1798405015}
-  mainMenuPanel: {fileID: 404740521}
-  startGameButton: {fileID: 1261790235}
 --- !u!1 &1115578351
 GameObject:
   m_ObjectHideFlags: 0
@@ -721,6 +719,7 @@ GameObject:
   - component: {fileID: 1798405016}
   - component: {fileID: 1798405018}
   - component: {fileID: 1798405017}
+  - component: {fileID: 1798405019}
   m_Layer: 5
   m_Name: PressAnyKeyPanel
   m_TagString: Untagged
@@ -786,6 +785,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1798405015}
   m_CullTransparentMesh: 1
+--- !u!114 &1798405019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1798405015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a4e1c2b9d0f4a6e8b3c5d7e9f1a2b3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Presentation.ShellUi.PressAnyKeyScreen
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

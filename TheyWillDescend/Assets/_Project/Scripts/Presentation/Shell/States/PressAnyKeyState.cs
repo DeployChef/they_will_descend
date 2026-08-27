@@ -1,4 +1,5 @@
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.ShellUi;
 
 namespace TheyWillDescend.Shell.States
 {
@@ -17,14 +18,14 @@ namespace TheyWillDescend.Shell.States
 
         public void Enter()
         {
-            var ui = ShellUiPort.Current;
-            if (ui == null)
+            var screen = PressAnyKeyScreen.Current;
+            if (screen == null)
             {
-                GameLog.Error("PressAnyKeyState: IShellUi not bound. ShellUiBinder must be on a loaded MainMenu.");
+                GameLog.Error("PressAnyKeyState: PressAnyKeyScreen missing. Put it on PressAnyKeyPanel in MainMenu.");
                 return;
             }
 
-            ui.ShowPressAnyKey();
+            screen.Show();
             _input.Proceeded += OnProceeded;
             _input.EnableMenu();
             GameLog.Info("Press any key to continue.");
@@ -34,6 +35,7 @@ namespace TheyWillDescend.Shell.States
         {
             _input.Proceeded -= OnProceeded;
             _input.Disable();
+            PressAnyKeyScreen.Current?.Hide();
         }
 
         void OnProceeded()

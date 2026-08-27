@@ -5,8 +5,8 @@ using TheyWillDescend.Shell.States;
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root helper: registers Shell states. Does not Find UI —
-    /// MainMenu binder registers <see cref="ShellUiPort"/> when that scene is loaded.
+        /// Composition root helper: registers Shell states. Does not Find UI —
+        /// MainMenu screens register themselves when that scene is loaded.
     /// </summary>
     public static class AppFlowFactory
     {
