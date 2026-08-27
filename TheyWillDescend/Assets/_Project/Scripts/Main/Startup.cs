@@ -18,9 +18,9 @@ namespace TheyWillDescend.Main
 
         [SerializeField] GameAudio gameAudio;
         [SerializeField] GameInput gameInput;
+        [SerializeField] GameSession gameSession;
 
         AppStateMachine _fsm;
-        GameSession _session;
         bool _started;
 
         void Awake()
@@ -33,12 +33,8 @@ namespace TheyWillDescend.Main
 
         async UniTaskVoid BootAsync()
         {
-            var scenes = new SceneLoader();
             var skipMenu = skipMenuToGameTemporarily;
             var ct = this.GetCancellationTokenOnDestroy();
-
-            if (!skipMenu)
-                await scenes.LoadMainMenuAdditive(ct);
 
             var audio = gameAudio;
             if (audio == null)
@@ -56,9 +52,18 @@ namespace TheyWillDescend.Main
                     "Startup is missing GameInput. Assign the GameInput object, do not AddComponent from code.");
             }
 
-            var bundle = AppFlowFactory.Create(scenes, audio, input);
-            _fsm = bundle.StateMachine;
-            _session = bundle.Session;
+            var session = gameSession;
+            if (session == null)
+            {
+                GameLog.Error("Startup: GameSession must be assigned. Put it on its own Bootstrap object.");
+                throw new InvalidOperationException(
+                    "Startup is missing GameSession. Assign the GameSession object, do not AddComponent from code.");
+            }
+
+            if (!skipMenu)
+                await session.LoadMainMenuAsync(ct);
+
+            _fsm = AppFlowFactory.Create(session, audio, input);
 
             if (skipMenu)
             {
@@ -70,12 +75,6 @@ namespace TheyWillDescend.Main
                 GameLog.Info("Startup ready (Root). AppFlow started.");
                 _fsm.Start(AppStateId.PressAnyKey);
             }
-        }
-
-        void OnDestroy()
-        {
-            _session?.Cancel();
-            _session = null;
         }
     }
 }

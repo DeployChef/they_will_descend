@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// Narrow scene port: load/unload shell and session scenes. No economy knowledge.
+    /// Narrow scene port: load/unload by name. No economy, no which-scene policy.
     /// </summary>
     public sealed class SceneLoader
     {
@@ -15,10 +15,6 @@ namespace TheyWillDescend.Shell
             var scene = SceneManager.GetSceneByName(sceneName);
             return scene.IsValid() && scene.isLoaded;
         }
-
-        public bool IsGameLoaded => IsLoaded(GameScenes.Game);
-        public bool IsMainMenuLoaded => IsLoaded(GameScenes.MainMenu);
-        public bool IsLoadingLoaded => IsLoaded(GameScenes.Loading);
 
         public async UniTask LoadAdditive(
             string sceneName,
@@ -61,24 +57,6 @@ namespace TheyWillDescend.Shell
 
             await op.ToUniTask(cancellationToken: cancellationToken);
         }
-
-        public UniTask LoadGameAdditive(CancellationToken cancellationToken = default) =>
-            LoadAdditive(GameScenes.Game, setActive: true, cancellationToken);
-
-        public UniTask UnloadGame(CancellationToken cancellationToken = default) =>
-            Unload(GameScenes.Game, cancellationToken);
-
-        public UniTask LoadMainMenuAdditive(CancellationToken cancellationToken = default) =>
-            LoadAdditive(GameScenes.MainMenu, setActive: false, cancellationToken);
-
-        public UniTask UnloadMainMenu(CancellationToken cancellationToken = default) =>
-            Unload(GameScenes.MainMenu, cancellationToken);
-
-        public UniTask LoadLoadingAdditive(CancellationToken cancellationToken = default) =>
-            LoadAdditive(GameScenes.Loading, setActive: false, cancellationToken);
-
-        public UniTask UnloadLoading(CancellationToken cancellationToken = default) =>
-            Unload(GameScenes.Loading, cancellationToken);
 
         static void TrySetActive(string sceneName)
         {

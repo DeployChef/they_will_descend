@@ -3,26 +3,32 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.Io;
+using UnityEngine;
 
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// One gameplay run: show Loading, load Game, wait until simulation exists, then hide Loading.
-    /// Not a scene object — it owns the lifetime of Game, so it cannot live on Game.
-    /// After <see cref="DisposeAsync"/>, MainMenu is back; caller should TransitionTo MainMenu.
+    /// Bootstrap host for one gameplay run. Scene names and bake timeout live here;
+    /// <see cref="SceneLoader"/> only load/unload.
     /// </summary>
-    public sealed class GameSession
+    public sealed class GameSession : MonoBehaviour
     {
-        const float SimulationReadyTimeoutSeconds = 30f;
+        [Header("Scenes")]
+        [SerializeField] string loadingScene = GameScenes.Loading;
+        [SerializeField] string gameScene = GameScenes.Game;
+        [SerializeField] string mainMenuScene = GameScenes.MainMenu;
 
-        readonly SceneLoader _scenes;
+        [Header("Ready")]
+        [SerializeField] float simulationReadyTimeoutSeconds = 30f;
+
+        readonly SceneLoader _scenes = new();
         CancellationTokenSource _runCts;
 
         public bool IsActive { get; private set; }
 
-        public GameSession(SceneLoader scenes)
+        public async UniTask LoadMainMenuAsync(CancellationToken cancellationToken = default)
         {
-            _scenes = scenes;
+            await _scenes.LoadAdditive(mainMenuScene, setActive: false, cancellationToken);
         }
 
         public async UniTask StartAsync(CancellationToken cancellationToken = default)
@@ -34,27 +40,27 @@ namespace TheyWillDescend.Shell
             _runCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var ct = _runCts.Token;
 
-            await _scenes.LoadLoadingAdditive(ct);
-            await _scenes.UnloadMainMenu(ct);
-            await _scenes.LoadGameAdditive(ct);
+            await _scenes.LoadAdditive(loadingScene, setActive: false, ct);
+            await _scenes.Unload(mainMenuScene, ct);
+            await _scenes.LoadAdditive(gameScene, setActive: true, ct);
 
-            if (!_scenes.IsGameLoaded)
+            if (!_scenes.IsLoaded(gameScene))
             {
                 GameLog.Error("GameSession.Start failed — Game scene not loaded.");
                 return;
             }
 
             await WaitUntilSimulationReady(ct);
-            await _scenes.UnloadLoading(ct);
+            await _scenes.Unload(loadingScene, ct);
             IsActive = true;
         }
 
         public async UniTask DisposeAsync(CancellationToken cancellationToken = default)
         {
             Cancel();
-            await _scenes.UnloadLoading(cancellationToken);
-            await _scenes.UnloadGame(cancellationToken);
-            await _scenes.LoadMainMenuAdditive(cancellationToken);
+            await _scenes.Unload(loadingScene, cancellationToken);
+            await _scenes.Unload(gameScene, cancellationToken);
+            await _scenes.LoadAdditive(mainMenuScene, setActive: false, cancellationToken);
             IsActive = false;
         }
 
@@ -67,14 +73,17 @@ namespace TheyWillDescend.Shell
             _runCts = null;
         }
 
-        static async UniTask WaitUntilSimulationReady(CancellationToken cancellationToken)
+        void OnDestroy() => Cancel();
+
+        async UniTask WaitUntilSimulationReady(CancellationToken cancellationToken)
         {
+            var timeout = simulationReadyTimeoutSeconds > 0f ? simulationReadyTimeoutSeconds : 30f;
             try
             {
                 await UniTask.WaitUntil(
                         () => SimWorld.TryGet(out _, out _),
                         cancellationToken: cancellationToken)
-                    .Timeout(TimeSpan.FromSeconds(SimulationReadyTimeoutSeconds));
+                    .Timeout(TimeSpan.FromSeconds(timeout));
             }
             catch (TimeoutException)
             {

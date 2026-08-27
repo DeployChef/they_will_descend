@@ -10,29 +10,14 @@ namespace TheyWillDescend.Main
     /// </summary>
     public static class AppFlowFactory
     {
-        public readonly struct Bundle
+        public static AppStateMachine Create(GameSession session, GameAudio audio, GameInput input)
         {
-            public readonly AppStateMachine StateMachine;
-            public readonly GameSession Session;
-
-            public Bundle(AppStateMachine stateMachine, GameSession session)
-            {
-                StateMachine = stateMachine;
-                Session = session;
-            }
-        }
-
-        public static Bundle Create(SceneLoader scenes, GameAudio audio, GameInput input)
-        {
-            var session = new GameSession(scenes);
             var fsm = new AppStateMachine();
-
             fsm.Register(new PressAnyKeyState(fsm, input));
             fsm.Register(new MainMenuState(fsm, input));
             fsm.Register(new LoadingGameState(fsm, session, input));
             fsm.Register(new PlayingState(input, audio));
-
-            return new Bundle(fsm, session);
+            return fsm;
         }
     }
 }
