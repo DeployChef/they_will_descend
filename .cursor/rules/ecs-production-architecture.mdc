@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Production ECS Architecture
 
-Target: mature, extensible DOTS architecture for a large city-survival sim.
+Target: mature, extensible DOTS architecture for a large AA city-survival sim.
 
 ## Layers
 
@@ -19,19 +19,21 @@ Content: Authoring/Baker, blobs, prefabs, balance tables
 
 Assemblies are compile walls, not DDD layers. Four: Simulation, Authoring, Presentation, Main. See wiki `01 Folder Structure`.
 
-## Simulation domains (folders + SystemGroups)
+## Simulation folders (feature, then layer)
 
-Time → Commands → Workforce/Assignment → Production → Needs/Survival → Society/Laws → Gods/Crisis → WinLose → EmitEvents
+`Simulation/<Feature>/{Components,Commands,CommandSystems,Systems}`  
+Tick: Commands → commute/construction → production → day clock. Needs/Laws/Gods/WinLose later.
 
 ## Rules
 
 - One write model: ECS simulation world
 - Systems = domain rules; components = state; avoid rich OO aggregates on entities
-- Player/UI writes **commands**, not stocks directly
-- Singletons for global state (`GameTime`, ledgers, phase) — not VContainer in core
+- Player/UI writes **commands** (`SimCommands.TryPost`), not stocks directly
+- Singletons for global state (`GameTime`, `SimControl`, ledgers) — not VContainer in core
 - DI only optional in Presentation (UI, FMOD, save)
-- ScriptableObjects/authoring = design-time; runtime truth = entities/blobs
-- Start workforce as **aggregates** (`AssignedCount`); agents/pathfinding later
+- ScriptableObjects/authoring = design-time; runtime truth = entities
+- Workers are **agents** with assignment and commute; pathfinding later. One slot per building is temporary
+- Production only if `Workplace.Working` (arrived), not merely assigned
 - Prefer data-driven content for new buildings/resources/laws
 
 ## Anti-patterns
@@ -40,3 +42,4 @@ Time → Commands → Workforce/Assignment → Production → Needs/Survival →
 - God `IEconomyService` used by UI and systems alike
 - Mixing jam card architecture into ECS core
 - Burst systems calling managed UI/FMOD directly
+- `Time.timeScale` as city pause

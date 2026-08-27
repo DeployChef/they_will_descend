@@ -5,9 +5,10 @@ alwaysApply: true
 
 # Camera & scenes
 
-- **Bootstrap (Root):** Startup, one Main Camera (+ AudioListener), EventSystem. No menu canvas, no gameplay light/world.
-- **MainMenu:** splash/menu canvases + ShellUiBinder. No Main Camera.
-- **Game:** level, lights, VCams (later), Simulation SubScene. No second Main Camera (Cinemachine Brain on Root).
+- **Bootstrap (Root):** Startup, GameAudio, GameInput, GameSession, one Main Camera (+ AudioListener), EventSystem. No menu canvas, no gameplay light/world.
+- **MainMenu:** splash/menu canvases + `PressAnyKeyScreen` / `MainMenuScreen`. No Main Camera.
+- **Loading:** transition while Game loads. Include in Build list.
+- **Game:** level, lights, VCams, Simulation SubScene. No second Main Camera (Cinemachine Brain on Root).
 - Cinemachine package: add when implementing VCams; until then Game may temporarily keep its camera (mark temporary).
 
 Canon: `TheyWillDescendWiki/Architecture/11 Camera & Presentation Scenes.md`

@@ -57,8 +57,6 @@
 | Меш дома ≠ растяжка на всю зону | Дом по короткой стороне пятна; у 6×2 зона шире дома |
 | 6×2 и 2×2 разные | Разный footprint и разный префаб |
 
-Временный куб заменён. Сейчас:
-
 | Footprint | Prefab (RPGPP) |
 | --- | --- |
 | House 6×2 | `rpgpp_lt_building_01` |
@@ -67,15 +65,19 @@
 
 Scale: uniform по горизонтальному bounds → короткая сторона pad. Куб остаётся только fallback, если слот prefab пустой.
 
+Готовый дом рисует **Entities Graphics** на entity. `BuildingViewBoard` — зона footprint + бар стройки, не меш дома.
+
 ### 2.5 Valid / invalid placement
 
 | Состояние | Зона | Snap |
 | --- | --- | --- |
 | Можно ставить | cyan | кольцо **и** лучи (cluster) |
-| Нельзя (overlap / out of depth) | **красная** | кольцо **вкл**, лучи **выкл** (угол следует курсору) |
+| Нельзя (overlap / out of depth / нет ресурса) | **красная** | кольцо **вкл**, лучи **выкл** (угол следует курсору) |
 | Клик | только если valid | — |
 
-Occupy пока в Presentation (`HashSet` кластеров). Потом → ECS occupancy.
+**Occupy — ECS:** буфер `OccupiedCell` на session (`CityGridAuthoring`). Ghost читает World, не свой `HashSet`.
+
+Управление режимом стройки: **ЛКМ** — поставить, остаться в режиме если после `Playback()` ещё `CanAfford`. **ПКМ** и **Esc** — отмена. Каталог ставит `BuildLocked`.
 
 ## 3. Неверные модели (отвергнуто)
 
@@ -105,18 +107,30 @@ Place:
 ```text
 build plane → snap (cluster, ring)
 → ExpandClusters (дуга якоря на каждое кольцо глубины)
-→ zone mesh по секциям + prefab дома (не на всю зону)
+→ PlaceBuildingCommand → occupy OccupiedCell
+→ zone mesh по секциям; готовый дом — EG-штамп
 ```
 
 Центр = `Headquarters.LocalTransform` → `CityGrid.Center` на bake. Сетка/стройка **читают** World, не пушат Transform.
+
+Математика: `Simulation/City/Math/RadialGridMath.cs`.
 
 ## 5. Слои
 
 | Слой | Роль |
 | --- | --- |
 | Presentation | underlay, ghost zone + catalog mesh; центр pull `CityGrid.Center` |
-| Simulation | config / occupancy (позже) |
-| Shell | build catalog, Esc, SimGate.Frozen |
+| Simulation | `CityGrid`, `OccupiedCell`, Place/Reject |
+| HUD / Playing | catalog, Esc → `BuildWidget.TryHandleEscape`, `BuildLocked` на `SimControl` |
+
+Разрез презентации города:
+
+| Класс | Владеет |
+| --- | --- |
+| `BuildPlacementController` | ghost + ЛКМ/ПКМ |
+| `BuildingViewBoard` | зоны/прогресс живых домов |
+| `BuildingSelection` | клик выбора |
+| `BuildingRejectLog` | drain `BuildingRejectedEvent` |
 
 ## 6. План
 
@@ -124,8 +138,8 @@ build plane → snap (cluster, ring)
 | --- | --- |
 | Underlay + cluster math | done |
 | Place + zone + house prefab | done |
-| Occupy / red invalid + ray snap off | done (Presentation) |
-| Occupy → ECS | later |
+| Occupy / red invalid + ray snap off | done |
+| Occupy → ECS | **done** |
 | Rotate | later |
 | Roads (свободнее) | later |
 | Smart ring align (F6) | later / polish |

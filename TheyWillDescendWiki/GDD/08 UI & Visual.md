@@ -11,7 +11,7 @@
 
 ## Камера и взаимодействие
 
-**Канон:** одна Main Camera на Bootstrap (Root) + Cinemachine VCam на MainMenu/Game.  
+**Канон:** одна Main Camera на Bootstrap (Root) + Cinemachine VCam на Game (меню — позже). Сцена **Loading** в Build list.  
 Детали: [[../Architecture/11 Camera & Presentation Scenes|Architecture/11]].
 
 Орбита / RTS-стиль кадра — отдельное решение геймплея; не путать с наличием второй Main Camera.

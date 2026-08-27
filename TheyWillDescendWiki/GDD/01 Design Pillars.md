@@ -21,6 +21,7 @@
 
 - [x] UI/геймплей: **классический Frostpunk-like** (assign + build), не card DnD из джема
 - [x] Симуляция: **production ECS / DOTS** (см. Architecture)
+- [x] Масштаб: **полная AA city-survival**, не джем и не card-core GMTK
 
 ## Открытые решения
 

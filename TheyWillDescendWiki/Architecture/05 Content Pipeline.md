@@ -192,18 +192,19 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 ## 7. Session authoring (чеклист SubScene)
 
-На **одном** GO `SimControl`:
+На **одном** GO `SimControl` (соседи authoring, один bake-entity):
 
-1. `SimControlAuthoring` — часы, буферы команд, штамп агента
-2. `CityGridAuthoring` — сетка + occupy + дефолтная длительность стройки
-3. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
-4. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
+1. `SimControlAuthoring` — `SimControl` + `SimBridge` + буфер `SimClockCommand`
+2. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
+3. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace` + длительность стройки
+4. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
+5. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
 
-Рядом, отдельным GO:
+Рядом, **отдельным** GO (не на SimControl: BakingOnly снял бы session singleton):
 
-5. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
-6. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
-7. `GameTimeAuthoring`
+6. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
+7. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
+8. `GameTimeAuthoring`
 
 После смены SO зайди в Play: SubScene перепечётся. Ошибки ключей/префабов — Console при bake, не «тихий нулевой дом».
 
@@ -213,7 +214,7 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 Build HUD читает session-каталог → кнопка с именем и костом (`Sawmill` + `15 Wood`, `Kitchen` + `8 Wood`).
 
-Клик → призрак. Красная зона: занято **или** не хватает ресурсов. ЛКМ → `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, ставит сайт (или сразу дом, если duration уже 0 и complete).
+Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, ставит сайт (или сразу дом, если duration уже 0). После `Playback()` режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
 
 Сценарий и load (`BuildingId > 0` или `InstantComplete`) кост не берут.
 

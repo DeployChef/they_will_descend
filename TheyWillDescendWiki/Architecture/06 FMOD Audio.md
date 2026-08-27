@@ -236,6 +236,18 @@ public class Fire : MonoBehaviour {
 
 ---
 
+## Хост в Unity
+
+`GameAudio` — сосед на Bootstrap (инспектор-ссылка с `Startup`). Живёт с Root-камерой и `AudioListener`. Симуляция его не вызывает.
+
+- Старт/стоп сессионной музыки — `PlayingState` Enter/Exit
+- Пауза инстанса — `LateUpdate` читает `SimControl.PlayerPaused` (не Speed, не `timeScale`)
+- Событие сейчас: `event:/main_soundtrack`, банк `Main_theme`
+
+Не ускорять pitch музыки через `timeScale`.
+
+---
+
 ## Правила для программистов
 
 ### 1. EventReference вместо строк

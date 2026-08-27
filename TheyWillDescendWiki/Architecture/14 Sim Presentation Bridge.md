@@ -7,16 +7,18 @@
 World — единственный write model игры. Стрелки не симметричны:
 
 ```text
-Presentation  →  команды (`SimIo`)     единственная запись из UI
-Presentation  ←  query / pull          единственное чтение в вид
+Presentation  →  SimCommands.TryPost     единственная запись из UI
+Presentation  ←  query / pull            единственное чтение в вид
 Simulation    ✕  TimeWidget / ViewBoard / Animator
 ```
 
-`SystemBase` в Presentation, который вызывает `TimeWidget.ShowTime` или `*ViewBoard.Sync`, — это **обратная** связь: ECS-тик владеет видом. Так нельзя. Канон: виджет/доска в `Update` / `LateUpdate` сами читают World (`using var query`). Query не кэшировать на MonoBehaviour (lifetime GO ≠ lifetime World).
+`SystemBase` в Presentation, который вызывает `TimeWidget.ShowTime` или `*ViewBoard.Sync`, — это **обратная** связь: ECS-тик владеет видом. Так нельзя. Канон: виджет/доска в `Update` / `LateUpdate` сами читают World. Query не кэшировать на MonoBehaviour (lifetime GO ≠ lifetime World).
 
 Редкое исключение наружу: `BuildingRejectedEvent` (тост). Не спавн, не тик дня.
 
-Пауза/скорость — не запись игрового состояния: `SimGate` → `SimControl.DeltaTime`.
+Пауза/скорость — команды на `SimControl`, не запись стоков.
+
+`SimCommands.Playback()` — тот же кадр применить consume (load, постановка дома, чтобы ghost сразу увидел occupy/сток). Обычный клик HUD может положиться на следующий тик `CommandSystemGroup`.
 
 ## Меши и поза
 
@@ -30,34 +32,37 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 ```text
 кнопка spawn / place
-  → HUD каталог из `BuildingPrototype`
-  → SimIo.TryEnqueue… (буфер на session)
-  → CommandSystemGroup (тик, не Flush из UI)
+  → HUD каталог из BuildingPrototype
+  → SimCommands.TryPost (буфер на session)
+  → CommandSystemGroup
   → агент: Instantiate(SimPrototypes.Agent)
-  → дом: Building + Construction + LocalTransform (меша нет)
-       complete → Instantiate(House)
+  → дом: Building + Construction + LocalTransform
+       complete → Instantiate(House stamp)
 
 вид (LateUpdate pull)
   ← query какие entity есть
-  ← стройка: обводка + бар (pull Construction)
+  ← стройка: обводка + бар (BuildingViewBoard, Construction)
   ← готовый дом: обводка; меш рисует Entities Graphics
-  ← люди: LocalTransform + Moving → Mixamo (walk/idle); Arrived → меш выключен (в доме)
-  ← сток HUD pull ResourceAmount + ResourceInfo
-  ← слот дома: виджет +/− → Assign/Unassign command
+  ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived → меш выключен
+  ← сток HUD pull ResourceAmount
+  ← слот дома: BuildingInspectPanel +/− → Assign/Unassign
 ```
 
-Отказ стройки — `BuildingRejectedEvent` (тост). Спавн/день — не события.
+Отказ стройки — `BuildingRejectedEvent` → `BuildingRejectLog`. Спавн/день — не события.
 
 ## Что где
 
 | Кусок | Слой |
 | --- | --- |
-| `SpawnAgentCommand`, `PlaceBuildingCommand`, `AssignWorkerCommand`, `SimIo` | Simulation |
+| `SpawnAgentCommand`, `PlaceBuildingCommand`, `AssignWorkerCommand`, `SimCommands` | Simulation |
 | `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceAmount` | Simulation |
-| Session singleton (Baker `SimControlAuthoring`) | SubScene |
-| `ResourceAmount` / `ResourceInfo` (Baker `ResourceCatalogAuthoring` на SimControl) | SubScene |
-| Плаза HQ (`Building` + `Headquarters`) | SubScene bake; `CityGrid.Center` с HQ; не `PlaceBuilding` |
-| `AgentViewBoard` / `BuildingViewBoard` / `TimeWidget` | Presentation **читает** World. Системы сима вью не знают. |
-| Пауза / x1 x2 x3 | `SimGate` (Presentation/Shell) → `SimControl.DeltaTime` |
+| Session singleton | SubScene: `SimControlAuthoring` + соседние authoring |
+| Плаза HQ | SubScene bake; не `PlaceBuilding` |
+| `AgentViewBoard` / `BuildingViewBoard` / `BuildingSelection` / `TimeWidget` | Presentation **читает** World |
+| Пауза / x1 x2 x3 | `SimClockCommand` → `SimControl` |
+
+`SimBridge` — leftover-имя: `NextAgentId` + флаги despawn. Не путать с Presentation.
+
+`AgentSpawner` только постит spawn (площадка/скорость). Префабы Mixamo и `spawnParent` — на `AgentViewBoard` (тот же GO).
 
 Связанные: [[08 Production ECS]] · [[10 Vertical Slice — Shell + ECS Walkers]] · [[13 Time HUD and Save]]

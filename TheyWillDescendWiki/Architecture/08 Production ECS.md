@@ -2,58 +2,57 @@
 
 ← [[07 Mentorship & Learning]] | [[Index]] | [[../Home|Home]]
 
-Целевая **production**-архитектура симуляции: зрелая, расширяемая, под масштаб Frostpunk-like проекта. Не «демо Entities», а каркас большой игры.
+Целевая **production**-архитектура симуляции: зрелая, расширяемая, под масштаб Frostpunk-like AA-проекта. Не «демо Entities».
 
 ## Закон
 
 > **Write model симуляции — ECS. Всё остальное — адаптеры.**
 
-UI / FMOD / камера не считают экономику. Authoring и ScriptableObjects — design-time контент; в Play истина — entities (и readonly blobs).
+UI / FMOD / камера не считают экономику. Authoring и ScriptableObjects — design-time контент; в Play истина — entities.
 
 ## Слои
 
 ```
 Main             Startup / регистрация FSM
 Presentation     UI, camera, Shell, FMOD; Intent → Command (без economy math)
-        ↓ Commands
+        ↓ SimCommands.TryPost
 Simulation       ECS world — source of truth
         ↑ pull / редкие reject-события
-Content          Authoring, Baker, blobs, prefabs, balance
+Content          Authoring, Baker, prefabs, balance
 ```
 
 Сборки — [[01 Folder Structure]]. «Application» как тонкий use-case (сейв-снимок) живёт **папкой** в Presentation, не отдельной asmdef.
 
 ## Домены Simulation
 
-Папки + SystemGroups + соглашения по компонентам:
+Папки + SystemGroups:
 
-| Домен | Ответственность |
-| --- | --- |
-| Time | день/тик, пауза, фазы суток |
-| Commands | входящие намерения игрока/AI |
-| City | здания, стройка, слоты |
-| Workforce | рабочие, assignment, idle |
-| Economy | склады, рецепты, логистика |
-| Survival | голод, cold/heat / давление |
-| Society | hope/discontent, законы как модификаторы |
-| Gods | дань, фазы, гнев |
-| Crisis | кризисы, таймеры давления |
-| Events | факты наружу (для UI/аудио) |
-| WinLose | условия конца рана |
+| Домен | Ответственность | Сейчас |
+| --- | --- | --- |
+| Time | сутки (`GameTime`) | да |
+| Session | `SimControl`, команды, despawn-флаги | да |
+| City | здания, стройка, сетка, occupy | да |
+| Agents | рабочие, assignment, commute | да (без pathfinding) |
+| Economy | склады, производство | да (один выход на тип) |
+| Survival | голод, cold/heat | нет |
+| Society | hope/discontent, законы | нет |
+| Gods | дань, фазы, гнев | нет |
+| Crisis | кризисы | нет |
+| WinLose | конец рана | нет |
 
 ### Порядок тика (pipeline)
 
 ```
-ReceiveCommands (`CommandSystemGroup`)
-  → AdvanceTime
-  → Assignment
-  → Production
-  → Consumption / Needs
-  → Morale / Laws
-  → Gods / Crisis
-  → WinLose
-  → EmitEvents
+CommandSystemGroup (OrderFirst в SimulationSystemGroup)
+  consume clock / spawn / place / assign / scenario / despawn
+  ApplySimDeltaTime (OrderLast в группе)
+  → commute / plaza idle / locomotion
+  → construction
+  → production (только Workplace.Working)
+  → AdvanceGameTime
 ```
+
+Needs / Laws / Gods / Crisis / WinLose — группы появятся, когда появится домен.
 
 ## DI
 
@@ -68,28 +67,29 @@ ReceiveCommands (`CommandSystemGroup`)
 
 ```
 UI → AssignWorkerCommand
-AssignmentSystem → Workforce / Workplace
-ProductionSystem → Stock
-UI ← читает Stock / domain events
+ConsumeAssignWorker → AgentAssignment / Workplace
+AdvanceAgentCommute → Workplace.Working
+ProduceResourceSystem → ResourceAmount
+UI ← читает ledger / Construction
 ```
 
 ## Точки расширения
 
 | Добавляем | Куда | Не переписываем |
 | --- | --- | --- |
-| Ресурс | content + stock | весь UI |
-| Здание | authoring prefab + recipe data | ядро production «на каждый тип» |
+| Ресурс | content + `ResourceAmount` | весь UI (чипы HUD пока сценой — временно) |
+| Здание | `BuildingDefinition` + prefab + catalog | ядро production «на каждый тип» |
 | Закон | modifier components / tags | разрозненные if по коду |
 | Кризис | event entity + Crisis group | экономику с нуля |
 | Другой UI | Presentation | Simulation |
 
-## Ранние решения
+## Ранние решения (обновлено)
 
 - Геймплей: **Frostpunk assign/build**, не card DnD ([[../GDD/00 Overview|GDD]])
-- Workforce v1: **агрегаты** (`AssignedCount`), агенты с pathfinding позже
-- Время: **singleton** `GameTime` (уже в коде)
-- Сцены: Root + additive Game + SubScene Simulation — см. [[09 App Shell]]
-- SimGate: дни/экономика только в **Running**
+- Workforce: **агенты** с assignment и commute. Pathfinding — позже. Один слот на здание — временно
+- Время: `GameTime` + `SimControl` (не отдельный `SimClock`, не `SimGate`)
+- Сцены: Bootstrap + additive MainMenu / Loading / Game + SubScene — [[09 App Shell]]
+- Тик экономики только при `SimControl.IsRunning`
 - Логи: `GameLog` + каналы
 
 ## Анти-паттерны
@@ -100,8 +100,9 @@ UI ← читает Stock / domain events
 - Burst/ISystem → прямые вызовы UI/FMOD
 - Presentation `SystemBase`, который держит `TimeWidget` / `*ViewBoard` (вид **pull**, не push)
 - Копирование card-архитектуры джема в core
-- Симуляция тикает на меню/брифинге без SimGate
+- Симуляция тикает на меню/брифинге (`SessionInGame = 0` должно быть Off)
 - VContainer-сервис как write model экономики
+- `Time.timeScale` как пауза города
 
 ## Карта с бэкенд-DDD
 

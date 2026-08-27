@@ -1,11 +1,11 @@
 ---
-description: They Will Descend is Frostpunk-like city survival, not card DnD
+description: They Will Descend is Frostpunk-like AA city survival, not card DnD
 alwaysApply: true
 ---
 
 # Game Vision
 
-**They Will Descend** = Frostpunk-like city survival (Maya / pyramid / gods), not GMTK card game.
+**They Will Descend** = Frostpunk-like **AA city-survival** (Maya / pyramid / gods). Not a jam. Not a GMTK card game.
 
 ## Core loop
 
@@ -15,6 +15,8 @@ alwaysApply: true
 - Spend resources to build / upgrade
 - Pressure: survival + gods / tribute (metaphor TBD in GDD)
 - Laws / crises later — after the economic loop works
+
+Architecture is ahead of content. Next growth is the **loop** (needs, pressure, lose), not more folders.
 
 ## Non-goals (gameplay)
 
@@ -29,4 +31,4 @@ Not allowed as foundation: card UI, card entities as core sim.
 
 ## Vertical slice target
 
-Workers, few building types, few resources, time tick, assign, build, one pressure, win/lose — then expand.
+Workers, few building types, few resources, time tick, assign, build — **in code**. One pressure + win/lose — next, then expand.

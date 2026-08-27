@@ -2,65 +2,70 @@
 
 ← [[09 App Shell]] | [[Index]]
 
-Целевой процесс **ближайших заходов**. Временное помечается явно.  
+Срез, который **уже в коде**. Временное помечается явно.  
 Камеры/состав сцен: [[11 Camera & Presentation Scenes]].
 
 ## Конечный UX
 
 ```text
-Bootstrap (Root, всегда) — Main Camera, EventSystem, Startup
+Bootstrap (Root, всегда) — камера, EventSystem, Startup, GameAudio, GameInput, GameSession
   → load MainMenu
        Press Any Key → Main Menu UI
        ↓ «Начать игру»
-  LoadingGame — unload MainMenu, load Game, SimGate.Off
+  LoadingGame — Loading + Game, unload MainMenu, SimControl Off
        ↓
-  Playing — SimGate.Running
-       ⇄ Paused (Esc, Frozen)
+  Playing — SimClockCommand.InGame(true)
+       ⇄ PlayerPaused (Esc / ⏸), FSM остаётся Playing
 ```
 
 ## Сцены (канон)
 
 | Сцена | Что на ней |
 | --- | --- |
-| `Bootstrap` | Startup, одна Main Camera (+ AudioListener), EventSystem |
-| `MainMenu` | Canvas splash/menu, ShellUiBinder |
-| `Game` | мир, свет, SubScene Simulation, `VCam_Gameplay` + `RTSCameraTarget` |
+| `Bootstrap` | хосты + одна Main Camera (+ AudioListener) + EventSystem |
+| `MainMenu` | Canvas splash/menu, `PressAnyKeyScreen`, `MainMenuScreen` |
+| `Loading` | переход в ран |
+| `Game` | мир, свет, HUD, SubScene Simulation, `VCam_Gameplay` + `RTSCameraTarget` |
 
-## Заходы
+Build list: Bootstrap (0), MainMenu, Loading, Game.
 
-| # | Цель | Статус |
-| --- | --- | --- |
-| **A** | UI flow на одном Boot | done (эволюционирует в B) |
-| **B** | Три сцены + load по правилам | done |
-| **C+D** | ECS-ходьба + Frozen стопает | **done** (entity + view board) |
+## Что уже работает
 
-## SubScene vs Game vs спавн (важно)
+| Кусок | Статус |
+| --- | --- |
+| Меню → Loading → Playing | done |
+| ECS-ходьба + Mixamo view | done |
+| Пауза / x1 x2 x3 + часы HUD | done |
+| Сток wood/food | done |
+| Стройка на полярной сетке + occupy ECS | done |
+| Назначение рабочего (один слот) | done |
+| Сценарий bake (стартовый запас + дома + люди) | done |
+| Save/load слот JSON | done |
+| Нужды / кризис / win-lose | нет — следующий рост петли |
+
+## SubScene vs Game vs спавн
 
 | Что | Где | Почему |
 | --- | --- | --- |
-| `GameTime`, `SimControl`, `ResourceAmount` | **Simulation SubScene** | bake → session entity, данные рана |
-| Плаза HQ | **Simulation SubScene** | bake → `Building` + `Headquarters` + EG-меш; `CityGrid.Center` с его `LocalTransform` |
-| Статичный декор (деревья, скалы) | **Game** сцена | обычные GO, не симуляция |
+| `GameTime`, `SimControl`, `ResourceAmount`, каталоги | **Simulation SubScene** | bake → session entity |
+| Плаза HQ | **Simulation SubScene** | bake → `Building` + `Headquarters`; `CityGrid.Center` с `LocalTransform` |
+| Статичный декор | **Game** сцена | обычные GO |
 | Челики (skinned + Animator) | **Game** + runtime entity | entity в ECS; вид (`AgentViewBoard`) снаружи |
-| Новые челики / дома игрока | команды `SpawnAgent` / `PlaceBuilding` | динамика = `Instantiate`, не bake |
+| Новые челики / дома игрока | команды `SpawnAgent` / `PlaceBuilding` | динамика = Instantiate, не bake |
 
-SubScene **нужна** для baked sim-данных (время, контроль, позже здания/рецепты).  
-Она **не обязана** содержать всех агентов. Динамическое население = команда `SpawnAgent` → entity; `AgentViewBoard` ставит меш.
+На GO `SimControl` в SubScene (соседи authoring):
 
-HUD: `GameHudCanvas` на Game (overlay). Часы — `TimeWidget` на `TimeBar`; сток — `ResourceWidget` сверху слева; инспектор дома — правая плашка (`BuildingInspectPanel`).
+1. `SimControlAuthoring` — часы + `SimBridge` + `SimClockCommand`
+2. `AgentSessionAuthoring` — spawn/assign буферы + штамп агента
+3. `CityGridAuthoring` — сетка + occupy + place/reject
+4. `BuildingCatalogAuthoring` / `ResourceCatalogAuthoring`
 
+Рядом, **не** на том же GO: `Scenario` + `ScenarioAuthoring`, HQ, `GameTimeAuthoring`.
 
-## Заход B — руками
+HUD: `GameHudCanvas` на Game. Часы — `TimeWidget`; сток — `ResourceWidget`; инспектор — `BuildingInspectPanel` (ссылка на `BuildingSelection`).
 
-1. `SampleScene` → Save As → `Assets/_Project/Scenes/Game.unity` (мир Sample).  
-2. На Game: SubScene Simulation с Bootstrap; Startup/Canvas **не** копировать.  
-3. New Scene → Save As `Assets/_Project/Scenes/MainMenu.unity`; перенеси туда Canvas + ShellUiBinder.  
-4. Bootstrap: только Startup + Main Camera + EventSystem.  
-5. Build Settings: Bootstrap (0), MainMenu, Game.  
-6. Play с Bootstrap.
-
-**Временно:** челики-вид — MB board, не C.
+Стройка: **ЛКМ** ставит и остаётся в режиме, пока после `Playback()` ещё хватает ресурса. **ПКМ** и **Esc** отменяют.
 
 ---
 
-Связанные: [[11 Camera & Presentation Scenes]] · [[09 App Shell]] · [[02 Scenes & Lifetime]]
+Связанные: [[11 Camera & Presentation Scenes]] · [[09 App Shell]] · [[02 Scenes & Lifetime]] · [[05 Content Pipeline]]

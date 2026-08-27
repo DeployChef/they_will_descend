@@ -2,12 +2,12 @@
 
 ← [[02 Scenes & Lifetime]] | [[Index]]
 
-Канон презентации: **одна реальная камера на Root**, остальное — виртуальные камеры (Cinemachine) и UI на своих сценах.
+Канон презентации: **одна реальная камера на Bootstrap**, остальное — виртуальные камеры (Cinemachine) и UI на своих сценах.
 
 ## Зачем
 
 Две Main Camera (Boot + Game) → конфликт AudioListener, clear flags, stack.  
-Одна Main Camera + Brain + VCam’ы → меню, подлёт к генератору, геймплей без смены «настоящей» камеры.
+Одна Main Camera + Brain + VCam’ы → меню, подлёт, геймплей без смены «настоящей» камеры.
 
 ## Что где лежит
 
@@ -15,10 +15,10 @@
 
 | Объект | Да / нет | Почему |
 | --- | --- | --- |
-| Main Camera | **да** | единственный вывод в кадр; `CinemachineBrain` + `AudioListener` |
+| Main Camera | **да** | единственный вывод; `CinemachineBrain` + `AudioListener` |
 | AudioListener | **да** (на Main Camera) | один на игру |
 | EventSystem | **да** | UI input глобально |
-| Startup | **да** | composition / AppFlow |
+| Startup / GameAudio / GameInput / GameSession | **да** | хосты оболочки (соседи) |
 | Canvas меню | **нет** | на сцене MainMenu |
 | Directional Light | **нет** | свет мира/меню — у тех сцен |
 | Уровень / NPC | **нет** | только Game |
@@ -28,20 +28,26 @@
 | Объект | Да / нет |
 | --- | --- |
 | Canvas (Press Any Key, Main Menu, кнопка Start) | **да** |
-| ShellUiBinder | **да** |
+| `PressAnyKeyScreen` / `MainMenuScreen` | **да** (на панелях; `.Current`) |
 | VCam меню (опционально) | да, когда будет 3D-фон |
 | Свет только для меню-декора | по необходимости |
 | Main Camera | **нет** |
+
+### Loading — переход
+
+Экран загрузки, пока `GameSession` грузит Game.
 
 ### Game — сессия
 
 | Объект | Да / нет |
 | --- | --- |
-| Enviroment / Humans / … | **да** |
+| Environment / Humans / HUD | **да** |
 | Directional Light (+ volume) | **да** |
 | VCam геймплея (и катсценные VCam) | **да** |
 | SubScene Simulation | **да** |
 | Main Camera | **нет** — смотрит Root-камера через Brain на активный VCam |
+
+Если на Game ещё висит камера — **временно**, пометить и убрать.
 
 ## Cinemachine
 
@@ -61,7 +67,7 @@ Brain на Root смотрит на виртуальную камеру. Сам�
 
 | Объект | Роль |
 | --- | --- |
-| `RTSCameraTarget` | точка, вокруг которой орбита; пан WASD двигает её по земле. Старт: плаза `(0, 2, 0)` |
+| `RTSCameraTarget` | точка орбиты; пан WASD двигает её по земле. Старт: плаза `(0, 2, 0)` |
 | `VCam_Gameplay` | `CinemachineCamera` + `CinemachineOrbitalFollow` + `CinemachineHardLookAt` + `CinemachineInputAxisController` + `RTSCameraController` |
 
 Управление:
@@ -78,12 +84,11 @@ Pitch от зума, не от мыши — иначе контроллер и �
 
 `RTSCameraController` пока в `Assets/Scripts` (Assembly-CSharp, наследие Sample). Канон позже — Presentation.
 
-
 ## Play Mode vs Editor (обязательно)
 
 | Режим | Что в Hierarchy | Что происходит |
 | --- | --- | --- |
-| **Play (канон)** | Достаточно **одной** Bootstrap | `Startup` грузит MainMenu → по Start грузит Game, выгружает MainMenu |
+| **Play (канон)** | Достаточно **одной** Bootstrap | `Startup` грузит MainMenu → по Start Loading+Game, выгружает MainMenu |
 | **Edit уровня** | Bootstrap + Game (additive) | Видишь мир через Brain+VCam |
 | **Edit UI** | Bootstrap + MainMenu | Правишь Canvas |
 
@@ -93,15 +98,14 @@ Pitch от зума, не от мыши — иначе контроллер и �
 Build list (порядок):
 1. `Bootstrap` (index 0 — стартовая)
 2. `MainMenu`
-3. `Game`
+3. `Loading`
+4. `Game`
 
 SampleScene из билда убрать.
 
-
-
 ## Итог одной фразой
 
-**Bootstrap = вечный глаз и нервная система (камера, input, startup). MainMenu = экраны. Game = мир и его свет/VCam.**
+**Bootstrap = вечный глаз и нервная система (камера, input, startup, audio). MainMenu = экраны. Loading = переход. Game = мир и его свет/VCam.**
 
 ---
 

@@ -29,7 +29,7 @@
 ```
 
 Maya settlement. Great Pyramid. Gods that do not wait.  
-A city-survival game in the spirit of **Frostpunk** — born from our GMTK jam prototype, rebuilt for a full campaign of hard choices.
+A full **AA city-survival** game in the spirit of **Frostpunk** — born from our GMTK jam prototype, rebuilt as a campaign of hard choices. Not a jam sequel and not a card game.
 
 You manage people, heat, faith, and scarce resources while the countdown to the End of the World never stops.  
 Every edict has a cost. Every tribute buys time. Every delay kills someone.
@@ -86,4 +86,4 @@ Open `TheyWillDescendWiki/` as an Obsidian vault for graph links and backlinks.
 
 ## Status
 
-Early foundation. Unity project scaffolded. Wiki structure in place. Systems TBD.
+Architecture is in place (Unity 6 DOTS, Shell FSM, ECS write model). Vertical slice in progress: workers, build, time, two building types, wood/food, save/load. Needs, pressure, and win/lose are next — see the wiki.

@@ -1,5 +1,5 @@
 ---
-description: Elegant App Shell — AppStateMachine, GameSession, SimGate; no fat GameDirector
+description: Elegant App Shell — AppStateMachine, GameSession, SimControl; no fat GameDirector
 alwaysApply: true
 ---
 
@@ -11,15 +11,17 @@ Two machines: **Shell** (C# FSM in the Presentation assembly) and **Simulation**
 
 ## Elegant core (prefer this over jam GameDirector)
 
-- `AppStateMachine` + `IAppState` (Enter/Exit)
-- `GameSession` (Start/Dispose one run)
-- `SimGate` Off | Running | Frozen
-- `SceneLoader` (narrow)
+- `AppStateMachine` + `IAppState` (Enter/Exit, **no Tick**)
+- `GameSession` (StartAsync/DisposeAsync one run)
+- Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`
+- `SceneLoader` (narrow, UniTask)
+- Bootstrap hosts are siblings with inspector refs: Startup, GameAudio, GameInput, GameSession
+- Menu UI: `PressAnyKeyScreen` / `MainMenuScreen` `.Current` — no ShellUiBinder
 - **Composition Root in Main** wires them with `new` — VContainer optional later, never inside `ISystem`
 
 ## Do not treat as canon
 
-Fat `GameDirector`, card Inject, soft restart via Find, economy pause via timeScale only.
+Fat `GameDirector`, card Inject, soft restart via Find, economy pause via timeScale only, `Startup.Update`.
 
 ## Canon wiki
 

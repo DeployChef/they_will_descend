@@ -49,15 +49,16 @@
 | --- | --- | --- |
 | 0 | Entities, SubScene, bake, Entities Hierarchy | done |
 | 1 | `GameTime` singleton + tick + `GameLog` | done |
-| Shell | PressAnyKey → Menu → Playing → Paused + UI | заход A — собрать UI на сцене |
+| Shell | PressAnyKey → Menu → Loading → Playing; Esc = часы, не стейт | done ([[09 App Shell]]) |
 | 2 | Time HUD (pause/x1/x2/x3 + часы) + slot save/load | done ([[13 Time HUD and Save]]) |
-| 3+ | Resources, workers, workplaces, … | planned |
+| 3 | Ресурсы, стройка, рабочие, workplace | **done** в срезе (один слот, один выход) |
+| 4+ | Нужды, давление, win/lose | next — петля, не новые папки |
 
 ## Зафиксированные архитектурные решения (обучение)
 
-- Геймплей: Frostpunk assign/build, не cards
+- Геймплей: Frostpunk assign/build, не cards. Это AA city-survival, не джем
 - Симуляция: production ECS; DI не в `ISystem`
-- Shell: AppFlow + Director + SimGate; VContainer как в gmtk Root/Game — только снаружи ECS
+- Shell: `AppStateMachine` + `GameSession` + `SimControl` (нет `SimGate`); VContainer только снаружи ECS, позже
 - Инкапсуляция: public fields на компонентах; запись — дисциплина systems/commands
 - Логи: `GameLog`, не сырой `Debug.Log` в новом коде
 

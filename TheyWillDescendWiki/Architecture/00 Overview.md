@@ -2,16 +2,17 @@
 
 ← [[Index]] | [[../Home|Home]]
 
-## Стек (целевой)
+## Стек (как в коде)
 
 | Слой | Выбор |
 | --- | --- |
 | Engine | Unity 6, URP |
-| Simulation | **DOTS / Entities** — source of truth рана |
-| Shell / App | **AppFlow FSM** + **SimGate** (код в Presentation; вход — Main); сцены Root → Game |
+| Simulation | **DOTS / Entities** — единственный write model рана |
+| Shell / App | **AppStateMachine** + `IAppState` Enter/Exit (код в Presentation; вход — Main) |
+| Часы рана | `SimControl` + `SimClockCommand` в ECS. Нет `SimGate`, нет `timeScale` |
 | DI | **VContainer** позже, только Presentation (не внутри `ISystem`) |
 | Presentation | UI, камера, FMOD, Shell; читает ECS / шлёт commands |
-| Content | Authoring + Baker, blobs, prefabs, таблицы баланса |
+| Content | Authoring + Baker, ScriptableObjects, префабы |
 | Logging | `GameLog` (`Presentation/Infrastructure/Logging`) |
 | Сборки | четыре стены — [[01 Folder Structure]] |
 
@@ -20,24 +21,24 @@
 ## Слои
 
 ```
-Main (Startup, регистрация)
+Main (Startup, AppFlowFactory — регистрация)
         ↓
-Presentation (Shell FSM, SimGate, UI, камера, FMOD)
-        ↓ Intent / Commands
+Presentation (Shell FSM, HUD, камера, FMOD)
+        ↓ SimCommands.TryPost
 Simulation ECS  ← истина рана
-        ↑ pull / reject-события
+        ↑ pull / BuildingRejectedEvent
 Content (Authoring, bake, баланс)
 ```
 
-Сборки (стены компилятора) — [[01 Folder Structure]]. Shell — роль и папка, не asmdef.
+Сборки — стены компилятора. Shell — роль и папка в Presentation, не отдельная asmdef.
 
 ## Принципы
 
-- Симуляция не знает про кнопки UI и меню
-- UI шлёт команды; не считает производство/голод
-- Shell включает симуляцию через SimGate (не «просто Play Mode»)
+- Симуляция не знает кнопки, меню, Animator, FMOD
+- UI шлёт команды; не считает производство
+- Ран тикает, только если `SimControl.Mode == Running` (session in-game, не player-pause, не build-lock)
 - Баланс и типы зданий — данными
-- gmtk_2026 — референс **shell/DI сцен**, не card-core и не write model
+- gmtk_2026 — сеттинг, не card-core и не write model
 - Обучение: [[07 Mentorship & Learning]]
 
 ---
