@@ -45,11 +45,10 @@ Assets/_Project/Scripts/
     Economy/     Components, Systems
     Content/     каталоги (плоские SO-типы)
   Authoring/
-    Session/     SimControlAuthoring
+    Session/     SimControlAuthoring, SimRulesAuthoring
     Agents/      AgentSessionAuthoring
     City/        CityGrid, Building, catalog, HQ
     Economy/     ResourceCatalogAuthoring
-    Time/        GameTimeAuthoring
     Scenario/    ScenarioAuthoring + bake
     Editor/      Scene tools сценария
   Presentation/

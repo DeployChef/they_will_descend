@@ -268,11 +268,14 @@ namespace TheyWillDescend.App
                 return;
 
             var entity = timeQuery.GetSingletonEntity();
+            var current = em.GetComponentData<GameTime>(entity);
             em.SetComponentData(entity, new GameTime
             {
                 Day = snapshot.day,
                 ElapsedInDay = snapshot.elapsedInDay,
-                DayDuration = snapshot.dayDuration > 0f ? snapshot.dayDuration : 60f
+                DayDuration = snapshot.dayDuration > 0f ? snapshot.dayDuration : current.DayDuration,
+                WorkShiftStartHour = current.WorkShiftStartHour,
+                WorkShiftEndHour = current.WorkShiftEndHour
             });
         }
     }

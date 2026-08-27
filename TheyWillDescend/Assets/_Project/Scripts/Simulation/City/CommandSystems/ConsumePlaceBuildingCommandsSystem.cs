@@ -120,11 +120,9 @@ namespace TheyWillDescend.Simulation.City
             var transform = LocalTransform.FromPositionRotationScale(position, rotation, scale);
             var duration = command.ConstructionDuration > 0.001f
                 ? command.ConstructionDuration
-                : (prototype.ConstructionDuration > 0.001f
-                    ? prototype.ConstructionDuration
-                    : (grid.ConstructionDuration > 0.001f ? grid.ConstructionDuration : 8f));
+                : prototype.ConstructionDuration;
 
-            if (command.InstantComplete != 0)
+            if (command.InstantComplete != 0 || duration <= 0.001f)
             {
                 SpawnFinishedHouse(em, prefab, building, transform);
                 return;

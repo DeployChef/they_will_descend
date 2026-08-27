@@ -15,7 +15,7 @@
 | Что | Где лежит | Зачем |
 | --- | --- | --- |
 | **Ключ** | `typeId` / `resourceId` строка | Стык всего: симуляция, HUD, сейв, сценарий, позже таблица |
-| **Документ баланса** | `BuildingDefinition` / `ResourceDefinition` | Числа и имя. Не живой дом в сцене |
+| **Документ баланса** | `BuildingDefinition` / `ResourceDefinition` / `SimRules` | Числа типа или закона мира. Не живой дом в сцене |
 | **Меш** | префаб с `BuildingAuthoring` | Как выглядит. Не кост, не footprint |
 | **Каталог** | `DefaultBuildingCatalog` / `DefaultResourceCatalog` | Список «что существует в этом билде» |
 | **Стартовый город** | `ScenarioDefinition` | Какие дома стоят на старте и сколько ресурсов. Не сейв игрока |
@@ -48,6 +48,9 @@ Assets/_Project/Content/
     DefaultResourceCatalog.asset
   Scenarios/
     DefaultScenario.asset
+    DebugScenario.asset
+  Rules/
+    DefaultSimRules.asset
 ```
 
 Меню создания (ПКМ в Project):
@@ -57,6 +60,7 @@ Assets/_Project/Content/
 - `They Will Descend / Resource Definition`
 - `They Will Descend / Resource Catalog`
 - `They Will Descend / Scenario Definition`
+- `They Will Descend / Sim Rules`
 
 Сцены:
 
@@ -101,6 +105,24 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 
 ---
 
+## 4b. Правила мира (`SimRules`)
+
+Длина суток, смена 6–18, скорость ходока — **не** сценарий и не тип дома.
+
+Ассет: `Content/Rules/DefaultSimRules`. На `SimControl` висит `SimRulesAuthoring` → тот же ассет.
+
+Baker копирует:
+
+| Поле SO | Куда в ECS |
+| --- | --- |
+| Day Duration | `GameTime.DayDuration` (на session) |
+| Work Shift Start/End | `GameTime.WorkShiftStartHour` / `EndHour` |
+| Worker Speed | штамп `AgentLocomotion.Speed` |
+
+Системы SO не читают. Play после правки ассета перепечёт SubScene.
+
+---
+
 ## 5. Здание
 
 Сейчас: `sawmill` (6×2, 15 wood, +12 Wood/ч) и `kitchen` (2×2, 8 wood, −6 Wood/ч → +12 Food/ч).
@@ -116,7 +138,7 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 | Display Name | HUD / инспектор | `Kitchen` |
 | Width Clusters | дуги сетки | как в [[12 Radial City Grid]] |
 | Depth Radial Rings | кольца вглубь | обычно 2 |
-| Construction Duration | секунды стройки; **0 = взять с CityGrid** (сейчас 8) | 0 ок |
+| Construction Duration | секунды стройки этого типа; **0 = дом появляется сразу** | 8 |
 | Workplace Slots | рабочие на доме; рецепт при 10/10 = 100% | 10 |
 | Recipe Inputs | что ест **за игровой час**, пока рабочий на месте | Kitchen: 6 Wood |
 | Recipe Outputs | что даёт **за игровой час** | Sawmill: 12 Wood; Kitchen: 12 Food |
@@ -195,16 +217,16 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 На **одном** GO `SimControl` (соседи authoring, один bake-entity):
 
 1. `SimControlAuthoring` — `SimControl` + `SimBridge` + буфер `SimClockCommand`
-2. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
-3. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace` + длительность стройки
-4. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
-5. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
+2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока)
+3. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
+4. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace`
+5. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
+6. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
 
 Рядом, **отдельным** GO (не на SimControl: BakingOnly снял бы session singleton):
 
-6. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
-7. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
-8. `GameTimeAuthoring`
+7. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
+8. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
 
 После смены SO зайди в Play: SubScene перепечётся. Ошибки ключей/префабов — Console при bake, не «тихий нулевой дом».
 
@@ -233,6 +255,7 @@ Build HUD читает session-каталог → кнопка с именем �
 | Console: duplicate typeId | Два SO с одним ключом в catalog |
 | Console: prefab must have BuildingAuthoring pointing at … | Забыл компонент или SO на префабе ≠ документ в каталоге |
 | HUD пустой / «catalog empty» | SubScene не запеклась; catalog не на SimControl |
+| Сутки снова 5 с / нет смены | `SimRulesAuthoring` без ассета; править `DefaultSimRules`, не Inspector SubScene |
 | Призрак без меша, дом после клика есть | `BuildPlacementController.Catalog` не тот asset |
 | Стартовый запас 0 | Запас на Scenario, не на ResourceDefinition; Scenario GO есть? |
 | Игрок ставит бесплатно | Пустой Build Cost на definition |

@@ -138,6 +138,7 @@ GameObject:
   - component: {fileID: 568820915}
   - component: {fileID: 568820917}
   - component: {fileID: 568820918}
+  - component: {fileID: 568820919}
   m_Layer: 0
   m_Name: SimControl
   m_TagString: Untagged
@@ -202,7 +203,6 @@ MonoBehaviour:
     RadialStep: 1.35
     RingCount: 40
     InnerBandClusterCount: 66
-  constructionDuration: 8
 --- !u!114 &568820917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,6 +228,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9d5f3b27e4a5f8b0d2e6f9a3b5c7d8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Agents.AgentSessionAuthoring
+--- !u!114 &568820919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568820912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c8e9f0b1d2435465768798a9b0c1d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Session.SimRulesAuthoring
+  rules: {fileID: 11400000, guid: 1b2c3d4e5f60718293a4b5c6d7e8f901, type: 2}
 --- !u!1 &615145529
 GameObject:
   m_ObjectHideFlags: 0
@@ -410,51 +423,6 @@ Transform:
   - {fileID: 5865604703265719664}
   m_Father: {fileID: 615145532}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1691655344
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1691655345}
-  - component: {fileID: 1691655346}
-  m_Layer: 0
-  m_Name: GameTime
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1691655345
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1691655344}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1691655346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1691655344}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57eeee3d7106acb4eb5330e4a3100e8b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Authoring.Time.GameTimeAuthoring
-  dayDuration: 60
 --- !u!4 &802900547296430992
 Transform:
   m_ObjectHideFlags: 0
@@ -816,7 +784,6 @@ MonoBehaviour:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1691655345}
   - {fileID: 568820914}
   - {fileID: 1274346482}
   - {fileID: 615145532}

@@ -4,12 +4,11 @@ namespace TheyWillDescend.Simulation.Time
 {
     public struct GameTime : IComponentData
     {
-        public const float WorkShiftStartHour = 6f;
-        public const float WorkShiftEndHour = 18f;
-
         public int Day;
         public float ElapsedInDay;
         public float DayDuration;
+        public float WorkShiftStartHour;
+        public float WorkShiftEndHour;
 
         public float HourOfDay
         {
@@ -25,13 +24,21 @@ namespace TheyWillDescend.Simulation.Time
             }
         }
 
-        /// <summary>06:00 inclusive … 18:00 exclusive. Night is plaza time.</summary>
+        /// <summary>Start inclusive, end exclusive. Night is plaza time.</summary>
         public bool IsWorkShift
         {
             get
             {
+                var start = WorkShiftStartHour;
+                var end = WorkShiftEndHour;
+                if (end <= start)
+                {
+                    start = 6f;
+                    end = 18f;
+                }
+
                 var hour = HourOfDay;
-                return hour >= WorkShiftStartHour && hour < WorkShiftEndHour;
+                return hour >= start && hour < end;
             }
         }
     }

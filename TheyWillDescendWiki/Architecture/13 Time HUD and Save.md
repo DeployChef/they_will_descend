@@ -104,7 +104,7 @@ HH:MM из clockHours
 подпись: Day {Day}   {HH}:{MM}
 ```
 
-Сейчас `DayDuration = 60` сек на x1. x2/x3 ускоряют тот же день, не длину суток. Боевой баланс может растянуть дальше.
+Сейчас `DayDuration` берётся из `DefaultSimRules` (60 с на x1). x2/x3 ускоряют тот же день, не длину суток в ассете.
 
 HUD **читает** `GameTime` + `SimControl`. Кнопки → `SimClockCommand`.
 

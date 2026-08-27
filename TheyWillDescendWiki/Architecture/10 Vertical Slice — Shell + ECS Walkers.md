@@ -56,11 +56,12 @@ Build list: Bootstrap (0), MainMenu, Loading, Game.
 На GO `SimControl` в SubScene (соседи authoring):
 
 1. `SimControlAuthoring` — часы + `SimBridge` + `SimClockCommand`
-2. `AgentSessionAuthoring` — spawn/assign буферы + штамп агента
-3. `CityGridAuthoring` — сетка + occupy + place/reject
-4. `BuildingCatalogAuthoring` / `ResourceCatalogAuthoring`
+2. `SimRulesAuthoring` → `DefaultSimRules`
+3. `AgentSessionAuthoring` — spawn/assign буферы + штамп агента
+4. `CityGridAuthoring` — сетка + occupy + place/reject
+5. `BuildingCatalogAuthoring` / `ResourceCatalogAuthoring`
 
-Рядом, **не** на том же GO: `Scenario` + `ScenarioAuthoring`, HQ, `GameTimeAuthoring`.
+Рядом, **не** на том же GO: `Scenario` + `ScenarioAuthoring`, HQ.
 
 HUD: `GameHudCanvas` на Game. Часы — `TimeWidget`; сток — `ResourceWidget`; инспектор — `BuildingInspectPanel` (ссылка на `BuildingSelection`).
 

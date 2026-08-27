@@ -48,7 +48,7 @@ namespace TheyWillDescend.Simulation.Agents
                 {
                     Position = position,
                     Facing = facing,
-                    Speed = 2f,
+                    Speed = 0f,
                     HasPose = 1,
                     PlazaAngle = angle,
                     PlazaRadius = radius,

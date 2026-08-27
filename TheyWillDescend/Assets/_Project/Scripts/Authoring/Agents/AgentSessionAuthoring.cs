@@ -1,3 +1,4 @@
+using TheyWillDescend.Authoring.Session;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Session;
 using Unity.Entities;
@@ -21,9 +22,15 @@ namespace TheyWillDescend.Authoring.Agents
                 AddBuffer<UnassignWorkerCommand>(entity);
                 AddBuffer<SetWorkplacePausedCommand>(entity);
 
+                var rules = GetComponent<SimRulesAuthoring>();
+                var so = rules != null ? rules.Rules : null;
+                if (so != null)
+                    DependsOn(so);
+                var speed = so != null ? so.WorkerSpeed : 2f;
+
                 var agentPrototype = CreateAdditionalEntity(TransformUsageFlags.Dynamic);
                 AddComponent<Prefab>(agentPrototype);
-                AddComponent(agentPrototype, new AgentLocomotion { Speed = 2f });
+                AddComponent(agentPrototype, new AgentLocomotion { Speed = speed });
                 AddComponent<AgentAssignment>(agentPrototype);
                 AddComponent<AgentPlazaIdle>(agentPrototype);
                 AddComponent(agentPrototype, new AgentId());

@@ -250,7 +250,8 @@ namespace TheyWillDescend.Presentation.GameHud
                 if (status != null)
                 {
                     if (occupied == 0)
-                        status.text = "Off shift (06:00–18:00). No one assigned.";
+                        status.text =
+                            $"Off shift ({time.WorkShiftStartHour:00}:00–{time.WorkShiftEndHour:00}:00). No one assigned.";
                     else
                         status.text = paused
                             ? "Off shift. Crew at the pyramid. Production is stopped."

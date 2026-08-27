@@ -69,9 +69,14 @@ namespace TheyWillDescend.Simulation.Agents
             var entity = em.Instantiate(prototype);
             em.SetComponentData(entity, new AgentId { Value = agentId });
             em.SetComponentData(entity, new AgentType { Kind = command.Kind });
+            var protoSpeed = em.HasComponent<AgentLocomotion>(prototype)
+                ? em.GetComponentData<AgentLocomotion>(prototype).Speed
+                : 0f;
+            if (protoSpeed <= 0.001f)
+                protoSpeed = 2f;
             em.SetComponentData(entity, new AgentLocomotion
             {
-                Speed = command.Speed > 0.001f ? command.Speed : 2f,
+                Speed = command.Speed > 0.001f ? command.Speed : protoSpeed,
                 Target = command.Target,
                 Moving = command.Moving
             });

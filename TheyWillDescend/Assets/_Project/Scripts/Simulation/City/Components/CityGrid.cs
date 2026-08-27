@@ -9,8 +9,6 @@ namespace TheyWillDescend.Simulation.City
         public float3 Center;
         public int NextBuildingId;
         public byte Ready;
-        /// <summary>Fallback duration when the building definition has none.</summary>
-        public float ConstructionDuration;
     }
 
     public struct OccupiedCell : IBufferElementData

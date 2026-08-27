@@ -14,6 +14,6 @@ namespace TheyWillDescend.Simulation.City
         public readonly float Normalized =>
             Duration <= 0.0001f ? 1f : math.min(1f, Elapsed / Duration);
 
-        public readonly bool IsComplete => Duration > 0f && Elapsed >= Duration;
+        public readonly bool IsComplete => Duration <= 0.0001f || Elapsed >= Duration;
     }
 }
