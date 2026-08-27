@@ -1,7 +1,6 @@
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using TheyWillDescend.Shell.States;
-using UnityEngine.InputSystem;
 
 namespace TheyWillDescend.Main
 {
@@ -14,21 +13,18 @@ namespace TheyWillDescend.Main
         public readonly struct Bundle
         {
             public readonly AppStateMachine StateMachine;
-            public readonly GameInput Input;
             public readonly GameSession Session;
 
-            public Bundle(AppStateMachine stateMachine, GameInput input, GameSession session)
+            public Bundle(AppStateMachine stateMachine, GameSession session)
             {
                 StateMachine = stateMachine;
-                Input = input;
                 Session = session;
             }
         }
 
-        public static Bundle Create(SceneLoader scenes, GameAudio audio, InputActionAsset inputActions)
+        public static Bundle Create(SceneLoader scenes, GameAudio audio, GameInput input)
         {
             var session = new GameSession(scenes);
-            var input = new GameInput(inputActions);
             var fsm = new AppStateMachine();
 
             fsm.Register(new PressAnyKeyState(fsm, input));
@@ -36,7 +32,7 @@ namespace TheyWillDescend.Main
             fsm.Register(new LoadingGameState(fsm, session, input));
             fsm.Register(new PlayingState(input, audio));
 
-            return new Bundle(fsm, input, session);
+            return new Bundle(fsm, session);
         }
     }
 }

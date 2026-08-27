@@ -4,12 +4,11 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM, input asset.
+    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
@@ -17,11 +16,10 @@ namespace TheyWillDescend.Main
         [Tooltip("Skip PressAnyKey/MainMenu and load Game immediately. Turn OFF before shipping flow work.")]
         [SerializeField] bool skipMenuToGameTemporarily = true;
 
-        [Header("Input")]
-        [SerializeField] InputActionAsset inputActions;
+        [SerializeField] GameAudio gameAudio;
+        [SerializeField] GameInput gameInput;
 
         AppStateMachine _fsm;
-        GameInput _input;
         GameSession _session;
         bool _started;
 
@@ -42,25 +40,24 @@ namespace TheyWillDescend.Main
             if (!skipMenu)
                 await scenes.LoadMainMenuAdditive(ct);
 
-            var audio = GetComponent<GameAudio>();
+            var audio = gameAudio;
             if (audio == null)
             {
-                GameLog.Error("Startup: GameAudio must be on Bootstrap. Do not AddComponent it from code.");
+                GameLog.Error("Startup: GameAudio must be assigned. Put it on its own Bootstrap object.");
                 throw new InvalidOperationException(
-                    "Bootstrap is missing GameAudio. Add it on the scene, not from Startup.");
+                    "Startup is missing GameAudio. Assign the GameAudio object, do not AddComponent from code.");
             }
 
-            if (inputActions == null)
+            var input = gameInput;
+            if (input == null)
             {
-                GameLog.Error(
-                    "Startup: Input Action Asset must be assigned on Bootstrap (TheyWillDescend.inputactions).");
+                GameLog.Error("Startup: GameInput must be assigned. Put it on its own Bootstrap object.");
                 throw new InvalidOperationException(
-                    "Bootstrap is missing Input Action Asset. Assign Assets/_Project/Input/TheyWillDescend.inputactions.");
+                    "Startup is missing GameInput. Assign the GameInput object, do not AddComponent from code.");
             }
 
-            var bundle = AppFlowFactory.Create(scenes, audio, inputActions);
+            var bundle = AppFlowFactory.Create(scenes, audio, input);
             _fsm = bundle.StateMachine;
-            _input = bundle.Input;
             _session = bundle.Session;
 
             if (skipMenu)
@@ -79,8 +76,6 @@ namespace TheyWillDescend.Main
         {
             _session?.Cancel();
             _session = null;
-            _input?.Dispose();
-            _input = null;
         }
     }
 }

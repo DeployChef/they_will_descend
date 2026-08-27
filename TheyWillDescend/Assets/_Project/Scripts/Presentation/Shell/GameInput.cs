@@ -5,60 +5,100 @@ using UnityEngine.InputSystem;
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// Runtime copy of the project Input Action Asset. Enable one map per app state.
-    /// Callbacks, not polling.
+    /// Bootstrap host for shell input. Assign the asset and actions in the inspector.
+    /// Runtime clone — the project asset is not enabled in Play Mode.
     /// </summary>
-    public sealed class GameInput : IDisposable
+    public sealed class GameInput : MonoBehaviour
     {
-        readonly InputActionAsset _asset;
-        readonly InputActionMap _menu;
-        readonly InputActionMap _game;
-        readonly InputAction _proceed;
-        readonly InputAction _pause;
+        [SerializeField] InputActionAsset actions;
+        [SerializeField] InputActionReference proceed;
+        [SerializeField] InputActionReference pause;
+
+        InputActionAsset _runtime;
+        InputAction _proceed;
+        InputAction _pause;
 
         public event Action Proceeded;
         public event Action PausePressed;
 
-        public GameInput(InputActionAsset source)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+        void Awake() => Bind();
 
-            _asset = UnityEngine.Object.Instantiate(source);
-            _menu = _asset.FindActionMap("Menu", throwIfNotFound: true);
-            _game = _asset.FindActionMap("Game", throwIfNotFound: true);
-            _proceed = _menu.FindAction("Proceed", throwIfNotFound: true);
-            _pause = _game.FindAction("Pause", throwIfNotFound: true);
-
-            _proceed.performed += OnProceed;
-            _pause.performed += OnPause;
-        }
+        void OnDestroy() => Unbind();
 
         public void EnableMenu()
         {
-            _game.Disable();
-            _menu.Enable();
+            Bind();
+            _runtime.Disable();
+            _proceed.actionMap.Enable();
         }
 
         public void EnableGame()
         {
-            _menu.Disable();
-            _game.Enable();
+            Bind();
+            _runtime.Disable();
+            _pause.actionMap.Enable();
         }
 
         public void Disable()
         {
-            _menu.Disable();
-            _game.Disable();
+            if (_runtime != null)
+                _runtime.Disable();
         }
 
-        public void Dispose()
+        void Bind()
         {
+            if (_runtime != null)
+                return;
+
+            if (actions == null)
+            {
+                throw new InvalidOperationException(
+                    "GameInput: assign TheyWillDescend.inputactions on Bootstrap.");
+            }
+
+            if (proceed == null || pause == null)
+            {
+                throw new InvalidOperationException(
+                    "GameInput: assign Proceed and Pause in the inspector.");
+            }
+
+            _runtime = Instantiate(actions);
+            _proceed = Resolve(_runtime, proceed);
+            _pause = Resolve(_runtime, pause);
+            _proceed.performed += OnProceed;
+            _pause.performed += OnPause;
+            _runtime.Disable();
+        }
+
+        void Unbind()
+        {
+            if (_runtime == null)
+                return;
+
             _proceed.performed -= OnProceed;
             _pause.performed -= OnPause;
-            Disable();
-            if (_asset != null)
-                UnityEngine.Object.Destroy(_asset);
+            _runtime.Disable();
+            Destroy(_runtime);
+            _runtime = null;
+        }
+
+        static InputAction Resolve(InputActionAsset runtime, InputActionReference reference)
+        {
+            var source = reference.action;
+            if (source == null)
+            {
+                throw new InvalidOperationException(
+                    "GameInput: action reference is empty. Drag the action from the .inputactions asset.");
+            }
+
+            var action = runtime.FindAction(source.id);
+            if (action == null)
+            {
+                throw new InvalidOperationException(
+                    $"GameInput: action '{source.name}' is not on the assigned asset.");
+            }
+
+            return action;
         }
 
         void OnProceed(InputAction.CallbackContext _) => Proceeded?.Invoke();
