@@ -1,7 +1,6 @@
 using FMOD.Studio;
 using FMODUnity;
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
 using Unity.Entities;
 using UnityEngine;

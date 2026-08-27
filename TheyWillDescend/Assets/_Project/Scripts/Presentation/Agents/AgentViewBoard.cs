@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.Agents;
-using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;

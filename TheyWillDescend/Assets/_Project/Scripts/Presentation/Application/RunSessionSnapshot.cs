@@ -4,7 +4,6 @@ using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
-using TheyWillDescend.Simulation.Io;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using Unity.Collections;

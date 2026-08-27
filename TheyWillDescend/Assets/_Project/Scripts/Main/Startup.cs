@@ -20,8 +20,8 @@ namespace TheyWillDescend.Main
         [SerializeField] GameInput gameInput;
         [SerializeField] GameSession gameSession;
 
-        AppStateMachine _fsm;
-        bool _started;
+        private AppStateMachine _fsm;
+        private bool _started;
 
         void Awake()
         {
@@ -33,39 +33,35 @@ namespace TheyWillDescend.Main
 
         async UniTaskVoid BootAsync()
         {
-            var skipMenu = skipMenuToGameTemporarily;
             var ct = this.GetCancellationTokenOnDestroy();
 
-            var audio = gameAudio;
-            if (audio == null)
+            if (gameAudio == null)
             {
                 GameLog.Error("Startup: GameAudio must be assigned. Put it on its own Bootstrap object.");
                 throw new InvalidOperationException(
                     "Startup is missing GameAudio. Assign the GameAudio object, do not AddComponent from code.");
             }
 
-            var input = gameInput;
-            if (input == null)
+            if (gameInput == null)
             {
                 GameLog.Error("Startup: GameInput must be assigned. Put it on its own Bootstrap object.");
                 throw new InvalidOperationException(
                     "Startup is missing GameInput. Assign the GameInput object, do not AddComponent from code.");
             }
 
-            var session = gameSession;
-            if (session == null)
+            if (gameSession == null)
             {
                 GameLog.Error("Startup: GameSession must be assigned. Put it on its own Bootstrap object.");
                 throw new InvalidOperationException(
                     "Startup is missing GameSession. Assign the GameSession object, do not AddComponent from code.");
             }
 
-            if (!skipMenu)
-                await session.LoadMainMenuAsync(ct);
+            if (!skipMenuToGameTemporarily)
+                await gameSession.LoadMainMenuAsync(ct);
 
-            _fsm = AppFlowFactory.Create(session, audio, input);
+            _fsm = AppFlowFactory.Create(gameSession, gameAudio, gameInput);
 
-            if (skipMenu)
+            if (skipMenuToGameTemporarily)
             {
                 GameLog.Warning("TEMPORARY: skipMenuToGame — starting at LoadingGame (MainMenu not loaded).");
                 _fsm.Start(AppStateId.LoadingGame);
