@@ -17,7 +17,6 @@ namespace TheyWillDescend.Presentation.Environment
 
         [Header("Skybox")]
         [SerializeField] private Material skyboxMaterial;
-        [SerializeField] private bool useSkyboxTint = true;
 
         [Header("Day/Night Curve (Intensity)")]
         [SerializeField] private AnimationCurve lightIntensityCurve;
@@ -88,11 +87,12 @@ namespace TheyWillDescend.Presentation.Environment
             float shadowIntensity = Mathf.SmoothStep(minShadowIntensity, maxShadowIntensity, intensity);
             dayLight.shadowStrength = shadowIntensity;
 
-            // 5. Скайбокс tint
-            if (useSkyboxTint && skyboxMaterial != null)
+            // 5. Скайбокс — меняем exposure (а не tint)
+            if (skyboxMaterial != null)
             {
-                float brightness = Mathf.Lerp(0.15f, 1f, intensity);
-                skyboxMaterial.SetColor("_Tint", new Color(brightness, brightness, brightness, 1f));
+                // День = 1.0, Ночь = 0.1
+                float exposure = Mathf.Lerp(0.1f, 1.0f, intensity);
+                skyboxMaterial.SetFloat("_Exposure", exposure);
             }
         }
 
