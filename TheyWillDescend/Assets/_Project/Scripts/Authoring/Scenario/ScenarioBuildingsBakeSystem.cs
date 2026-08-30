@@ -35,13 +35,14 @@ namespace TheyWillDescend.Authoring.Scenario
             using var specQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ScenarioResourceSpec>());
             if (specQuery.IsEmptyIgnoreFilter)
                 return;
-            if (!em.HasBuffer<ResourceAmount>(session))
+            if (!em.HasBuffer<ResourceAmount>(session) || !em.HasBuffer<ResourceInfo>(session))
             {
                 Debug.LogError("Scenario bake: session has no resource ledger. Add ResourceCatalogAuthoring on SimControl.");
                 return;
             }
 
             var stock = em.GetBuffer<ResourceAmount>(session);
+            var info = em.GetBuffer<ResourceInfo>(session);
             using var specEntities = specQuery.ToEntityArray(Unity.Collections.Allocator.Temp);
             for (var e = 0; e < specEntities.Length; e++)
             {
@@ -57,7 +58,7 @@ namespace TheyWillDescend.Authoring.Scenario
                         continue;
                     }
 
-                    ResourceLedger.Set(stock, spec.ResourceId, spec.Amount);
+                    ResourceLedger.SetClamped(stock, info, spec.ResourceId, spec.Amount);
                 }
             }
         }

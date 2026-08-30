@@ -43,6 +43,7 @@ Assets/_Project/Scripts/
     City/        Components, Commands, CommandSystems, Systems, Math
     Agents/      Components, Commands, CommandSystems, Systems
     Economy/     Components, Systems
+    Gods/        Components, Commands, CommandSystems, Systems
     Content/     каталоги (плоские SO-типы)
   Authoring/
     Session/     SimControlAuthoring, SimRulesAuthoring
@@ -54,7 +55,7 @@ Assets/_Project/Scripts/
   Presentation/
     Agents/      AgentSpawner, AgentViewBoard
     City/        placement, grid guide, BuildingViewBoard, BuildingSelection, BuildingRejectLog
-    GameHud/     Time / Resource / Build / Inspect / Save / Spawn
+    GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Shell/       FSM, GameSession, SceneLoader, GameInput
     ShellUi/     PressAnyKeyScreen, MainMenuScreen
     Application/ RunSessionSnapshot

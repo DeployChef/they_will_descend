@@ -1,4 +1,5 @@
 using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Gods;
 using TheyWillDescend.Simulation.Time;
 using Unity.Entities;
 using UnityEngine;
@@ -31,11 +32,25 @@ namespace TheyWillDescend.Authoring.Session
                         WorkShiftStartHour = 6f,
                         WorkShiftEndHour = 18f
                     });
+                    AddComponent(entity, new PyramidConfig
+                    {
+                        MaxEnergyPerHour = 24f,
+                        EraChangeHour = 8f,
+                        DefaultStockCap = 2000f,
+                        LoyaltyDecayPerDay = 12f
+                    });
                     return;
                 }
 
                 DependsOn(so);
                 AddComponent(entity, so.CreateClock());
+                AddComponent(entity, new PyramidConfig
+                {
+                    MaxEnergyPerHour = so.PyramidMaxEnergyPerHour,
+                    EraChangeHour = so.EraChangeHour,
+                    DefaultStockCap = so.DefaultStockCap,
+                    LoyaltyDecayPerDay = so.LoyaltyDecayPerDay
+                });
             }
         }
     }

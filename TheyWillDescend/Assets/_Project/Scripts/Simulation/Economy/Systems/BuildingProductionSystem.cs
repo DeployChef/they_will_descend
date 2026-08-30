@@ -14,30 +14,36 @@ namespace TheyWillDescend.Simulation.Economy
     [UpdateAfter(typeof(TheyWillDescend.Simulation.Agents.SyncWorkplaceLoadSystem))]
     public partial struct BuildingProductionSystem : ISystem
     {
+        EntityQuery _session;
+
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimControl>();
-            state.RequireForUpdate<ResourceAmount>();
-            state.RequireForUpdate<BuildingRecipeLine>();
-            state.RequireForUpdate<GameTime>();
+            _session = state.GetEntityQuery(
+                ComponentType.ReadOnly<SimControl>(),
+                ComponentType.ReadOnly<GameTime>(),
+                ComponentType.ReadWrite<ResourceAmount>(),
+                ComponentType.ReadOnly<ResourceInfo>(),
+                ComponentType.ReadOnly<BuildingRecipeLine>());
+            state.RequireForUpdate(_session);
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var control = SystemAPI.GetSingleton<SimControl>();
+            var control = _session.GetSingleton<SimControl>();
             if (!control.IsRunning)
                 return;
             var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;
 
-            var time = SystemAPI.GetSingleton<GameTime>();
+            var time = _session.GetSingleton<GameTime>();
             if (!time.IsWorkShift)
                 return;
             var dayDuration = time.DayDuration;
-            var stock = SystemAPI.GetSingletonBuffer<ResourceAmount>();
-            var recipes = SystemAPI.GetSingletonBuffer<BuildingRecipeLine>(true);
+            var stock = _session.GetSingletonBuffer<ResourceAmount>();
+            var info = _session.GetSingletonBuffer<ResourceInfo>(true);
+            var recipes = _session.GetSingletonBuffer<BuildingRecipeLine>(true);
 
             foreach (var (workplace, type) in
                      SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>>()
@@ -53,7 +59,7 @@ namespace TheyWillDescend.Simulation.Economy
                 var typeId = type.ValueRO.TypeId;
                 if (!BuildingRecipes.HasLines(recipes, typeId))
                     continue;
-                BuildingRecipes.Apply(recipes, stock, typeId, dt, dayDuration, load);
+                BuildingRecipes.Apply(recipes, stock, info, typeId, dt, dayDuration, load);
             }
         }
     }

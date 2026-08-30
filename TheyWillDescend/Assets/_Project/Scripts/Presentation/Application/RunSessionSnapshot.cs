@@ -4,6 +4,7 @@ using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Gods;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using Unity.Collections;
@@ -140,6 +141,7 @@ namespace TheyWillDescend.App
 
             buildingEntities.Dispose();
             buildings.Dispose();
+            CaptureGods(em, bag, snapshot);
             GameLog.Info(
                 $"Captured snapshot: day {snapshot.day}, agents {snapshot.agents.Length}, buildings {snapshot.buildings.Length} ({constructing} constructing).");
             return snapshot;
@@ -191,6 +193,7 @@ namespace TheyWillDescend.App
             SimCommands.Playback();
             ApplyPausedBuildings(snapshot);
             ApplyResources(snapshot);
+            ApplyGods(snapshot);
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
         }
@@ -225,14 +228,101 @@ namespace TheyWillDescend.App
                 return;
 
             var stock = em.GetBuffer<ResourceAmount>(bag);
+            var info = em.HasBuffer<ResourceInfo>(bag) ? em.GetBuffer<ResourceInfo>(bag) : default;
 
             for (var i = 0; i < snapshot.resources.Length; i++)
             {
                 var row = snapshot.resources[i];
                 if (string.IsNullOrWhiteSpace(row.resourceId))
                     continue;
-                ResourceLedger.Set(stock, ContentId.EncodeOrEmpty(row.resourceId), row.amount);
+                var id = ContentId.EncodeOrEmpty(row.resourceId);
+                if (info.IsCreated)
+                    ResourceLedger.SetClamped(stock, info, id, row.amount);
+                else
+                    ResourceLedger.Set(stock, id, row.amount);
             }
+        }
+
+        static void CaptureGods(EntityManager em, Entity bag, RunSnapshot snapshot)
+        {
+            if (em.HasComponent<GodLoyalty>(bag))
+            {
+                var loyalty = em.GetComponentData<GodLoyalty>(bag);
+                snapshot.faith = loyalty.Value;
+                snapshot.faithMax = loyalty.EffectiveMax;
+            }
+
+            if (em.HasComponent<Timeline>(bag))
+            {
+                var timeline = em.GetComponentData<Timeline>(bag);
+                snapshot.eraIndex = timeline.EraIndex;
+                snapshot.eraStartDay = timeline.EraStartDay;
+                snapshot.eraStartElapsed = timeline.EraStartElapsed;
+                snapshot.previousMaxLoyalty = timeline.PreviousMaxLoyalty;
+                snapshot.targetMaxLoyalty = timeline.TargetMaxLoyalty;
+            }
+
+            using var hq = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Headquarters>(),
+                ComponentType.ReadOnly<PyramidFeedLine>());
+            if (hq.IsEmptyIgnoreFilter)
+                return;
+            using var entities = hq.ToEntityArray(Allocator.Temp);
+            var feed = em.GetBuffer<PyramidFeedLine>(entities[0]);
+            snapshot.pyramidFeed = new PyramidFeedSnapshot[feed.Length];
+            for (var i = 0; i < feed.Length; i++)
+            {
+                snapshot.pyramidFeed[i] = new PyramidFeedSnapshot
+                {
+                    resourceId = feed[i].ResourceId.ToString(),
+                    perHour = feed[i].PerHour
+                };
+            }
+        }
+
+        static void ApplyGods(RunSnapshot snapshot)
+        {
+            if (!SimWorld.TryGet(out var em, out var bag))
+                return;
+
+            if (em.HasComponent<GodLoyalty>(bag))
+            {
+                em.SetComponentData(bag, new GodLoyalty
+                {
+                    Value = snapshot.faith,
+                    EffectiveMax = snapshot.faithMax > 0.0001f ? snapshot.faithMax : 100f
+                });
+            }
+
+            if (em.HasComponent<Timeline>(bag))
+            {
+                em.SetComponentData(bag, new Timeline
+                {
+                    EraIndex = snapshot.eraIndex,
+                    EraStartDay = snapshot.eraStartDay,
+                    EraStartElapsed = snapshot.eraStartElapsed,
+                    PreviousMaxLoyalty = snapshot.previousMaxLoyalty,
+                    TargetMaxLoyalty = snapshot.targetMaxLoyalty > 0.0001f
+                        ? snapshot.targetMaxLoyalty
+                        : 100f
+                });
+            }
+
+            if (snapshot.pyramidFeed == null)
+                return;
+            for (var i = 0; i < snapshot.pyramidFeed.Length; i++)
+            {
+                var row = snapshot.pyramidFeed[i];
+                if (string.IsNullOrWhiteSpace(row.resourceId))
+                    continue;
+                SimCommands.TryPost(new SetPyramidFeedCommand
+                {
+                    ResourceId = ContentId.EncodeOrEmpty(row.resourceId),
+                    PerHour = row.perHour
+                });
+            }
+
+            SimCommands.Playback();
         }
 
         static void EnqueueAgent(AgentSnapshot record)

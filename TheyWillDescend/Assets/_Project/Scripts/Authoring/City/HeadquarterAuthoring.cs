@@ -1,4 +1,5 @@
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Gods;
 using Unity.Entities;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace TheyWillDescend.Authoring.City
                     Id = authoring.buildingId > 0 ? authoring.buildingId : 1
                 });
                 AddComponent<Headquarters>(entity);
+                AddBuffer<PyramidFeedLine>(entity);
             }
         }
     }

@@ -10,18 +10,24 @@ namespace TheyWillDescend.Simulation.City
     [UpdateAfter(typeof(TransformSystemGroup))]
     public partial struct AdvanceConstructionSystem : ISystem
     {
+        EntityQuery _sites;
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<SimControl>();
             state.RequireForUpdate<Construction>();
+            _sites = state.GetEntityQuery(
+                ComponentType.ReadWrite<Construction>(),
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadOnly<LocalTransform>());
         }
 
         public void OnUpdate(ref SystemState state)
         {
-            Run(state.EntityManager);
+            Run(state.EntityManager, _sites);
         }
 
-        public static void Run(EntityManager em)
+        public static void Run(EntityManager em, EntityQuery sites)
         {
             if (!SimBridgeAccess.TryGet(em, out var session))
                 return;
@@ -33,19 +39,10 @@ namespace TheyWillDescend.Simulation.City
             if (dt <= 0f)
                 return;
 
-            if (!em.HasBuffer<BuildingPrototype>(session))
+            if (!em.HasBuffer<BuildingPrototype>(session) || sites.IsEmptyIgnoreFilter)
                 return;
 
-            var catalog = em.GetBuffer<BuildingPrototype>(session);
-
-            using var query = em.CreateEntityQuery(
-                ComponentType.ReadWrite<Construction>(),
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<LocalTransform>());
-            if (query.IsEmptyIgnoreFilter)
-                return;
-
-            using var entities = query.ToEntityArray(Allocator.Temp);
+            using var entities = sites.ToEntityArray(Allocator.Temp);
             var finished = new NativeList<Entity>(8, Allocator.Temp);
             for (var i = 0; i < entities.Length; i++)
             {
@@ -59,11 +56,11 @@ namespace TheyWillDescend.Simulation.City
             }
 
             for (var i = 0; i < finished.Length; i++)
-                FinishSite(em, catalog, finished[i]);
+                FinishSite(em, session, finished[i]);
             finished.Dispose();
         }
 
-        static void FinishSite(EntityManager em, DynamicBuffer<BuildingPrototype> catalog, Entity site)
+        static void FinishSite(EntityManager em, Entity session, Entity site)
         {
             if (!em.Exists(site) || !em.HasComponent<Building>(site))
                 return;
@@ -72,8 +69,11 @@ namespace TheyWillDescend.Simulation.City
             var transform = em.HasComponent<LocalTransform>(site)
                 ? em.GetComponentData<LocalTransform>(site)
                 : LocalTransform.Identity;
+
+            var catalog = em.GetBuffer<BuildingPrototype>(session);
             var prefab = ConsumePlaceBuildingCommandsSystem.ResolveHousePrefab(
                 catalog, building.TypeId, building.WidthClusters, building.DepthRadialRings);
+
             em.DestroyEntity(site);
             if (prefab == Entity.Null)
                 return;
