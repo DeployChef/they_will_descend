@@ -1,0 +1,15 @@
+---
+description: God loyalty is 0–100% with a sliding era max and red forbidden zone
+alwaysApply: true
+---
+
+# God loyalty
+
+Loyalty is a **0–100 percent axis** on the session, not a resource. Wrath is low loyalty — not a second meter.
+
+- Run starts at **100**. The HUD bar is always 0–100, never rescaled to era max. Always on screen at the **bottom**, as faith (`вера`) — not a Frostpunk heat chip on the time bar.
+- Each era has a target max (playtest wave: 100 → 90 → 50 → 80 → 100). The band from `EffectiveMax` to 100 is the **red forbidden zone**.
+- That zone does **not** snap. At the era-start **instant** (day + hour, not midnight), `EffectiveMax` lerps from the previous max to the new target over **one game day** (24h from that instant). During that window the player may still rise above the era’s final max, up to current `EffectiveMax`. After that, cap is the target.
+- Each tick: `Value = min(Value, EffectiveMax)`. **Decay** every tick (24/7): `LoyaltyDecayPerDay` on `SimRules` (now 12 points per game day). Tribute burn adds against that drain. Offerings clamp to `EffectiveMax`. If the sliding cap crosses current value, value rides down with it.
+- Catastrophes (later) use **absolute** 0–100. Do not roll disasters until the axis and HUD exist.
+---

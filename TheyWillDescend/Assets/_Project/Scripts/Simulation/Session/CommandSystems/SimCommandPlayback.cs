@@ -1,5 +1,6 @@
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Gods;
 using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Session
@@ -19,6 +20,7 @@ namespace TheyWillDescend.Simulation.Session
             ConsumeAssignWorkerCommandsSystem.Run(em);
             ConsumeUnassignWorkerCommandsSystem.Run(em);
             ConsumeSetWorkplacePausedCommandsSystem.Run(em);
+            ConsumeSetPyramidFeedCommandsSystem.Run(em);
         }
     }
 }

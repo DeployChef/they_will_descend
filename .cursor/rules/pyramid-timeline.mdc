@@ -1,0 +1,22 @@
+---
+description: Pyramid is a 24/7 generator with an energy/h cap; sliders allocate feed
+alwaysApply: true
+---
+
+# Pyramid and timeline
+
+- Pyramid is the baked **HQ** entity, not a workplace recipe and not a placeable catalog house. Do not assign workers to it.
+- Burn is **24/7**. Work shift stays a people rule.
+- **Ceiling (closed):** one max **energy-worth per hour**. Player allocates it with **per-resource sliders** (units/h). Sum of `perHour * energyValue (* era tribute mul)` cannot exceed the cap; the sim clamps. Obelisks later add to the same cap — do not special-case them. Now the number lives on `SimRules`.
+- Cannot burn `energy` into energy.
+- Eras last an integer number of **game days**, boundary **day + hour** (e.g. 08:00 on `SimRules`), not midnight. Tribute **snaps at that instant**. Loyalty cap lerps 24h from the same instant (see `gods-loyalty`).
+- **Energy value** lives on `ResourceDefinition`. Era may multiply it for current tribute. Do not hardcode 1:1.
+- Energy is a resource; this slice only produces it (no city drain yet).
+
+## Later: ritual slot (do not build now)
+
+People and pyramid-heart **crystals** are **button offerings**, not sliders. People stay agents (never a `ResourceAmount`). Crystals are a resource that must not appear on burn sliders.
+
+While a ritual runs, the pyramid’s offering slot is **busy**: reject other discrete offers and feed-slider changes. One `PyramidRitual` on HQ later is enough. Continuous commodity burn stays sliders; do not fold sacrifice into `PyramidFeedLine`.
+
+---

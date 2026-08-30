@@ -15,7 +15,7 @@
 | Что | Где лежит | Зачем |
 | --- | --- | --- |
 | **Ключ** | `typeId` / `resourceId` строка | Стык всего: симуляция, HUD, сейв, сценарий, позже таблица |
-| **Документ баланса** | `BuildingDefinition` / `ResourceDefinition` / `SimRules` | Числа типа или закона мира. Не живой дом в сцене |
+| **Документ баланса** | `BuildingDefinition` / `ResourceDefinition` / `SimRules` / `TimelineCatalog` | Числа типа или закона мира. Не живой дом в сцене |
 | **Меш** | префаб с `BuildingAuthoring` | Как выглядит. Не кост, не footprint |
 | **Каталог** | `DefaultBuildingCatalog` / `DefaultResourceCatalog` | Список «что существует в этом билде» |
 | **Стартовый город** | `ScenarioDefinition` | Какие дома стоят на старте и сколько ресурсов. Не сейв игрока |
@@ -87,7 +87,9 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 
 ## 4. Ресурс
 
-Сейчас в каталоге: `wood`, `food`.
+Сейчас в каталоге: `wood`, `food`, `energy`.
+
+Энергия — ресурс (`canFeed` выкл: слайдер пирамиды её не жжёт). `energyValue` — сколько энергии даёт единица при сжигании на пирамиде. `stockCap` 0 = взять `SimRules.DefaultStockCap` (временный потолок до складов).
 
 ### Новый ресурс
 
@@ -118,6 +120,11 @@ Baker копирует:
 | Day Duration | `GameTime.DayDuration` (на session) |
 | Work Shift Start/End | `GameTime.WorkShiftStartHour` / `EndHour` |
 | Worker Speed | штамп `AgentLocomotion.Speed` |
+| Era Change Hour | `PyramidConfig.EraChangeHour` (граница эры, не полночь) |
+| Pyramid Max Energy / Hour | `PyramidConfig.MaxEnergyPerHour` (потом обелиски) |
+| Default Stock Cap | временный потолок стока |
+
+На том же GO: `TimelineCatalogAuthoring` → `DefaultTimeline` (эры, дань, max loyalty).
 
 Системы SO не читают. Play после правки ассета перепечёт SubScene.
 
@@ -217,16 +224,17 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 На **одном** GO `SimControl` (соседи authoring, один bake-entity):
 
 1. `SimControlAuthoring` — `SimControl` + `SimBridge` + буфер `SimClockCommand`
-2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока)
-3. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
-4. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace`
-5. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
-6. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
+2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока, час эры, потолок жжения, cap стока)
+3. `TimelineCatalogAuthoring` → `DefaultTimeline`
+4. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
+5. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace`
+6. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
+7. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
 
 Рядом, **отдельным** GO (не на SimControl: BakingOnly снял бы session singleton):
 
-7. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
-8. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
+8. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
+9. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
 
 После смены SO зайди в Play: SubScene перепечётся. Ошибки ключей/префабов — Console при bake, не «тихий нулевой дом».
 

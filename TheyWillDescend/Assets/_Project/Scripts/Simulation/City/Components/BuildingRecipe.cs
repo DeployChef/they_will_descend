@@ -68,6 +68,7 @@ namespace TheyWillDescend.Simulation.City
         public static void Apply(
             DynamicBuffer<BuildingRecipeLine> recipes,
             DynamicBuffer<ResourceAmount> stock,
+            DynamicBuffer<ResourceInfo> info,
             in FixedString64Bytes typeId,
             float deltaTime,
             float dayDuration,
@@ -87,7 +88,7 @@ namespace TheyWillDescend.Simulation.City
                 if (line.Kind == BuildingRecipeKind.Input)
                     ResourceLedger.Add(stock, line.ResourceId, -amount);
                 else if (line.Kind == BuildingRecipeKind.Output)
-                    ResourceLedger.Add(stock, line.ResourceId, amount);
+                    ResourceLedger.AddClamped(stock, info, line.ResourceId, amount);
             }
         }
     }

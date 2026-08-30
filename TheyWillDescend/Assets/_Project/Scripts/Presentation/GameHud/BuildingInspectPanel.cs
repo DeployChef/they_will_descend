@@ -18,6 +18,7 @@ namespace TheyWillDescend.Presentation.GameHud
     public sealed class BuildingInspectPanel : MonoBehaviour
     {
         [SerializeField] BuildingSelection selection;
+        public BuildingSelection Selection => selection;
         [SerializeField] GameObject card;
         [SerializeField] TMP_Text title;
         [SerializeField] TMP_Text subtitle;
@@ -191,6 +192,12 @@ namespace TheyWillDescend.Presentation.GameHud
         void Show(int id)
         {
             if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
+            {
+                Hide();
+                return;
+            }
+
+            if (em.HasComponent<Headquarters>(entity))
             {
                 Hide();
                 return;

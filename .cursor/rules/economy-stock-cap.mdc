@@ -1,0 +1,17 @@
+---
+description: All resources have a building-derived stock cap; energy is a resource
+alwaysApply: true
+---
+
+# Stock cap
+
+Every catalog resource has a **finite stock**. `Amount` cannot grow past capacity.
+
+- Capacity is **derived from buildings**, not a free number on the ledger and not a second resource type.
+- A warehouse-type building grants cap to materials (wood, food, …). Other buildings grant cap to **energy**. Obelisks later grant energy cap the same way — do not special-case them in systems.
+- **Energy is a resource** (`ResourceAmount` row). God loyalty is a 0–100% axis with an era max — not a resource. Tribute is a role a resource plays in the current era.
+- HQ / `SimRules` may grant a **small base cap** so the run works before the first warehouse. That is a starting grant, not “unlimited storage”.
+- Overflow: production and pyramid output **clamp** (do not write past cap). Do not silently delete the rule “for the slice”.
+- **Now (temporary):** one max per resource (number on `SimRules` or `ResourceDefinition`) so the clamp exists. Warehouses / energy buildings / obelisks replace that number later. Tune when a consumer exists.
+- Energy is produced, not spent, until a consumer building exists. Cap still applies.
+---

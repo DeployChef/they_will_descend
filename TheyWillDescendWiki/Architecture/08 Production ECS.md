@@ -36,7 +36,7 @@ Content          Authoring, Baker, prefabs, balance
 | Economy | склады, производство | да (рецепт на типе) |
 | Survival | голод, cold/heat | нет |
 | Society | hope/discontent, законы | нет |
-| Gods | дань, фазы, гнев | нет |
+| Gods | дань, эры, лояльность, печь HQ | срез 1 |
 | Crisis | кризисы | нет |
 | WinLose | конец рана | нет |
 
@@ -49,7 +49,9 @@ CommandSystemGroup (OrderFirst в SimulationSystemGroup)
   → commute / plaza idle / locomotion
   → construction
   → production (только Workplace.Working)
+  → pyramid burn 24/7 (не Workplace; после домов)
   → AdvanceGameTime
+  → era boundary (день+час) / loyalty lerp
 ```
 
 Needs / Laws / Gods / Crisis / WinLose — группы появятся, когда появится домен.

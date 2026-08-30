@@ -59,8 +59,7 @@ namespace TheyWillDescend.Presentation.City
             var em = world.EntityManager;
             using var query = em.CreateEntityQuery(
                 ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<LocalTransform>(),
-                ComponentType.Exclude<Headquarters>());
+                ComponentType.ReadOnly<LocalTransform>());
             Sync(em, query);
         }
 
@@ -121,7 +120,11 @@ namespace TheyWillDescend.Presentation.City
                 var building = buildings[i];
                 _seen.Add(building.Id);
                 if (!_views.TryGetValue(building.Id, out var view) || view?.Root == null)
-                    view = CreateView(building);
+                {
+                    view = em.HasComponent<Headquarters>(entities[i])
+                        ? CreateHqView(building, transforms[i].Position)
+                        : CreateView(building);
+                }
 
                 if (view == null)
                     continue;
@@ -185,6 +188,78 @@ namespace TheyWillDescend.Presentation.City
             entities.Dispose();
             buildings.Dispose();
             transforms.Dispose();
+        }
+
+        PlacedView CreateHqView(in Building building, float3 position)
+        {
+            EnsureReady();
+            EnsureMaterial();
+            var root = new GameObject($"Headquarters_{building.Id}");
+            root.transform.SetParent(_overlayRoot, true);
+            root.transform.position = (Vector3)position;
+
+            var zoneGo = new GameObject("PlazaRing");
+            zoneGo.transform.SetParent(root.transform, false);
+            var zoneFilter = zoneGo.AddComponent<MeshFilter>();
+            var zoneRenderer = zoneGo.AddComponent<MeshRenderer>();
+            zoneFilter.sharedMesh = BuildAnnulusMesh(9f, 13.5f, 48, 0.06f);
+            zoneRenderer.sharedMaterial = _placedZoneMaterial;
+            zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            zoneRenderer.receiveShadows = false;
+
+            var click = new GameObject("ClickProxy");
+            click.transform.SetParent(root.transform, false);
+            click.transform.localPosition = Vector3.up * 6f;
+            var capsule = click.AddComponent<CapsuleCollider>();
+            capsule.radius = 12f;
+            capsule.height = 28f;
+            capsule.direction = 1;
+
+            var tag = root.AddComponent<BuildingIdTag>();
+            tag.Id = building.Id;
+
+            var view = new PlacedView { Root = root, ZoneRenderer = zoneRenderer };
+            _views[building.Id] = view;
+            return view;
+        }
+
+        static Mesh BuildAnnulusMesh(float inner, float outer, int segments, float y)
+        {
+            var verts = new Vector3[segments * 2];
+            var tris = new int[segments * 12];
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = i / (float)segments * Mathf.PI * 2f;
+                var c = Mathf.Cos(angle);
+                var s = Mathf.Sin(angle);
+                verts[i * 2] = new Vector3(c * inner, y, s * inner);
+                verts[i * 2 + 1] = new Vector3(c * outer, y, s * outer);
+                var next = (i + 1) % segments;
+                var i0 = i * 2;
+                var i1 = i * 2 + 1;
+                var i2 = next * 2;
+                var i3 = next * 2 + 1;
+                var t = i * 12;
+                tris[t] = i0;
+                tris[t + 1] = i1;
+                tris[t + 2] = i2;
+                tris[t + 3] = i1;
+                tris[t + 4] = i3;
+                tris[t + 5] = i2;
+                tris[t + 6] = i0;
+                tris[t + 7] = i2;
+                tris[t + 8] = i1;
+                tris[t + 9] = i1;
+                tris[t + 10] = i2;
+                tris[t + 11] = i3;
+            }
+
+            var mesh = new Mesh { name = "HqPlazaRing" };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0, true);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         PlacedView CreateView(in Building building)

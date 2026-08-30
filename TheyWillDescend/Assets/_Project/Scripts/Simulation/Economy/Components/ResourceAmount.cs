@@ -14,11 +14,14 @@ namespace TheyWillDescend.Simulation.Economy
     }
 
     /// <summary>
-    /// Baked catalog names for HUD. Icons stay on the catalog asset.
+    /// Baked catalog names and rules for HUD / pyramid / stock cap.
     /// </summary>
     public struct ResourceInfo : IBufferElementData
     {
         public FixedString64Bytes ResourceId;
         public FixedString64Bytes DisplayName;
+        public float EnergyValue;
+        public float StockCap;
+        public byte CanFeed;
     }
 }

@@ -8,9 +8,9 @@
 | --- | --- | --- |
 | City / Buildings | сетка, occupy, footprint, стройка, HQ | апгрейды, ротация |
 | Agents / Workforce | спавн, plaza idle, commute, assign/unassign | pathfinding, нужды |
-| Economy | ledger `ResourceAmount`, рецепт на типе здания | склады, логистика |
+| Economy | ledger `ResourceAmount`, рецепт на типе здания | cap стока от зданий, склады, энергия |
 | Survival pressure | — | тепло/жизнь, голод |
-| Gods | — | дань, гнев, фазы |
+| Gods | эры, лояльность, печь HQ | обряд (люди/кристаллы), катастрофы |
 | Laws | — | модификаторы |
 | WinLose | — | условия конца рана |
 

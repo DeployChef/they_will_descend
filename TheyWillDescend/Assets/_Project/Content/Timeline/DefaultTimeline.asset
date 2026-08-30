@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7c1e4a8d2f64c9e8a1b3c5d7e9f0123, type: 3}
+  m_Name: DefaultTimeline
+  m_EditorClassIdentifier: TheyWillDescend.Simulation::TheyWillDescend.Simulation.Content.TimelineCatalogAsset
+  eras:
+  - eraId: dawn
+    displayName: Dawn
+    durationDays: 1
+    maxLoyalty: 100
+    tribute:
+    - {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    tributeEnergyMultiplier: 1.2
+    loyaltyPerEnergy: 0.05
+  - eraId: dusk
+    displayName: Dusk
+    durationDays: 1
+    maxLoyalty: 90
+    tribute:
+    - {fileID: 11400000, guid: 8f5d2b0c3e9a5f7b0d2c4e6a8b0f3d51, type: 2}
+    tributeEnergyMultiplier: 1.3
+    loyaltyPerEnergy: 0.05
+  - eraId: hunger
+    displayName: Hunger
+    durationDays: 1
+    maxLoyalty: 50
+    tribute:
+    - {fileID: 11400000, guid: 8f5d2b0c3e9a5f7b0d2c4e6a8b0f3d51, type: 2}
+    tributeEnergyMultiplier: 1.5
+    loyaltyPerEnergy: 0.05
+  - eraId: return
+    displayName: Return
+    durationDays: 1
+    maxLoyalty: 80
+    tribute:
+    - {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    tributeEnergyMultiplier: 1.2
+    loyaltyPerEnergy: 0.05
+  - eraId: zenith
+    displayName: Zenith
+    durationDays: 1
+    maxLoyalty: 100
+    tribute:
+    - {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    tributeEnergyMultiplier: 1.1
+    loyaltyPerEnergy: 0.05
