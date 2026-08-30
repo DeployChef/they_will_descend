@@ -55,7 +55,7 @@ Assets/_Project/Scripts/
   Presentation/
     Agents/      AgentSpawner, AgentViewBoard
     City/        placement, grid guide, BuildingViewBoard, BuildingSelection, BuildingRejectLog
-    GameHud/     Time / Resource / Build / Inspect / Save / Spawn
+    GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Shell/       FSM, GameSession, SceneLoader, GameInput
     ShellUi/     PressAnyKeyScreen, MainMenuScreen
     Application/ RunSessionSnapshot

@@ -5,7 +5,9 @@ namespace TheyWillDescend.Simulation.Gods
 {
     /// <summary>
     /// Catalog row. Buffer order is era index.
+    /// Numeric fields stay before <see cref="Summary"/> so a stale bake cannot zero MaxLoyalty.
     /// </summary>
+    [InternalBufferCapacity(8)]
     public struct EraLine : IBufferElementData
     {
         public FixedString64Bytes EraId;
@@ -14,6 +16,7 @@ namespace TheyWillDescend.Simulation.Gods
         public float MaxLoyalty;
         public float TributeEnergyMul;
         public float LoyaltyPerEnergy;
+        public FixedString512Bytes Summary;
     }
 
     public struct EraTributeLine : IBufferElementData

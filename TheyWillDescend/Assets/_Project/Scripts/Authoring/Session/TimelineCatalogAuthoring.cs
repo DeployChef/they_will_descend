@@ -61,6 +61,13 @@ namespace TheyWillDescend.Authoring.Session
                         firstMax = max;
 
                     var name = string.IsNullOrWhiteSpace(spec.displayName) ? spec.eraId : spec.displayName;
+                    var summary = spec.summary ?? string.Empty;
+                    if (summary.Length > 500)
+                    {
+                        Debug.LogWarning($"Timeline era '{spec.eraId}' summary truncated to 500 chars.", so);
+                        summary = summary.Substring(0, 500);
+                    }
+
                     eras.Add(new EraLine
                     {
                         EraId = id,
@@ -70,7 +77,8 @@ namespace TheyWillDescend.Authoring.Session
                         TributeEnergyMul = spec.tributeEnergyMultiplier > 0.0001f
                             ? spec.tributeEnergyMultiplier
                             : 1f,
-                        LoyaltyPerEnergy = spec.loyaltyPerEnergy < 0f ? 0f : spec.loyaltyPerEnergy
+                        LoyaltyPerEnergy = spec.loyaltyPerEnergy < 0f ? 0f : spec.loyaltyPerEnergy,
+                        Summary = summary
                     });
 
                     var eraIndex = eras.Length - 1;

@@ -13,6 +13,7 @@ namespace TheyWillDescend.Simulation.Content
         public ResourceDefinition[] tribute;
         [Min(0f)] public float tributeEnergyMultiplier;
         [Min(0f)] public float loyaltyPerEnergy;
+        [TextArea(2, 5)] public string summary;
     }
 
     /// <summary>

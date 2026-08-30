@@ -53,8 +53,8 @@ namespace TheyWillDescend.Simulation.Gods
                     break;
 
                 timeline.EraIndex += 1;
-                timeline.EraStartDay = day;
-                timeline.EraStartElapsed = elapsed;
+                timeline.EraStartDay = time.Day;
+                timeline.EraStartElapsed = time.ElapsedInDay;
                 timeline.PreviousMaxLoyalty = loyalty.EffectiveMax;
                 timeline.TargetMaxLoyalty = eras[timeline.EraIndex].MaxLoyalty;
             }

@@ -62,5 +62,41 @@ namespace TheyWillDescend.Simulation.Gods
             day = startDay;
             elapsed = HourToElapsed(eraChangeHour, dayDuration);
         }
+
+        public static float NowHours(in GameTime time)
+        {
+            return time.Day * 24f + time.HourOfDay;
+        }
+
+        public static float BoundaryHours(
+            DynamicBuffer<EraLine> eras,
+            float eraChangeHour,
+            float dayDuration,
+            int eraIndex)
+        {
+            if (eraIndex <= 0)
+                return 0f;
+            StartOfEra(eras, eraChangeHour, dayDuration, eraIndex, out var day, out var elapsed);
+            var duration = dayDuration > 0.0001f ? dayDuration : 1f;
+            return day * 24f + elapsed / duration * 24f;
+        }
+
+        public static float EraEndHours(
+            DynamicBuffer<EraLine> eras,
+            float eraChangeHour,
+            float dayDuration,
+            int eraIndex)
+        {
+            if (eraIndex < 0 || eraIndex >= eras.Length)
+                return 0f;
+            if (eraIndex + 1 < eras.Length)
+                return BoundaryHours(eras, eraChangeHour, dayDuration, eraIndex + 1);
+
+            var start = BoundaryHours(eras, eraChangeHour, dayDuration, eraIndex);
+            var days = eras[eraIndex].DurationDays;
+            if (days < 1)
+                days = 1;
+            return start + days * 24f;
+        }
     }
 }
