@@ -1,0 +1,201 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4773640749899098690
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 786987467606419860}
+  - component: {fileID: 1755530736188001812}
+  - component: {fileID: 1692766470421225616}
+  - component: {fileID: 2461944036911258609}
+  - component: {fileID: 4082606754043969555}
+  - component: {fileID: 2455215462847711700}
+  - component: {fileID: 9002270990740900883}
+  - component: {fileID: 3000588908964957310}
+  - component: {fileID: 926080797899507400}
+  - component: {fileID: 5219026554284324656}
+  m_Layer: 0
+  m_Name: Kitchen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &786987467606419860
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1755530736188001812
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1692766470421225616
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 06d0872e8945c7641afb0463fa8ac454, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &2461944036911258609
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43cdaf160e51a744a88a7d5c405d6b73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Simulation::TheyWillDescend.Simulation.Content.BuildingKey
+  typeId: kitchen
+--- !u!114 &4082606754043969555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de8adabf34150347a34b5ae87fdfc04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BuildingFootprintAuthoring
+  widthClusters: 2
+  depthRadialRings: 2
+--- !u!114 &2455215462847711700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5de5a1dad8f57a448ca7d0dfde134af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BuildingConstructionAuthoring
+  duration: 8
+--- !u!114 &9002270990740900883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 325937726390dfa4cae44843a3d1709b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BuildingWorkplaceAuthoring
+  slots: 10
+--- !u!114 &3000588908964957310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeb19dcb445f4b048aa052e3a5c0e4d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BuildingRecipeAuthoring
+  inputs:
+  - Resource: {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    PerHour: 6
+  outputs:
+  - Resource: {fileID: 11400000, guid: 8f5d2b0c3e9a5f7b0d2c4e6a8b0f3d51, type: 2}
+    PerHour: 12
+--- !u!114 &926080797899507400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ef88be9cba213c48a1129752a44c4fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BuildingCostAuthoring
+  costs:
+  - Resource: {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    Amount: 8
+--- !u!114 &5219026554284324656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 155b6a2c8d31f994ab14551d52d7678a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingView
+  displayName: Kitchen
+  idleColor: {r: 0.82, g: 0.62, b: 0.38, a: 1}
+  workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
+  constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}

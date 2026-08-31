@@ -5,7 +5,7 @@ using Unity.Transforms;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Bake also writes Center. This catches Play if the baking system missed LocalTransform.
+    /// Bake also writes Center. Reads LocalToWorld so a static HQ still counts.
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(AdvancePlazaIdleSystem))]
@@ -20,7 +20,7 @@ namespace TheyWillDescend.Simulation.City
         public void OnUpdate(ref SystemState state)
         {
             foreach (var transform in
-                     SystemAPI.Query<RefRO<LocalTransform>>().WithAll<Headquarters>())
+                     SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<Headquarters>())
             {
                 var grid = SystemAPI.GetSingletonRW<CityGrid>();
                 grid.ValueRW.Center = transform.ValueRO.Position;

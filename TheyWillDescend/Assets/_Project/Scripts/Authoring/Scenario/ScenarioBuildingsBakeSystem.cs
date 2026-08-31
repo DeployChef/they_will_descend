@@ -89,7 +89,7 @@ namespace TheyWillDescend.Authoring.Scenario
                 for (var i = 0; i < specs.Length; i++)
                 {
                     var spec = specs[i];
-                    if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, 0, 0, out var prototype))
+                    if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, out var prototype))
                     {
                         Debug.LogError($"Scenario bake: unknown building type {spec.TypeId}.");
                         continue;

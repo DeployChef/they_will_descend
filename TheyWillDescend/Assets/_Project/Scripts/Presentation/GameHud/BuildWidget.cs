@@ -133,8 +133,8 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             var catalog = em.GetBuffer<BuildingPrototype>(bag);
-            var costs = em.HasBuffer<BuildingCost>(bag) ? em.GetBuffer<BuildingCost>(bag) : default;
             var names = em.HasBuffer<ResourceInfo>(bag) ? em.GetBuffer<ResourceInfo>(bag) : default;
+            var viewCatalog = placement != null ? placement.Catalog : null;
             var count = 0;
             for (var i = 0; i < catalog.Length; i++)
             {
@@ -147,10 +147,14 @@ namespace TheyWillDescend.Presentation.GameHud
                 go.name = $"Catalog_{typeId}";
                 go.SetActive(true);
                 var button = go.GetComponent<Button>();
-                var cost = FormatBuildingCost(costs, names, prototype.TypeId);
-                var title = prototype.DisplayName.IsEmpty
-                    ? $"{prototype.WidthClusters}×{prototype.DepthRadialRings}"
-                    : prototype.DisplayName.ToString();
+                var costs = em.HasBuffer<BuildingCost>(prototype.Prefab)
+                    ? em.GetBuffer<BuildingCost>(prototype.Prefab)
+                    : default;
+                var cost = FormatBuildingCost(costs, names);
+                var prefab = viewCatalog != null ? viewCatalog.FindPrefab(typeId) : null;
+                var title = BuildingView.NameOf(prefab);
+                if (string.IsNullOrEmpty(title))
+                    title = typeId;
                 SetButtonLabel(button, string.IsNullOrEmpty(cost) ? title : $"{title}\n{cost}");
                 HudButtons.Bind(button, () => BeginPlace(typeId));
                 _spawnedButtons.Add(button);
@@ -260,17 +264,16 @@ namespace TheyWillDescend.Presentation.GameHud
 
         static string FormatBuildingCost(
             DynamicBuffer<BuildingCost> costs,
-            DynamicBuffer<ResourceInfo> names,
-            in FixedString64Bytes typeId)
+            DynamicBuffer<ResourceInfo> names)
         {
-            if (typeId.IsEmpty || !costs.IsCreated)
+            if (!costs.IsCreated)
                 return string.Empty;
 
             var parts = new List<string>(4);
             for (var i = 0; i < costs.Length; i++)
             {
                 var cost = costs[i];
-                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
+                if (cost.Amount <= 0.0001f)
                     continue;
                 parts.Add($"{(int)math.ceil(cost.Amount)} {ResourceDisplayName(names, cost.ResourceId)}");
             }

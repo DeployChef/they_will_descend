@@ -7,7 +7,7 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Economy
 {
     /// <summary>
-    /// Production tick: working buildings run their catalog recipe (consume / produce per game hour).
+    /// Production tick: working buildings run the recipe on their own stamp buffer.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -22,8 +22,7 @@ namespace TheyWillDescend.Simulation.Economy
                 ComponentType.ReadOnly<SimControl>(),
                 ComponentType.ReadOnly<GameTime>(),
                 ComponentType.ReadWrite<ResourceAmount>(),
-                ComponentType.ReadOnly<ResourceInfo>(),
-                ComponentType.ReadOnly<BuildingRecipeLine>());
+                ComponentType.ReadOnly<ResourceInfo>());
             state.RequireForUpdate(_session);
         }
 
@@ -43,10 +42,9 @@ namespace TheyWillDescend.Simulation.Economy
             var dayDuration = time.DayDuration;
             var stock = _session.GetSingletonBuffer<ResourceAmount>();
             var info = _session.GetSingletonBuffer<ResourceInfo>(true);
-            var recipes = _session.GetSingletonBuffer<BuildingRecipeLine>(true);
 
-            foreach (var (workplace, type) in
-                     SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>>()
+            foreach (var (workplace, type, recipes) in
+                     SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>, DynamicBuffer<BuildingRecipeLine>>()
                          .WithAll<Building>()
                          .WithNone<Construction, Headquarters>())
             {
@@ -56,10 +54,9 @@ namespace TheyWillDescend.Simulation.Economy
                 var load = Workplace.Load01(workplace.ValueRO.WorkingCount, slots);
                 if (load <= 0f)
                     continue;
-                var typeId = type.ValueRO.TypeId;
-                if (!BuildingRecipes.HasLines(recipes, typeId))
+                if (!BuildingRecipes.HasLines(recipes))
                     continue;
-                BuildingRecipes.Apply(recipes, stock, info, typeId, dt, dayDuration, load);
+                BuildingRecipes.Apply(recipes, stock, info, dt, dayDuration, load);
             }
         }
     }

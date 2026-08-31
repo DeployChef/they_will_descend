@@ -5,22 +5,21 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Place cost for a catalog type. Several rows per TypeId.
+    /// Place cost on a house stamp. No TypeId — the buffer lives on the prefab entity.
     /// </summary>
     public struct BuildingCost : IBufferElementData
     {
-        public FixedString64Bytes TypeId;
         public FixedString64Bytes ResourceId;
         public float Amount;
     }
 
     public static class BuildingCosts
     {
-        public static bool HasCost(DynamicBuffer<BuildingCost> costs, in FixedString64Bytes typeId)
+        public static bool HasCost(DynamicBuffer<BuildingCost> costs)
         {
             for (var i = 0; i < costs.Length; i++)
             {
-                if (costs[i].TypeId == typeId && costs[i].Amount > 0.0001f)
+                if (costs[i].Amount > 0.0001f)
                     return true;
             }
 
@@ -29,13 +28,12 @@ namespace TheyWillDescend.Simulation.City
 
         public static bool CanAfford(
             DynamicBuffer<BuildingCost> costs,
-            DynamicBuffer<ResourceAmount> stock,
-            in FixedString64Bytes typeId)
+            DynamicBuffer<ResourceAmount> stock)
         {
             for (var i = 0; i < costs.Length; i++)
             {
                 var cost = costs[i];
-                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
+                if (cost.Amount <= 0.0001f)
                     continue;
                 if (!ResourceLedger.Has(stock, cost.ResourceId, cost.Amount))
                     return false;

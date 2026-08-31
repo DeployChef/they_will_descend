@@ -58,18 +58,23 @@ namespace TheyWillDescend.Simulation.City
             DynamicBuffer<BuildingPrototype> catalog,
             in PlaceBuildingCommand command)
         {
-            if (!BuildingCatalog.TryResolve(
-                    catalog, command.TypeId, command.WidthClusters, command.DepthRadialRings, out var prototype))
+            if (!BuildingCatalog.TryResolve(catalog, command.TypeId, out var prototype))
             {
                 Reject(em, session, command, BuildingRejectedEvent.UnknownType);
                 return;
             }
 
-            var footprint = prototype.Footprint;
             var prefab = prototype.Prefab;
+            if (prefab == Entity.Null || !em.HasComponent<BuildingType>(prefab))
+            {
+                Reject(em, session, command, BuildingRejectedEvent.UnknownType);
+                return;
+            }
+
+            var type = em.GetComponentData<BuildingType>(prefab);
+            var footprint = type.Footprint;
             var clusters = new NativeList<OccupiedCell>(64, Allocator.Temp);
             if (grid.Ready == 0
-                || prefab == Entity.Null
                 || !RadialFootprintMath.TryExpandClusters(
                     grid.Config, command.AnchorCluster, command.AnchorRadial, footprint, clusters))
             {
@@ -86,7 +91,7 @@ namespace TheyWillDescend.Simulation.City
                 return;
             }
 
-            if (!TryPay(em, session, prototype.TypeId, command))
+            if (!TryPay(em, session, prefab, command))
             {
                 Reject(em, session, command, BuildingRejectedEvent.Unaffordable);
                 clusters.Dispose();
@@ -101,7 +106,9 @@ namespace TheyWillDescend.Simulation.City
                 grid.Center, grid.Config, command.AnchorCluster, command.AnchorRadial, footprint,
                 out var position, out var rotation, out var stubWorldSize);
 
-            var meshSize = prototype.MeshSize;
+            var meshSize = em.HasComponent<BuildingMeshSize>(prefab)
+                ? em.GetComponentData<BuildingMeshSize>(prefab).Horizontal
+                : 1f;
             var scale = meshSize > 0.001f ? stubWorldSize / meshSize : 1f;
 
             var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
@@ -111,7 +118,7 @@ namespace TheyWillDescend.Simulation.City
             var building = new Building
             {
                 Id = id,
-                TypeId = prototype.TypeId,
+                TypeId = type.TypeId,
                 WidthClusters = footprint.WidthClusters,
                 DepthRadialRings = footprint.DepthRadialRings,
                 AnchorCluster = command.AnchorCluster,
@@ -120,7 +127,7 @@ namespace TheyWillDescend.Simulation.City
             var transform = LocalTransform.FromPositionRotationScale(position, rotation, scale);
             var duration = command.ConstructionDuration > 0.001f
                 ? command.ConstructionDuration
-                : prototype.ConstructionDuration;
+                : type.ConstructionDuration;
 
             if (command.InstantComplete != 0 || duration <= 0.001f)
             {
@@ -142,9 +149,9 @@ namespace TheyWillDescend.Simulation.City
             var site = em.CreateEntity();
             em.AddComponentData(site, building);
             em.AddComponentData(site, construction);
-            em.AddComponentData(site, transform);
-            if (prototype.WorkplaceSlots > 0)
+            if (em.HasComponent<Workplace>(prefab))
                 em.AddComponentData(site, new Workplace());
+            SimEntityPose.Apply(em, site, transform);
 #if UNITY_EDITOR
             em.SetName(site, $"BuildingSite_{building.Id}");
 #endif
@@ -160,9 +167,8 @@ namespace TheyWillDescend.Simulation.City
             if (!em.HasComponent<Building>(entity))
                 em.AddComponent<Building>(entity);
             em.SetComponentData(entity, building);
-            if (!em.HasComponent<Workplace>(entity))
-                em.AddComponent<Workplace>(entity);
-            em.SetComponentData(entity, new Workplace());
+            if (em.HasComponent<Workplace>(entity))
+                em.SetComponentData(entity, new Workplace());
             SimEntityPose.Apply(em, entity, transform);
 #if UNITY_EDITOR
             em.SetName(entity, $"Building_{building.Id}");
@@ -171,11 +177,9 @@ namespace TheyWillDescend.Simulation.City
 
         public static Entity ResolveHousePrefab(
             DynamicBuffer<BuildingPrototype> catalog,
-            in FixedString64Bytes typeId,
-            int widthClusters,
-            int depthRadialRings)
+            in FixedString64Bytes typeId)
         {
-            return BuildingCatalog.TryResolve(catalog, typeId, widthClusters, depthRadialRings, out var prototype)
+            return BuildingCatalog.TryResolve(catalog, typeId, out var prototype)
                 ? prototype.Prefab
                 : Entity.Null;
         }
@@ -183,40 +187,26 @@ namespace TheyWillDescend.Simulation.City
         static bool TryPay(
             EntityManager em,
             Entity session,
-            in FixedString64Bytes typeId,
+            Entity prefab,
             in PlaceBuildingCommand command)
         {
             if (command.InstantComplete != 0 || command.BuildingId > 0)
                 return true;
-            if (!em.HasBuffer<BuildingCost>(session))
+            if (!em.HasBuffer<BuildingCost>(prefab))
                 return true;
 
-            var costs = em.GetBuffer<BuildingCost>(session);
+            var costs = em.GetBuffer<BuildingCost>(prefab);
             if (!em.HasBuffer<ResourceAmount>(session))
-            {
-                for (var i = 0; i < costs.Length; i++)
-                {
-                    if (costs[i].TypeId == typeId && costs[i].Amount > 0.0001f)
-                        return false;
-                }
-
-                return true;
-            }
+                return !BuildingCosts.HasCost(costs);
 
             var stock = em.GetBuffer<ResourceAmount>(session);
-            for (var i = 0; i < costs.Length; i++)
-            {
-                var cost = costs[i];
-                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
-                    continue;
-                if (!ResourceLedger.Has(stock, cost.ResourceId, cost.Amount))
-                    return false;
-            }
+            if (!BuildingCosts.CanAfford(costs, stock))
+                return false;
 
             for (var i = 0; i < costs.Length; i++)
             {
                 var cost = costs[i];
-                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
+                if (cost.Amount <= 0.0001f)
                     continue;
                 ResourceLedger.Add(stock, cost.ResourceId, -cost.Amount);
             }

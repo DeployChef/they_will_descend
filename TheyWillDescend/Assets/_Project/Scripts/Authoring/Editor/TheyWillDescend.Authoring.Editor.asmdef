@@ -3,8 +3,10 @@
     "rootNamespace": "TheyWillDescend.Authoring.Editor",
     "references": [
         "TheyWillDescend.Authoring",
+        "TheyWillDescend.Presentation",
         "TheyWillDescend.Simulation",
-        "Unity.Mathematics"
+        "Unity.Mathematics",
+        "FMODUnity"
     ],
     "includePlatforms": [
         "Editor"

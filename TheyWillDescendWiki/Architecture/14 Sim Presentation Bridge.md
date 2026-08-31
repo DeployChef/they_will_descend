@@ -32,7 +32,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 ```text
 кнопка spawn / place
-  → HUD каталог из BuildingPrototype
+  → HUD каталог: ключ из BuildingPrototype, имя с BuildingView
   → SimCommands.TryPost (буфер на session)
   → CommandSystemGroup
   → агент: Instantiate(SimPrototypes.Agent)

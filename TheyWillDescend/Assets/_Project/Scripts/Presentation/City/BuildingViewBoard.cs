@@ -20,6 +20,7 @@ namespace TheyWillDescend.Presentation.City
     {
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingSelection selection;
+        [SerializeField] TheyWillDescend.Simulation.Content.BuildingCatalogAsset catalog;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
         readonly Color _constructionFill = new(0.25f, 0.85f, 0.45f, 0.95f);
         readonly Color _loadFill = new(0.95f, 0.72f, 0.18f, 0.95f);
@@ -57,9 +58,7 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             var em = world.EntityManager;
-            using var query = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<LocalTransform>());
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
             Sync(em, query);
         }
 
@@ -112,55 +111,53 @@ namespace TheyWillDescend.Presentation.City
 
             var entities = query.ToEntityArray(Allocator.Temp);
             var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
-            var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             _seen.Clear();
             var cam = Camera.main;
             for (var i = 0; i < buildings.Length; i++)
             {
                 var building = buildings[i];
+                var entity = entities[i];
+                var position = PositionOf(em, entity);
                 _seen.Add(building.Id);
                 if (!_views.TryGetValue(building.Id, out var view) || view?.Root == null)
                 {
-                    view = em.HasComponent<Headquarters>(entities[i])
-                        ? CreateHqView(building, transforms[i].Position)
+                    view = em.HasComponent<Headquarters>(entity)
+                        ? CreateHqView(building, position)
                         : CreateView(building);
                 }
 
                 if (view == null)
                     continue;
 
-                var constructing = em.HasComponent<Construction>(entities[i]);
-                var barOn = view.BarRoot != null;
-                if (barOn)
-                    view.BarRoot.SetActive(true);
+                var constructing = em.HasComponent<Construction>(entity);
+                if (view.BarRoot != null)
+                    view.BarRoot.SetActive(constructing || HasStaffBar(em, entity));
 
                 if (constructing && view.Fill != null)
                 {
-                    var construction = em.GetComponentData<Construction>(entities[i]);
+                    var construction = em.GetComponentData<Construction>(entity);
                     view.Fill.color = _constructionFill;
                     view.Fill.fillAmount = construction.Normalized;
                 }
                 else if (view.Fill != null)
                 {
-                    var paused = em.HasComponent<Workplace>(entities[i])
-                        && em.GetComponentData<Workplace>(entities[i]).IsPaused;
-                    var slots = em.HasComponent<BuildingType>(entities[i])
-                        ? em.GetComponentData<BuildingType>(entities[i]).WorkplaceSlots
+                    var paused = em.HasComponent<Workplace>(entity)
+                        && em.GetComponentData<Workplace>(entity).IsPaused;
+                    var slots = em.HasComponent<BuildingType>(entity)
+                        ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
                         : 0;
-                    var assigned = em.HasComponent<Workplace>(entities[i])
-                        ? em.GetComponentData<Workplace>(entities[i]).AssignedCount
+                    var assigned = em.HasComponent<Workplace>(entity)
+                        ? em.GetComponentData<Workplace>(entity).AssignedCount
                         : 0;
                     view.Fill.color = paused
                         ? new Color(0.45f, 0.45f, 0.48f, 0.9f)
                         : _loadFill;
                     view.Fill.fillAmount = Workplace.Load01(assigned, slots);
-                    if (slots <= 0 && view.BarRoot != null)
-                        view.BarRoot.SetActive(false);
                 }
 
                 if (view.BarRoot != null && view.BarRoot.activeSelf)
                 {
-                    var pos = (Vector3)transforms[i].Position + Vector3.up * 2.2f;
+                    var pos = (Vector3)position + Vector3.up * 2.2f;
                     view.BarRoot.transform.position = pos;
                     if (cam != null)
                         view.BarRoot.transform.rotation = Quaternion.LookRotation(
@@ -170,6 +167,11 @@ namespace TheyWillDescend.Presentation.City
                 var selected = selection != null && building.Id == selection.SelectedBuildingId;
                 if (view.ZoneRenderer != null)
                     view.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
+
+                var tintCatalog = catalog != null
+                    ? catalog
+                    : Object.FindFirstObjectByType<BuildPlacementController>()?.Catalog;
+                BuildingWorkTint.Apply(em, entity, tintCatalog);
             }
 
             if (_views.Count != _seen.Count)
@@ -187,7 +189,21 @@ namespace TheyWillDescend.Presentation.City
 
             entities.Dispose();
             buildings.Dispose();
-            transforms.Dispose();
+        }
+
+        static float3 PositionOf(EntityManager em, Entity entity)
+        {
+            if (em.HasComponent<LocalToWorld>(entity))
+                return em.GetComponentData<LocalToWorld>(entity).Position;
+            if (em.HasComponent<LocalTransform>(entity))
+                return em.GetComponentData<LocalTransform>(entity).Position;
+            return default;
+        }
+
+        static bool HasStaffBar(EntityManager em, Entity entity)
+        {
+            return em.HasComponent<BuildingType>(entity)
+                && em.GetComponentData<BuildingType>(entity).WorkplaceSlots > 0;
         }
 
         PlacedView CreateHqView(in Building building, float3 position)
@@ -198,21 +214,23 @@ namespace TheyWillDescend.Presentation.City
             root.transform.SetParent(_overlayRoot, true);
             root.transform.position = (Vector3)position;
 
+            var plaza = PlazaRadius();
             var zoneGo = new GameObject("PlazaRing");
             zoneGo.transform.SetParent(root.transform, false);
             var zoneFilter = zoneGo.AddComponent<MeshFilter>();
             var zoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            zoneFilter.sharedMesh = BuildAnnulusMesh(9f, 13.5f, 48, 0.06f);
+            zoneFilter.sharedMesh = BuildAnnulusMesh(plaza * 0.55f, plaza * 0.92f, 48, 0.06f);
             zoneRenderer.sharedMaterial = _placedZoneMaterial;
             zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
             zoneRenderer.receiveShadows = false;
 
+            const float clickHeight = 18f;
             var click = new GameObject("ClickProxy");
             click.transform.SetParent(root.transform, false);
-            click.transform.localPosition = Vector3.up * 6f;
+            click.transform.localPosition = Vector3.up * (clickHeight * 0.5f);
             var capsule = click.AddComponent<CapsuleCollider>();
-            capsule.radius = 12f;
-            capsule.height = 28f;
+            capsule.radius = plaza * 0.82f;
+            capsule.height = clickHeight;
             capsule.direction = 1;
 
             var tag = root.AddComponent<BuildingIdTag>();
@@ -430,16 +448,29 @@ namespace TheyWillDescend.Presentation.City
             _overlayRoot = go.transform;
         }
 
+        static float PlazaRadius()
+        {
+            if (TryGetCityGrid(out var grid) && grid.Config.InnerRadius > 0.5f)
+                return grid.Config.InnerRadius;
+            return RadialGridConfig.Default.InnerRadius;
+        }
+
         static bool TryGetCityCenter(out float3 center)
         {
             center = default;
-            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<CityGrid>(bag))
-                return false;
-            var grid = em.GetComponentData<CityGrid>(bag);
-            if (grid.Ready == 0)
+            if (!TryGetCityGrid(out var grid))
                 return false;
             center = grid.Center;
             return true;
+        }
+
+        static bool TryGetCityGrid(out CityGrid grid)
+        {
+            grid = default;
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<CityGrid>(bag))
+                return false;
+            grid = em.GetComponentData<CityGrid>(bag);
+            return grid.Ready != 0;
         }
     }
 }

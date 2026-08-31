@@ -71,8 +71,7 @@ namespace TheyWillDescend.Simulation.City
                 : LocalTransform.Identity;
 
             var catalog = em.GetBuffer<BuildingPrototype>(session);
-            var prefab = ConsumePlaceBuildingCommandsSystem.ResolveHousePrefab(
-                catalog, building.TypeId, building.WidthClusters, building.DepthRadialRings);
+            var prefab = ConsumePlaceBuildingCommandsSystem.ResolveHousePrefab(catalog, building.TypeId);
 
             em.DestroyEntity(site);
             if (prefab == Entity.Null)

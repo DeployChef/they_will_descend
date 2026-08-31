@@ -46,13 +46,15 @@ namespace TheyWillDescend.Presentation.City
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
 
+        public BuildingCatalogAsset Catalog => catalog;
+
         public bool IsPlacing => _placing;
 
         public event Action Finished;
 
         public void BeginPlacing(string typeId)
         {
-            if (!TryResolvePrototype(typeId, out var prototype) || !prototype.Footprint.IsValid)
+            if (!TryResolvePrototype(typeId, out var prototype) || prototype.Prefab == Entity.Null)
             {
                 GameLog.Error($"Place mode: unknown building type {typeId}.");
                 return;
@@ -64,15 +66,32 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            _typeId = prototype.TypeId.ToString();
-            _footprint = prototype.Footprint;
-            _meshSize = prototype.MeshSize > 0.001f ? prototype.MeshSize : 1f;
+            if (!SimWorld.TryGet(out var em, out _)
+                || !em.HasComponent<BuildingType>(prototype.Prefab))
+            {
+                GameLog.Error($"Place mode: stamp for {typeId} has no BuildingType.");
+                return;
+            }
+
+            var type = em.GetComponentData<BuildingType>(prototype.Prefab);
+            if (!type.Footprint.IsValid)
+            {
+                GameLog.Error($"Place mode: invalid footprint for {typeId}.");
+                return;
+            }
+            _typeId = type.TypeId.ToString();
+            _footprint = type.Footprint;
+            _meshSize = em.HasComponent<BuildingMeshSize>(prototype.Prefab)
+                ? em.GetComponentData<BuildingMeshSize>(prototype.Prefab).Horizontal
+                : 1f;
+            if (_meshSize <= 0.001f)
+                _meshSize = 1f;
             _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
             gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
-            GameLog.Info($"Place mode: {prototype.DisplayName}.");
+            GameLog.Info($"Place mode: {BuildingView.NameOf(_ghostPrefab)}.");
         }
 
         public void CancelPlacing()
@@ -383,7 +402,7 @@ namespace TheyWillDescend.Presentation.City
                 || !SimWorld.TryGet(out var em, out var bag)
                 || !em.HasBuffer<BuildingPrototype>(bag))
                 return false;
-            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, 0, 0, out prototype);
+            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, out prototype);
         }
 
         static bool OverlapsOccupied(List<(int cluster, int radial)> clusters)
@@ -408,15 +427,16 @@ namespace TheyWillDescend.Presentation.City
 
         static bool CanAfford(string typeId)
         {
-            var id = ContentId.EncodeOrEmpty(typeId);
-            if (id.IsEmpty
-                || !SimWorld.TryGet(out var em, out var bag)
-                || !em.HasBuffer<BuildingCost>(bag))
+            if (!TryResolvePrototype(typeId, out var prototype))
                 return true;
-            var costs = em.GetBuffer<BuildingCost>(bag);
+            if (!SimWorld.TryGet(out var em, out var bag))
+                return true;
+            if (!em.HasBuffer<BuildingCost>(prototype.Prefab))
+                return true;
+            var costs = em.GetBuffer<BuildingCost>(prototype.Prefab);
             if (!em.HasBuffer<ResourceAmount>(bag))
-                return !BuildingCosts.HasCost(costs, id);
-            return BuildingCosts.CanAfford(costs, em.GetBuffer<ResourceAmount>(bag), id);
+                return !BuildingCosts.HasCost(costs);
+            return BuildingCosts.CanAfford(costs, em.GetBuffer<ResourceAmount>(bag));
         }
 
         void OnDisable()

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
-using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
@@ -18,10 +17,10 @@ namespace TheyWillDescend.Authoring.City
 
         public BuildingCatalogAsset Catalog => catalog;
 
-        public bool TryGet(string typeId, out BuildingDefinition definition)
+        public bool TryGet(string typeId, out GameObject prefab)
         {
-            definition = null;
-            return catalog != null && catalog.TryGet(typeId, out definition);
+            prefab = null;
+            return catalog != null && catalog.TryGet(typeId, out prefab);
         }
 
         class Baker : Baker<BuildingCatalogAuthoring>
@@ -30,8 +29,6 @@ namespace TheyWillDescend.Authoring.City
             {
                 var entity = GetEntity(TransformUsageFlags.None);
                 var buffer = AddBuffer<BuildingPrototype>(entity);
-                var costs = AddBuffer<BuildingCost>(entity);
-                var recipes = AddBuffer<BuildingRecipeLine>(entity);
                 var so = authoring.catalog;
                 if (so == null)
                 {
@@ -41,125 +38,59 @@ namespace TheyWillDescend.Authoring.City
 
                 DependsOn(so);
                 var seen = new HashSet<string>(System.StringComparer.Ordinal);
-                var buildings = so.Buildings;
-                for (var i = 0; i < buildings.Count; i++)
-                    BakeEntry(buffer, costs, recipes, seen, buildings[i], authoring);
+                var prefabs = so.Prefabs;
+                for (var i = 0; i < prefabs.Count; i++)
+                    BakeEntry(buffer, seen, prefabs[i], authoring);
             }
 
             void BakeEntry(
                 DynamicBuffer<BuildingPrototype> buffer,
-                DynamicBuffer<BuildingCost> costs,
-                DynamicBuffer<BuildingRecipeLine> recipes,
                 HashSet<string> seen,
-                BuildingDefinition definition,
+                GameObject prefab,
                 BuildingCatalogAuthoring host)
             {
-                if (definition == null)
+                if (prefab == null)
                 {
-                    Debug.LogError("Building catalog has a missing definition.", host);
+                    Debug.LogError("Building catalog has a missing prefab.", host);
                     return;
                 }
 
-                DependsOn(definition);
-                DependsOnRates(definition.RecipeInputs);
-                DependsOnRates(definition.RecipeOutputs);
-                var typeId = definition.TypeId;
+                DependsOn(prefab);
+                var key = prefab.GetComponent<BuildingKey>();
+                if (key == null)
+                {
+                    Debug.LogError($"Prefab '{prefab.name}' needs a BuildingKey.", prefab);
+                    return;
+                }
+
+                var typeId = key.TypeId;
                 if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
                 {
-                    Debug.LogError($"Building '{definition.name}' has an empty or too-long typeId.", definition);
+                    Debug.LogError($"Building '{prefab.name}' has an empty or too-long typeId.", prefab);
                     return;
                 }
 
                 if (!seen.Add(typeId))
                 {
-                    Debug.LogError($"Building catalog: duplicate typeId {typeId} ({definition.name}).", definition);
+                    Debug.LogError($"Building catalog: duplicate typeId {typeId} ({prefab.name}).", prefab);
                     return;
                 }
 
-                var prefab = definition.Prefab;
-                if (prefab == null)
+                if (prefab.GetComponent<BuildingFootprintAuthoring>() == null)
                 {
-                    Debug.LogError($"Building '{definition.DisplayName}' (type {typeId}) has no prefab.", definition);
+                    Debug.LogError($"Prefab '{prefab.name}' needs BuildingFootprintAuthoring.", prefab);
                     return;
                 }
 
-                DependsOn(prefab);
                 var stamp = GetEntity(prefab, TransformUsageFlags.Dynamic);
                 if (stamp == Entity.Null)
                     return;
 
-                var authoring = prefab.GetComponent<BuildingAuthoring>();
-                if (authoring == null || authoring.Definition != definition)
-                {
-                    Debug.LogError(
-                        $"Prefab '{prefab.name}' must have BuildingAuthoring pointing at '{definition.name}'.",
-                        prefab);
-                    return;
-                }
-
                 buffer.Add(new BuildingPrototype
                 {
                     TypeId = typeKey,
-                    Prefab = stamp,
-                    DisplayName = definition.DisplayName,
-                    WidthClusters = definition.WidthClusters,
-                    DepthRadialRings = definition.DepthRadialRings,
-                    MeshSize = BuildingPrefabMetrics.HorizontalSize(prefab),
-                    ConstructionDuration = definition.ConstructionDuration,
-                    WorkplaceSlots = definition.WorkplaceSlots
+                    Prefab = stamp
                 });
-
-                var costList = definition.BuildCost;
-                for (var c = 0; c < costList.Length; c++)
-                {
-                    var entry = costList[c];
-                    if (entry.Resource == null || entry.Amount <= 0.0001f)
-                        continue;
-                    DependsOn(entry.Resource);
-                    costs.Add(new BuildingCost
-                    {
-                        TypeId = typeKey,
-                        ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
-                        Amount = entry.Amount
-                    });
-                }
-
-                BakeRecipe(recipes, typeKey, definition.RecipeInputs, BuildingRecipeKind.Input);
-                BakeRecipe(recipes, typeKey, definition.RecipeOutputs, BuildingRecipeKind.Output);
-            }
-
-            void BakeRecipe(
-                DynamicBuffer<BuildingRecipeLine> recipes,
-                FixedString64Bytes typeKey,
-                ResourceRate[] rates,
-                BuildingRecipeKind kind)
-            {
-                if (rates == null)
-                    return;
-                for (var i = 0; i < rates.Length; i++)
-                {
-                    var entry = rates[i];
-                    if (entry.Resource == null || entry.PerHour <= 0.0001f)
-                        continue;
-                    recipes.Add(new BuildingRecipeLine
-                    {
-                        TypeId = typeKey,
-                        Kind = kind,
-                        ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
-                        PerHour = entry.PerHour
-                    });
-                }
-            }
-
-            void DependsOnRates(ResourceRate[] rates)
-            {
-                if (rates == null)
-                    return;
-                for (var i = 0; i < rates.Length; i++)
-                {
-                    if (rates[i].Resource != null)
-                        DependsOn(rates[i].Resource);
-                }
             }
         }
     }
