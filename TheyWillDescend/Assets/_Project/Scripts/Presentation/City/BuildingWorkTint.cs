@@ -14,9 +14,6 @@ namespace TheyWillDescend.Presentation.City
     {
         public static void Apply(EntityManager em, Entity entity, BuildingCatalogAsset catalog)
         {
-            if (!em.HasComponent<URPMaterialPropertyBaseColor>(entity))
-                return;
-
             var constructing = em.HasComponent<Construction>(entity);
             var working = em.HasComponent<Workplace>(entity)
                 && !em.GetComponentData<Workplace>(entity).IsPaused
@@ -28,10 +25,29 @@ namespace TheyWillDescend.Presentation.City
                 : working
                     ? colors.working
                     : colors.idle;
-            em.SetComponentData(entity, new URPMaterialPropertyBaseColor
+            var tint = new URPMaterialPropertyBaseColor
             {
                 Value = new float4(color.r, color.g, color.b, color.a)
-            });
+            };
+            WriteTint(em, entity, tint);
+            if (!em.HasBuffer<LinkedEntityGroup>(entity))
+                return;
+
+            var group = em.GetBuffer<LinkedEntityGroup>(entity);
+            for (var i = 0; i < group.Length; i++)
+            {
+                var child = group[i].Value;
+                if (child == entity)
+                    continue;
+                WriteTint(em, child, tint);
+            }
+        }
+
+        static void WriteTint(EntityManager em, Entity entity, in URPMaterialPropertyBaseColor tint)
+        {
+            if (!em.Exists(entity) || !em.HasComponent<URPMaterialPropertyBaseColor>(entity))
+                return;
+            em.SetComponentData(entity, tint);
         }
 
         static (Color idle, Color working, Color construction) ResolveColors(

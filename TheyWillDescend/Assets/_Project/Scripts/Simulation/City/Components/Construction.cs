@@ -4,7 +4,8 @@ using Unity.Mathematics;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Present = still building. Mesh stamp is instantiated only after this is removed.
+    /// Present = still unbuilt. Same stamp entity as the finished house.
+    /// People will drive Elapsed later; now a timer.
     /// </summary>
     public struct Construction : IComponentData
     {

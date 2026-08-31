@@ -8,70 +8,55 @@ using UnityEngine;
 namespace TheyWillDescend.Authoring.City
 {
     /// <summary>
-    /// Bakes optional stamp modules onto the house prefab entity.
-    /// <see cref="BuildingKey"/> is required; other authoring on the same GO is optional.
+    /// Bakes optional stamp packs onto the house prefab entity.
     /// </summary>
-    public sealed class BuildingKeyBaker : Baker<BuildingKey>
+    public sealed class BuildingStampBaker : Baker<BuildingStamp>
     {
-        public override void Bake(BuildingKey authoring)
+        public override void Bake(BuildingStamp authoring)
         {
             var typeId = authoring.TypeId;
             if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
             {
-                Debug.LogError($"{authoring.name}: BuildingKey has an empty or too-long typeId.", authoring);
+                Debug.LogError($"{authoring.name}: BuildingStamp has an empty or too-long typeId.", authoring);
                 return;
             }
 
-            var footprint = GetComponent<BuildingFootprintAuthoring>();
-            if (footprint == null)
-            {
-                Debug.LogError($"{authoring.name}: add BuildingFootprintAuthoring.", authoring);
-                return;
-            }
-
-            var construction = GetComponent<BuildingConstructionAuthoring>();
-            var workplace = GetComponent<BuildingWorkplaceAuthoring>();
-            var recipe = GetComponent<BuildingRecipeAuthoring>();
-            var cost = GetComponent<BuildingCostAuthoring>();
-            DependsOnRates(recipe != null ? recipe.Inputs : null);
-            DependsOnRates(recipe != null ? recipe.Outputs : null);
-            DependsOnCosts(cost != null ? cost.Costs : null);
+            DependsOnCosts(authoring.Costs);
+            DependsOnRates(authoring.RecipeInputs);
+            DependsOnRates(authoring.RecipeOutputs);
 
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            var slots = workplace != null ? workplace.Slots : 0;
+            var slots = authoring.WorkplaceSlots;
             AddComponent(entity, new BuildingType
             {
                 TypeId = typeKey,
-                WidthClusters = footprint.WidthClusters,
-                DepthRadialRings = footprint.DepthRadialRings,
-                ConstructionDuration = construction != null ? construction.Duration : 0f,
+                WidthClusters = authoring.WidthClusters,
+                DepthRadialRings = authoring.DepthRadialRings,
+                ConstructionDuration = authoring.ConstructionDuration,
                 WorkplaceSlots = slots
             });
             AddComponent(entity, new BuildingMeshSize
             {
                 Horizontal = BuildingPrefabMetrics.HorizontalSize(authoring.gameObject)
             });
-            AddComponent(entity, new URPMaterialPropertyBaseColor
-            {
-                Value = new float4(0.55f, 0.55f, 0.58f, 1f)
-            });
-            if (workplace != null && slots > 0)
+            AddBodyColors(authoring);
+            if (authoring.HasWorkplace)
                 AddComponent<Workplace>(entity);
 
-            if (recipe != null)
+            if (authoring.HasRecipe)
             {
                 var buffer = AddBuffer<BuildingRecipeLine>(entity);
-                AddRecipe(buffer, recipe.Inputs, BuildingRecipeKind.Input);
-                AddRecipe(buffer, recipe.Outputs, BuildingRecipeKind.Output);
+                AddRecipe(buffer, authoring.RecipeInputs, BuildingRecipeKind.Input);
+                AddRecipe(buffer, authoring.RecipeOutputs, BuildingRecipeKind.Output);
             }
 
-            if (cost != null)
+            var costs = authoring.Costs;
+            if (HasAnyCost(costs))
             {
                 var buffer = AddBuffer<BuildingCost>(entity);
-                var list = cost.Costs;
-                for (var i = 0; i < list.Length; i++)
+                for (var i = 0; i < costs.Length; i++)
                 {
-                    var entry = list[i];
+                    var entry = costs[i];
                     if (entry.Resource == null || entry.Amount <= 0.0001f)
                         continue;
                     DependsOn(entry.Resource);
@@ -117,6 +102,23 @@ namespace TheyWillDescend.Authoring.City
             }
         }
 
+        void AddBodyColors(BuildingStamp authoring)
+        {
+            var renderers = authoring.GetComponentsInChildren<MeshRenderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer == null || renderer.GetComponentInParent<BakeStripAuthoring>() != null)
+                    continue;
+
+                var visual = GetEntity(renderer.gameObject, TransformUsageFlags.Dynamic);
+                AddComponent(visual, new URPMaterialPropertyBaseColor
+                {
+                    Value = new float4(0.55f, 0.55f, 0.58f, 1f)
+                });
+            }
+        }
+
         void DependsOnCosts(BuildingCostEntry[] costs)
         {
             if (costs == null)
@@ -126,6 +128,19 @@ namespace TheyWillDescend.Authoring.City
                 if (costs[i].Resource != null)
                     DependsOn(costs[i].Resource);
             }
+        }
+
+        static bool HasAnyCost(BuildingCostEntry[] costs)
+        {
+            if (costs == null)
+                return false;
+            for (var i = 0; i < costs.Length; i++)
+            {
+                if (costs[i].Resource != null && costs[i].Amount > 0.0001f)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

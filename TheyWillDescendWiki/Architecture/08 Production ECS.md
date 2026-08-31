@@ -80,7 +80,7 @@ UI ← читает ledger / Construction
 | Добавляем | Куда | Не переписываем |
 | --- | --- | --- |
 | Ресурс | content + `ResourceAmount` | весь UI (чипы HUD пока сценой — временно) |
-| Здание | префаб + модули + catalog prefabs | ядро production «на каждый тип» |
+| Здание | префаб + `BuildingStamp` + catalog prefabs | ядро production «на каждый тип» |
 | Закон | modifier components / tags | разрозненные if по коду |
 | Кризис | event entity + Crisis group | экономику с нуля |
 | Другой UI | Presentation | Simulation |

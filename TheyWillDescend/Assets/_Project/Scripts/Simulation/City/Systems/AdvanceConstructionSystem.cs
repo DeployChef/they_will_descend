@@ -39,7 +39,7 @@ namespace TheyWillDescend.Simulation.City
             if (dt <= 0f)
                 return;
 
-            if (!em.HasBuffer<BuildingPrototype>(session) || sites.IsEmptyIgnoreFilter)
+            if (sites.IsEmptyIgnoreFilter)
                 return;
 
             using var entities = sites.ToEntityArray(Allocator.Temp);
@@ -56,28 +56,23 @@ namespace TheyWillDescend.Simulation.City
             }
 
             for (var i = 0; i < finished.Length; i++)
-                FinishSite(em, session, finished[i]);
+                FinishSite(em, finished[i]);
             finished.Dispose();
         }
 
-        static void FinishSite(EntityManager em, Entity session, Entity site)
+        static void FinishSite(EntityManager em, Entity site)
         {
-            if (!em.Exists(site) || !em.HasComponent<Building>(site))
+            if (!em.Exists(site) || !em.HasComponent<Construction>(site))
                 return;
 
-            var building = em.GetComponentData<Building>(site);
-            var transform = em.HasComponent<LocalTransform>(site)
-                ? em.GetComponentData<LocalTransform>(site)
-                : LocalTransform.Identity;
-
-            var catalog = em.GetBuffer<BuildingPrototype>(session);
-            var prefab = ConsumePlaceBuildingCommandsSystem.ResolveHousePrefab(catalog, building.TypeId);
-
-            em.DestroyEntity(site);
-            if (prefab == Entity.Null)
-                return;
-
-            ConsumePlaceBuildingCommandsSystem.SpawnFinishedHouse(em, prefab, building, transform);
+            em.RemoveComponent<Construction>(site);
+#if UNITY_EDITOR
+            if (em.HasComponent<Building>(site))
+            {
+                var building = em.GetComponentData<Building>(site);
+                em.SetName(site, $"Building_{building.Id}");
+            }
+#endif
         }
     }
 }

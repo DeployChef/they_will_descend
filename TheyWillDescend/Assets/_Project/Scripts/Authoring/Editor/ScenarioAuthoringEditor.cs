@@ -220,9 +220,9 @@ namespace TheyWillDescend.Authoring.Editor
 
         static void StripRuntimeAuthoring(GameObject root)
         {
-            var keys = root.GetComponentsInChildren<TheyWillDescend.Simulation.Content.BuildingKey>(true);
-            for (var i = 0; i < keys.Length; i++)
-                Undo.DestroyObjectImmediate(keys[i]);
+            var stamps = root.GetComponentsInChildren<TheyWillDescend.Simulation.Content.BuildingStamp>(true);
+            for (var i = 0; i < stamps.Length; i++)
+                Undo.DestroyObjectImmediate(stamps[i]);
         }
 
         static void EnsureBakingOnly(GameObject go)

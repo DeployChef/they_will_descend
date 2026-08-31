@@ -1,3 +1,4 @@
+using System;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
@@ -129,32 +130,19 @@ namespace TheyWillDescend.Simulation.City
                 ? command.ConstructionDuration
                 : type.ConstructionDuration;
 
-            if (command.InstantComplete != 0 || duration <= 0.001f)
+            Construction? construction = null;
+            if (command.InstantComplete == 0 && duration > 0.001f)
             {
-                SpawnFinishedHouse(em, prefab, building, transform);
-                return;
+                var site = new Construction
+                {
+                    Elapsed = math.max(0f, command.ConstructionElapsed),
+                    Duration = duration
+                };
+                if (!site.IsComplete)
+                    construction = site;
             }
 
-            var construction = new Construction
-            {
-                Elapsed = math.max(0f, command.ConstructionElapsed),
-                Duration = duration
-            };
-            if (construction.IsComplete)
-            {
-                SpawnFinishedHouse(em, prefab, building, transform);
-                return;
-            }
-
-            var site = em.CreateEntity();
-            em.AddComponentData(site, building);
-            em.AddComponentData(site, construction);
-            if (em.HasComponent<Workplace>(prefab))
-                em.AddComponentData(site, new Workplace());
-            SimEntityPose.Apply(em, site, transform);
-#if UNITY_EDITOR
-            em.SetName(site, $"BuildingSite_{building.Id}");
-#endif
+            SpawnHouse(em, prefab, building, transform, construction);
         }
 
         public static void SpawnFinishedHouse(
@@ -163,6 +151,16 @@ namespace TheyWillDescend.Simulation.City
             in Building building,
             LocalTransform transform)
         {
+            SpawnHouse(em, prefab, building, transform, null);
+        }
+
+        public static void SpawnHouse(
+            EntityManager em,
+            Entity prefab,
+            in Building building,
+            LocalTransform transform,
+            Construction? construction)
+        {
             var entity = em.Instantiate(prefab);
             if (!em.HasComponent<Building>(entity))
                 em.AddComponent<Building>(entity);
@@ -170,8 +168,12 @@ namespace TheyWillDescend.Simulation.City
             if (em.HasComponent<Workplace>(entity))
                 em.SetComponentData(entity, new Workplace());
             SimEntityPose.Apply(em, entity, transform);
+            if (construction.HasValue)
+                em.AddComponentData(entity, construction.Value);
 #if UNITY_EDITOR
-            em.SetName(entity, $"Building_{building.Id}");
+            em.SetName(entity, construction.HasValue
+                ? $"BuildingSite_{building.Id}"
+                : $"Building_{building.Id}");
 #endif
         }
 

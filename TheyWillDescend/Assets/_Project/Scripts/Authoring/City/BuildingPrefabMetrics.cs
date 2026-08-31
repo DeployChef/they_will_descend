@@ -12,6 +12,8 @@ namespace TheyWillDescend.Authoring.City
             var filters = prefab.GetComponentsInChildren<MeshFilter>(true);
             for (var i = 0; i < filters.Length; i++)
             {
+                if (filters[i].GetComponentInParent<BakeStripAuthoring>() != null)
+                    continue;
                 var mesh = filters[i].sharedMesh;
                 if (mesh == null)
                     continue;

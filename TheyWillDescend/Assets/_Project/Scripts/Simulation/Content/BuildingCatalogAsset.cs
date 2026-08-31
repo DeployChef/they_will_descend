@@ -27,8 +27,8 @@ namespace TheyWillDescend.Simulation.Content
                 var entry = buildings[i];
                 if (entry == null)
                     continue;
-                var key = entry.GetComponent<BuildingKey>();
-                if (key == null || key.TypeId != id)
+                var stamp = entry.GetComponent<BuildingStamp>();
+                if (stamp == null || stamp.TypeId != id)
                     continue;
                 prefab = entry;
                 return true;

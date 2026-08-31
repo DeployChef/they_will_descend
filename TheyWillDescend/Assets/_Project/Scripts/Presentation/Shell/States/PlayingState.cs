@@ -1,3 +1,4 @@
+using System;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.GameHud;
@@ -21,7 +22,15 @@ namespace TheyWillDescend.Shell.States
         public void Enter()
         {
             SimCommands.TryPost(SimClockCommand.InGame(true));
-            _audio?.StartSessionMusic();
+            try
+            {
+                _audio?.StartSessionMusic();
+            }
+            catch (Exception e)
+            {
+                GameLog.Error($"Playing: music failed to start. {e.Message}");
+            }
+
             _input.PausePressed += OnPausePressed;
             _input.EnableGame();
             GameLog.Info("Playing: Esc pauses the city (stay in Playing).");

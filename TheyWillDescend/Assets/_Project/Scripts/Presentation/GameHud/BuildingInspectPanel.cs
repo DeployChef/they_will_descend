@@ -239,12 +239,13 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (constructing)
             {
+                var construction = em.GetComponentData<Construction>(entity);
                 if (subtitle != null)
                     subtitle.text = "Under construction";
                 if (status != null)
                     status.text = "Crew locked until the house stands.";
                 if (workFill != null)
-                    workFill.fillAmount = 0.35f;
+                    workFill.fillAmount = construction.Normalized;
             }
             else if (!onShift)
             {

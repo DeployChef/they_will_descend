@@ -36,13 +36,14 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
   → SimCommands.TryPost (буфер на session)
   → CommandSystemGroup
   → агент: Instantiate(SimPrototypes.Agent)
-  → дом: Building + Construction + LocalTransform
-       complete → Instantiate(House stamp)
+  → дом: Instantiate(штамп) + Building; Construction пока не построен
+       complete → снять Construction (тот же entity)
 
 вид (LateUpdate pull)
   ← query какие entity есть
-  ← стройка: обводка + бар (BuildingViewBoard, Construction)
-  ← готовый дом: обводка; меш рисует Entities Graphics
+  ← стройка: тот же штамп (root + Body) + `_BuildingWorldUi` бар (Instantiate префаба, не new GO)
+  ← готовый дом: зона `_BuildingOverlay`; меш — Entities Graphics на ребёнке Body
+  ← HQ: `_HqOverlay` (кольцо + клик)
   ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived → меш выключен
   ← сток HUD pull ResourceAmount
   ← слот дома: BuildingInspectPanel +/− → Assign/Unassign

@@ -1,3 +1,4 @@
+using System;
 using FMOD.Studio;
 using FMODUnity;
 using TheyWillDescend.Infrastructure.Logging;
@@ -24,7 +25,8 @@ namespace TheyWillDescend.Presentation.Audio
         public void StartSessionMusic()
         {
             StopSessionMusic();
-            TryLoadMusicBank();
+            TryLoadBank("Master");
+            TryLoadBank(MusicBankName);
 
             try
             {
@@ -36,7 +38,12 @@ namespace TheyWillDescend.Presentation.Audio
             {
                 GameLog.Error(
                     "GameAudio: event:/main_soundtrack not in loaded banks. " +
-                    "In FMOD Studio put it on a bank, Ctrl+B, copy .bank into StreamingAssets/Desktop/.");
+                    "In FMOD Studio put it on bank Main_theme, Ctrl+B, copy .bank into StreamingAssets/Desktop/.");
+                return;
+            }
+            catch (Exception e)
+            {
+                GameLog.Error($"GameAudio: failed to create music instance. {e.Message}");
                 return;
             }
 
@@ -45,6 +52,10 @@ namespace TheyWillDescend.Presentation.Audio
                 GameLog.Error("GameAudio: music instance is invalid.");
                 return;
             }
+
+            var listener = FindFirstObjectByType<StudioListener>();
+            if (listener != null)
+                RuntimeManager.AttachInstanceToGameObject(_music, listener.transform);
 
             _music.start();
             _lastPaused = false;
@@ -56,6 +67,7 @@ namespace TheyWillDescend.Presentation.Audio
             if (!_music.isValid())
                 return;
 
+            RuntimeManager.DetachInstanceFromGameObject(_music);
             _music.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
             _music.release();
             _music.clearHandle();
@@ -67,8 +79,9 @@ namespace TheyWillDescend.Presentation.Audio
             if (!_music.isValid())
                 return;
 
-            var paused = SimWorld.TryGet(out var em, out var bag)
-                && em.GetComponentData<SimControl>(bag).PlayerPaused != 0;
+            var paused = false;
+            if (SimWorld.TryGet(out var em, out var bag) && em.HasComponent<SimControl>(bag))
+                paused = em.GetComponentData<SimControl>(bag).PlayerPaused != 0;
             if (paused == _lastPaused)
                 return;
 
@@ -78,12 +91,18 @@ namespace TheyWillDescend.Presentation.Audio
 
         void OnDestroy() => StopSessionMusic();
 
-        static void TryLoadMusicBank()
+        static void TryLoadBank(string bankName)
         {
-            if (RuntimeManager.HasBankLoaded(MusicBankName))
-                return;
-
-            RuntimeManager.LoadBank(MusicBankName, loadSamples: true);
+            try
+            {
+                if (RuntimeManager.HasBankLoaded(bankName))
+                    return;
+                RuntimeManager.LoadBank(bankName, loadSamples: true);
+            }
+            catch (BankLoadException e)
+            {
+                GameLog.Warning($"GameAudio: bank '{bankName}' missing. {e.Message}");
+            }
         }
     }
 }

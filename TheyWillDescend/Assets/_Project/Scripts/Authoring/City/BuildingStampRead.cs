@@ -5,7 +5,7 @@ using UnityEngine;
 namespace TheyWillDescend.Authoring.City
 {
     /// <summary>
-    /// Read stamp modules from a catalog prefab (editor + baker helpers).
+    /// Read stamp card from a catalog prefab (editor + baker helpers).
     /// </summary>
     public static class BuildingStampRead
     {
@@ -13,8 +13,8 @@ namespace TheyWillDescend.Authoring.City
         {
             if (prefab == null)
                 return string.Empty;
-            var key = prefab.GetComponent<BuildingKey>();
-            return key != null ? key.TypeId : string.Empty;
+            var stamp = prefab.GetComponent<BuildingStamp>();
+            return stamp != null ? stamp.TypeId : string.Empty;
         }
 
         public static bool TryFootprint(GameObject prefab, out BuildingFootprint footprint)
@@ -22,10 +22,10 @@ namespace TheyWillDescend.Authoring.City
             footprint = default;
             if (prefab == null)
                 return false;
-            var module = prefab.GetComponent<BuildingFootprintAuthoring>();
-            if (module == null)
+            var stamp = prefab.GetComponent<BuildingStamp>();
+            if (stamp == null)
                 return false;
-            footprint = module.Footprint;
+            footprint = stamp.Footprint;
             return footprint.IsValid;
         }
 

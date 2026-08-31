@@ -13,14 +13,17 @@ using UnityEngine.UI;
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Footprint zone always. Progress bar while Construction exists.
-    /// Finished house mesh is Entities Graphics on the Building entity — not this board.
+    /// Footprint overlay + world UI instances. House mesh is Entities Graphics
+    /// on the Building entity. Does not assemble bars or texts with new GameObject.
     /// </summary>
     public sealed class BuildingViewBoard : MonoBehaviour
     {
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingSelection selection;
         [SerializeField] TheyWillDescend.Simulation.Content.BuildingCatalogAsset catalog;
+        [SerializeField] BuildingOverlay overlayPrefab;
+        [SerializeField] HqOverlay hqOverlayPrefab;
+        [SerializeField] BuildingWorldUi worldUiPrefab;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
         readonly Color _constructionFill = new(0.25f, 0.85f, 0.45f, 0.95f);
         readonly Color _loadFill = new(0.95f, 0.72f, 0.18f, 0.95f);
@@ -36,6 +39,7 @@ namespace TheyWillDescend.Presentation.City
         {
             public GameObject Root;
             public MeshRenderer ZoneRenderer;
+            public BuildingWorldUi WorldUi;
             public GameObject BarRoot;
             public Image Fill;
         }
@@ -123,7 +127,7 @@ namespace TheyWillDescend.Presentation.City
                 {
                     view = em.HasComponent<Headquarters>(entity)
                         ? CreateHqView(building, position)
-                        : CreateView(building);
+                        : CreateView(em, entity, building);
                 }
 
                 if (view == null)
@@ -155,13 +159,12 @@ namespace TheyWillDescend.Presentation.City
                     view.Fill.fillAmount = Workplace.Load01(assigned, slots);
                 }
 
-                if (view.BarRoot != null && view.BarRoot.activeSelf)
+                if (view.WorldUi != null)
                 {
-                    var pos = (Vector3)position + Vector3.up * 2.2f;
-                    view.BarRoot.transform.position = pos;
+                    var pose = view.WorldUi.transform;
+                    pose.position = (Vector3)position + Vector3.up * 2.2f;
                     if (cam != null)
-                        view.BarRoot.transform.rotation = Quaternion.LookRotation(
-                            view.BarRoot.transform.position - cam.transform.position);
+                        pose.rotation = Quaternion.LookRotation(pose.position - cam.transform.position);
                 }
 
                 var selected = selection != null && building.Id == selection.SelectedBuildingId;
@@ -209,34 +212,43 @@ namespace TheyWillDescend.Presentation.City
         PlacedView CreateHqView(in Building building, float3 position)
         {
             EnsureReady();
+            if (hqOverlayPrefab == null)
+            {
+                GameLog.Error("BuildingViewBoard: assign HqOverlay prefab.");
+                return null;
+            }
+
             EnsureMaterial();
-            var root = new GameObject($"Headquarters_{building.Id}");
-            root.transform.SetParent(_overlayRoot, true);
-            root.transform.position = (Vector3)position;
+            var overlay = Object.Instantiate(hqOverlayPrefab, _overlayRoot);
+            overlay.name = $"Headquarters_{building.Id}";
+            overlay.transform.position = (Vector3)position;
+            if (overlay.IdTag != null)
+                overlay.IdTag.Id = building.Id;
 
             var plaza = PlazaRadius();
-            var zoneGo = new GameObject("PlazaRing");
-            zoneGo.transform.SetParent(root.transform, false);
-            var zoneFilter = zoneGo.AddComponent<MeshFilter>();
-            var zoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            zoneFilter.sharedMesh = BuildAnnulusMesh(plaza * 0.55f, plaza * 0.92f, 48, 0.06f);
-            zoneRenderer.sharedMaterial = _placedZoneMaterial;
-            zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            zoneRenderer.receiveShadows = false;
+            if (overlay.PlazaFilter != null)
+                overlay.PlazaFilter.sharedMesh = BuildAnnulusMesh(plaza * 0.55f, plaza * 0.92f, 48, 0.06f);
+            if (overlay.PlazaRenderer != null)
+            {
+                overlay.PlazaRenderer.sharedMaterial = _placedZoneMaterial;
+                overlay.PlazaRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                overlay.PlazaRenderer.receiveShadows = false;
+            }
 
             const float clickHeight = 18f;
-            var click = new GameObject("ClickProxy");
-            click.transform.SetParent(root.transform, false);
-            click.transform.localPosition = Vector3.up * (clickHeight * 0.5f);
-            var capsule = click.AddComponent<CapsuleCollider>();
-            capsule.radius = plaza * 0.82f;
-            capsule.height = clickHeight;
-            capsule.direction = 1;
+            if (overlay.ClickProxy != null)
+            {
+                overlay.ClickProxy.transform.localPosition = Vector3.up * (clickHeight * 0.5f);
+                overlay.ClickProxy.radius = plaza * 0.82f;
+                overlay.ClickProxy.height = clickHeight;
+                overlay.ClickProxy.direction = 1;
+            }
 
-            var tag = root.AddComponent<BuildingIdTag>();
-            tag.Id = building.Id;
-
-            var view = new PlacedView { Root = root, ZoneRenderer = zoneRenderer };
+            var view = new PlacedView
+            {
+                Root = overlay.gameObject,
+                ZoneRenderer = overlay.PlazaRenderer
+            };
             _views[building.Id] = view;
             return view;
         }
@@ -280,9 +292,15 @@ namespace TheyWillDescend.Presentation.City
             return mesh;
         }
 
-        PlacedView CreateView(in Building building)
+        PlacedView CreateView(EntityManager em, Entity entity, in Building building)
         {
             EnsureReady();
+            if (overlayPrefab == null)
+            {
+                GameLog.Error("BuildingViewBoard: assign BuildingOverlay prefab.");
+                return null;
+            }
+
             if (gridGuide == null || !TryGetCityCenter(out var center))
             {
                 GameLog.Error("BuildingViewBoard: grid or CityGrid.Center missing.");
@@ -304,94 +322,63 @@ namespace TheyWillDescend.Presentation.City
                 return null;
             }
 
-            var root = new GameObject(
-                $"Building_{building.WidthClusters}x{building.DepthRadialRings}_{building.Id}");
-            root.transform.SetParent(_overlayRoot, true);
+            var overlay = Object.Instantiate(overlayPrefab, _overlayRoot);
+            overlay.name = $"Building_{building.WidthClusters}x{building.DepthRadialRings}_{building.Id}";
+            if (overlay.IdTag != null)
+                overlay.IdTag.Id = building.Id;
 
-            var zoneGo = new GameObject("FootprintZone");
-            zoneGo.transform.SetParent(root.transform, false);
-            var zoneFilter = zoneGo.AddComponent<MeshFilter>();
-            var zoneRenderer = zoneGo.AddComponent<MeshRenderer>();
             var zoneMesh = RadialSectorMeshBuilder.BuildClusterZoneMesh(center, config, clusters);
-            zoneFilter.sharedMesh = zoneMesh;
-            zoneRenderer.sharedMaterial = _placedZoneMaterial;
-            zoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            zoneRenderer.receiveShadows = false;
-            var collider = zoneGo.AddComponent<MeshCollider>();
-            collider.sharedMesh = zoneMesh;
+            if (overlay.ZoneFilter != null)
+                overlay.ZoneFilter.sharedMesh = zoneMesh;
+            if (overlay.ZoneCollider != null)
+                overlay.ZoneCollider.sharedMesh = zoneMesh;
+            if (overlay.ZoneRenderer != null)
+            {
+                overlay.ZoneRenderer.sharedMaterial = _placedZoneMaterial;
+                overlay.ZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                overlay.ZoneRenderer.receiveShadows = false;
+            }
 
-            var tag = root.AddComponent<BuildingIdTag>();
-            tag.Id = building.Id;
-
-            var view = new PlacedView { Root = root, ZoneRenderer = zoneRenderer };
-            CreateProgressBar(view, root.transform);
+            var worldUi = SpawnWorldUi(em, entity, overlay.transform);
+            var view = new PlacedView
+            {
+                Root = overlay.gameObject,
+                ZoneRenderer = overlay.ZoneRenderer,
+                WorldUi = worldUi,
+                BarRoot = worldUi != null ? worldUi.BarRoot : null,
+                Fill = worldUi != null ? worldUi.Fill : null
+            };
             _views[building.Id] = view;
             return view;
         }
 
-        static void CreateProgressBar(PlacedView view, Transform parent)
+        BuildingWorldUi SpawnWorldUi(EntityManager em, Entity entity, Transform parent)
         {
-            var bar = new GameObject("ConstructionBar");
-            bar.transform.SetParent(parent, false);
-            var canvas = bar.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = 20;
-            var group = bar.AddComponent<CanvasGroup>();
-            group.interactable = false;
-            group.blocksRaycasts = false;
-            var rect = bar.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(180f, 22f);
-            bar.transform.localScale = Vector3.one * 0.02f;
+            var prefab = ResolveWorldUiPrefab(em, entity);
+            if (prefab == null)
+            {
+                GameLog.Error("BuildingViewBoard: assign BuildingWorldUi prefab.");
+                return null;
+            }
 
-            var bg = CreateBarImage(bar.transform, "Bg", new Color(0.08f, 0.1f, 0.12f, 0.85f));
-            Stretch(bg.rectTransform);
-
-            var fill = CreateBarImage(bar.transform, "Fill", new Color(0.25f, 0.85f, 0.45f, 0.95f));
-            Stretch(fill.rectTransform);
-            fill.type = Image.Type.Filled;
-            fill.fillMethod = Image.FillMethod.Horizontal;
-            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
-            fill.fillAmount = 0f;
-
-            view.BarRoot = bar;
-            view.Fill = fill;
-            bar.SetActive(false);
+            var ui = Object.Instantiate(prefab, parent);
+            ui.name = "WorldUi";
+            return ui;
         }
 
-        static Sprite _whiteSprite;
-
-        static Image CreateBarImage(Transform parent, string name, Color color)
+        BuildingWorldUi ResolveWorldUiPrefab(EntityManager em, Entity entity)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            var image = go.AddComponent<Image>();
-            image.sprite = WhiteSprite();
-            image.color = color;
-            image.raycastTarget = false;
-            return image;
-        }
-
-        static Sprite WhiteSprite()
-        {
-            if (_whiteSprite != null)
-                return _whiteSprite;
-            var texture = Texture2D.whiteTexture;
-            _whiteSprite = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f),
-                100f);
-            _whiteSprite.name = "ConstructionBarWhite";
-            return _whiteSprite;
-        }
-
-        static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            var tintCatalog = catalog != null
+                ? catalog
+                : Object.FindFirstObjectByType<BuildPlacementController>()?.Catalog;
+            if (tintCatalog == null || !em.HasComponent<Building>(entity))
+                return worldUiPrefab;
+            var typeId = em.GetComponentData<Building>(entity).TypeId.ToString();
+            var stamp = tintCatalog.FindPrefab(typeId);
+            var view = stamp != null ? stamp.GetComponent<BuildingView>() : null;
+            if (view != null && view.WorldUiPrefab != null)
+                return view.WorldUiPrefab;
+            return worldUiPrefab;
         }
 
         void DestroyView(int buildingId)
@@ -443,9 +430,7 @@ namespace TheyWillDescend.Presentation.City
         {
             if (_overlayRoot != null)
                 return;
-            var go = new GameObject("BuildingOverlays");
-            go.transform.SetParent(transform, false);
-            _overlayRoot = go.transform;
+            _overlayRoot = transform;
         }
 
         static float PlazaRadius()

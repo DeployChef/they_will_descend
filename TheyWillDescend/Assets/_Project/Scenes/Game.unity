@@ -1807,7 +1807,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -16, y: -88}
+  m_AnchoredPosition: {x: -16, y: -151.47}
   m_SizeDelta: {x: 340, y: 500}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &356625421
@@ -9482,7 +9482,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -16, y: -88}
+  m_AnchoredPosition: {x: -16, y: -159.7}
   m_SizeDelta: {x: 340, y: 500}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1557076192
@@ -11433,6 +11433,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Presentation.City.BuildPlacementController
   gridGuide: {fileID: 1180480264}
   catalog: {fileID: 11400000, guid: 8ccaa307f2365bf4b9254e0d00573910, type: 2}
+  overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
   zoneValidColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
   zoneInvalidColor: {r: 0.95, g: 0.2, b: 0.15, a: 0.5}
 --- !u!4 &1884302426
@@ -11464,6 +11465,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingViewBoard
   gridGuide: {fileID: 1180480264}
   selection: {fileID: 1884302428}
+  catalog: {fileID: 0}
+  overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
+  hqOverlayPrefab: {fileID: 6350343473815025015, guid: 01ccfb3a902bc6947b3e366b444c2522, type: 3}
+  worldUiPrefab: {fileID: 5175040469931536505, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
   zoneColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
 --- !u!114 &1884302428
 MonoBehaviour:

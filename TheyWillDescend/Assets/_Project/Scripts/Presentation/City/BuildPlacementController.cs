@@ -22,6 +22,7 @@ namespace TheyWillDescend.Presentation.City
     {
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingCatalogAsset catalog;
+        [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] Color zoneValidColor = new(0.15f, 0.75f, 1f, 0.45f);
         [SerializeField] Color zoneInvalidColor = new(0.95f, 0.2f, 0.15f, 0.5f);
 
@@ -45,6 +46,7 @@ namespace TheyWillDescend.Presentation.City
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
+        BuildingOverlay _ghostOverlay;
 
         public BuildingCatalogAsset Catalog => catalog;
 
@@ -247,19 +249,36 @@ namespace TheyWillDescend.Presentation.City
             EnsureMaterials();
             if (_ghostRoot != null)
                 return;
+            if (overlayPrefab == null)
+            {
+                GameLog.Error("BuildPlacementController: assign BuildingOverlay prefab.");
+                return;
+            }
 
-            _ghostRoot = new GameObject("GhostPlacement").transform;
-            _ghostRoot.SetParent(transform, false);
+            _ghostOverlay = Instantiate(overlayPrefab, transform);
+            _ghostOverlay.name = "GhostPlacement";
+            _ghostRoot = _ghostOverlay.transform;
+            if (_ghostOverlay.ZoneCollider != null)
+                _ghostOverlay.ZoneCollider.enabled = false;
+            _ghostZoneFilter = _ghostOverlay.ZoneFilter;
+            _ghostZoneRenderer = _ghostOverlay.ZoneRenderer;
+            if (_ghostZoneFilter != null)
+            {
+                if (_ghostZoneFilter.sharedMesh == null)
+                {
+                    _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
+                    _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
+                }
+                else
+                    _ghostZoneMesh = _ghostZoneFilter.sharedMesh;
+            }
 
-            var zoneGo = new GameObject("GhostZone");
-            zoneGo.transform.SetParent(_ghostRoot, false);
-            _ghostZoneFilter = zoneGo.AddComponent<MeshFilter>();
-            _ghostZoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
-            _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
-            _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
-            _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _ghostZoneRenderer.receiveShadows = false;
+            if (_ghostZoneRenderer != null)
+            {
+                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
+                _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                _ghostZoneRenderer.receiveShadows = false;
+            }
 
             _ghostRoot.gameObject.SetActive(false);
         }
@@ -267,6 +286,8 @@ namespace TheyWillDescend.Presentation.City
         void RecreateGhostBuilding()
         {
             EnsureGhost();
+            if (_ghostRoot == null)
+                return;
             if (_ghostBuilding != null)
             {
                 Destroy(_ghostBuilding.gameObject);
@@ -279,6 +300,7 @@ namespace TheyWillDescend.Presentation.City
             var instance = Instantiate(_ghostPrefab, _ghostRoot);
             instance.name = "GhostHouse";
             StripColliders(instance);
+            HideWorldUi(instance);
             _ghostBuilding = instance.transform;
             _ghostBuilding.localScale = Vector3.one;
         }
@@ -294,6 +316,13 @@ namespace TheyWillDescend.Presentation.City
 
             t.position = pos;
             t.rotation = rot;
+        }
+
+        static void HideWorldUi(GameObject go)
+        {
+            var ui = go.GetComponentsInChildren<BuildingWorldUi>(true);
+            for (var i = 0; i < ui.Length; i++)
+                ui[i].gameObject.SetActive(false);
         }
 
         static void StripColliders(GameObject go)

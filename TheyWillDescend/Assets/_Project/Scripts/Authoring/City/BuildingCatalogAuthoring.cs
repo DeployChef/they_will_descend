@@ -56,14 +56,14 @@ namespace TheyWillDescend.Authoring.City
                 }
 
                 DependsOn(prefab);
-                var key = prefab.GetComponent<BuildingKey>();
-                if (key == null)
+                var stamp = prefab.GetComponent<BuildingStamp>();
+                if (stamp == null)
                 {
-                    Debug.LogError($"Prefab '{prefab.name}' needs a BuildingKey.", prefab);
+                    Debug.LogError($"Prefab '{prefab.name}' needs a BuildingStamp.", prefab);
                     return;
                 }
 
-                var typeId = key.TypeId;
+                var typeId = stamp.TypeId;
                 if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
                 {
                     Debug.LogError($"Building '{prefab.name}' has an empty or too-long typeId.", prefab);
@@ -76,20 +76,20 @@ namespace TheyWillDescend.Authoring.City
                     return;
                 }
 
-                if (prefab.GetComponent<BuildingFootprintAuthoring>() == null)
+                if (!stamp.Footprint.IsValid)
                 {
-                    Debug.LogError($"Prefab '{prefab.name}' needs BuildingFootprintAuthoring.", prefab);
+                    Debug.LogError($"Prefab '{prefab.name}' has an invalid footprint.", prefab);
                     return;
                 }
 
-                var stamp = GetEntity(prefab, TransformUsageFlags.Dynamic);
-                if (stamp == Entity.Null)
+                var entityPrefab = GetEntity(prefab, TransformUsageFlags.Dynamic);
+                if (entityPrefab == Entity.Null)
                     return;
 
                 buffer.Add(new BuildingPrototype
                 {
                     TypeId = typeKey,
-                    Prefab = stamp
+                    Prefab = entityPrefab
                 });
             }
         }
