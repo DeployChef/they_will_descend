@@ -79,10 +79,16 @@ namespace TheyWillDescend.Presentation.Environment
         [SerializeField] private Material nightSkyboxMaterial;
         [Tooltip("Длительность плавного перехода между скайбоксами (в долях суток). 0.05 = ~1.2 часа")]
         [SerializeField] private float skyboxBlendRange = 0.05f;
+        [Tooltip("Множитель яркости дневного скайбокса. 1 = как в исходном материале")]
+        [SerializeField, Range(0f, 8f)] private float daySkyboxExposure = 1f;
+        [Tooltip("Множитель яркости ночного скайбокса. 1 = как в исходном материале")]
+        [SerializeField, Range(0f, 8f)] private float nightSkyboxExposure = 1f;
 
         // Материал-блендер (создаётся в Awake, если оба скайбокса — кубемапы)
         private Material _blendMaterial;
         private bool _blendMaterialReady;
+        private float _dayBaseExposure = 1f;
+        private float _nightBaseExposure = 1f;
 
         private void Awake()
         {
@@ -139,9 +145,26 @@ namespace TheyWillDescend.Presentation.Environment
             };
             _blendMaterial.SetTexture("_Tex1", dayTex);
             _blendMaterial.SetTexture("_Tex2", nightTex);
+
+            // Копируем _Tint и _Exposure из исходных материалов,
+            // чтобы яркость совпадала со встроенным Skybox/Cubemap
+            CopySkyboxProperty(daySkyboxMaterial, nightSkyboxMaterial, "_Tint",
+                m => m.SetColor("_TintColor", m.GetColor("_Tint")));
+            CopySkyboxProperty(daySkyboxMaterial, nightSkyboxMaterial, "_Exposure",
+                m => _dayBaseExposure = m.GetFloat("_Exposure"));
+            CopySkyboxProperty(nightSkyboxMaterial, daySkyboxMaterial, "_Exposure",
+                m => _nightBaseExposure = m.GetFloat("_Exposure"));
+
             RenderSettings.skybox = _blendMaterial;
             _blendMaterialReady = true;
             Debug.Log("[TimeLightController] Плавный блендинг скайбоксов включён.");
+        }
+
+        /// <summary>Копирует свойство из основного материала (или из запасного, если в основном его нет).</summary>
+        private void CopySkyboxProperty(Material primary, Material fallback, string prop, System.Action<Material> apply)
+        {
+            if (primary != null && primary.HasProperty(prop)) { apply(primary); return; }
+            if (fallback != null && fallback.HasProperty(prop)) { apply(fallback); }
         }
 
         /// <summary>Достаём кубемапу из скайбокс-материала (Skybox/Cubemap использует _Tex).</summary>
@@ -269,12 +292,16 @@ namespace TheyWillDescend.Presentation.Environment
 
                 _blendMaterial.SetFloat("_Blend", dayness);
 
-                // Exposure по кривой применяется к дневной кубемапе,
-                // ночная всегда с натуральной яркостью (1.0)
+                // Итоговая экспозура = базовая (из материала) * множитель из Inspector * кривая
                 if (useSkyboxExposure)
                 {
-                    _blendMaterial.SetFloat("_Exposure1", skyboxExposureCurve.Evaluate(dayProgress));
-                    _blendMaterial.SetFloat("_Exposure2", 1f);
+                    _blendMaterial.SetFloat("_Exposure1", _dayBaseExposure * daySkyboxExposure * skyboxExposureCurve.Evaluate(dayProgress));
+                    _blendMaterial.SetFloat("_Exposure2", _nightBaseExposure * nightSkyboxExposure);
+                }
+                else
+                {
+                    _blendMaterial.SetFloat("_Exposure1", _dayBaseExposure * daySkyboxExposure);
+                    _blendMaterial.SetFloat("_Exposure2", _nightBaseExposure * nightSkyboxExposure);
                 }
                 return;
             }

@@ -23,8 +23,10 @@ Shader "Custom/Skybox/CubemapBlend"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            samplerCUBE _Tex1;
-            samplerCUBE _Tex2;
+            UNITY_DECLARE_TEXCUBE(_Tex1);
+            UNITY_DECLARE_TEXCUBE(_Tex2);
+            half4 _Tex1_HDR;
+            half4 _Tex2_HDR;
             float4 _TintColor;
             half _Exposure1;
             half _Exposure2;
@@ -51,11 +53,11 @@ Shader "Custom/Skybox/CubemapBlend"
 
             half4 frag (v2f i) : SV_Target
             {
-                half4 c1 = texCUBE(_Tex1, i.texcoord) * half4(_Exposure1, _Exposure1, _Exposure1, 1);
-                half4 c2 = texCUBE(_Tex2, i.texcoord) * half4(_Exposure2, _Exposure2, _Exposure2, 1);
-                half4 c = lerp(c2, c1, _Blend);
-                c *= _TintColor * 2.0;
-                return c;
+                half3 c1 = DecodeHDR(UNITY_SAMPLE_TEXCUBE(_Tex1, i.texcoord), _Tex1_HDR) * _Exposure1;
+                half3 c2 = DecodeHDR(UNITY_SAMPLE_TEXCUBE(_Tex2, i.texcoord), _Tex2_HDR) * _Exposure2;
+                half3 c = lerp(c2, c1, _Blend);
+                c *= _TintColor.rgb * unity_ColorSpaceDouble.rgb;
+                return half4(c, 1);
             }
             ENDCG
         }
