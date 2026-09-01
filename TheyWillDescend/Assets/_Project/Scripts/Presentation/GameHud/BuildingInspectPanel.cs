@@ -21,10 +21,15 @@ namespace TheyWillDescend.Presentation.GameHud
         public BuildingSelection Selection => selection;
         [SerializeField] GameObject card;
         [SerializeField] TMP_Text title;
-        [SerializeField] TMP_Text subtitle;
         [SerializeField] TMP_Text workers;
         [SerializeField] TMP_Text idle;
         [SerializeField] TMP_Text status;
+        [Tooltip("Тип: Workplace / Building")]
+        [SerializeField] TMP_Text buildingRole;
+        [Tooltip("Название производимого ресурса")]
+        [SerializeField] TMP_Text resourceName;
+        [Tooltip("Количество ресурса в час (без суффикса), например +2.5")]
+        [SerializeField] TMP_Text resourceRate;
         [SerializeField] Button minusButton;
         [SerializeField] Button plusButton;
         [SerializeField] Button maxMinusButton;
@@ -159,8 +164,6 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (constructing)
             {
-                if (subtitle != null)
-                    subtitle.text = "Under construction";
                 if (status != null)
                     status.text = "Crew locked until the house stands.";
                 if (workFill != null)
@@ -168,8 +171,7 @@ namespace TheyWillDescend.Presentation.GameHud
             }
             else if (!onShift)
             {
-                if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                UpdateRecipeLabels(em, bag, building.TypeId, slots, 0f);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -186,8 +188,7 @@ namespace TheyWillDescend.Presentation.GameHud
             }
             else if (paused)
             {
-                if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                UpdateRecipeLabels(em, bag, building.TypeId, slots, 0f);
                 if (status != null)
                     status.text = occupied == 0
                         ? "Production stopped. No one assigned."
@@ -198,8 +199,7 @@ namespace TheyWillDescend.Presentation.GameHud
             else
             {
                 var productionLoad = Workplace.Load01(working, slots);
-                if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, productionLoad);
+                UpdateRecipeLabels(em, bag, building.TypeId, slots, productionLoad);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -255,48 +255,49 @@ namespace TheyWillDescend.Presentation.GameHud
             return true;
         }
 
-        static string FormatRecipeSubtitle(
+        void UpdateRecipeLabels(
             EntityManager em,
             Entity session,
             FixedString64Bytes typeId,
             int slots,
             float productionLoad)
         {
-            var role = slots > 0 ? "Workplace" : "Building";
-            if (!em.HasBuffer<BuildingRecipeLine>(session))
-                return role;
+            // 1. Тип здания
+            if (buildingRole != null)
+                buildingRole.text = slots > 0 ? "Workplace" : "Building";
 
-            var recipes = em.GetBuffer<BuildingRecipeLine>(session);
-            var hasNames = em.HasBuffer<ResourceInfo>(session);
-            var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
-            var parts = new System.Text.StringBuilder(role);
-            var any = false;
-            for (var i = 0; i < recipes.Length; i++)
+            // 2-3. Ресурс и его производство в час
+            if (resourceName == null && resourceRate == null)
+                return;
+
+            string name = null;
+            string rate = null;
+            if (em.HasBuffer<BuildingRecipeLine>(session))
             {
-                var line = recipes[i];
-                if (line.TypeId != typeId || line.PerHour <= 0.0001f)
-                    continue;
-                if (!any)
+                var recipes = em.GetBuffer<BuildingRecipeLine>(session);
+                var hasNames = em.HasBuffer<ResourceInfo>(session);
+                var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
+                for (var i = 0; i < recipes.Length; i++)
                 {
-                    parts.Append("  ·  ");
-                    any = true;
-                }
-                else
-                    parts.Append("  ");
+                    var line = recipes[i];
+                    if (line.TypeId != typeId || line.PerHour <= 0.0001f)
+                        continue;
 
-                var name = hasNames
-                    ? DisplayName(names, line.ResourceId)
-                    : line.ResourceId.ToString();
-                var sign = line.Kind == BuildingRecipeKind.Input ? "−" : "+";
-                var current = line.PerHour * productionLoad;
-                parts.Append(name);
-                parts.Append(' ');
-                parts.Append(sign);
-                parts.Append(current.ToString("0.##"));
-                parts.Append("/h");
+                    // Берём первую строку рецепта (основной выход)
+                    name = hasNames
+                        ? DisplayName(names, line.ResourceId)
+                        : line.ResourceId.ToString();
+                    var sign = line.Kind == BuildingRecipeKind.Input ? "−" : "+";
+                    var current = line.PerHour * productionLoad;
+                    rate = $"{sign}{current:0.##}";
+                    break;
+                }
             }
 
-            return parts.ToString();
+            if (resourceName != null)
+                resourceName.text = name ?? string.Empty;
+            if (resourceRate != null)
+                resourceRate.text = rate ?? string.Empty;
         }
 
         static string DisplayName(DynamicBuffer<ResourceInfo> names, FixedString64Bytes resourceId)
