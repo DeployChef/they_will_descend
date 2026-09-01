@@ -68,7 +68,8 @@ SceneLoader (узкий)
   LoadAdditive / Unload — без знания экономики
 
 GameInput
-  клон TheyWillDescend.inputactions
+  клон TheyWillDescend.inputactions (инспектор: только этот asset)
+  Menu/Proceed и Game/Pause — FindAction на клоне, не InputActionReference в сцене
   Menu: Proceed (anyKey + ЛКМ/ПКМ/СКМ + gamepad south)
   Game: Pause (Esc)
 ```

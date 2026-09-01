@@ -12729,7 +12729,6 @@ GameObject:
   - component: {fileID: 2122642357}
   - component: {fileID: 2122642356}
   - component: {fileID: 2122642355}
-  - component: {fileID: 2122642359}
   m_Layer: 0
   m_Name: VCam_Gameplay
   m_TagString: Untagged
@@ -12807,8 +12806,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 624a026a2b3ac264ba9b212c7609c69c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RTSCameraController
-  moveAction: {fileID: 0}
-  zoomAction: {fileID: 0}
+  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  zoomAction: {fileID: 8552022565011884605, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprintActionName: Sprint
   camera: {fileID: 2122642353}
   cameraTarget: {fileID: 1206856169}
@@ -12975,58 +12974,6 @@ MonoBehaviour:
       Wait: 1
       Time: 2
     Restrictions: 0
---- !u!114 &2122642359
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2122642352}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 624a026a2b3ac264ba9b212c7609c69c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  zoomAction: {fileID: 8552022565011884605, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  sprintActionName: Sprint
-  camera: {fileID: 2122642353}
-  cameraTarget: {fileID: 0}
-  orbitalFollow: {fileID: 2122642358}
-  moveSpeed: 25
-  sprintSpeedMultiplier: 4
-  acceleration: 10
-  deceleration: 10
-  minRadius: 8
-  maxRadius: 15
-  radiusStep: 3
-  zoomSmoothness: 10
-  angleCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 20
-      inSlope: 0
-      outSlope: 55
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 75
-      inSlope: 55
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  mapCenter: {x: 0, y: 0, z: 0}
-  maxMapRadius: 60
 --- !u!1 &2129285028
 GameObject:
   m_ObjectHideFlags: 0

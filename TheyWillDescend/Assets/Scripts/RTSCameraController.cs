@@ -33,6 +33,8 @@ public class RTSCameraController : MonoBehaviour
 
     private Vector3 currentVelocity;
     private bool sprintInput;
+    private InputAction move;
+    private InputAction zoom;
     private InputAction sprintAction;
     private float currentSpeedMultiplier = 1f;
     private float targetRadius;
@@ -47,23 +49,25 @@ public class RTSCameraController : MonoBehaviour
 
     private void OnEnable()
     {
-        EnableMap(moveAction);
-        EnableMap(zoomAction);
-    }
-
-    private static void EnableMap(InputActionReference reference)
-    {
-        var action = reference != null ? reference.action : null;
-        action?.actionMap?.Enable();
-        action?.Enable();
+        move?.actionMap?.Enable();
+        move?.Enable();
+        zoom?.actionMap?.Enable();
+        zoom?.Enable();
     }
 
     private void Awake()
     {
-        sprintAction = InputSystem.actions != null
-            ? InputSystem.actions.FindAction(sprintActionName)
-            : null;
+        var asset = InputSystem.actions;
+        move = ActionOrFind(moveAction, asset, "Move");
+        zoom = ActionOrFind(zoomAction, asset, "Zoom");
+        sprintAction = asset != null ? asset.FindAction(sprintActionName) : null;
         sprintAction?.Enable();
+    }
+
+    static InputAction ActionOrFind(InputActionReference reference, InputActionAsset asset, string name)
+    {
+        var fromRef = reference != null ? reference.action : null;
+        return fromRef != null ? fromRef : asset?.FindAction(name);
     }
 
     private void Start()
@@ -84,7 +88,10 @@ public class RTSCameraController : MonoBehaviour
 
     void HandleMovementInput()
     {
-        Vector2 moveInput = moveAction.action.ReadValue<Vector2>();
+        if (move == null || camera == null)
+            return;
+
+        Vector2 moveInput = move.ReadValue<Vector2>();
 
         Vector3 forward = camera.transform.forward;
         forward.y = 0f;
@@ -108,7 +115,10 @@ public class RTSCameraController : MonoBehaviour
 
     void HandleZoomInput()
     {
-        float scrollInput = zoomAction.action.ReadValue<float>();
+        if (zoom == null)
+            return;
+
+        float scrollInput = zoom.ReadValue<float>();
         
         if (Mathf.Abs(scrollInput) > 0.1f)
         {
@@ -129,6 +139,9 @@ public class RTSCameraController : MonoBehaviour
 
     void UpdateMovement()
     {
+        if (cameraTarget == null)
+            return;
+
         Vector3 newPosition = cameraTarget.position + currentVelocity * Time.unscaledDeltaTime;
 
         // Проверяем лимиты карты (кратера)
