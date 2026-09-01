@@ -1,4 +1,3 @@
-using TheyWillDescend.Simulation.Content;
 using UnityEngine;
 
 namespace TheyWillDescend.Authoring.City
@@ -27,11 +26,6 @@ namespace TheyWillDescend.Authoring.City
             }
 
             return size > 0.001f ? size : 1f;
-        }
-
-        public static float HorizontalSize(BuildingDefinition definition)
-        {
-            return definition == null ? 1f : HorizontalSize(definition.Prefab);
         }
     }
 }

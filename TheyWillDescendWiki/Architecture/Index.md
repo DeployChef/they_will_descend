@@ -9,7 +9,7 @@
 ## Документы
 
 - [[00 Overview]] — стек и слои
-- [[01 Folder Structure]] — `Assets/_Project`, четыре сборки
+- [[01 Folder Structure]] — `Assets/_Project`, сборки-стены
 - [[02 Scenes & Lifetime]] — Bootstrap, MainMenu, Loading, Game, SubScene
 - [[03 Core Systems]] — AppFlow, GameSession, SimControl, GameLog
 - [[04 Simulation]] — город, люди, экономика (что есть / что ещё нет)

@@ -22,7 +22,7 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 ## Меши и поза
 
-> Поза в ECS — `LocalTransform`. Дом — испечённый entity-штамп, рисует Entities Graphics.  
+> Поза в ECS — `LocalTransform`. Дом: sim-entity (пакеты, скопированные со spec) + живой GO-вид (меш, Animator, Light). Light/Animator не печь в ECS.  
 > Человек: `Instantiate(SimPrototypes.Agent)` + `AgentType`; Mixamo GO копирует позу, пока жив Animator.
 
 Не кладём в entity: `Transform`, `Animator`, `GameObject`, слот Mixamo.  
@@ -32,17 +32,19 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 ```text
 кнопка spawn / place
-  → HUD каталог из BuildingPrototype
+  → HUD каталог: ключ из BuildingPrototype, имя с BuildingView
   → SimCommands.TryPost (буфер на session)
   → CommandSystemGroup
   → агент: Instantiate(SimPrototypes.Agent)
-  → дом: Building + Construction + LocalTransform
-       complete → Instantiate(House stamp)
+  → дом: CreateEntity из BuildingPrototype + Building; Construction пока не построен
+       complete → снять Construction (тот же entity)
 
 вид (LateUpdate pull)
   ← query какие entity есть
-  ← стройка: обводка + бар (BuildingViewBoard, Construction)
-  ← готовый дом: обводка; меш рисует Entities Graphics
+  ← доска Instantiate(Unity-штамп) один раз; `BuildingView.Sync` читает свою entity
+  ← стройка / загрузка: бар на WorldUi ребёнке штампа
+  ← зона `_BuildingOverlay` (клетка, не дом)
+  ← HQ: `_HqOverlay` (кольцо + клик)
   ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived → меш выключен
   ← сток HUD pull ResourceAmount
   ← слот дома: BuildingInspectPanel +/− → Assign/Unassign

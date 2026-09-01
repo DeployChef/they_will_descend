@@ -6,6 +6,7 @@ namespace TheyWillDescend.Authoring.City
 {
     /// <summary>
     /// HQ transform is the polar origin. Writes CityGrid.Center at bake.
+    /// HQ is a static renderer (LocalToWorld, no LocalTransform).
     /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
     [UpdateInGroup(typeof(PostBakingSystemGroup))]
@@ -17,7 +18,7 @@ namespace TheyWillDescend.Authoring.City
                 return;
 
             foreach (var transform in
-                     SystemAPI.Query<RefRO<LocalTransform>>().WithAll<Headquarters>())
+                     SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<Headquarters>())
             {
                 grid.ValueRW.Center = transform.ValueRO.Position;
                 return;

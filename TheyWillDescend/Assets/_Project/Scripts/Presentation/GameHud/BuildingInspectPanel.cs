@@ -1,4 +1,5 @@
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Content;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
@@ -211,17 +212,13 @@ namespace TheyWillDescend.Presentation.GameHud
             var slots = em.HasComponent<BuildingType>(entity)
                 ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
                 : 0;
-            if (em.HasBuffer<BuildingPrototype>(bag)
-                && BuildingCatalog.TryResolve(
-                    em.GetBuffer<BuildingPrototype>(bag),
-                    building.TypeId,
-                    0,
-                    0,
-                    out var prototype))
+            var viewCatalog = FindViewCatalog();
+            if (viewCatalog != null)
             {
-                displayName = prototype.DisplayName.ToString();
-                if (slots <= 0)
-                    slots = prototype.WorkplaceSlots;
+                var prefab = viewCatalog.FindPrefab(building.TypeId.ToString());
+                var viewName = BuildingView.NameOf(prefab);
+                if (!string.IsNullOrEmpty(viewName))
+                    displayName = viewName;
             }
 
             if (card != null)
@@ -243,17 +240,18 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (constructing)
             {
+                var construction = em.GetComponentData<Construction>(entity);
                 if (subtitle != null)
                     subtitle.text = "Under construction";
                 if (status != null)
                     status.text = "Crew locked until the house stands.";
                 if (workFill != null)
-                    workFill.fillAmount = 0.35f;
+                    workFill.fillAmount = construction.Normalized;
             }
             else if (!onShift)
             {
                 if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                    subtitle.text = FormatRecipeSubtitle(em, entity, bag, slots, 0f);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -271,7 +269,7 @@ namespace TheyWillDescend.Presentation.GameHud
             else if (paused)
             {
                 if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                    subtitle.text = FormatRecipeSubtitle(em, entity, bag, slots, 0f);
                 if (status != null)
                     status.text = occupied == 0
                         ? "Production stopped. No one assigned."
@@ -283,7 +281,7 @@ namespace TheyWillDescend.Presentation.GameHud
             {
                 var productionLoad = Workplace.Load01(working, slots);
                 if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, productionLoad);
+                    subtitle.text = FormatRecipeSubtitle(em, entity, bag, slots, productionLoad);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -340,18 +338,24 @@ namespace TheyWillDescend.Presentation.GameHud
             return true;
         }
 
+        static BuildingCatalogAsset FindViewCatalog()
+        {
+            var placement = Object.FindFirstObjectByType<BuildPlacementController>();
+            return placement != null ? placement.Catalog : null;
+        }
+
         static string FormatRecipeSubtitle(
             EntityManager em,
+            Entity buildingEntity,
             Entity session,
-            FixedString64Bytes typeId,
             int slots,
             float productionLoad)
         {
             var role = slots > 0 ? "Workplace" : "Building";
-            if (!em.HasBuffer<BuildingRecipeLine>(session))
+            if (!em.HasBuffer<BuildingRecipeLine>(buildingEntity))
                 return role;
 
-            var recipes = em.GetBuffer<BuildingRecipeLine>(session);
+            var recipes = em.GetBuffer<BuildingRecipeLine>(buildingEntity);
             var hasNames = em.HasBuffer<ResourceInfo>(session);
             var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
             var parts = new System.Text.StringBuilder(role);
@@ -359,7 +363,7 @@ namespace TheyWillDescend.Presentation.GameHud
             for (var i = 0; i < recipes.Length; i++)
             {
                 var line = recipes[i];
-                if (line.TypeId != typeId || line.PerHour <= 0.0001f)
+                if (line.PerHour <= 0.0001f)
                     continue;
                 if (!any)
                 {

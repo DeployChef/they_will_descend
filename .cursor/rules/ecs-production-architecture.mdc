@@ -17,7 +17,7 @@ Simulation (ECS): source of truth
 Content: Authoring/Baker, blobs, prefabs, balance tables
 ```
 
-Assemblies are compile walls, not DDD layers. Four: Simulation, Authoring, Presentation, Main. See wiki `01 Folder Structure`.
+Assemblies are compile walls, not DDD layers. Simulation, Content (art catalogs), Authoring, Presentation, Main. See wiki `01 Folder Structure`. Simulation does not reference Content.
 
 ## Simulation folders (feature, then layer)
 

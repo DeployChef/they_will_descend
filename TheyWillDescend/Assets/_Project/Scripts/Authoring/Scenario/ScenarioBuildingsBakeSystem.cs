@@ -11,7 +11,8 @@ namespace TheyWillDescend.Authoring.Scenario
 {
     /// <summary>
     /// Copies scenario houses/stock/worker count onto the session.
-    /// Does not Instantiate catalog prefabs — that duplicates EntityGuid in Live Conversion.
+    /// Houses become <see cref="PendingScenarioPlace"/> rows; Play spawns via
+    /// <c>SpawnHouse</c>. Does not convert catalog art.
     /// Runs after HQ writes CityGrid.Center so poses sit on the plaza origin.
     /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
@@ -89,7 +90,7 @@ namespace TheyWillDescend.Authoring.Scenario
                 for (var i = 0; i < specs.Length; i++)
                 {
                     var spec = specs[i];
-                    if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, 0, 0, out var prototype))
+                    if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, out var prototype))
                     {
                         Debug.LogError($"Scenario bake: unknown building type {spec.TypeId}.");
                         continue;

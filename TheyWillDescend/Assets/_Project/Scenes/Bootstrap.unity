@@ -390,36 +390,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Shell.GameInput
   actions: {fileID: -944628639613478452, guid: 7e4a1c9b2d5f4e08a6b3c0d1e2f34567, type: 3}
-  proceed: {fileID: 767140484}
-  pause: {fileID: 767140485}
---- !u!114 &767140484
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Menu/Proceed
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 7e4a1c9b2d5f4e08a6b3c0d1e2f34567, type: 3}
-  m_ActionId: e3b17d4a-2c58-4f0e-9a61-8d2f4c7b1e90
---- !u!114 &767140485
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Game/Pause
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 7e4a1c9b2d5f4e08a6b3c0d1e2f34567, type: 3}
-  m_ActionId: f4c28e5b-3d69-401f-ab72-9e3a5d8c2f01
 --- !u!1 &1820912095
 GameObject:
   m_ObjectHideFlags: 0

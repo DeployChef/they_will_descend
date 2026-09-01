@@ -1807,7 +1807,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -16, y: -88}
+  m_AnchoredPosition: {x: -16, y: -151.47}
   m_SizeDelta: {x: 340, y: 500}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &356625421
@@ -6179,20 +6179,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 951929505}
   m_CullTransparentMesh: 1
---- !u!114 &954774773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Player/Move
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_ActionId: 351f2ccd-1f9f-44bf-9bec-d62ac5c5f408
 --- !u!1 &969046634
 GameObject:
   m_ObjectHideFlags: 0
@@ -8943,20 +8929,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1446692634}
   m_CullTransparentMesh: 1
---- !u!114 &1458806393
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Camera/Zoom
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_ActionId: b92615ca-8b2b-497c-90e1-10d6587defaa
 --- !u!1 &1462101999
 GameObject:
   m_ObjectHideFlags: 0
@@ -9482,7 +9454,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -16, y: -88}
+  m_AnchoredPosition: {x: -16, y: -159.7}
   m_SizeDelta: {x: 340, y: 500}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1557076192
@@ -11433,6 +11405,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_Project.Scripts.Presentation.City.BuildPlacementController
   gridGuide: {fileID: 1180480264}
   catalog: {fileID: 11400000, guid: 8ccaa307f2365bf4b9254e0d00573910, type: 2}
+  overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
   zoneValidColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
   zoneInvalidColor: {r: 0.95, g: 0.2, b: 0.15, a: 0.5}
 --- !u!4 &1884302426
@@ -11464,6 +11437,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingViewBoard
   gridGuide: {fileID: 1180480264}
   selection: {fileID: 1884302428}
+  catalog: {fileID: 0}
+  overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
+  hqOverlayPrefab: {fileID: 6350343473815025015, guid: 01ccfb3a902bc6947b3e366b444c2522, type: 3}
   zoneColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
 --- !u!114 &1884302428
 MonoBehaviour:
@@ -12753,7 +12729,6 @@ GameObject:
   - component: {fileID: 2122642357}
   - component: {fileID: 2122642356}
   - component: {fileID: 2122642355}
-  - component: {fileID: 2122642359}
   m_Layer: 0
   m_Name: VCam_Gameplay
   m_TagString: Untagged
@@ -12831,8 +12806,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 624a026a2b3ac264ba9b212c7609c69c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RTSCameraController
-  moveAction: {fileID: 954774773}
-  zoomAction: {fileID: 1458806393}
+  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  zoomAction: {fileID: 8552022565011884605, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sprintActionName: Sprint
   camera: {fileID: 2122642353}
   cameraTarget: {fileID: 1206856169}
@@ -12999,58 +12974,6 @@ MonoBehaviour:
       Wait: 1
       Time: 2
     Restrictions: 0
---- !u!114 &2122642359
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2122642352}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 624a026a2b3ac264ba9b212c7609c69c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  zoomAction: {fileID: 8552022565011884605, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  sprintActionName: Sprint
-  camera: {fileID: 2122642353}
-  cameraTarget: {fileID: 0}
-  orbitalFollow: {fileID: 2122642358}
-  moveSpeed: 25
-  sprintSpeedMultiplier: 4
-  acceleration: 10
-  deceleration: 10
-  minRadius: 8
-  maxRadius: 15
-  radiusStep: 3
-  zoomSmoothness: 10
-  angleCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 20
-      inSlope: 0
-      outSlope: 55
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 75
-      inSlope: 55
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  mapCenter: {x: 0, y: 0, z: 0}
-  maxMapRadius: 60
 --- !u!1 &2129285028
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TheyWillDescend.Content;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
@@ -22,6 +23,7 @@ namespace TheyWillDescend.Presentation.City
     {
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingCatalogAsset catalog;
+        [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] Color zoneValidColor = new(0.15f, 0.75f, 1f, 0.45f);
         [SerializeField] Color zoneInvalidColor = new(0.95f, 0.2f, 0.15f, 0.5f);
 
@@ -45,6 +47,9 @@ namespace TheyWillDescend.Presentation.City
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
+        BuildingOverlay _ghostOverlay;
+
+        public BuildingCatalogAsset Catalog => catalog;
 
         public bool IsPlacing => _placing;
 
@@ -52,7 +57,7 @@ namespace TheyWillDescend.Presentation.City
 
         public void BeginPlacing(string typeId)
         {
-            if (!TryResolvePrototype(typeId, out var prototype) || !prototype.Footprint.IsValid)
+            if (!TryResolvePrototype(typeId, out var spec) || spec.TypeId.IsEmpty)
             {
                 GameLog.Error($"Place mode: unknown building type {typeId}.");
                 return;
@@ -64,15 +69,20 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            _typeId = prototype.TypeId.ToString();
-            _footprint = prototype.Footprint;
-            _meshSize = prototype.MeshSize > 0.001f ? prototype.MeshSize : 1f;
+            if (!spec.Footprint.IsValid)
+            {
+                GameLog.Error($"Place mode: invalid footprint for {typeId}.");
+                return;
+            }
+            _typeId = spec.TypeId.ToString();
+            _footprint = spec.Footprint;
+            _meshSize = spec.MeshSize > 0.001f ? spec.MeshSize : 1f;
             _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
             gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
-            GameLog.Info($"Place mode: {prototype.DisplayName}.");
+            GameLog.Info($"Place mode: {BuildingView.NameOf(_ghostPrefab)}.");
         }
 
         public void CancelPlacing()
@@ -228,19 +238,36 @@ namespace TheyWillDescend.Presentation.City
             EnsureMaterials();
             if (_ghostRoot != null)
                 return;
+            if (overlayPrefab == null)
+            {
+                GameLog.Error("BuildPlacementController: assign BuildingOverlay prefab.");
+                return;
+            }
 
-            _ghostRoot = new GameObject("GhostPlacement").transform;
-            _ghostRoot.SetParent(transform, false);
+            _ghostOverlay = Instantiate(overlayPrefab, transform);
+            _ghostOverlay.name = "GhostPlacement";
+            _ghostRoot = _ghostOverlay.transform;
+            if (_ghostOverlay.ZoneCollider != null)
+                _ghostOverlay.ZoneCollider.enabled = false;
+            _ghostZoneFilter = _ghostOverlay.ZoneFilter;
+            _ghostZoneRenderer = _ghostOverlay.ZoneRenderer;
+            if (_ghostZoneFilter != null)
+            {
+                if (_ghostZoneFilter.sharedMesh == null)
+                {
+                    _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
+                    _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
+                }
+                else
+                    _ghostZoneMesh = _ghostZoneFilter.sharedMesh;
+            }
 
-            var zoneGo = new GameObject("GhostZone");
-            zoneGo.transform.SetParent(_ghostRoot, false);
-            _ghostZoneFilter = zoneGo.AddComponent<MeshFilter>();
-            _ghostZoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
-            _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
-            _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
-            _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _ghostZoneRenderer.receiveShadows = false;
+            if (_ghostZoneRenderer != null)
+            {
+                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
+                _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                _ghostZoneRenderer.receiveShadows = false;
+            }
 
             _ghostRoot.gameObject.SetActive(false);
         }
@@ -248,6 +275,8 @@ namespace TheyWillDescend.Presentation.City
         void RecreateGhostBuilding()
         {
             EnsureGhost();
+            if (_ghostRoot == null)
+                return;
             if (_ghostBuilding != null)
             {
                 Destroy(_ghostBuilding.gameObject);
@@ -260,6 +289,7 @@ namespace TheyWillDescend.Presentation.City
             var instance = Instantiate(_ghostPrefab, _ghostRoot);
             instance.name = "GhostHouse";
             StripColliders(instance);
+            HideWorldUi(instance);
             _ghostBuilding = instance.transform;
             _ghostBuilding.localScale = Vector3.one;
         }
@@ -275,6 +305,13 @@ namespace TheyWillDescend.Presentation.City
 
             t.position = pos;
             t.rotation = rot;
+        }
+
+        static void HideWorldUi(GameObject go)
+        {
+            var ui = go.GetComponentsInChildren<BuildingWorldUi>(true);
+            for (var i = 0; i < ui.Length; i++)
+                ui[i].gameObject.SetActive(false);
         }
 
         static void StripColliders(GameObject go)
@@ -383,7 +420,7 @@ namespace TheyWillDescend.Presentation.City
                 || !SimWorld.TryGet(out var em, out var bag)
                 || !em.HasBuffer<BuildingPrototype>(bag))
                 return false;
-            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, 0, 0, out prototype);
+            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, out prototype);
         }
 
         static bool OverlapsOccupied(List<(int cluster, int radial)> clusters)
@@ -408,15 +445,16 @@ namespace TheyWillDescend.Presentation.City
 
         static bool CanAfford(string typeId)
         {
-            var id = ContentId.EncodeOrEmpty(typeId);
-            if (id.IsEmpty
-                || !SimWorld.TryGet(out var em, out var bag)
-                || !em.HasBuffer<BuildingCost>(bag))
+            if (!TryResolvePrototype(typeId, out var spec))
                 return true;
-            var costs = em.GetBuffer<BuildingCost>(bag);
+            if (!SimWorld.TryGet(out var em, out var bag))
+                return true;
+            if (!em.HasBuffer<BuildingCatalogCost>(bag))
+                return true;
+            var costs = em.GetBuffer<BuildingCatalogCost>(bag);
             if (!em.HasBuffer<ResourceAmount>(bag))
-                return !BuildingCosts.HasCost(costs, id);
-            return BuildingCosts.CanAfford(costs, em.GetBuffer<ResourceAmount>(bag), id);
+                return !BuildingCosts.HasCost(costs, spec.TypeId);
+            return BuildingCosts.CanAfford(costs, spec.TypeId, em.GetBuffer<ResourceAmount>(bag));
         }
 
         void OnDisable()

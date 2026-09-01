@@ -65,7 +65,7 @@
 
 Scale: uniform по горизонтальному bounds → короткая сторона pad. Куб остаётся только fallback, если слот prefab пустой.
 
-Готовый дом рисует **Entities Graphics** на entity. `BuildingViewBoard` — зона footprint + бар стройки, не меш дома.
+Готовый дом рисует **живой GO** (`BuildingView` на инстансе штампа). ECS держит пакеты и позу. `BuildingViewBoard` — реестр инстансов + зона footprint, не бар и не меш.
 
 ### 2.5 Valid / invalid placement
 
@@ -108,7 +108,7 @@ Place:
 build plane → snap (cluster, ring)
 → ExpandClusters (дуга якоря на каждое кольцо глубины)
 → PlaceBuildingCommand → occupy OccupiedCell
-→ zone mesh по секциям; готовый дом — EG-штамп
+→ zone mesh по секциям; готовый дом — живой GO, не EG-штамп
 ```
 
 Центр = `Headquarters.LocalTransform` → `CityGrid.Center` на bake. Сетка/стройка **читают** World, не пушат Transform.
