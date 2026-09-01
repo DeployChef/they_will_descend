@@ -32,6 +32,12 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button powerButton;
         [SerializeField] Button closeButton;
         [SerializeField] Image workFill;
+        [Tooltip("Спрайт для состояния Start (производство остановлено)")]
+        [SerializeField] Sprite powerStartSprite;
+        [Tooltip("Спрайт для состояния Stop (производство работает)")]
+        [SerializeField] Sprite powerStopSprite;
+        [Tooltip("Image, в который подставляется спрайт. Если не назначен — берётся Image с самой кнопки")]
+        [SerializeField] Image powerIcon;
 
         void Awake()
         {
@@ -60,18 +66,12 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (maxMinusButton == null && minusButton != null)
                 maxMinusButton = CloneButton(minusButton, "MaxMinusButton", "Max");
-            else
-                HudButtons.SetLabel(maxMinusButton, "Max");
 
             if (maxPlusButton == null && plusButton != null)
                 maxPlusButton = CloneButton(plusButton, "MaxPlusButton", "Max");
-            else
-                HudButtons.SetLabel(maxPlusButton, "Max");
 
             if (powerButton == null && plusButton != null)
                 powerButton = CloneButton(plusButton, "PowerButton", "Stop");
-
-            LayoutStaffButtons();
         }
 
         static Button CloneButton(Button source, string name, string label)
@@ -82,90 +82,6 @@ namespace TheyWillDescend.Presentation.GameHud
             button.onClick.RemoveAllListeners();
             HudButtons.SetLabel(button, label);
             return button;
-        }
-
-        void LayoutStaffButtons()
-        {
-            const float edge = 16f;
-            const float gap = 6f;
-            const float maxWidth = 56f;
-            var rowY = minusButton != null
-                ? minusButton.GetComponent<RectTransform>().anchoredPosition.y
-                : -232f;
-            var rowH = minusButton != null
-                ? minusButton.GetComponent<RectTransform>().sizeDelta.y
-                : 40f;
-
-            PlaceOnLeft(maxMinusButton, edge, rowY, maxWidth, rowH);
-            PlaceOnLeft(minusButton, edge + maxWidth + gap, rowY, 48f, rowH);
-            PlaceOnRight(maxPlusButton, edge, rowY, maxWidth, rowH);
-            PlaceOnRight(plusButton, edge + maxWidth + gap, rowY, 48f, rowH);
-            PlacePowerRow(powerButton, rowY, rowH);
-
-            if (workers != null)
-            {
-                var rt = workers.rectTransform;
-                rt.sizeDelta = new Vector2(-268f, rt.sizeDelta.y);
-            }
-
-            var powerRt = powerButton != null ? powerButton.GetComponent<RectTransform>() : null;
-            var idleRt = idle != null ? idle.rectTransform : null;
-            var statusRt = status != null ? status.rectTransform : null;
-            var barRt = workFill != null && workFill.transform.parent != null
-                ? workFill.transform.parent as RectTransform
-                : null;
-            PushBelow(idleRt, powerRt, 8f);
-            PushBelow(statusRt, idleRt, 8f);
-            PushBelow(barRt, statusRt, 12f);
-        }
-
-        static void PlaceOnLeft(Button button, float x, float y, float width, float height)
-        {
-            if (button == null)
-                return;
-
-            var rt = button.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(x, y);
-            rt.sizeDelta = new Vector2(width, height);
-        }
-
-        static void PlaceOnRight(Button button, float xFromRight, float y, float width, float height)
-        {
-            if (button == null)
-                return;
-
-            var rt = button.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-xFromRight, y);
-            rt.sizeDelta = new Vector2(width, height);
-        }
-
-        static void PlacePowerRow(Button power, float rowY, float rowH)
-        {
-            if (power == null)
-                return;
-
-            var rt = power.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = new Vector2(0f, rowY - rowH - 8f);
-            rt.sizeDelta = new Vector2(-32f, 40f);
-        }
-
-        static void PushBelow(RectTransform target, RectTransform above, float gap)
-        {
-            if (target == null || above == null)
-                return;
-
-            var needed = above.anchoredPosition.y - above.sizeDelta.y - gap;
-            if (target.anchoredPosition.y > needed)
-                target.anchoredPosition = new Vector2(target.anchoredPosition.x, needed);
         }
 
         void Update()
@@ -304,8 +220,7 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.SetInteractable(maxPlusButton, canStaff && occupied < slots && idleCount > 0);
             HudButtons.SetInteractable(maxMinusButton, canStaff && occupied > 0);
             HudButtons.SetInteractable(powerButton, !constructing && slots > 0);
-            HudButtons.SetLabel(powerButton, paused ? "Start" : "Stop");
-            HudButtons.Tint(powerButton, !paused);
+            UpdatePowerIcon(paused);
         }
 
         static bool TryFindBuilding(EntityManager em, int id, out Entity entity, out Building building)
@@ -465,6 +380,22 @@ namespace TheyWillDescend.Presentation.GameHud
                 Paused = paused ? (byte)0 : (byte)1
             });
             SimCommands.Playback();
+        }
+
+        void UpdatePowerIcon(bool paused)
+        {
+            // paused = производство остановлено → показываем Start
+            // работает → показываем Stop
+            var sprite = paused ? powerStartSprite : powerStopSprite;
+            if (sprite == null)
+                return;
+
+            var icon = powerIcon;
+            if (icon == null && powerButton != null)
+                icon = powerButton.GetComponent<Image>();
+
+            if (icon != null)
+                icon.sprite = sprite;
         }
 
         void OnClose()
