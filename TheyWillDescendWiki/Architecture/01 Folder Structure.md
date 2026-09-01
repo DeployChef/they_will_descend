@@ -10,20 +10,23 @@
 Новая asmdef оправдана, только если без неё либо запретная ссылка компилируется, либо в билд едет код, которого там быть не должно.
 
 ```
-Authoring  →  Simulation
-Presentation  →  Simulation
-Main  →  Presentation
+Authoring      →  Simulation, Content
+Presentation   →  Simulation, Content
+Content        →  Simulation
+Main           →  Presentation
 ```
 
-`TheyWillDescend.Simulation` **не** ссылается на Presentation, uGUI, Input System, Animator.  
+`TheyWillDescend.Simulation` **не** ссылается на Content, Presentation, uGUI, Input System, Animator.  
 `TheyWillDescend.Authoring` **не** ссылается на Presentation.  
-Simulation и Authoring: `autoReferenced: false` — на них ссылаются явно.
+`TheyWillDescend.Content` — арт-реестры (`typeId` → префаб). Не логический снимок рана.  
+Simulation, Authoring, Content: `autoReferenced: false` — на них ссылаются явно.
 
 ## Сборки
 
 | Asmdef | Что внутри | Нельзя |
 | --- | --- | --- |
-| `TheyWillDescend.Simulation` | компоненты, команды, системы, сетка, occupancy | UI, виды, диск, FMOD |
+| `TheyWillDescend.Simulation` | компоненты, команды, системы, сетка, occupancy; логические SO (`ResourceDefinition`, `SimRules`) | UI, виды, префабы домов, диск, FMOD |
+| `TheyWillDescend.Content` | арт-каталоги (`BuildingCatalogAsset`) | `ISystem`, экономика рана |
 | `TheyWillDescend.Authoring` | Baker’ы SubScene, editor-tools сценария | runtime UI |
 | `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, JSON-сейв, `GameLog`, FMOD-хост | `ISystem` / `SystemBase` на виджеты; писать стоки/occupy в обход команд |
 | `TheyWillDescend.Main` | `Startup`, `AppFlowFactory` — вход и регистрация | экономика, `EntityManager` |
@@ -44,7 +47,8 @@ Assets/_Project/Scripts/
     Agents/      Components, Commands, CommandSystems, Systems
     Economy/     Components, Systems
     Gods/        Components, Commands, CommandSystems, Systems
-    Content/     каталоги (плоские SO-типы)
+    Content/     каталоги логики (ResourceDefinition, SimRules, Timeline, BuildingStamp)
+  Content/       BuildingCatalogAsset — арт домов (не снимок рана)
   Authoring/
     Session/     SimControlAuthoring, SimRulesAuthoring
     Agents/      AgentSessionAuthoring

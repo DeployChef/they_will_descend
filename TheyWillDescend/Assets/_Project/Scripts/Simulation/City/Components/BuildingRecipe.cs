@@ -11,11 +11,23 @@ namespace TheyWillDescend.Simulation.City
     }
 
     /// <summary>
-    /// Recipe row on a house stamp / instance. <see cref="PerHour"/> is the HUD unit
-    /// (game hour). No TypeId — the buffer lives on the building entity.
+    /// Recipe row on a house instance. <see cref="PerHour"/> is the HUD unit
+    /// (game hour). Catalog rows live in <see cref="BuildingCatalogRecipe"/>.
     /// </summary>
     public struct BuildingRecipeLine : IBufferElementData
     {
+        public BuildingRecipeKind Kind;
+        public FixedString64Bytes ResourceId;
+        public float PerHour;
+    }
+
+    /// <summary>
+    /// Recipe row for one catalog type. Lives on the session; Place copies matching
+    /// rows onto the instance as <see cref="BuildingRecipeLine"/>.
+    /// </summary>
+    public struct BuildingCatalogRecipe : IBufferElementData
+    {
+        public FixedString64Bytes TypeId;
         public BuildingRecipeKind Kind;
         public FixedString64Bytes ResourceId;
         public float PerHour;

@@ -4,8 +4,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Baked scenario houses. Play turns these into PlaceBuildingCommand.
-    /// Instantiating catalog prefabs during bake duplicates EntityGuid in Live Conversion.
+    /// Starting houses copied from the scenario SO at bake. Play spawns them through
+    /// the same <c>SpawnHouse</c> path as Place (InstantComplete, no pay).
     /// </summary>
     public struct PendingScenarioPlace : IBufferElementData
     {

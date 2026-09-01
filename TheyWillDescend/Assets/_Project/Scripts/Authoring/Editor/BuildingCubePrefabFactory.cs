@@ -1,4 +1,5 @@
 using TheyWillDescend.Authoring.City;
+using TheyWillDescend.Content;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.Content;
 using UnityEditor;
@@ -37,25 +38,6 @@ namespace TheyWillDescend.Authoring.Editor
             var overlay = CreateOverlayPrefab();
             var hqOverlay = CreateHqOverlayPrefab();
             var mat = CreateMaterial();
-            CreateStamp(
-                "_BuildingStamp",
-                "_stamp",
-                width: 2,
-                depth: 2,
-                duration: 0f,
-                workplace: false,
-                slots: 0,
-                recipe: false,
-                inputs: null,
-                outputs: null,
-                costs: null,
-                idle: new Color(0.55f, 0.55f, 0.58f),
-                working: new Color(0.35f, 0.82f, 0.42f),
-                construction: new Color(0.95f, 0.78f, 0.28f),
-                mat,
-                worldUi,
-                displayName: "Stamp");
-
             var kitchen = CreateStamp(
                 "Kitchen",
                 "kitchen",
@@ -165,18 +147,11 @@ namespace TheyWillDescend.Authoring.Editor
             Write(view, "idleColor", idle);
             Write(view, "workingColor", working);
             Write(view, "constructionColor", construction);
-            if (worldUi != null)
-            {
-                var so = new SerializedObject(view);
-                so.FindProperty("worldUiPrefab").objectReferenceValue = worldUi;
-                so.ApplyModifiedPropertiesWithoutUndo();
-            }
 
             if (worldUi != null)
             {
                 var nested = (GameObject)PrefabUtility.InstantiatePrefab(worldUi.gameObject, go.transform);
                 nested.name = "WorldUi";
-                nested.AddComponent<BakeStripAuthoring>();
             }
 
             var path = $"{Folder}/{fileName}.prefab";
@@ -290,7 +265,6 @@ namespace TheyWillDescend.Authoring.Editor
                 var so = new SerializedObject(boards[i]);
                 so.FindProperty("overlayPrefab").objectReferenceValue = overlay;
                 so.FindProperty("hqOverlayPrefab").objectReferenceValue = hq;
-                so.FindProperty("worldUiPrefab").objectReferenceValue = worldUi;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(boards[i]);
             }

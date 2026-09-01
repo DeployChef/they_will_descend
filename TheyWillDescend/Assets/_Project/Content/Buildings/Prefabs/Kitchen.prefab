@@ -76,7 +76,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingView
   displayName: Kitchen
-  worldUiPrefab: {fileID: 5175040469931536505, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
   idleColor: {r: 0.82, g: 0.62, b: 0.38, a: 1}
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
@@ -265,30 +264,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5927249818930253296, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1749164090781065590}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
 --- !u!224 &2565686764578803240 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2326273514062946615, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
   m_PrefabInstance: {fileID: 275761825570303775}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &5877867825639269103 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5927249818930253296, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
-  m_PrefabInstance: {fileID: 275761825570303775}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1749164090781065590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5877867825639269103}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0e487da8ffdbc0449f4b9411d509323, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BakeStripAuthoring

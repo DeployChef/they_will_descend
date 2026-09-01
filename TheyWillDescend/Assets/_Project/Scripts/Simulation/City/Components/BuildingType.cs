@@ -4,7 +4,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Shared type data on the house stamp. Not instance id / anchor.
+    /// Type data copied onto a house instance from <see cref="BuildingPrototype"/>.
+    /// Not instance id / anchor.
     /// </summary>
     public struct BuildingType : IComponentData
     {

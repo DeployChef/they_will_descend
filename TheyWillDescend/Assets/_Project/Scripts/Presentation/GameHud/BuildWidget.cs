@@ -139,7 +139,7 @@ namespace TheyWillDescend.Presentation.GameHud
             for (var i = 0; i < catalog.Length; i++)
             {
                 var prototype = catalog[i];
-                if (prototype.Prefab == Entity.Null || prototype.TypeId.IsEmpty)
+                if (prototype.TypeId.IsEmpty)
                     continue;
                 count++;
                 var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
@@ -147,10 +147,10 @@ namespace TheyWillDescend.Presentation.GameHud
                 go.name = $"Catalog_{typeId}";
                 go.SetActive(true);
                 var button = go.GetComponent<Button>();
-                var costs = em.HasBuffer<BuildingCost>(prototype.Prefab)
-                    ? em.GetBuffer<BuildingCost>(prototype.Prefab)
+                var costs = em.HasBuffer<BuildingCatalogCost>(bag)
+                    ? em.GetBuffer<BuildingCatalogCost>(bag)
                     : default;
-                var cost = FormatBuildingCost(costs, names);
+                var cost = FormatBuildingCost(costs, prototype.TypeId, names);
                 var prefab = viewCatalog != null ? viewCatalog.FindPrefab(typeId) : null;
                 var title = BuildingView.NameOf(prefab);
                 if (string.IsNullOrEmpty(title))
@@ -263,17 +263,18 @@ namespace TheyWillDescend.Presentation.GameHud
         }
 
         static string FormatBuildingCost(
-            DynamicBuffer<BuildingCost> costs,
+            DynamicBuffer<BuildingCatalogCost> costs,
+            in FixedString64Bytes typeId,
             DynamicBuffer<ResourceInfo> names)
         {
-            if (!costs.IsCreated)
+            if (!costs.IsCreated || typeId.IsEmpty)
                 return string.Empty;
 
             var parts = new List<string>(4);
             for (var i = 0; i < costs.Length; i++)
             {
                 var cost = costs[i];
-                if (cost.Amount <= 0.0001f)
+                if (cost.TypeId != typeId || cost.Amount <= 0.0001f)
                     continue;
                 parts.Add($"{(int)math.ceil(cost.Amount)} {ResourceDisplayName(names, cost.ResourceId)}");
             }

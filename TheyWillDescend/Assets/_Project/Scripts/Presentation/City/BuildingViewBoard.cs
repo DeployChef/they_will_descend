@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using TheyWillDescend.Content;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
@@ -8,27 +10,23 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Footprint overlay + world UI instances. House mesh is Entities Graphics
-    /// on the Building entity. Does not assemble bars or texts with new GameObject.
+    /// Registry: spawn/destroy house views and grid overlays. Feature chrome
+    /// lives on <see cref="BuildingView"/>, not here.
     /// </summary>
     public sealed class BuildingViewBoard : MonoBehaviour
     {
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingSelection selection;
-        [SerializeField] TheyWillDescend.Simulation.Content.BuildingCatalogAsset catalog;
+        [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] HqOverlay hqOverlayPrefab;
-        [SerializeField] BuildingWorldUi worldUiPrefab;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
-        readonly Color _constructionFill = new(0.25f, 0.85f, 0.45f, 0.95f);
-        readonly Color _loadFill = new(0.95f, 0.72f, 0.18f, 0.95f);
 
-        Transform _overlayRoot;
+        Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
         Material _placedZoneMaterial;
@@ -38,10 +36,9 @@ namespace TheyWillDescend.Presentation.City
         sealed class PlacedView
         {
             public GameObject Root;
+            public GameObject Overlay;
+            public BuildingView View;
             public MeshRenderer ZoneRenderer;
-            public BuildingWorldUi WorldUi;
-            public GameObject BarRoot;
-            public Image Fill;
         }
 
         public void RebuildViews()
@@ -69,13 +66,7 @@ namespace TheyWillDescend.Presentation.City
         public void ClearViews()
         {
             foreach (var view in _views.Values)
-            {
-                if (view?.Root == null)
-                    continue;
-                view.Root.SetActive(false);
-                Object.DestroyImmediate(view.Root);
-            }
-
+                DestroyPlaced(view);
             _views.Clear();
             selection?.Deselect();
         }
@@ -123,58 +114,24 @@ namespace TheyWillDescend.Presentation.City
                 var entity = entities[i];
                 var position = PositionOf(em, entity);
                 _seen.Add(building.Id);
-                if (!_views.TryGetValue(building.Id, out var view) || view?.Root == null)
+                if (!_views.TryGetValue(building.Id, out var placed) || placed?.Root == null)
                 {
-                    view = em.HasComponent<Headquarters>(entity)
+                    placed = em.HasComponent<Headquarters>(entity)
                         ? CreateHqView(building, position)
-                        : CreateView(em, entity, building);
+                        : CreateHouseView(em, entity, building, position);
                 }
 
-                if (view == null)
+                if (placed == null)
                     continue;
 
-                var constructing = em.HasComponent<Construction>(entity);
-                if (view.BarRoot != null)
-                    view.BarRoot.SetActive(constructing || HasStaffBar(em, entity));
-
-                if (constructing && view.Fill != null)
-                {
-                    var construction = em.GetComponentData<Construction>(entity);
-                    view.Fill.color = _constructionFill;
-                    view.Fill.fillAmount = construction.Normalized;
-                }
-                else if (view.Fill != null)
-                {
-                    var paused = em.HasComponent<Workplace>(entity)
-                        && em.GetComponentData<Workplace>(entity).IsPaused;
-                    var slots = em.HasComponent<BuildingType>(entity)
-                        ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
-                        : 0;
-                    var assigned = em.HasComponent<Workplace>(entity)
-                        ? em.GetComponentData<Workplace>(entity).AssignedCount
-                        : 0;
-                    view.Fill.color = paused
-                        ? new Color(0.45f, 0.45f, 0.48f, 0.9f)
-                        : _loadFill;
-                    view.Fill.fillAmount = Workplace.Load01(assigned, slots);
-                }
-
-                if (view.WorldUi != null)
-                {
-                    var pose = view.WorldUi.transform;
-                    pose.position = (Vector3)position + Vector3.up * 2.2f;
-                    if (cam != null)
-                        pose.rotation = Quaternion.LookRotation(pose.position - cam.transform.position);
-                }
+                if (placed.View != null)
+                    placed.View.Sync(em, entity, cam);
+                else
+                    placed.Root.transform.position = (Vector3)position;
 
                 var selected = selection != null && building.Id == selection.SelectedBuildingId;
-                if (view.ZoneRenderer != null)
-                    view.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
-
-                var tintCatalog = catalog != null
-                    ? catalog
-                    : Object.FindFirstObjectByType<BuildPlacementController>()?.Catalog;
-                BuildingWorkTint.Apply(em, entity, tintCatalog);
+                if (placed.ZoneRenderer != null)
+                    placed.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
             }
 
             if (_views.Count != _seen.Count)
@@ -203,12 +160,6 @@ namespace TheyWillDescend.Presentation.City
             return default;
         }
 
-        static bool HasStaffBar(EntityManager em, Entity entity)
-        {
-            return em.HasComponent<BuildingType>(entity)
-                && em.GetComponentData<BuildingType>(entity).WorkplaceSlots > 0;
-        }
-
         PlacedView CreateHqView(in Building building, float3 position)
         {
             EnsureReady();
@@ -219,7 +170,7 @@ namespace TheyWillDescend.Presentation.City
             }
 
             EnsureMaterial();
-            var overlay = Object.Instantiate(hqOverlayPrefab, _overlayRoot);
+            var overlay = Object.Instantiate(hqOverlayPrefab, _root);
             overlay.name = $"Headquarters_{building.Id}";
             overlay.transform.position = (Vector3)position;
             if (overlay.IdTag != null)
@@ -244,13 +195,14 @@ namespace TheyWillDescend.Presentation.City
                 overlay.ClickProxy.direction = 1;
             }
 
-            var view = new PlacedView
+            var placed = new PlacedView
             {
                 Root = overlay.gameObject,
+                Overlay = overlay.gameObject,
                 ZoneRenderer = overlay.PlazaRenderer
             };
-            _views[building.Id] = view;
-            return view;
+            _views[building.Id] = placed;
+            return placed;
         }
 
         static Mesh BuildAnnulusMesh(float inner, float outer, int segments, float y)
@@ -292,12 +244,19 @@ namespace TheyWillDescend.Presentation.City
             return mesh;
         }
 
-        PlacedView CreateView(EntityManager em, Entity entity, in Building building)
+        PlacedView CreateHouseView(EntityManager em, Entity entity, in Building building, float3 position)
         {
             EnsureReady();
+            var prefab = ResolveStampPrefab(em, entity, building);
+            if (prefab == null)
+            {
+                GameLog.Error($"BuildingViewBoard: no stamp prefab for {building.TypeId}.");
+                return null;
+            }
+
             if (overlayPrefab == null)
             {
-                GameLog.Error("BuildingViewBoard: assign BuildingOverlay prefab.");
+                GameLog.Error("BuildingViewBoard: assign overlay prefab.");
                 return null;
             }
 
@@ -308,6 +267,27 @@ namespace TheyWillDescend.Presentation.City
             }
 
             EnsureMaterial();
+            var house = Object.Instantiate(prefab, _root);
+            house.name = $"Building_{building.Id}";
+            house.transform.position = (Vector3)position;
+            var view = house.GetComponent<BuildingView>();
+            if (view == null)
+                GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
+
+            var overlay = SpawnOverlay(building, center);
+            var placed = new PlacedView
+            {
+                Root = house,
+                Overlay = overlay != null ? overlay.gameObject : null,
+                View = view,
+                ZoneRenderer = overlay != null ? overlay.ZoneRenderer : null
+            };
+            _views[building.Id] = placed;
+            return placed;
+        }
+
+        BuildingOverlay SpawnOverlay(in Building building, float3 center)
+        {
             var footprint = new BuildingFootprint
             {
                 WidthClusters = building.WidthClusters,
@@ -318,12 +298,12 @@ namespace TheyWillDescend.Presentation.City
             if (!RadialFootprintMath.TryExpandClusters(
                     config, building.AnchorCluster, building.AnchorRadial, footprint, clusters))
             {
-                GameLog.Warning($"Building view skip id={building.Id}: expand failed.");
+                GameLog.Warning($"Building overlay skip id={building.Id}: expand failed.");
                 return null;
             }
 
-            var overlay = Object.Instantiate(overlayPrefab, _overlayRoot);
-            overlay.name = $"Building_{building.WidthClusters}x{building.DepthRadialRings}_{building.Id}";
+            var overlay = Object.Instantiate(overlayPrefab, _root);
+            overlay.name = $"Overlay_{building.Id}";
             if (overlay.IdTag != null)
                 overlay.IdTag.Id = building.Id;
 
@@ -339,46 +319,20 @@ namespace TheyWillDescend.Presentation.City
                 overlay.ZoneRenderer.receiveShadows = false;
             }
 
-            var worldUi = SpawnWorldUi(em, entity, overlay.transform);
-            var view = new PlacedView
-            {
-                Root = overlay.gameObject,
-                ZoneRenderer = overlay.ZoneRenderer,
-                WorldUi = worldUi,
-                BarRoot = worldUi != null ? worldUi.BarRoot : null,
-                Fill = worldUi != null ? worldUi.Fill : null
-            };
-            _views[building.Id] = view;
-            return view;
+            return overlay;
         }
 
-        BuildingWorldUi SpawnWorldUi(EntityManager em, Entity entity, Transform parent)
+        GameObject ResolveStampPrefab(EntityManager em, Entity entity, in Building building)
         {
-            var prefab = ResolveWorldUiPrefab(em, entity);
-            if (prefab == null)
-            {
-                GameLog.Error("BuildingViewBoard: assign BuildingWorldUi prefab.");
-                return null;
-            }
-
-            var ui = Object.Instantiate(prefab, parent);
-            ui.name = "WorldUi";
-            return ui;
-        }
-
-        BuildingWorldUi ResolveWorldUiPrefab(EntityManager em, Entity entity)
-        {
-            var tintCatalog = catalog != null
+            var source = catalog != null
                 ? catalog
                 : Object.FindFirstObjectByType<BuildPlacementController>()?.Catalog;
-            if (tintCatalog == null || !em.HasComponent<Building>(entity))
-                return worldUiPrefab;
-            var typeId = em.GetComponentData<Building>(entity).TypeId.ToString();
-            var stamp = tintCatalog.FindPrefab(typeId);
-            var view = stamp != null ? stamp.GetComponent<BuildingView>() : null;
-            if (view != null && view.WorldUiPrefab != null)
-                return view.WorldUiPrefab;
-            return worldUiPrefab;
+            if (source == null)
+                return null;
+            var typeId = em.HasComponent<Building>(entity)
+                ? em.GetComponentData<Building>(entity).TypeId.ToString()
+                : building.TypeId.ToString();
+            return source.FindPrefab(typeId);
         }
 
         void DestroyView(int buildingId)
@@ -387,23 +341,32 @@ namespace TheyWillDescend.Presentation.City
             if (!_views.TryGetValue(buildingId, out var view))
                 return;
             _views.Remove(buildingId);
-            if (view?.Root == null)
+            DestroyPlaced(view);
+        }
+
+        static void DestroyPlaced(PlacedView view)
+        {
+            if (view == null)
                 return;
-            view.Root.SetActive(false);
-            Object.DestroyImmediate(view.Root);
+            DestroyGo(view.Root);
+            if (view.Overlay != null && view.Overlay != view.Root)
+                DestroyGo(view.Overlay);
+        }
+
+        static void DestroyGo(GameObject go)
+        {
+            if (go == null)
+                return;
+            go.SetActive(false);
+            Object.DestroyImmediate(go);
         }
 
         void EnsureMaterial()
         {
             if (_placedZoneMaterial == null)
-            {
                 _placedZoneMaterial = CreateZoneMaterial("FootprintZone_Placed", zoneColor);
-            }
-
             if (_selectedZoneMaterial == null)
-            {
                 _selectedZoneMaterial = CreateZoneMaterial("FootprintZone_Selected", _selectedZoneColor);
-            }
         }
 
         static Material CreateZoneMaterial(string name, Color color)
@@ -428,9 +391,9 @@ namespace TheyWillDescend.Presentation.City
 
         void EnsureReady()
         {
-            if (_overlayRoot != null)
+            if (_root != null)
                 return;
-            _overlayRoot = transform;
+            _root = transform;
         }
 
         static float PlazaRadius()

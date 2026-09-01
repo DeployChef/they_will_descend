@@ -5,8 +5,9 @@ using UnityEngine;
 namespace TheyWillDescend.Simulation.Content
 {
     /// <summary>
-    /// One card on a house prefab. Empty / toggled-off packs are not baked.
-    /// HUD name and world UI live on <c>BuildingView</c>, not here.
+    /// One card on a house prefab. Catalog bake copies digits onto the session
+    /// spec; empty / toggled-off packs are not copied. HUD name and world UI
+    /// live on <c>BuildingView</c>, not here.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BuildingStamp : MonoBehaviour

@@ -14,7 +14,7 @@
 | Presentation | UI, камера, FMOD, Shell; читает ECS / шлёт commands |
 | Content | Authoring + Baker, ScriptableObjects, префабы |
 | Logging | `GameLog` (`Presentation/Infrastructure/Logging`) |
-| Сборки | четыре стены — [[01 Folder Structure]] |
+| Сборки | стены компилятора — [[01 Folder Structure]] |
 
 Подробности: [[08 Production ECS]] · [[09 App Shell]].
 

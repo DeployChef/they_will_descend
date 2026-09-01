@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TheyWillDescend.Content;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
@@ -56,7 +57,7 @@ namespace TheyWillDescend.Presentation.City
 
         public void BeginPlacing(string typeId)
         {
-            if (!TryResolvePrototype(typeId, out var prototype) || prototype.Prefab == Entity.Null)
+            if (!TryResolvePrototype(typeId, out var spec) || spec.TypeId.IsEmpty)
             {
                 GameLog.Error($"Place mode: unknown building type {typeId}.");
                 return;
@@ -68,26 +69,14 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            if (!SimWorld.TryGet(out var em, out _)
-                || !em.HasComponent<BuildingType>(prototype.Prefab))
-            {
-                GameLog.Error($"Place mode: stamp for {typeId} has no BuildingType.");
-                return;
-            }
-
-            var type = em.GetComponentData<BuildingType>(prototype.Prefab);
-            if (!type.Footprint.IsValid)
+            if (!spec.Footprint.IsValid)
             {
                 GameLog.Error($"Place mode: invalid footprint for {typeId}.");
                 return;
             }
-            _typeId = type.TypeId.ToString();
-            _footprint = type.Footprint;
-            _meshSize = em.HasComponent<BuildingMeshSize>(prototype.Prefab)
-                ? em.GetComponentData<BuildingMeshSize>(prototype.Prefab).Horizontal
-                : 1f;
-            if (_meshSize <= 0.001f)
-                _meshSize = 1f;
+            _typeId = spec.TypeId.ToString();
+            _footprint = spec.Footprint;
+            _meshSize = spec.MeshSize > 0.001f ? spec.MeshSize : 1f;
             _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
             gridGuide.SetBuildModeActive(true);
@@ -456,16 +445,16 @@ namespace TheyWillDescend.Presentation.City
 
         static bool CanAfford(string typeId)
         {
-            if (!TryResolvePrototype(typeId, out var prototype))
+            if (!TryResolvePrototype(typeId, out var spec))
                 return true;
             if (!SimWorld.TryGet(out var em, out var bag))
                 return true;
-            if (!em.HasBuffer<BuildingCost>(prototype.Prefab))
+            if (!em.HasBuffer<BuildingCatalogCost>(bag))
                 return true;
-            var costs = em.GetBuffer<BuildingCost>(prototype.Prefab);
+            var costs = em.GetBuffer<BuildingCatalogCost>(bag);
             if (!em.HasBuffer<ResourceAmount>(bag))
-                return !BuildingCosts.HasCost(costs);
-            return BuildingCosts.CanAfford(costs, em.GetBuffer<ResourceAmount>(bag));
+                return !BuildingCosts.HasCost(costs, spec.TypeId);
+            return BuildingCosts.CanAfford(costs, spec.TypeId, em.GetBuffer<ResourceAmount>(bag));
         }
 
         void OnDisable()

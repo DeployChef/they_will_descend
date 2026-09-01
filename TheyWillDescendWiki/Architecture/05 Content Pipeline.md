@@ -13,22 +13,23 @@
 | Что | Где лежит | Зачем |
 | --- | --- | --- |
 | **Ключ** | `typeId` / `resourceId` строка | Стык всего: симуляция, HUD, сейв, сценарий, позже таблица |
-| **Дом (тип)** | префаб: корень `BuildingStamp` + `BuildingView`; ребёнок `Body` (меш); вложенный `_BuildingWorldUi` (BakeStrip) | состав, цифры, вид. Нет второго SO «карточка лесопилки» |
+| **Дом (тип)** | префаб: корень `BuildingStamp` + `BuildingView`; ребёнок `Body` (меш); вложенный `_BuildingWorldUi` | состав, цифры, вид. Нет второго SO «карточка лесопилки» |
 | **Ресурс / правила / эры** | `ResourceDefinition` / `SimRules` / `TimelineCatalog` | не пространственные документы |
-| **Каталог домов** | `DefaultBuildingCatalog` — список **префабов** | что можно строить в этом билде |
+| **Каталог домов** | `DefaultBuildingCatalog` (`TheyWillDescend.Content`) — список **префабов** | арт. Логический снимок после bake — буферы на session |
 | **Стартовый город** | `ScenarioDefinition` | какие ключи стоят на старте. Не сейв игрока |
 
 Ран после bake:
 
 ```text
-префаб  →  Baker
+префаб.BuildingStamp  →  catalog baker (цифры, не Convert префаба)
              ↓
-session: BuildingPrototype (typeId → entity штампа)
-штамп: BuildingType + optional Workplace + recipe/cost buffers
-Play: PlaceBuildingCommand.TypeId = "sawmill"  →  Instantiate(штамп) (+ Construction, пока не построен)
+session: BuildingPrototype (spec) + BuildingCatalogCost / Recipe
+Play: PlaceBuildingCommand.TypeId = "sawmill"
+        → CreateEntity + copy spec (+ Construction, пока не построен)
+вид: Instantiate того же Unity-префаба по typeId
 ```
 
-Имя кнопки и цвет куба HUD берёт с `BuildingView` на корне штампа (не из ECS). Меш — ребёнок `Body`, не корень. Крышный бар/иконки — префаб `_BuildingWorldUi`: в Prefab Mode сиблинг `Body` (BakeStrip, в ECS не попадает); в Play Presentation инстансит его и ведёт за entity. Призрак — тот же catalog asset на `BuildPlacementController`. Живой дом — root entity + child mesh (Entities Graphics).
+Имя кнопки и цвета HUD берёт с `BuildingView` на корне штампа. Меш — ребёнок `Body` (не печётся в ECS). В Play доска **Instantiates тот же префаб**; живой `BuildingView.Sync` читает пакеты своей entity (бар, цвет, позже клипы/свет). Крышный `_BuildingWorldUi` — ребёнок штампа, не второй инстанс с доски. Призрак — тот же catalog asset. Overlay клетки — отдельный префаб, не ребёнок кухни.
 
 Sheet позже пишет **цифры** в поля `BuildingStamp` по `typeId`. Пакеты (Workplace / Recipe) — галки на той же карточке. Импортёра нет.
 
@@ -41,7 +42,6 @@ Assets/_Project/Content/
   Buildings/
     DefaultBuildingCatalog.asset
     Prefabs/
-      _BuildingStamp.prefab   ← шаблон, не в каталоге
       Kitchen.prefab
       Sawmill.prefab
       _BuildingWorldUi.prefab ← бар + статусы, общий
@@ -137,7 +137,7 @@ Baker копирует:
 
 ## 5. Здание
 
-Документ типа — **префаб**. Корень — паспорт (`BuildingStamp` + `BuildingView`), без меша. Куб сейчас живёт в ребёнке `Body` (заглушка под FBX). Цвет куба: стройка / работает / стоит — Presentation, не система тика.
+Документ типа — **один префаб**. Корень — паспорт (`BuildingStamp` + `BuildingView`). `Body` / WorldUi / позже свет и клипы — одежда, не ECS. Catalog baker копирует цифры паспорта на session; Play-вид — Instantiate того же префаба. Цвет «стройка / работает / стоит» пишет живой `BuildingView`, не ISystem.
 
 Срез после `Create Cube Stamps`: `sawmill` (6×2, 15 wood, +12 Wood/ч) и `kitchen` (2×2, 8 wood, −6 Wood/ч → +12 Food/ч). RPGPP-меши в пакете оставлены, со штампов сняты.
 
@@ -150,27 +150,27 @@ Baker копирует:
 | HUD канвас | сцена Game | инспект, ± рабочие, дань. Не ребёнок дома |
 | Зона сетки | `_BuildingOverlay.prefab` | сектор клетки; не ребёнок кухни |
 
-Запрещено в Play: `new GameObject` для баров, текстов, клик-прокси. Только `Instantiate(префаб)` / ECS `Instantiate` штампа.
+Запрещено в Play: `new GameObject` для баров, текстов, клик-прокси. Только `Instantiate(префаб)` / ECS `CreateEntity` из spec.
 
 ### 5.1 Новый дом (процесс ГД)
 
-Не копировать кухню и «вычищать». Duplicate **`_BuildingStamp`**, выставить карточку.
+Duplicate ближайший дом из каталога, не пустой шаблон. Первым меняешь `typeId`.
 
-1. Duplicate `_BuildingStamp` → `Factory`. Сразу `BuildingStamp.typeId = factory` (уникальный, lowercase).
-2. Нужны люди — галка Workplace + слоты.
+1. Duplicate `Kitchen` (или `Sawmill`, если ближе по footprint) → `Factory`. Сразу `BuildingStamp.typeId = factory` (уникальный, lowercase).
+2. Нужны люди — галка Workplace + слоты. Склад: галки Workplace/Recipe выкл.
 3. Нужно варить — галка Recipe (те же `ResourceDefinition`).
 4. Платный — список cost. Долгая стройка — `constructionDuration` (0 = сразу готовый).
-5. `BuildingView` — display name, цвета куба, ссылка на `_BuildingWorldUi`. Не печётся в ECS.
+5. `BuildingView` — display name, цвета куба. Крыша — ребёнок `WorldUi` на штампе. Не печётся в ECS.
 6. Префаб в `DefaultBuildingCatalog` (список префабов).
-7. Play: кнопка, призрак = этот префаб, Place = `Instantiate` штампа (с `Construction`, пока duration > 0).
+7. Play: кнопка, призрак = этот префаб, Place = `CreateEntity` из spec (с `Construction`, пока duration > 0).
 
-Кухня → похожая кухня: duplicate `Kitchen`, сменить `typeId` первым. Склад: duplicate штампа, не кухни; Workplace/Recipe выкл. HQ / пирамида **не** в этом каталоге.
+Похожая кухня: duplicate `Kitchen`, сменить `typeId` первым. HQ / пирамида **не** в этом каталоге.
 
 Цифры экономики — поля `BuildingStamp`. Sheet позже перезапишет те же поля по ключу; галки пакетов таблица не создаёт.
 
 ### 5.2 Карточка `BuildingStamp` (один скрипт)
 
-Код пакетов — отдельные типы/baker, на префабе **один** MonoBehaviour. Пустое / галка выкл → baker не кладёт ECS-компонент.
+Код пакетов — отдельные ECS-типы, на префабе **один** MonoBehaviour. Пустое / галка выкл → catalog baker не копирует слоты/рецепт; spawn не кладёт `Workplace` / recipe buffer.
 
 | Поле | Смысл | Выкл / пусто = |
 | --- | --- | --- |
@@ -180,32 +180,34 @@ Baker копирует:
 | `costs` | списание при Place | бесплатно |
 | Workplace | слоты | HUD без +/−, production не ищет рабочих |
 | Recipe | in/out за игровой час | не варит |
-| `BuildingView` | имя, цвета, world UI prefab | HUD показывает `typeId` |
+| `BuildingView` | имя, цвета | HUD показывает `typeId` |
 
 Bake падает, если нет `BuildingStamp`, пустой или слишком длинный `typeId`, дубликат ключа в каталоге, битый footprint.
 
-Рецепт живёт **на штампе** (буфер instance). Симуляция: `perHour * dt * 24 / DayDuration`. Размер меша для посадки — `MeshFilter` на `Body` при bake (`BuildingMeshSize`).
+Рецепт живёт **на instance** (буфер, скопированный со spec). Симуляция: `perHour * dt * 24 / DayDuration`. Размер меша для посадки — `MeshFilter` на `Body` при catalog bake (`BuildingPrototype.MeshSize`).
 
 Композиция штампа:
 
 ```text
 Kitchen                 ← BuildingStamp + BuildingView
-  Body                  ← MeshFilter / MeshRenderer (куб сейчас, FBX потом)
-  WorldUi               ← BakeStrip, макет крыши
+  Body                  ← меш (+ Animator / Light позже)
+  WorldUi               ← макет крыши
 ```
 
 Корень без меша. `BuildingView` не вешать на `Body`. Overlay клетки — не ребёнок кухни.
+
+`BuildingViewBoard` — реестр (появился entity → Instantiate штампа + overlay). Бар, цвет, купол — `BuildingView.Sync` по компонентам entity, не `if (typeId)`.
 
 Стройка: тот же entity, что готовый дом. `Construction` висит, пока не достроено (сейчас таймер; люди на сайт — позже). Меш штампа в мире **с кадра Place**. Бар на `_BuildingWorldUi` заполняется, пока висит `Construction`; снятие компонента = построен.
 
 ### 5.3 Каталог
 
-Открыть `DefaultBuildingCatalog` → массив префабов (не SO-карточек).
+Открыть `DefaultBuildingCatalog` → массив префабов (не SO-карточек). Тип ассета — `TheyWillDescend.Content.BuildingCatalogAsset`: вид и ghost Instantiates по `typeId`. Симуляция этот тип не видит; baker копирует цифры `BuildingStamp` в буферы session.
 
 Один и тот же asset:
 
 1. `SimControl` → `BuildingCatalogAuthoring`.
-2. Game → `BuildPlacementController` → Catalog.
+2. Game → `BuildPlacementController` / `BuildingViewBoard` → Catalog.
 
 Забыл второй — Play поставит entity, призрак без меша. Не делай второй catalog «для UI».
 
@@ -233,7 +235,7 @@ Kitchen                 ← BuildingStamp + BuildingView
 | Capture scene → config | Превью → список домов в SO. Запас не трогает |
 | Move tool | Тащишь превью — snap в клетку, MouseUp пишет SO |
 
-Bake сценария: starting stock в леджер; дома — `PendingScenarioPlace`, люди — `PendingScenarioSpawns` на session. Первый тик **Play** делает Place/Spawn. В bake **нельзя** Instantiate штампа каталога: Live Conversion даёт DuplicateEntityGuid. Превью в SubScene unpack’аются полностью (не prefab instance).
+Bake сценария: starting stock в леджер; дома — `PendingScenarioPlace`, люди — `PendingScenarioSpawns` на session. Первый тик **Play** (и `Playback`) спавнит дома через тот же `SpawnHouse`, InstantComplete, без команды. Каталог не Convert'ит Unity-префаб, так что DuplicateEntityGuid больше не про дома. Превью в SubScene unpack’аются полностью (не prefab instance).
 
 `ScenarioAuthoring` нельзя вешать на SimControl: BakingOnly снял бы session singleton.
 
@@ -264,9 +266,9 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 ## 8. Что видит игрок
 
-Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на префабе, кост с буфера штампа.
+Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на префабе, кост с `BuildingCatalogCost`.
 
-Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, `Instantiate` штампа (`Construction`, если duration > 0). После `Playback()` режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
+Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, `CreateEntity` из spec (`Construction`, если duration > 0). После `Playback()` режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
 
 Сценарий и load (`BuildingId > 0` или `InstantComplete`) кост не берут.
 
@@ -318,7 +320,7 @@ Baker склеивает по typeId
 
 ## 11. Контрольный прогон нового дома
 
-1. Меню `They Will Descend / Buildings / Create Cube Stamps` (или duplicate `_BuildingStamp` + карточка + строка в каталоге).
+1. Duplicate `Kitchen` / `Sawmill` + карточка + строка в каталоге.
 2. Play без ошибок duplicate / missing BuildingStamp.
 3. В Build HUD есть кнопка с именем и костом.
 4. Призрак-куб садится на сетку нужного размера; цвет меняется, когда дом варит.

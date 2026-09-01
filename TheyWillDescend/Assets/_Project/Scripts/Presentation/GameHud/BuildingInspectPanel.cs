@@ -1,4 +1,5 @@
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Content;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
@@ -337,7 +338,7 @@ namespace TheyWillDescend.Presentation.GameHud
             return true;
         }
 
-        static TheyWillDescend.Simulation.Content.BuildingCatalogAsset FindViewCatalog()
+        static BuildingCatalogAsset FindViewCatalog()
         {
             var placement = Object.FindFirstObjectByType<BuildPlacementController>();
             return placement != null ? placement.Catalog : null;

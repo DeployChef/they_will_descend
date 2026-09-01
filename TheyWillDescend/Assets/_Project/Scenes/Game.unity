@@ -6179,20 +6179,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 951929505}
   m_CullTransparentMesh: 1
---- !u!114 &954774773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Player/Move
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_ActionId: 351f2ccd-1f9f-44bf-9bec-d62ac5c5f408
 --- !u!1 &969046634
 GameObject:
   m_ObjectHideFlags: 0
@@ -8943,20 +8929,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1446692634}
   m_CullTransparentMesh: 1
---- !u!114 &1458806393
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Camera/Zoom
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_ActionId: b92615ca-8b2b-497c-90e1-10d6587defaa
 --- !u!1 &1462101999
 GameObject:
   m_ObjectHideFlags: 0
@@ -11468,7 +11440,6 @@ MonoBehaviour:
   catalog: {fileID: 0}
   overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
   hqOverlayPrefab: {fileID: 6350343473815025015, guid: 01ccfb3a902bc6947b3e366b444c2522, type: 3}
-  worldUiPrefab: {fileID: 5175040469931536505, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
   zoneColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
 --- !u!114 &1884302428
 MonoBehaviour:
@@ -12836,8 +12807,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 624a026a2b3ac264ba9b212c7609c69c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RTSCameraController
-  moveAction: {fileID: 954774773}
-  zoomAction: {fileID: 1458806393}
+  moveAction: {fileID: 0}
+  zoomAction: {fileID: 0}
   sprintActionName: Sprint
   camera: {fileID: 2122642353}
   cameraTarget: {fileID: 1206856169}

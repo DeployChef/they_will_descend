@@ -3,8 +3,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Session
 {
     /// <summary>
-    /// Baked entity stamps for Instantiate. Not GameObject prefabs.
-    /// Agent is a blank sim body. Houses live in <see cref="TheyWillDescend.Simulation.City.BuildingPrototype"/> on the same session.
+    /// Agent is a blank sim body for Instantiate. Houses are not entity prefabs —
+    /// their spec lives in <see cref="TheyWillDescend.Simulation.City.BuildingPrototype"/> on the same session.
     /// </summary>
     public struct SimPrototypes : IComponentData
     {

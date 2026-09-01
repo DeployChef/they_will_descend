@@ -1,11 +1,13 @@
 using System.Collections.Generic;
+using TheyWillDescend.Simulation.Content;
 using UnityEngine;
 
-namespace TheyWillDescend.Simulation.Content
+namespace TheyWillDescend.Content
 {
     /// <summary>
-    /// List of house prefabs that exist in this build. Same asset on
-    /// BuildingCatalogAuthoring (SubScene) and BuildPlacementController (Game).
+    /// Art registry: typeId → house prefab. Same asset on
+    /// <c>BuildingCatalogAuthoring</c> (bake copies digits into World) and
+    /// Game view/ghost (Instantiate). Simulation does not reference this type.
     /// </summary>
     [CreateAssetMenu(
         fileName = "BuildingCatalog",

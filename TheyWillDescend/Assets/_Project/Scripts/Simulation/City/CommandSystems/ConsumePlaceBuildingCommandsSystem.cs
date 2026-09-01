@@ -1,4 +1,3 @@
-using System;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
@@ -16,7 +15,6 @@ namespace TheyWillDescend.Simulation.City
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<SimBridge>();
-            state.RequireForUpdate<SimPrototypes>();
             state.RequireForUpdate<CityGrid>();
         }
 
@@ -30,11 +28,54 @@ namespace TheyWillDescend.Simulation.City
             if (!SimBridgeAccess.TryGet(em, out var session))
                 return;
 
+            var grid = em.GetComponentData<CityGrid>(session);
+            DrainPendingScenario(em, session, ref grid);
+            DrainCommands(em, session, ref grid);
+            em.SetComponentData(session, grid);
+        }
+
+        static void DrainPendingScenario(EntityManager em, Entity session, ref CityGrid grid)
+        {
+            if (!em.HasBuffer<PendingScenarioPlace>(session))
+                return;
+
+            var pending = em.GetBuffer<PendingScenarioPlace>(session);
+            if (pending.Length == 0)
+                return;
+
+            if (!em.HasBuffer<BuildingPrototype>(session))
+            {
+                pending.Clear();
+                return;
+            }
+
+            var copy = pending.ToNativeArray(Allocator.Temp);
+            pending.Clear();
+            for (var i = 0; i < copy.Length; i++)
+            {
+                var catalog = em.GetBuffer<BuildingPrototype>(session);
+                var place = copy[i];
+                Place(em, session, ref grid, catalog, new PlaceBuildingCommand
+                {
+                    TypeId = place.TypeId,
+                    AnchorCluster = place.Cluster,
+                    AnchorRadial = place.Radial,
+                    InstantComplete = 1
+                });
+            }
+
+            copy.Dispose();
+        }
+
+        static void DrainCommands(EntityManager em, Entity session, ref CityGrid grid)
+        {
+            if (!em.HasBuffer<PlaceBuildingCommand>(session))
+                return;
+
             var commands = em.GetBuffer<PlaceBuildingCommand>(session);
             if (commands.Length == 0)
                 return;
 
-            var grid = em.GetComponentData<CityGrid>(session);
             if (!em.HasBuffer<BuildingPrototype>(session))
             {
                 commands.Clear();
@@ -49,7 +90,6 @@ namespace TheyWillDescend.Simulation.City
                 Place(em, session, ref grid, catalog, copy[i]);
             }
             copy.Dispose();
-            em.SetComponentData(session, grid);
         }
 
         static void Place(
@@ -59,21 +99,13 @@ namespace TheyWillDescend.Simulation.City
             DynamicBuffer<BuildingPrototype> catalog,
             in PlaceBuildingCommand command)
         {
-            if (!BuildingCatalog.TryResolve(catalog, command.TypeId, out var prototype))
+            if (!BuildingCatalog.TryResolve(catalog, command.TypeId, out var spec))
             {
                 Reject(em, session, command, BuildingRejectedEvent.UnknownType);
                 return;
             }
 
-            var prefab = prototype.Prefab;
-            if (prefab == Entity.Null || !em.HasComponent<BuildingType>(prefab))
-            {
-                Reject(em, session, command, BuildingRejectedEvent.UnknownType);
-                return;
-            }
-
-            var type = em.GetComponentData<BuildingType>(prefab);
-            var footprint = type.Footprint;
+            var footprint = spec.Footprint;
             var clusters = new NativeList<OccupiedCell>(64, Allocator.Temp);
             if (grid.Ready == 0
                 || !RadialFootprintMath.TryExpandClusters(
@@ -92,7 +124,7 @@ namespace TheyWillDescend.Simulation.City
                 return;
             }
 
-            if (!TryPay(em, session, prefab, command))
+            if (!TryPay(em, session, spec.TypeId, command))
             {
                 Reject(em, session, command, BuildingRejectedEvent.Unaffordable);
                 clusters.Dispose();
@@ -107,10 +139,8 @@ namespace TheyWillDescend.Simulation.City
                 grid.Center, grid.Config, command.AnchorCluster, command.AnchorRadial, footprint,
                 out var position, out var rotation, out var stubWorldSize);
 
-            var meshSize = em.HasComponent<BuildingMeshSize>(prefab)
-                ? em.GetComponentData<BuildingMeshSize>(prefab).Horizontal
-                : 1f;
-            var scale = meshSize > 0.001f ? stubWorldSize / meshSize : 1f;
+            var meshSize = spec.MeshSize > 0.001f ? spec.MeshSize : 1f;
+            var scale = stubWorldSize / meshSize;
 
             var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
             if (grid.NextBuildingId < id)
@@ -119,7 +149,7 @@ namespace TheyWillDescend.Simulation.City
             var building = new Building
             {
                 Id = id,
-                TypeId = type.TypeId,
+                TypeId = spec.TypeId,
                 WidthClusters = footprint.WidthClusters,
                 DepthRadialRings = footprint.DepthRadialRings,
                 AnchorCluster = command.AnchorCluster,
@@ -128,7 +158,7 @@ namespace TheyWillDescend.Simulation.City
             var transform = LocalTransform.FromPositionRotationScale(position, rotation, scale);
             var duration = command.ConstructionDuration > 0.001f
                 ? command.ConstructionDuration
-                : type.ConstructionDuration;
+                : spec.ConstructionDuration;
 
             Construction? construction = null;
             if (command.InstantComplete == 0 && duration > 0.001f)
@@ -142,31 +172,27 @@ namespace TheyWillDescend.Simulation.City
                     construction = site;
             }
 
-            SpawnHouse(em, prefab, building, transform, construction);
-        }
-
-        public static void SpawnFinishedHouse(
-            EntityManager em,
-            Entity prefab,
-            in Building building,
-            LocalTransform transform)
-        {
-            SpawnHouse(em, prefab, building, transform, null);
+            SpawnHouse(em, session, spec, building, transform, construction);
         }
 
         public static void SpawnHouse(
             EntityManager em,
-            Entity prefab,
+            Entity session,
+            in BuildingPrototype spec,
             in Building building,
             LocalTransform transform,
             Construction? construction)
         {
-            var entity = em.Instantiate(prefab);
-            if (!em.HasComponent<Building>(entity))
-                em.AddComponent<Building>(entity);
-            em.SetComponentData(entity, building);
-            if (em.HasComponent<Workplace>(entity))
-                em.SetComponentData(entity, new Workplace());
+            var entity = em.CreateEntity();
+            em.AddComponentData(entity, building);
+            em.AddComponentData(entity, spec.ToBuildingType());
+            em.AddComponentData(entity, new BuildingMeshSize
+            {
+                Horizontal = spec.MeshSize > 0.001f ? spec.MeshSize : 1f
+            });
+            if (spec.WorkplaceSlots > 0)
+                em.AddComponentData(entity, new Workplace());
+            CopyRecipes(em, session, spec.TypeId, entity);
             SimEntityPose.Apply(em, entity, transform);
             if (construction.HasValue)
                 em.AddComponentData(entity, construction.Value);
@@ -177,42 +203,62 @@ namespace TheyWillDescend.Simulation.City
 #endif
         }
 
-        public static Entity ResolveHousePrefab(
-            DynamicBuffer<BuildingPrototype> catalog,
-            in FixedString64Bytes typeId)
+        static void CopyRecipes(
+            EntityManager em,
+            Entity session,
+            in FixedString64Bytes typeId,
+            Entity entity)
         {
-            return BuildingCatalog.TryResolve(catalog, typeId, out var prototype)
-                ? prototype.Prefab
-                : Entity.Null;
+            if (!em.HasBuffer<BuildingCatalogRecipe>(session))
+                return;
+
+            var src = em.GetBuffer<BuildingCatalogRecipe>(session);
+            var lines = new NativeList<BuildingRecipeLine>(8, Allocator.Temp);
+            for (var i = 0; i < src.Length; i++)
+            {
+                var row = src[i];
+                if (row.TypeId != typeId || row.PerHour <= 0.0001f)
+                    continue;
+                lines.Add(new BuildingRecipeLine
+                {
+                    Kind = row.Kind,
+                    ResourceId = row.ResourceId,
+                    PerHour = row.PerHour
+                });
+            }
+
+            if (lines.Length == 0)
+            {
+                lines.Dispose();
+                return;
+            }
+
+            var dest = em.AddBuffer<BuildingRecipeLine>(entity);
+            for (var i = 0; i < lines.Length; i++)
+                dest.Add(lines[i]);
+            lines.Dispose();
         }
 
         static bool TryPay(
             EntityManager em,
             Entity session,
-            Entity prefab,
+            in FixedString64Bytes typeId,
             in PlaceBuildingCommand command)
         {
             if (command.InstantComplete != 0 || command.BuildingId > 0)
                 return true;
-            if (!em.HasBuffer<BuildingCost>(prefab))
+            if (!em.HasBuffer<BuildingCatalogCost>(session))
                 return true;
 
-            var costs = em.GetBuffer<BuildingCost>(prefab);
+            var costs = em.GetBuffer<BuildingCatalogCost>(session);
             if (!em.HasBuffer<ResourceAmount>(session))
-                return !BuildingCosts.HasCost(costs);
+                return !BuildingCosts.HasCost(costs, typeId);
 
             var stock = em.GetBuffer<ResourceAmount>(session);
-            if (!BuildingCosts.CanAfford(costs, stock))
+            if (!BuildingCosts.CanAfford(costs, typeId, stock))
                 return false;
 
-            for (var i = 0; i < costs.Length; i++)
-            {
-                var cost = costs[i];
-                if (cost.Amount <= 0.0001f)
-                    continue;
-                ResourceLedger.Add(stock, cost.ResourceId, -cost.Amount);
-            }
-
+            BuildingCosts.Pay(costs, typeId, stock);
             return true;
         }
 

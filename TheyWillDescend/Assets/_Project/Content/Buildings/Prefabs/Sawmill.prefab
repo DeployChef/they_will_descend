@@ -74,7 +74,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingView
   displayName: Sawmill
-  worldUiPrefab: {fileID: 5175040469931536505, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
   idleColor: {r: 0.45, g: 0.52, b: 0.62, a: 1}
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
@@ -263,30 +262,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5927249818930253296, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6386114369293746766}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
 --- !u!224 &4552133679066879771 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2326273514062946615, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
   m_PrefabInstance: {fileID: 2262205702976091692}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &5558895870735727580 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5927249818930253296, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
-  m_PrefabInstance: {fileID: 2262205702976091692}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &6386114369293746766
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5558895870735727580}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0e487da8ffdbc0449f4b9411d509323, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.City.BakeStripAuthoring

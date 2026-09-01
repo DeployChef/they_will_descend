@@ -4,13 +4,32 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Session catalog: type key → baked stamp. Numbers live on the prefab entity
-    /// (<see cref="BuildingType"/>, costs, recipe), not copied here.
+    /// Session catalog row: numbers for one house type. Not a pointer to a baked
+    /// art prefab — Place copies this onto a new entity.
     /// </summary>
     public struct BuildingPrototype : IBufferElementData
     {
         public FixedString64Bytes TypeId;
-        public Entity Prefab;
+        public int WidthClusters;
+        public int DepthRadialRings;
+        public float ConstructionDuration;
+        public int WorkplaceSlots;
+        public float MeshSize;
+
+        public BuildingFootprint Footprint => new()
+        {
+            WidthClusters = WidthClusters,
+            DepthRadialRings = DepthRadialRings
+        };
+
+        public BuildingType ToBuildingType() => new()
+        {
+            TypeId = TypeId,
+            WidthClusters = WidthClusters,
+            DepthRadialRings = DepthRadialRings,
+            ConstructionDuration = ConstructionDuration,
+            WorkplaceSlots = WorkplaceSlots
+        };
     }
 
     public static class BuildingCatalog
@@ -26,7 +45,7 @@ namespace TheyWillDescend.Simulation.City
 
             for (var i = 0; i < catalog.Length; i++)
             {
-                if (catalog[i].TypeId != typeId || catalog[i].Prefab == Entity.Null)
+                if (catalog[i].TypeId != typeId)
                     continue;
                 prototype = catalog[i];
                 return true;
