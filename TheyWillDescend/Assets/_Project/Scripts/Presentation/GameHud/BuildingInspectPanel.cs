@@ -45,6 +45,8 @@ namespace TheyWillDescend.Presentation.GameHud
         [Tooltip("Image, в который подставляется спрайт. Если не назначен — берётся Image с самой кнопки")]
         [SerializeField] Image powerIcon;
 
+        BuildPlacementController _placement;
+
         void Awake()
         {
             EnsureExtraButtons();
@@ -161,6 +163,8 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (constructing)
             {
+                var construction = em.GetComponentData<Construction>(entity);
+                UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
                     status.text = "Crew locked until the house stands.";
                 if (workFill != null)
@@ -168,7 +172,7 @@ namespace TheyWillDescend.Presentation.GameHud
             }
             else if (!onShift)
             {
-                UpdateRecipeLabels(em, bag, building.TypeId, slots, 0f);
+                UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -185,7 +189,7 @@ namespace TheyWillDescend.Presentation.GameHud
             }
             else if (paused)
             {
-                UpdateRecipeLabels(em, bag, building.TypeId, slots, 0f);
+                UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
                     status.text = occupied == 0
                         ? "Production stopped. No one assigned."
@@ -196,7 +200,7 @@ namespace TheyWillDescend.Presentation.GameHud
             else
             {
                 var productionLoad = Workplace.Load01(working, slots);
-                UpdateRecipeLabels(em, bag, building.TypeId, slots, productionLoad);
+                UpdateRecipeLabels(em, entity, bag, slots, productionLoad);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -252,6 +256,13 @@ namespace TheyWillDescend.Presentation.GameHud
             return true;
         }
 
+        BuildingCatalogAsset FindViewCatalog()
+        {
+            if (_placement == null)
+                _placement = FindFirstObjectByType<BuildPlacementController>();
+            return _placement != null ? _placement.Catalog : null;
+        }
+
         void UpdateRecipeLabels(
             EntityManager em,
             Entity buildingEntity,
@@ -259,35 +270,42 @@ namespace TheyWillDescend.Presentation.GameHud
             int slots,
             float productionLoad)
         {
-            // 1. Тип здания
             if (buildingRole != null)
                 buildingRole.text = slots > 0 ? "Workplace" : "Building";
 
-            // 2-3. Ресурс и его производство в час
             if (resourceName == null && resourceRate == null)
                 return;
 
             string name = null;
             string rate = null;
-            if (em.HasBuffer<BuildingRecipeLine>(session))
+            if (em.HasBuffer<BuildingRecipeLine>(buildingEntity))
             {
-                var recipes = em.GetBuffer<BuildingRecipeLine>(session);
+                var recipes = em.GetBuffer<BuildingRecipeLine>(buildingEntity);
                 var hasNames = em.HasBuffer<ResourceInfo>(session);
                 var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
+                var chosen = default(BuildingRecipeLine);
+                var found = false;
                 for (var i = 0; i < recipes.Length; i++)
                 {
                     var line = recipes[i];
-                    if (line.TypeId != typeId || line.PerHour <= 0.0001f)
+                    if (line.PerHour <= 0.0001f)
                         continue;
+                    if (!found || line.Kind == BuildingRecipeKind.Output)
+                    {
+                        chosen = line;
+                        found = true;
+                        if (line.Kind == BuildingRecipeKind.Output)
+                            break;
+                    }
+                }
 
-                    // Берём первую строку рецепта (основной выход)
+                if (found)
+                {
                     name = hasNames
-                        ? DisplayName(names, line.ResourceId)
-                        : line.ResourceId.ToString();
-                    var sign = line.Kind == BuildingRecipeKind.Input ? "−" : "+";
-                    var current = line.PerHour * productionLoad;
-                    rate = $"{sign}{current:0.##}";
-                    break;
+                        ? DisplayName(names, chosen.ResourceId)
+                        : chosen.ResourceId.ToString();
+                    var sign = chosen.Kind == BuildingRecipeKind.Input ? "−" : "+";
+                    rate = $"{sign}{chosen.PerHour * productionLoad:0.##}";
                 }
             }
 
