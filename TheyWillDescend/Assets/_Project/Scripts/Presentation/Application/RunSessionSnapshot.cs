@@ -162,6 +162,7 @@ namespace TheyWillDescend.App
             SimCommands.TryRequestDespawnAllBuildings();
             SimCommands.Playback();
 
+            MarkRunPrepared();
             ApplyGameTime(snapshot);
 
             if (snapshot.buildings != null)
@@ -196,6 +197,24 @@ namespace TheyWillDescend.App
             ApplyGods(snapshot);
             GameLog.Info(
                 $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
+        }
+
+        static void MarkRunPrepared()
+        {
+            if (!SimWorld.TryGet(out var em, out var session) || !em.HasComponent<SimControl>(session))
+            {
+                GameLog.Error("Snapshot apply: SimControl missing.");
+                return;
+            }
+
+            if (em.HasComponent<PendingScenarioSpawns>(session))
+                em.SetComponentData(session, new PendingScenarioSpawns { Workers = 0 });
+            if (em.HasBuffer<PendingScenarioPlace>(session))
+                em.GetBuffer<PendingScenarioPlace>(session).Clear();
+
+            var control = em.GetComponentData<SimControl>(session);
+            control.RunPrepared = 1;
+            em.SetComponentData(session, control);
         }
 
         static void ApplyPausedBuildings(RunSnapshot snapshot)

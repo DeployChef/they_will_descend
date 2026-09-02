@@ -34,8 +34,16 @@ namespace TheyWillDescend.Simulation.City
             em.SetComponentData(session, grid);
         }
 
+        static bool IsRunPrepared(EntityManager em, Entity session)
+        {
+            return em.HasComponent<SimControl>(session)
+                && em.GetComponentData<SimControl>(session).RunPrepared != 0;
+        }
+
         static void DrainPendingScenario(EntityManager em, Entity session, ref CityGrid grid)
         {
+            if (!IsRunPrepared(em, session))
+                return;
             if (!em.HasBuffer<PendingScenarioPlace>(session))
                 return;
 
@@ -69,6 +77,8 @@ namespace TheyWillDescend.Simulation.City
 
         static void DrainCommands(EntityManager em, Entity session, ref CityGrid grid)
         {
+            if (!IsRunPrepared(em, session))
+                return;
             if (!em.HasBuffer<PlaceBuildingCommand>(session))
                 return;
 

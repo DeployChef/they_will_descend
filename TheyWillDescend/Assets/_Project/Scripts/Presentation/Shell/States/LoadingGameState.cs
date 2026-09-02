@@ -43,8 +43,14 @@ namespace TheyWillDescend.Shell.States
             try
             {
                 await _session.StartAsync(cancellationToken);
-                if (cancellationToken.IsCancellationRequested || !_session.IsActive)
+                if (cancellationToken.IsCancellationRequested)
                     return;
+                if (!_session.IsActive)
+                {
+                    _fsm.TransitionTo(AppStateId.MainMenu);
+                    return;
+                }
+
                 _fsm.TransitionTo(AppStateId.Playing);
             }
             catch (OperationCanceledException)

@@ -47,8 +47,8 @@ Assets/_Project/Scripts/
     Agents/      Components, Commands, CommandSystems, Systems
     Economy/     Components, Systems
     Gods/        Components, Commands, CommandSystems, Systems
-    Content/     каталоги логики (ResourceDefinition, SimRules, Timeline, BuildingStamp)
-  Content/       BuildingCatalogAsset — арт домов (не снимок рана)
+    Content/     каталоги логики (ResourceDefinition, SimRules, Timeline, BuildingStamp identity)
+  Content/       BuildingCatalogAsset (арт+штамп), DifficultyProfile (оверлей), ScenarioDefinition
   Authoring/
     Session/     SimControlAuthoring, SimRulesAuthoring
     Agents/      AgentSessionAuthoring
@@ -60,9 +60,8 @@ Assets/_Project/Scripts/
     Agents/      AgentSpawner, AgentViewBoard
     City/        placement, grid guide, BuildingViewBoard, BuildingSelection, BuildingRejectLog
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
+    Application/ RunPublisher, RunSessionSnapshot
     Shell/       FSM, GameSession, SceneLoader, GameInput
-    ShellUi/     PressAnyKeyScreen, MainMenuScreen
-    Application/ RunSessionSnapshot
     Infrastructure/ Logging, Save
     Audio/       GameAudio
   Main/          Startup, AppFlowFactory

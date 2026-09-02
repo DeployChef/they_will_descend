@@ -49,7 +49,7 @@
 | --- | --- | --- |
 | 0 | Entities, SubScene, bake, Entities Hierarchy | done |
 | 1 | `GameTime` singleton + tick + `GameLog` | done |
-| Shell | PressAnyKey → Menu → Loading → Playing; Esc = часы, не стейт | done ([[09 App Shell]]) |
+| Shell | PressAnyKey → Menu → Loading → Playing; Esc = оверлей паузы, не стейт | done ([[09 App Shell]]) |
 | 2 | Time HUD (pause/x1/x2/x3 + часы) + slot save/load | done ([[13 Time HUD and Save]]) |
 | 3 | Ресурсы, стройка, рабочие, workplace | **done** в срезе (10 слотов; рецепт × нагрузка) |
 | 4+ | Нужды, давление, win/lose | next — петля, не новые папки |

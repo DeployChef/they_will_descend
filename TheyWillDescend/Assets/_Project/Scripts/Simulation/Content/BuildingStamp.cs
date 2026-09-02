@@ -7,7 +7,8 @@ namespace TheyWillDescend.Simulation.Content
     /// <summary>
     /// One card on a house prefab. Catalog bake copies digits onto the session
     /// spec; empty / toggled-off packs are not copied. HUD name and world UI
-    /// live on <c>BuildingView</c>, not here.
+    /// live on <c>BuildingView</c>, not here. Difficulty / A/B overlays replace
+    /// numbers on the session snapshot at run start — they do not live here.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BuildingStamp : MonoBehaviour

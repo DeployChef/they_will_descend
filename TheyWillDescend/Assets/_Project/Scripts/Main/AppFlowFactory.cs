@@ -14,9 +14,10 @@ namespace TheyWillDescend.Main
         {
             var fsm = new AppStateMachine();
             fsm.Register(new PressAnyKeyState(fsm, input));
-            fsm.Register(new MainMenuState(fsm, input));
+            fsm.Register(new MainMenuState(fsm, input, session));
             fsm.Register(new LoadingGameState(fsm, session, input));
-            fsm.Register(new PlayingState(input, audio));
+            fsm.Register(new PlayingState(fsm, session, input, audio));
+            fsm.Register(new ReturningToMenuState(fsm, session, input));
             return fsm;
         }
     }

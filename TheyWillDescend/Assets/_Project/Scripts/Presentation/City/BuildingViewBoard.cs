@@ -117,7 +117,7 @@ namespace TheyWillDescend.Presentation.City
                 if (!_views.TryGetValue(building.Id, out var placed) || placed?.Root == null)
                 {
                     placed = em.HasComponent<Headquarters>(entity)
-                        ? CreateHqView(building, position)
+                        ? CreateHqView(em, entity, building, position)
                         : CreateHouseView(em, entity, building, position);
                 }
 
@@ -160,7 +160,7 @@ namespace TheyWillDescend.Presentation.City
             return default;
         }
 
-        PlacedView CreateHqView(in Building building, float3 position)
+        PlacedView CreateHqView(EntityManager em, Entity entity, in Building building, float3 position)
         {
             EnsureReady();
             if (hqOverlayPrefab == null)
@@ -186,11 +186,18 @@ namespace TheyWillDescend.Presentation.City
                 overlay.PlazaRenderer.receiveShadows = false;
             }
 
-            const float clickHeight = 18f;
+            var clickRadius = plaza * 0.82f;
+            var clickHeight = 18f;
+            if (em.HasComponent<BuildingMeshSize>(entity))
+            {
+                var meshHalf = em.GetComponentData<BuildingMeshSize>(entity).Horizontal * 0.55f;
+                clickRadius = math.max(clickRadius, meshHalf);
+                clickHeight = math.max(clickHeight, clickRadius * 2f);
+            }
             if (overlay.ClickProxy != null)
             {
                 overlay.ClickProxy.transform.localPosition = Vector3.up * (clickHeight * 0.5f);
-                overlay.ClickProxy.radius = plaza * 0.82f;
+                overlay.ClickProxy.radius = clickRadius;
                 overlay.ClickProxy.height = clickHeight;
                 overlay.ClickProxy.direction = 1;
             }

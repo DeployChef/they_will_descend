@@ -19,7 +19,8 @@ namespace TheyWillDescend.Authoring.Session
                 {
                     Mode = SimRunMode.Off,
                     Speed = 1,
-                    DeltaTime = 0f
+                    DeltaTime = 0f,
+                    RunPrepared = 0
                 });
                 AddComponent(entity, new SimBridge());
                 AddBuffer<SimClockCommand>(entity);

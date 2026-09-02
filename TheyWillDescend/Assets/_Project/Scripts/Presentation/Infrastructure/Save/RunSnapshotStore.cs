@@ -12,6 +12,8 @@ namespace TheyWillDescend.Infrastructure.Save
         public static string SlotPath =>
             Path.Combine(Application.persistentDataPath, "run_slot0.json");
 
+        public static bool HasSlot => File.Exists(SlotPath);
+
         public static void Write(RunSnapshot snapshot)
         {
             snapshot.version = RunSnapshot.CurrentVersion;

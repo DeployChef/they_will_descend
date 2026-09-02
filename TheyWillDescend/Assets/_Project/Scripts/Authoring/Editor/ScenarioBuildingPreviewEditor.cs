@@ -1,4 +1,5 @@
 using TheyWillDescend.Authoring.Scenario;
+using TheyWillDescend.Content;
 using UnityEditor;
 using UnityEngine;
 

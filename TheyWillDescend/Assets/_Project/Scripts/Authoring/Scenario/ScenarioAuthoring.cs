@@ -1,4 +1,5 @@
 using TheyWillDescend.Authoring.City;
+using TheyWillDescend.Content;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using Unity.Entities;

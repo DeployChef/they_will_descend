@@ -10,9 +10,9 @@ using UnityEngine;
 namespace TheyWillDescend.Authoring.Scenario
 {
     /// <summary>
-    /// Copies scenario houses/stock/worker count onto the session.
-    /// Houses become <see cref="PendingScenarioPlace"/> rows; Play spawns via
-    /// <c>SpawnHouse</c>. Does not convert catalog art.
+    /// Copies SubScene scenario houses/stock/worker count onto the session
+    /// at bake time (editor seed). Play overwrites the same buffers in
+    /// <c>RunPublisher</c> from the menu kit — this system does not run in Play.
     /// Runs after HQ writes CityGrid.Center so poses sit on the plaza origin.
     /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]

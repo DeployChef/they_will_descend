@@ -1,3 +1,4 @@
+using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using TMPro;
@@ -36,9 +37,10 @@ namespace TheyWillDescend.Presentation.GameHud
             var hasControl = SimWorld.TryGet(out var em, out var bag);
             var control = hasControl ? em.GetComponentData<SimControl>(bag) : default;
             var buildLocked = hasControl && control.BuildLocked != 0;
-            HudButtons.SetInteractable(speed1Button, !buildLocked);
-            HudButtons.SetInteractable(speed2Button, !buildLocked);
-            HudButtons.SetInteractable(speed3Button, !buildLocked);
+            var pauseMenuOpen = PauseMenuScreen.Current != null && PauseMenuScreen.Current.IsOpen;
+            HudButtons.SetInteractable(speed1Button, !buildLocked && !pauseMenuOpen);
+            HudButtons.SetInteractable(speed2Button, !buildLocked && !pauseMenuOpen);
+            HudButtons.SetInteractable(speed3Button, !buildLocked && !pauseMenuOpen);
             HudButtons.SetInteractable(pauseButton, !buildLocked);
 
             HudButtons.Tint(speed1Button, hasControl && control.Speed == 1);
@@ -69,7 +71,10 @@ namespace TheyWillDescend.Presentation.GameHud
 
         static void OnPauseClicked()
         {
-            SimCommands.TryPost(SimClockCommand.TogglePause());
+            if (PauseMenuScreen.Current != null)
+                PauseMenuScreen.Current.RequestToggle();
+            else
+                SimCommands.TryPost(SimClockCommand.TogglePause());
         }
 
         static void OnSpeedClicked(int speed)

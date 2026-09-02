@@ -15,6 +15,7 @@ namespace TheyWillDescend.Simulation.Session
             ConsumeSimClockCommandsSystem.Run(em);
             ConsumeDespawnAgentsSystem.Run(em);
             ConsumeDespawnBuildingsSystem.Run(em);
+            ConsumePendingScenarioSpawnsSystem.Run(em);
             ConsumeSpawnAgentCommandsSystem.Run(em);
             ConsumePlaceBuildingCommandsSystem.Run(em);
             ConsumeAssignWorkerCommandsSystem.Run(em);

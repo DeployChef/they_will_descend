@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TheyWillDescend.Simulation.Content;
 using UnityEngine;
 
-namespace TheyWillDescend.Authoring.Scenario
+namespace TheyWillDescend.Content
 {
     [Serializable]
     public struct ScenarioBuildingRecord

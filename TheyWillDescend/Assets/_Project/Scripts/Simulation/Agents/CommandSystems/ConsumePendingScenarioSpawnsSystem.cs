@@ -7,8 +7,8 @@ using UnityEngine;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// First Play tick: turn baked worker count into SpawnAgentCommand.
-    /// Skips Edit Mode so Live Conversion does not re-apply the queue.
+    /// Turns pending worker count into SpawnAgentCommand after the run publisher
+    /// has applied scenario + difficulty.
     /// </summary>
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateBefore(typeof(ConsumeSpawnAgentCommandsSystem))]
@@ -25,14 +25,28 @@ namespace TheyWillDescend.Simulation.Agents
         {
             if (!Application.isPlaying)
                 return;
+            Run(state.EntityManager);
+        }
 
-            var session = SystemAPI.GetSingletonEntity<PendingScenarioSpawns>();
-            var pending = SystemAPI.GetComponent<PendingScenarioSpawns>(session);
+        public static void Run(EntityManager em)
+        {
+            if (!SimBridgeAccess.TryGet(em, out var session))
+                return;
+            if (!em.HasComponent<PendingScenarioSpawns>(session)
+                || !em.HasComponent<CityGrid>(session)
+                || !em.HasComponent<SimControl>(session))
+                return;
+            if (em.GetComponentData<SimControl>(session).RunPrepared == 0)
+                return;
+
+            var pending = em.GetComponentData<PendingScenarioSpawns>(session);
             if (pending.Workers <= 0)
                 return;
 
-            var center = SystemAPI.GetComponent<CityGrid>(session).Center;
-            var commands = SystemAPI.GetBuffer<SpawnAgentCommand>(session);
+            var center = em.GetComponentData<CityGrid>(session).Center;
+            if (!em.HasBuffer<SpawnAgentCommand>(session))
+                em.AddBuffer<SpawnAgentCommand>(session);
+            var commands = em.GetBuffer<SpawnAgentCommand>(session);
             var count = pending.Workers;
             for (var i = 0; i < count; i++)
             {
@@ -58,7 +72,7 @@ namespace TheyWillDescend.Simulation.Agents
             }
 
             pending.Workers = 0;
-            SystemAPI.SetComponent(session, pending);
+            em.SetComponentData(session, pending);
         }
     }
 }

@@ -8,7 +8,8 @@ namespace TheyWillDescend.Simulation.Session
         TogglePlayerPause = 2,
         SetSpeed = 3,
         SetBuildLocked = 4,
-        Restore = 5
+        Restore = 5,
+        SetPlayerPause = 6
     }
 
     public struct SimClockCommand : IBufferElementData
@@ -26,6 +27,12 @@ namespace TheyWillDescend.Simulation.Session
         public static SimClockCommand TogglePause() => new()
         {
             Kind = SimClockCommandKind.TogglePlayerPause
+        };
+
+        public static SimClockCommand PlayerPaused(bool paused) => new()
+        {
+            Kind = SimClockCommandKind.SetPlayerPause,
+            Value = paused ? 1 : 0
         };
 
         public static SimClockCommand Speed(int speed) => new()

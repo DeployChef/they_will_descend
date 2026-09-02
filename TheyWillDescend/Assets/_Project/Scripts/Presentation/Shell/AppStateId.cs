@@ -5,6 +5,7 @@ namespace TheyWillDescend.Shell
         PressAnyKey = 0,
         MainMenu = 1,
         LoadingGame = 2,
-        Playing = 3
+        Playing = 3,
+        ReturningToMenu = 4
     }
 }

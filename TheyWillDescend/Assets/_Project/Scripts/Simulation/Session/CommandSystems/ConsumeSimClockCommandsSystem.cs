@@ -47,6 +47,11 @@ namespace TheyWillDescend.Simulation.Session
                         return;
                     control.PlayerPaused = control.PlayerPaused == 0 ? (byte)1 : (byte)0;
                     break;
+                case SimClockCommandKind.SetPlayerPause:
+                    if (control.SessionInGame == 0 || control.BuildLocked != 0)
+                        return;
+                    control.PlayerPaused = command.Value != 0 ? (byte)1 : (byte)0;
+                    break;
                 case SimClockCommandKind.SetSpeed:
                     if (control.SessionInGame == 0 || control.BuildLocked != 0)
                         return;

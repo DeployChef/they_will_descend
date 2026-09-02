@@ -14,6 +14,11 @@ namespace TheyWillDescend.Simulation.Session
         public byte SessionInGame;
         public byte PlayerPaused;
         public byte BuildLocked;
+        /// <summary>
+        /// 0 until the session publisher or a loaded snapshot applied.
+        /// Scenario pending and Place commands must not spawn before that.
+        /// </summary>
+        public byte RunPrepared;
 
         public bool IsRunning => Mode == SimRunMode.Running;
     }

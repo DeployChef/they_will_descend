@@ -1,5 +1,6 @@
 using TheyWillDescend.Authoring.City;
 using TheyWillDescend.Authoring.Scenario;
+using TheyWillDescend.Content;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.City;
 using Unity.Mathematics;
