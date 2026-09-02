@@ -77,6 +77,11 @@ MonoBehaviour:
   idleColor: {r: 0.45, g: 0.52, b: 0.62, a: 1}
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
+  workingPulseHz: 1.15
+  uiHeight: 2.2
+  uiReferenceDistance: 60
+  uiBaseScale: 0.02
+  uiHideBelowCameraHeight: 25
 --- !u!1 &5906566791462257087
 GameObject:
   m_ObjectHideFlags: 0
