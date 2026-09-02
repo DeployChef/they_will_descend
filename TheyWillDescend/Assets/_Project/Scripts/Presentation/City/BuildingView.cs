@@ -85,7 +85,6 @@ namespace TheyWillDescend.Presentation.City
             {
                 var local = em.GetComponentData<LocalTransform>(entity);
                 transform.SetPositionAndRotation(local.Position, local.Rotation);
-                transform.localScale = Vector3.one * local.Scale;
                 return;
             }
 

@@ -30,6 +30,9 @@ namespace TheyWillDescend.Authoring.City
             public override void Bake(BuildingCatalogAuthoring authoring)
             {
                 var entity = GetEntity(TransformUsageFlags.None);
+                var basePrototypes = AddBuffer<BaseBuildingPrototype>(entity);
+                var baseCosts = AddBuffer<BaseBuildingCatalogCost>(entity);
+                var baseRecipes = AddBuffer<BaseBuildingCatalogRecipe>(entity);
                 var prototypes = AddBuffer<BuildingPrototype>(entity);
                 var costs = AddBuffer<BuildingCatalogCost>(entity);
                 var recipes = AddBuffer<BuildingCatalogRecipe>(entity);
@@ -44,10 +47,22 @@ namespace TheyWillDescend.Authoring.City
                 var seen = new HashSet<string>(System.StringComparer.Ordinal);
                 var prefabs = so.Prefabs;
                 for (var i = 0; i < prefabs.Count; i++)
-                    BakeEntry(prototypes, costs, recipes, seen, prefabs[i], authoring);
+                    BakeEntry(
+                        basePrototypes,
+                        baseCosts,
+                        baseRecipes,
+                        prototypes,
+                        costs,
+                        recipes,
+                        seen,
+                        prefabs[i],
+                        authoring);
             }
 
             void BakeEntry(
+                DynamicBuffer<BaseBuildingPrototype> basePrototypes,
+                DynamicBuffer<BaseBuildingCatalogCost> baseCosts,
+                DynamicBuffer<BaseBuildingCatalogRecipe> baseRecipes,
                 DynamicBuffer<BuildingPrototype> prototypes,
                 DynamicBuffer<BuildingCatalogCost> costs,
                 DynamicBuffer<BuildingCatalogRecipe> recipes,
@@ -92,26 +107,27 @@ namespace TheyWillDescend.Authoring.City
                 DependsOnRates(stamp.RecipeInputs);
                 DependsOnRates(stamp.RecipeOutputs);
 
-                var meshSize = BuildingPrefabMetrics.HorizontalSize(prefab);
-                prototypes.Add(new BuildingPrototype
+                var basePrototype = new BaseBuildingPrototype
                 {
                     TypeId = typeKey,
                     WidthClusters = stamp.WidthClusters,
                     DepthRadialRings = stamp.DepthRadialRings,
                     ConstructionDuration = stamp.ConstructionDuration,
-                    WorkplaceSlots = stamp.WorkplaceSlots,
-                    MeshSize = meshSize > 0.001f ? meshSize : 1f
-                });
+                    WorkplaceSlots = stamp.WorkplaceSlots
+                };
+                basePrototypes.Add(basePrototype);
+                prototypes.Add(basePrototype.ToResolved());
 
-                AddCosts(costs, typeKey, stamp.Costs);
+                AddCosts(baseCosts, costs, typeKey, stamp.Costs);
                 if (stamp.HasRecipe)
                 {
-                    AddRecipe(recipes, typeKey, stamp.RecipeInputs, BuildingRecipeKind.Input);
-                    AddRecipe(recipes, typeKey, stamp.RecipeOutputs, BuildingRecipeKind.Output);
+                    AddRecipe(baseRecipes, recipes, typeKey, stamp.RecipeInputs, BuildingRecipeKind.Input);
+                    AddRecipe(baseRecipes, recipes, typeKey, stamp.RecipeOutputs, BuildingRecipeKind.Output);
                 }
             }
 
             void AddCosts(
+                DynamicBuffer<BaseBuildingCatalogCost> baseBuffer,
                 DynamicBuffer<BuildingCatalogCost> buffer,
                 in Unity.Collections.FixedString64Bytes typeKey,
                 BuildingCostEntry[] entries)
@@ -124,16 +140,19 @@ namespace TheyWillDescend.Authoring.City
                     if (entry.Resource == null || entry.Amount <= 0.0001f)
                         continue;
                     DependsOn(entry.Resource);
-                    buffer.Add(new BuildingCatalogCost
+                    var row = new BaseBuildingCatalogCost
                     {
                         TypeId = typeKey,
                         ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
                         Amount = entry.Amount
-                    });
+                    };
+                    baseBuffer.Add(row);
+                    buffer.Add(row.ToResolved());
                 }
             }
 
             void AddRecipe(
+                DynamicBuffer<BaseBuildingCatalogRecipe> baseBuffer,
                 DynamicBuffer<BuildingCatalogRecipe> buffer,
                 in Unity.Collections.FixedString64Bytes typeKey,
                 ResourceRate[] rates,
@@ -147,13 +166,15 @@ namespace TheyWillDescend.Authoring.City
                     if (entry.Resource == null || entry.PerHour <= 0.0001f)
                         continue;
                     DependsOn(entry.Resource);
-                    buffer.Add(new BuildingCatalogRecipe
+                    var row = new BaseBuildingCatalogRecipe
                     {
                         TypeId = typeKey,
                         Kind = kind,
                         ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
                         PerHour = entry.PerHour
-                    });
+                    };
+                    baseBuffer.Add(row);
+                    buffer.Add(row.ToResolved());
                 }
             }
 

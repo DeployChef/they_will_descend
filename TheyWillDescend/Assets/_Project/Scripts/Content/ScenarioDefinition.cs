@@ -33,9 +33,17 @@ namespace TheyWillDescend.Content
         [SerializeField] List<ScenarioBuildingRecord> buildings = new();
         [SerializeField] List<ScenarioResourceRecord> startingStock = new();
         [SerializeField, Min(0)] int startingWorkers = 8;
+        [SerializeField] DifficultyProfile[] difficulties = Array.Empty<DifficultyProfile>();
+        [SerializeField] DifficultyProfile defaultDifficulty;
 
         public IReadOnlyList<ScenarioBuildingRecord> Buildings => buildings;
         public IReadOnlyList<ScenarioResourceRecord> StartingStock => startingStock;
+        public IReadOnlyList<DifficultyProfile> Difficulties =>
+            difficulties ?? Array.Empty<DifficultyProfile>();
+        public DifficultyProfile DefaultDifficulty =>
+            defaultDifficulty != null && ContainsDifficulty(defaultDifficulty)
+                ? defaultDifficulty
+                : null;
         public int StartingWorkers
         {
             get => startingWorkers < 0 ? 0 : startingWorkers;
@@ -49,6 +57,38 @@ namespace TheyWillDescend.Content
                 return;
             for (var i = 0; i < next.Count; i++)
                 buildings.Add(next[i]);
+        }
+
+        /// <summary>
+        /// Null means the prefab-default catalog and is always a valid fallback.
+        /// </summary>
+        public bool ContainsDifficulty(DifficultyProfile difficulty)
+        {
+            if (difficulty == null)
+                return true;
+            if (difficulties == null)
+                return false;
+            for (var i = 0; i < difficulties.Length; i++)
+            {
+                if (difficulties[i] == difficulty)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public bool TryResolveDifficulty(
+            DifficultyProfile requested,
+            out DifficultyProfile resolved)
+        {
+            if (requested != null)
+            {
+                resolved = ContainsDifficulty(requested) ? requested : null;
+                return resolved != null;
+            }
+
+            resolved = DefaultDifficulty;
+            return true;
         }
     }
 }

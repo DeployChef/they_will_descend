@@ -56,6 +56,7 @@ namespace TheyWillDescend.App
                     };
                 }
             }
+            CaptureResolvedCatalog(em, bag, snapshot);
 
             using var agentQuery = em.CreateEntityQuery(
                 ComponentType.ReadOnly<LocalTransform>(),
@@ -158,8 +159,13 @@ namespace TheyWillDescend.App
                 GameLog.Error("Snapshot apply: required session lifecycle queues are missing.");
                 return false;
             }
-
             em.CompleteAllTrackedJobs();
+            if (!TryRestoreResolvedCatalog(em, session, snapshot))
+            {
+                GameLog.Error("Snapshot apply: resolved building catalog is missing or invalid.");
+                return false;
+            }
+
             RunPublisher.ClearLifecycleQueues(em, session);
             var lifecycle = em.GetComponentData<SimSession>(session);
             lifecycle.Phase = SimSessionPhase.Preparing;
@@ -211,6 +217,148 @@ namespace TheyWillDescend.App
             ApplyGods(snapshot);
             GameLog.Info(
                 $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
+            return true;
+        }
+
+        static void CaptureResolvedCatalog(
+            EntityManager em,
+            Entity session,
+            RunSnapshot snapshot)
+        {
+            if (!em.HasBuffer<BuildingPrototype>(session)
+                || !em.HasBuffer<BuildingCatalogCost>(session)
+                || !em.HasBuffer<BuildingCatalogRecipe>(session))
+                return;
+
+            var prototypes = em.GetBuffer<BuildingPrototype>(session);
+            snapshot.buildingCatalog = new ResolvedBuildingPrototypeSnapshot[prototypes.Length];
+            for (var i = 0; i < prototypes.Length; i++)
+            {
+                var row = prototypes[i];
+                snapshot.buildingCatalog[i] = new ResolvedBuildingPrototypeSnapshot
+                {
+                    typeId = row.TypeId.ToString(),
+                    widthClusters = row.WidthClusters,
+                    depthRadialRings = row.DepthRadialRings,
+                    constructionDuration = row.ConstructionDuration,
+                    workplaceSlots = row.WorkplaceSlots
+                };
+            }
+
+            var costs = em.GetBuffer<BuildingCatalogCost>(session);
+            snapshot.buildingCosts = new ResolvedBuildingCostSnapshot[costs.Length];
+            for (var i = 0; i < costs.Length; i++)
+            {
+                var row = costs[i];
+                snapshot.buildingCosts[i] = new ResolvedBuildingCostSnapshot
+                {
+                    typeId = row.TypeId.ToString(),
+                    resourceId = row.ResourceId.ToString(),
+                    amount = row.Amount
+                };
+            }
+
+            var recipes = em.GetBuffer<BuildingCatalogRecipe>(session);
+            snapshot.buildingRecipes = new ResolvedBuildingRecipeSnapshot[recipes.Length];
+            for (var i = 0; i < recipes.Length; i++)
+            {
+                var row = recipes[i];
+                snapshot.buildingRecipes[i] = new ResolvedBuildingRecipeSnapshot
+                {
+                    typeId = row.TypeId.ToString(),
+                    kind = (byte)row.Kind,
+                    resourceId = row.ResourceId.ToString(),
+                    perHour = row.PerHour
+                };
+            }
+        }
+
+        static bool TryRestoreResolvedCatalog(
+            EntityManager em,
+            Entity session,
+            RunSnapshot snapshot)
+        {
+            if (snapshot.buildingCatalog == null
+                || snapshot.buildingCatalog.Length == 0
+                || !em.HasBuffer<BuildingPrototype>(session)
+                || !em.HasBuffer<BuildingCatalogCost>(session)
+                || !em.HasBuffer<BuildingCatalogRecipe>(session))
+                return false;
+
+            for (var i = 0; i < snapshot.buildingCatalog.Length; i++)
+            {
+                var row = snapshot.buildingCatalog[i];
+                if (row == null
+                    || !ContentId.TryEncode(row.typeId, out _)
+                    || row.widthClusters <= 0
+                    || row.depthRadialRings <= 0)
+                    return false;
+            }
+
+            var prototypes = em.GetBuffer<BuildingPrototype>(session);
+            prototypes.Clear();
+            for (var i = 0; i < snapshot.buildingCatalog.Length; i++)
+            {
+                var row = snapshot.buildingCatalog[i];
+                prototypes.Add(new BuildingPrototype
+                {
+                    TypeId = ContentId.EncodeOrEmpty(row.typeId),
+                    WidthClusters = row.widthClusters,
+                    DepthRadialRings = row.depthRadialRings,
+                    ConstructionDuration = math.max(0f, row.constructionDuration),
+                    WorkplaceSlots = math.max(0, row.workplaceSlots)
+                });
+            }
+
+            var costs = em.GetBuffer<BuildingCatalogCost>(session);
+            costs.Clear();
+            if (snapshot.buildingCosts != null)
+            {
+                for (var i = 0; i < snapshot.buildingCosts.Length; i++)
+                {
+                    var row = snapshot.buildingCosts[i];
+                    if (row == null || row.amount <= 0.0001f)
+                        continue;
+                    var typeId = ContentId.EncodeOrEmpty(row.typeId);
+                    var resourceId = ContentId.EncodeOrEmpty(row.resourceId);
+                    if (typeId.IsEmpty || resourceId.IsEmpty)
+                        continue;
+                    costs.Add(new BuildingCatalogCost
+                    {
+                        TypeId = typeId,
+                        ResourceId = resourceId,
+                        Amount = row.amount
+                    });
+                }
+            }
+
+            var recipes = em.GetBuffer<BuildingCatalogRecipe>(session);
+            recipes.Clear();
+            if (snapshot.buildingRecipes != null)
+            {
+                for (var i = 0; i < snapshot.buildingRecipes.Length; i++)
+                {
+                    var row = snapshot.buildingRecipes[i];
+                    if (row == null || row.perHour <= 0.0001f)
+                        continue;
+                    var typeId = ContentId.EncodeOrEmpty(row.typeId);
+                    var resourceId = ContentId.EncodeOrEmpty(row.resourceId);
+                    var kind = (BuildingRecipeKind)row.kind;
+                    if (typeId.IsEmpty
+                        || resourceId.IsEmpty
+                        || (kind != BuildingRecipeKind.Input
+                            && kind != BuildingRecipeKind.Output))
+                        continue;
+                    recipes.Add(new BuildingCatalogRecipe
+                    {
+                        TypeId = typeId,
+                        Kind = kind,
+                        ResourceId = resourceId,
+                        PerHour = row.perHour
+                    });
+                }
+            }
+
             return true;
         }
 

@@ -62,7 +62,8 @@ IAppState (PressAnyKey, MainMenu, LoadingGame, Playing)
 
 GameSession
   StartAsync / DisposeAsync / LoadMainMenuAsync
-  run kits: DefaultScenario+DefaultDifficulty vs DebugScenario+DebugDifficulty
+  current buttons: DefaultScenario.DefaultDifficulty vs DebugScenario.DefaultDifficulty
+  future menu: SetRunSelection(scenario, allowed difficulty)
   load/unload контента рана; ждёт bake: SimWorld.TryGet; затем RunPublisher
 
 SceneLoader (узкий)
@@ -147,7 +148,7 @@ fsm.Register(new ReturningToMenuState(fsm, session, input));
 
 Экраны биндятся в Awake на своих панелях (`Current`): `MainMenuScreen`, `PauseMenuScreen`. Стейты читают в Enter, не кэшируют с boot.
 
-Меню: **Start Game** / **Load** / **Start Debug**. Start Game = DefaultScenario + штамп. Load = слот (кнопка серая, если файла нет). Debug = DebugScenario + `DifficultyProfile`.
+Меню: **Start Game** / **Load** / **Start Debug**. Список допустимых `DifficultyProfile` и default принадлежат `ScenarioDefinition`, а не отдельным полям `GameSession`. Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Null default = prefab-default balance. Load = слот (кнопка серая, если файла нет).
 
 `skipMenuToGameTemporarily` — debug: сразу LoadingGame, MainMenu не грузится. **По умолчанию выключен.** Сейчас выключен, чтобы проверить меню.
 

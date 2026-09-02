@@ -215,13 +215,12 @@ namespace TheyWillDescend.Authoring.Editor
             preview.Cluster = record.Cluster;
             preview.Radial = record.Radial;
             BuildingStampRead.TryFootprint(prefab, out var footprint);
-            preview.ApplyPose(
-                config, center, footprint, BuildingStampRead.MeshSize(prefab));
+            preview.ApplyPose(config, center, footprint);
         }
 
         static void StripRuntimeAuthoring(GameObject root)
         {
-            var stamps = root.GetComponentsInChildren<TheyWillDescend.Simulation.Content.BuildingStamp>(true);
+            var stamps = root.GetComponentsInChildren<BuildingStamp>(true);
             for (var i = 0; i < stamps.Length; i++)
                 Undo.DestroyObjectImmediate(stamps[i]);
         }
@@ -246,13 +245,6 @@ namespace TheyWillDescend.Authoring.Editor
 
             footprint = default;
             return false;
-        }
-
-        internal static float MeshSize(BuildingCatalogAuthoring catalog, string typeId)
-        {
-            if (catalog == null || !catalog.TryGet(typeId, out var prefab))
-                return 1f;
-            return BuildingStampRead.MeshSize(prefab);
         }
 
         static List<BuildingFootprint> CollectFootprints(

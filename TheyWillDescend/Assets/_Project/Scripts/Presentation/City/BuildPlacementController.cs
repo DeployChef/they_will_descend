@@ -31,7 +31,6 @@ namespace TheyWillDescend.Presentation.City
 
         string _typeId;
         BuildingFootprint _footprint;
-        float _meshSize = 1f;
         GameObject _ghostPrefab;
 
         bool _placing;
@@ -76,7 +75,6 @@ namespace TheyWillDescend.Presentation.City
             }
             _typeId = spec.TypeId.ToString();
             _footprint = spec.Footprint;
-            _meshSize = spec.MeshSize > 0.001f ? spec.MeshSize : 1f;
             _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
             gridGuide.SetBuildModeActive(true);
@@ -220,15 +218,15 @@ namespace TheyWillDescend.Presentation.City
             {
                 RadialFootprintMath.FootprintMarkerPose(
                     center, config, _anchorCluster, _anchorRadial, _footprint,
-                    out var pos, out var rot, out var targetSize);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot, targetSize);
+                    out var pos, out var rot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
             }
             else
             {
                 RadialFootprintMath.FootprintMarkerPoseFromTurns(
                     center, config, _anchorTurns0, _anchorRadial, _footprint,
-                    out var pos, out var rot, out var targetSize);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot, targetSize);
+                    out var pos, out var rot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
             }
         }
 
@@ -290,20 +288,11 @@ namespace TheyWillDescend.Presentation.City
             StripColliders(instance);
             HideWorldUi(instance);
             _ghostBuilding = instance.transform;
-            _ghostBuilding.localScale = Vector3.one;
         }
 
-        void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot, float targetSize)
+        static void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot)
         {
-            t.localScale = Vector3.one;
             t.SetPositionAndRotation(pos, rot);
-
-            var size = _meshSize > 0.001f ? _meshSize : MeasureHorizontalSize(t.gameObject);
-            if (size > 0.001f)
-                t.localScale = Vector3.one * (targetSize / size);
-
-            t.position = pos;
-            t.rotation = rot;
         }
 
         static void HideWorldUi(GameObject go)
@@ -318,19 +307,6 @@ namespace TheyWillDescend.Presentation.City
             var cols = go.GetComponentsInChildren<Collider>();
             for (var i = 0; i < cols.Length; i++)
                 Destroy(cols[i]);
-        }
-
-        static float MeasureHorizontalSize(GameObject go)
-        {
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers == null || renderers.Length == 0)
-                return 1f;
-
-            var bounds = renderers[0].bounds;
-            for (var i = 1; i < renderers.Length; i++)
-                bounds.Encapsulate(renderers[i].bounds);
-
-            return Mathf.Max(bounds.size.x, bounds.size.z);
         }
 
         void SetGhostVisible(bool visible)

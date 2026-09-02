@@ -165,10 +165,11 @@ HUD **читает** `GameTime` + `SimControl`. Кнопки → `SimClockComman
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v15
-  version: 15
+SavePayload v20
+  version: 20
   clock, time
   resources: [{ resourceId: "wood", amount }]
+  resolved building catalog: prototype / cost / recipe rows
   agents: [{ id, pose, motor, assignment, plaza idle }]
   buildings: [{ id, typeId: "sawmill", footprint, built, construction, workerAgentId }]
 ```
@@ -179,6 +180,8 @@ SavePayload v15
 `built = 1` → сразу готовый дом (без `Construction`).
 
 Канон агента: **`LocalTransform` = где стоит**. Мотор = `AgentLocomotion`. Без работы — `AgentPlazaIdle`. На слоте — `AgentAssignment`. Сток — `ResourceAmount` на session.
+
+Слот сохраняет именно **resolved building catalog**, а не имя `DifficultyProfile`: это гарантирует, что in-game load и load из главного меню восстановят фактические duration/slots/cost/recipe этого рана. Immutable base catalog из prefab bake остаётся отдельно и нужен для нового `BeginRun`; profile id в save пока не требуется.
 
 `AgentId` — ключ моста на ран, не `Entity(53,1)`. После перезапуска Unity номера сущностей другие.
 
@@ -203,7 +206,7 @@ SavePayload v15
 ### Load (последовательность)
 
 1. Нет файла → лог, ничего не трогать.
-2. `RunSessionSnapshot.BeginApply` при остановленной sim переводит `SimSession.Phase` в `Preparing` и атомарно ставит reset + restore-команды.
+2. `RunSessionSnapshot.BeginApply` восстанавливает сохранённый resolved building catalog, затем при остановленной sim переводит `SimSession.Phase` в `Preparing` и атомарно ставит reset + restore-команды.
 3. Следующий `CommandSystemGroup` сносит **только динамику рана**: `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`, затем восстанавливает clock/buildings/agents/paused/feed. Не выгружать `Game.unity`.
 4. Snapshot-place имеет source `SnapshotRestore`: он разрешён в `Preparing`; gameplay-place разрешён только в `Ready`.
 5. Lifecycle-finalizer переводит `Preparing → Ready` лишь когда все входящие очереди drained.

@@ -33,6 +33,26 @@ namespace TheyWillDescend.Simulation.City
         public float PerHour;
     }
 
+    /// <summary>
+    /// Immutable prefab-default recipe row. Run setup rebuilds the resolved
+    /// <see cref="BuildingCatalogRecipe"/> buffer from these rows.
+    /// </summary>
+    public struct BaseBuildingCatalogRecipe : IBufferElementData
+    {
+        public FixedString64Bytes TypeId;
+        public BuildingRecipeKind Kind;
+        public FixedString64Bytes ResourceId;
+        public float PerHour;
+
+        public BuildingCatalogRecipe ToResolved() => new()
+        {
+            TypeId = TypeId,
+            Kind = Kind,
+            ResourceId = ResourceId,
+            PerHour = PerHour
+        };
+    }
+
     public static class BuildingRecipes
     {
         public static float FrameAmount(float perHour, float deltaTime, float dayDuration)

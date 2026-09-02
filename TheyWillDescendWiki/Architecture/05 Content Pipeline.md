@@ -24,15 +24,16 @@
 ```text
 префаб.BuildingStamp (typeId, footprint, кост, рецепт, слоты, duration)
              ↓ baker
-session: BuildingPrototype + Cost / Recipe   (дефолт со штампа)
-             ↓ RunPublisher (Loading, не тик)
-DifficultyProfile overlay (+ позже A/B pack — тот же шаг)
+session: BaseBuildingPrototype + BaseCost / BaseRecipe (immutable defaults)
+             ↓ RunPublisher rebuild перед каждым BeginRun
+session: BuildingPrototype + Cost / Recipe   (resolved runtime catalog)
+             ↓ DifficultyProfile overlay (+ позже A/B pack — тот же шаг)
 + chosen ScenarioDefinition
              ↓ Place копирует spec на дом
 вид: Instantiate префаба по typeId
 ```
 
-Меню: **Start Game** = DefaultScenario, цифры со штампа. **Start Debug** = DebugScenario + DebugDifficulty (кухня output 50 еды/ч, лесопилка стройка 1 с).
+`ScenarioDefinition` владеет списком допустимых сложностей и default difficulty. Меню выбирает пару scenario+difficulty; null default означает чистые prefab defaults. **Start Game** временно берёт `DefaultScenario.DefaultDifficulty` (пустой `NormalDifficulty`), **Start Debug** — `DebugScenario.DefaultDifficulty` (`DebugDifficulty`: кухня output 50 еды/ч, лесопилка стройка 1 с).
 
 A/B позже — ещё один оверлей в `RunPublisher.BeginRun`, не `ISystem` и не второй префаб. Pack приходит с тем же `typeId`.
 
@@ -64,6 +65,7 @@ Assets/_Project/Content/
   Rules/
     DefaultSimRules.asset
   Difficulty/
+    NormalDifficulty.asset
     DebugDifficulty.asset
 ```
 
@@ -136,8 +138,9 @@ Baker копирует:
 | Work Shift Start/End | `GameTime.WorkShiftStartHour` / `EndHour` |
 | Worker Speed | штамп `AgentLocomotion.Speed` |
 | Era Change Hour | `PyramidConfig.EraChangeHour` (граница эры, не полночь) |
-| Pyramid Max Energy / Hour | `PyramidConfig.MaxEnergyPerHour` (потом обелиски) |
 | Default Stock Cap | временный потолок стока |
+
+У пирамиды нет общего потолка энергии/ч. Будущие ограничения подачи задаются отдельно для конкретных ресурсов; сейчас они не реализованы и в `SimRules` не живут.
 
 На том же GO: `TimelineCatalogAuthoring` → `DefaultTimeline` (эры, дань, max loyalty).
 
@@ -194,7 +197,7 @@ Duplicate ближайший дом из каталога, не пустой ш�
 
 Bake падает, если нет `BuildingStamp`, пустой или слишком длинный `typeId`, дубликат ключа в каталоге, битый footprint.
 
-Рецепт живёт **на instance** (буфер, скопированный со spec). Симуляция: `perHour * dt * 24 / DayDuration`. Размер меша для посадки — `MeshFilter` на `Body` при catalog bake (`BuildingPrototype.MeshSize`).
+Рецепт живёт **на instance** (буфер, скопированный со spec). Симуляция: `perHour * dt * 24 / DayDuration`. Размер и scale арта не печатаются в ECS: prefab остаётся визуальным каноном, а runtime view, ghost и scenario preview меняют только position/rotation и сохраняют authored prefab scale.
 
 Композиция штампа:
 
@@ -225,13 +228,14 @@ Kitchen                 ← BuildingStamp + BuildingView
 
 ## 6. Сценарий (стартовый город)
 
-`DefaultScenario` — пустой/рабочий старт. `DebugScenario` — кухня + две лесопилки, 16 рабочих. **Play не берёт сценарий с GO `Scenario`.** Меню выбирает кит на `GameSession`: Start Game = DefaultScenario + цифры со штампа; Start Debug = DebugScenario + DebugDifficulty; Load = слот, без publisher. Bake SubScene — editor seed (превью/paint); `RunPublisher` **сначала сносит runtime-дома/агентов** (они живут в default world, выгрузка Game их не убивает), затем перезаписывает pending/stock/workers.
+`DefaultScenario` — пустой/рабочий старт. `DebugScenario` — кухня + две лесопилки, 16 рабочих. **Play не берёт сценарий с GO `Scenario`.** Меню выбирает сценарий и одну из разрешённых им сложностей: Start Game = `DefaultScenario.DefaultDifficulty`; Start Debug = `DebugScenario.DefaultDifficulty`; Load = слот, без publisher. Bake SubScene — editor seed (превью/paint); `RunPublisher` **сначала пересобирает resolved catalog из base**, затем применяет difficulty, сносит runtime-дома/агентов и перезаписывает pending/stock/workers.
 
 На ассете:
 
 - **Buildings** — список `(typeId, cluster, ring)`. HQ и сетка сюда не входят.
 - **Starting Stock** — `Wood 50`, `Food 20`. Capture домов **не** затирает это.
 - **Starting Workers** — сколько людей на плазе в Play. Не назначение на дома. Capture домов это тоже не трогает. По умолчанию 8.
+- **Difficulties / Default Difficulty** — допустимые профили этого сценария и временный выбор меню. Default может быть null: тогда ран использует чистые prefab defaults.
 
 ### Editor на GO Scenario (SubScene)
 
@@ -258,7 +262,7 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 На **одном** GO `SimControl` (соседи authoring, один bake-entity):
 
 1. `SimControlAuthoring` — `SimSession` + `SimControl` + `AgentIdSequence` + clock/lifecycle command buffers
-2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока, час эры, потолок жжения, cap стока)
+2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока, час эры, cap стока)
 3. `TimelineCatalogAuthoring` → `DefaultTimeline`
 4. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
 5. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace`
@@ -288,7 +292,7 @@ Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на п
 
 Куб зелёный, когда `WorkingCount > 0`; жёлтый на стройке; иначе idle. Потом те же флаги → Animator.
 
-Сейв пишет `"sawmill"` / `"wood"` как есть. Старые слоты не мигрируем: несовпадение версии удаляет файл. Подробно — [[13 Time HUD and Save]].
+Сейв пишет `"sawmill"` / `"wood"` как есть и сохраняет resolved building catalog (prototype/cost/recipe), поэтому load восстанавливает фактический баланс рана без поиска DifficultyProfile по имени. Старые слоты не мигрируем: несовпадение версии удаляет файл. Подробно — [[13 Time HUD and Save]].
 
 ---
 
@@ -307,7 +311,7 @@ Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на п
 | Сценарий съел дерево | Не должно: InstantComplete. Если ест — сломан skip в Place |
 | Capture обнулил Wood | Не должно: Capture пишет только buildings |
 | Новый ресурс не на HUD | Имя чипа ≠ Display Name; свободных чипов нет |
-| Дом не того размера на сетке | Width/Depth на Footprint, не скейл куба. Скейл только вписывает меш в клетку |
+| Дом не того размера на сетке | Footprint определяет занятые клетки, prefab scale — authored visual. Runtime его не подгоняет |
 
 ---
 
@@ -316,9 +320,9 @@ Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на п
 Цифры дома **по умолчанию на `BuildingStamp`**. Sheet / live pack позже пишет **оверлей** по `typeId`, не клонирует префаб.
 
 ```text
-Prefab stamp       →  дефолт (удобно смотреть на кухне)
-Sheet / live pack  →  typeId, cost, recipe, slots, duration
-RunPublisher       →  DifficultyProfile / A/B overlay на снимок
+Prefab stamp       →  canonical defaults
+Baker              →  immutable base catalog + usable resolved defaults
+RunPublisher       →  rebuild resolved из base → DifficultyProfile / A/B overlay
 ```
 
 A/B не тикает из `ISystem` и не клонирует кухню. Pack приходит с теми же `typeId` и подменяется в `RunPublisher.BeginRun` до постановки seed-команд; `Ready` подтвердит только ECS-finalizer. Импортёра и HTTP в этом срезе нет.

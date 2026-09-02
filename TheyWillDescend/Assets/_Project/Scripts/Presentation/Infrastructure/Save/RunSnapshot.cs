@@ -8,7 +8,7 @@ namespace TheyWillDescend.Infrastructure.Save
         /// <summary>
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 19;
+        public const int CurrentVersion = 20;
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -19,6 +19,12 @@ namespace TheyWillDescend.Infrastructure.Save
         public ResourceSnapshot[] resources = Array.Empty<ResourceSnapshot>();
         public AgentSnapshot[] agents = Array.Empty<AgentSnapshot>();
         public BuildingSnapshot[] buildings = Array.Empty<BuildingSnapshot>();
+        public ResolvedBuildingPrototypeSnapshot[] buildingCatalog =
+            Array.Empty<ResolvedBuildingPrototypeSnapshot>();
+        public ResolvedBuildingCostSnapshot[] buildingCosts =
+            Array.Empty<ResolvedBuildingCostSnapshot>();
+        public ResolvedBuildingRecipeSnapshot[] buildingRecipes =
+            Array.Empty<ResolvedBuildingRecipeSnapshot>();
         public float faith;
         public float faithMax;
         public int eraIndex;
@@ -74,6 +80,33 @@ namespace TheyWillDescend.Infrastructure.Save
         public float constructionDuration;
         public int workerAgentId;
         public byte paused;
+    }
+
+    [Serializable]
+    public sealed class ResolvedBuildingPrototypeSnapshot
+    {
+        public string typeId;
+        public int widthClusters;
+        public int depthRadialRings;
+        public float constructionDuration;
+        public int workplaceSlots;
+    }
+
+    [Serializable]
+    public sealed class ResolvedBuildingCostSnapshot
+    {
+        public string typeId;
+        public string resourceId;
+        public float amount;
+    }
+
+    [Serializable]
+    public sealed class ResolvedBuildingRecipeSnapshot
+    {
+        public string typeId;
+        public byte kind;
+        public string resourceId;
+        public float perHour;
     }
 
     [Serializable]

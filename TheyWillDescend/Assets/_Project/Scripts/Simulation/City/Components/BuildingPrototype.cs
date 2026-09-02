@@ -14,7 +14,6 @@ namespace TheyWillDescend.Simulation.City
         public int DepthRadialRings;
         public float ConstructionDuration;
         public int WorkplaceSlots;
-        public float MeshSize;
 
         public BuildingFootprint Footprint => new()
         {
@@ -23,6 +22,28 @@ namespace TheyWillDescend.Simulation.City
         };
 
         public BuildingType ToBuildingType() => new()
+        {
+            TypeId = TypeId,
+            WidthClusters = WidthClusters,
+            DepthRadialRings = DepthRadialRings,
+            ConstructionDuration = ConstructionDuration,
+            WorkplaceSlots = WorkplaceSlots
+        };
+    }
+
+    /// <summary>
+    /// Immutable prefab defaults baked onto the session. Run setup copies these
+    /// rows into <see cref="BuildingPrototype"/> before applying overlays.
+    /// </summary>
+    public struct BaseBuildingPrototype : IBufferElementData
+    {
+        public FixedString64Bytes TypeId;
+        public int WidthClusters;
+        public int DepthRadialRings;
+        public float ConstructionDuration;
+        public int WorkplaceSlots;
+
+        public BuildingPrototype ToResolved() => new()
         {
             TypeId = TypeId,
             WidthClusters = WidthClusters,

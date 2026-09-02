@@ -75,9 +75,12 @@ namespace TheyWillDescend.Authoring.Scenario
             if (specQuery.IsEmptyIgnoreFilter)
                 return;
 
-            if (!em.HasBuffer<BuildingPrototype>(session))
+            if (!em.HasBuffer<BaseBuildingPrototype>(session)
+                || em.GetBuffer<BaseBuildingPrototype>(session).Length == 0
+                || !em.HasBuffer<BuildingPrototype>(session)
+                || em.GetBuffer<BuildingPrototype>(session).Length == 0)
             {
-                Debug.LogError("Scenario bake: session has no building catalog.");
+                Debug.LogError("Scenario bake: session has no base/resolved building catalog.");
                 return;
             }
 

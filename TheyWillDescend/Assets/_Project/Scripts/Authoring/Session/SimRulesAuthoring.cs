@@ -34,7 +34,6 @@ namespace TheyWillDescend.Authoring.Session
                     });
                     AddComponent(entity, new PyramidConfig
                     {
-                        MaxEnergyPerHour = 24f,
                         EraChangeHour = 8f,
                         DefaultStockCap = 2000f,
                         LoyaltyDecayPerDay = 12f
@@ -46,7 +45,6 @@ namespace TheyWillDescend.Authoring.Session
                 AddComponent(entity, so.CreateClock());
                 AddComponent(entity, new PyramidConfig
                 {
-                    MaxEnergyPerHour = so.PyramidMaxEnergyPerHour,
                     EraChangeHour = so.EraChangeHour,
                     DefaultStockCap = so.DefaultStockCap,
                     LoyaltyDecayPerDay = so.LoyaltyDecayPerDay

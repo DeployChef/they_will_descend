@@ -36,11 +36,12 @@ namespace TheyWillDescend.Shell
         [Header("Run kits")]
         [SerializeField] ScenarioDefinition defaultScenario;
         [SerializeField] ScenarioDefinition debugScenario;
-        [SerializeField] DifficultyProfile debugDifficulty;
 
         readonly SceneLoader _scenes = new();
         CancellationTokenSource _runCts;
         RunKind _kind;
+        ScenarioDefinition _selectedScenario;
+        DifficultyProfile _selectedDifficulty;
         bool _loadSlot;
 
         public bool IsActive { get; private set; }
@@ -48,7 +49,33 @@ namespace TheyWillDescend.Shell
         public void SetRunKind(RunKind kind)
         {
             _kind = kind;
+            _selectedScenario = null;
+            _selectedDifficulty = null;
+            var scenario = kind == RunKind.Debug ? debugScenario : defaultScenario;
+            SetRunSelection(scenario, scenario != null ? scenario.DefaultDifficulty : null);
             _loadSlot = false;
+        }
+
+        public bool SetRunSelection(
+            ScenarioDefinition scenario,
+            DifficultyProfile difficulty)
+        {
+            if (scenario == null)
+            {
+                GameLog.Error("GameSession: run selection needs a scenario.");
+                return false;
+            }
+            if (!scenario.TryResolveDifficulty(difficulty, out var resolved))
+            {
+                GameLog.Error(
+                    $"GameSession: difficulty {difficulty.name} is not allowed by scenario {scenario.name}.");
+                return false;
+            }
+
+            _selectedScenario = scenario;
+            _selectedDifficulty = resolved;
+            _loadSlot = false;
+            return true;
         }
 
         public void SetLoadSlot() => _loadSlot = true;
@@ -101,14 +128,22 @@ namespace TheyWillDescend.Shell
             else
             {
                 var debug = _kind == RunKind.Debug;
-                var scenario = debug ? debugScenario : defaultScenario;
-                var difficulty = debug ? debugDifficulty : null;
+                var scenario = _selectedScenario != null
+                    ? _selectedScenario
+                    : debug
+                        ? debugScenario
+                        : defaultScenario;
+                var difficulty = _selectedScenario != null
+                    ? _selectedDifficulty
+                    : scenario != null
+                        ? scenario.DefaultDifficulty
+                        : null;
                 if (debug && scenario == null)
                     GameLog.Error("GameSession: DebugScenario is not assigned on GameSession.");
                 GameLog.Info(
                     $"Run kit: {(debug ? "Debug" : "Normal")} " +
                     $"scenario={(scenario != null ? scenario.name : "null")} " +
-                    $"overlay={(difficulty != null ? difficulty.name : "stamp defaults")}.");
+                    $"difficulty={(difficulty != null ? difficulty.name : "stamp defaults")}.");
                 setupBegan = RunPublisher.BeginRun(scenario, difficulty);
             }
 
@@ -166,6 +201,8 @@ namespace TheyWillDescend.Shell
             await _scenes.LoadAdditive(mainMenuScene, setActive: false, cancellationToken);
             IsActive = false;
             _kind = RunKind.Normal;
+            _selectedScenario = null;
+            _selectedDifficulty = null;
             _loadSlot = false;
         }
 
@@ -200,6 +237,8 @@ namespace TheyWillDescend.Shell
             await _scenes.Unload(loadingScene, cancellationToken);
             IsActive = false;
             _kind = RunKind.Normal;
+            _selectedScenario = null;
+            _selectedDifficulty = null;
             _loadSlot = false;
         }
 
@@ -210,9 +249,15 @@ namespace TheyWillDescend.Shell
             if (!em.HasComponent<CityGrid>(session)
                 || em.GetComponentData<CityGrid>(session).Ready == 0)
                 return false;
-            if (!em.HasBuffer<BuildingPrototype>(session))
+            if (!em.HasBuffer<BaseBuildingPrototype>(session)
+                || em.GetBuffer<BaseBuildingPrototype>(session).Length == 0)
                 return false;
-            if (em.GetBuffer<BuildingPrototype>(session).Length == 0)
+            if (!em.HasBuffer<BaseBuildingCatalogCost>(session)
+                || !em.HasBuffer<BaseBuildingCatalogRecipe>(session)
+                || !em.HasBuffer<BuildingPrototype>(session)
+                || em.GetBuffer<BuildingPrototype>(session).Length == 0
+                || !em.HasBuffer<BuildingCatalogCost>(session)
+                || !em.HasBuffer<BuildingCatalogRecipe>(session))
                 return false;
             if (!em.HasComponent<SimPrototypes>(session)
                 || em.GetComponentData<SimPrototypes>(session).Agent == Unity.Entities.Entity.Null)

@@ -142,10 +142,7 @@ namespace TheyWillDescend.Simulation.City
 
             RadialFootprintMath.FootprintMarkerPose(
                 grid.Center, grid.Config, command.AnchorCluster, command.AnchorRadial, footprint,
-                out var position, out var rotation, out var stubWorldSize);
-
-            var meshSize = spec.MeshSize > 0.001f ? spec.MeshSize : 1f;
-            var scale = stubWorldSize / meshSize;
+                out var position, out var rotation);
 
             var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
             if (grid.NextBuildingId < id)
@@ -160,7 +157,7 @@ namespace TheyWillDescend.Simulation.City
                 AnchorCluster = command.AnchorCluster,
                 AnchorRadial = command.AnchorRadial
             };
-            var transform = LocalTransform.FromPositionRotationScale(position, rotation, scale);
+            var transform = LocalTransform.FromPositionRotationScale(position, rotation, 1f);
             var duration = command.ConstructionDuration > 0.001f
                 ? command.ConstructionDuration
                 : spec.ConstructionDuration;
@@ -191,10 +188,6 @@ namespace TheyWillDescend.Simulation.City
             var entity = em.CreateEntity();
             em.AddComponentData(entity, building);
             em.AddComponentData(entity, spec.ToBuildingType());
-            em.AddComponentData(entity, new BuildingMeshSize
-            {
-                Horizontal = spec.MeshSize > 0.001f ? spec.MeshSize : 1f
-            });
             if (spec.WorkplaceSlots > 0)
                 em.AddComponentData(entity, new Workplace());
             CopyRecipes(em, session, spec.TypeId, entity);

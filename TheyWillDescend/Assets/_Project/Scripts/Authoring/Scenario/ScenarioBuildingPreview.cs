@@ -44,29 +44,25 @@ namespace TheyWillDescend.Authoring.Scenario
         public void ApplyPose(
             in RadialGridConfig config,
             float3 center,
-            in BuildingFootprint footprint,
-            float meshSize)
+            in BuildingFootprint footprint)
         {
             RadialFootprintMath.FootprintMarkerPose(
                 center, config, cluster, radial, footprint,
-                out var position, out var rotation, out var stubWorldSize);
+                out var position, out var rotation);
             transform.SetPositionAndRotation(position, rotation);
-            var scale = meshSize > 0.001f ? stubWorldSize / meshSize : 1f;
-            transform.localScale = Vector3.one * scale;
         }
 
         public bool SnapFromWorld(
             in RadialGridConfig config,
             float3 center,
-            in BuildingFootprint footprint,
-            float meshSize)
+            in BuildingFootprint footprint)
         {
             if (!RadialFootprintMath.TrySnapAnchor(
                     center, config, (float3)transform.position, out var snappedCluster, out var snappedRadial))
                 return false;
             cluster = snappedCluster;
             radial = snappedRadial;
-            ApplyPose(config, center, footprint, meshSize);
+            ApplyPose(config, center, footprint);
             return true;
         }
     }

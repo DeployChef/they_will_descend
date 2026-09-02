@@ -128,7 +128,10 @@ namespace TheyWillDescend.Authoring.Editor
 
             RadialFootprintMath.FootprintMarkerPose(
                 center, config, cluster, radial, footprint,
-                out var position, out var rotation, out var size);
+                out var position, out var rotation);
+            var width = footprint.WidthClusters * config.TargetClusterWorldWidth;
+            var depth = footprint.DepthRadialRings * config.RadialStep;
+            var size = math.max(0.35f, math.min(width, depth) * 0.85f);
             var matrix = Matrix4x4.TRS(position, rotation, Vector3.one * size);
             using (new Handles.DrawingScope(new Color(0.2f, 0.85f, 0.4f, 0.85f), matrix))
                 Handles.DrawWireCube(Vector3.zero, Vector3.one);

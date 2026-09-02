@@ -19,6 +19,14 @@ namespace TheyWillDescend.Shell
     {
         public static bool BeginRun(ScenarioDefinition scenario, DifficultyProfile difficulty)
         {
+            var requestedDifficulty = difficulty;
+            if (scenario != null
+                && !scenario.TryResolveDifficulty(requestedDifficulty, out difficulty))
+            {
+                GameLog.Error(
+                    $"RunPublisher: difficulty {requestedDifficulty.name} is not allowed by scenario {scenario.name}.");
+                return false;
+            }
             if (!SimWorld.TryGet(out var em, out var session))
             {
                 GameLog.Error("RunPublisher: SimSession missing.");
@@ -31,6 +39,11 @@ namespace TheyWillDescend.Shell
             }
 
             em.CompleteAllTrackedJobs();
+            if (!RebuildResolvedCatalog(em, session))
+            {
+                GameLog.Error("RunPublisher: base/resolved building catalogs are missing.");
+                return false;
+            }
             ClearLifecycleQueues(em, session);
             var lifecycle = em.GetComponentData<SimSession>(session);
             lifecycle.Phase = SimSessionPhase.Preparing;
@@ -47,7 +60,8 @@ namespace TheyWillDescend.Shell
             var name = scenario != null ? scenario.name : "none";
             var diff = difficulty != null ? difficulty.name : "stamp defaults";
             var houses = em.GetBuffer<PendingScenarioPlace>(session).Length;
-            GameLog.Info($"Run setup queued: scenario {name} ({houses} houses), overlay {diff}.");
+            GameLog.Info(
+                $"Run setup queued: scenario={name}, difficulty={diff}, houses={houses}.");
             return true;
         }
 
@@ -102,6 +116,37 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<UnassignWorkerCommand>(session).Clear();
             em.GetBuffer<SetWorkplacePausedCommand>(session).Clear();
             em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
+        }
+
+        internal static bool RebuildResolvedCatalog(EntityManager em, Entity session)
+        {
+            if (!em.HasBuffer<BaseBuildingPrototype>(session)
+                || !em.HasBuffer<BaseBuildingCatalogCost>(session)
+                || !em.HasBuffer<BaseBuildingCatalogRecipe>(session)
+                || !em.HasBuffer<BuildingPrototype>(session)
+                || !em.HasBuffer<BuildingCatalogCost>(session)
+                || !em.HasBuffer<BuildingCatalogRecipe>(session))
+                return false;
+
+            var basePrototypes = em.GetBuffer<BaseBuildingPrototype>(session);
+            var prototypes = em.GetBuffer<BuildingPrototype>(session);
+            prototypes.Clear();
+            for (var i = 0; i < basePrototypes.Length; i++)
+                prototypes.Add(basePrototypes[i].ToResolved());
+
+            var baseCosts = em.GetBuffer<BaseBuildingCatalogCost>(session);
+            var costs = em.GetBuffer<BuildingCatalogCost>(session);
+            costs.Clear();
+            for (var i = 0; i < baseCosts.Length; i++)
+                costs.Add(baseCosts[i].ToResolved());
+
+            var baseRecipes = em.GetBuffer<BaseBuildingCatalogRecipe>(session);
+            var recipes = em.GetBuffer<BuildingCatalogRecipe>(session);
+            recipes.Clear();
+            for (var i = 0; i < baseRecipes.Length; i++)
+                recipes.Add(baseRecipes[i].ToResolved());
+
+            return prototypes.Length > 0;
         }
 
         static void ApplyDifficulty(EntityManager em, Entity session, DifficultyProfile difficulty)

@@ -1,5 +1,5 @@
 ---
-description: Pyramid is a 24/7 generator with an energy/h cap; sliders allocate feed
+description: Pyramid burns feed 24/7 with no shared energy/hour ceiling
 alwaysApply: true
 ---
 
@@ -7,7 +7,7 @@ alwaysApply: true
 
 - Pyramid is the baked **HQ** entity, not a workplace recipe and not a placeable catalog house. Do not assign workers to it.
 - Burn is **24/7**. Work shift stays a people rule.
-- **Ceiling (closed):** one max **energy-worth per hour**. Player allocates it with **per-resource sliders** (units/h). Sum of `perHour * energyValue (* era tribute mul)` cannot exceed the cap; the sim clamps. Obelisks later add to the same cap — do not special-case them. Now the number lives on `SimRules`.
+- There is **no shared energy-worth/hour ceiling**. Each feed slider expresses the desired units/hour for one resource. Future constraints may be separate **per-resource feed limits** (for example wood units/hour); they are not implemented now.
 - Cannot burn `energy` into energy.
 - Eras last an integer number of **game days**, boundary **day + hour** (e.g. 08:00 on `SimRules`), not midnight. Tribute **snaps at that instant**. Loyalty cap lerps 24h from the same instant (see `gods-loyalty`).
 - **Energy value** lives on `ResourceDefinition`. Era may multiply it for current tribute. Do not hardcode 1:1.

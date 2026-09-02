@@ -16,6 +16,12 @@ namespace TheyWillDescend.Presentation.GameHud
     /// </summary>
     public sealed class PyramidInspectPanel : MonoBehaviour
     {
+        // Slider needs a finite visual range, but feed itself has no domain cap.
+        // Grow the presentation range whenever a value approaches its edge.
+        const float InitialFeedSoftRange = 20f;
+        const float SoftRangeExpansionThreshold = 0.8f;
+        const float SoftRangeExpansionFactor = 2f;
+
         [SerializeField] BuildingSelection selection;
         [SerializeField] GameObject card;
         public BuildingSelection Selection => selection;
@@ -101,9 +107,6 @@ namespace TheyWillDescend.Presentation.GameHud
             var tribute = em.HasBuffer<EraTributeLine>(bag) ? em.GetBuffer<EraTributeLine>(bag) : default;
             var eras = em.HasBuffer<EraLine>(bag) ? em.GetBuffer<EraLine>(bag) : default;
             var eraIndex = em.HasComponent<Timeline>(bag) ? em.GetComponentData<Timeline>(bag).EraIndex : 0;
-            var maxEnergy = em.HasComponent<PyramidConfig>(bag)
-                ? em.GetComponentData<PyramidConfig>(bag).MaxEnergyPerHour
-                : 24f;
             var used = tribute.IsCreated && eras.IsCreated
                 ? PyramidFeed.TotalEnergyPerHour(feed, info, tribute, eras, eraIndex)
                 : 0f;
@@ -111,9 +114,9 @@ namespace TheyWillDescend.Presentation.GameHud
             if (title != null)
                 title.text = "Пирамида";
             if (subtitle != null)
-                subtitle.text = $"Жертва  {used:0.#} / {maxEnergy:0.#} энергии/ч";
+                subtitle.text = $"Жертва  {used:0.#} энергии/ч";
 
-            SyncRows(feed, info, tribute, eras, eraIndex, maxEnergy);
+            SyncRows(feed, info, tribute, eraIndex);
             if (status != null)
                 status.text = FormatStatus(feed, info, tribute, eras, eraIndex);
         }
@@ -122,9 +125,7 @@ namespace TheyWillDescend.Presentation.GameHud
             DynamicBuffer<PyramidFeedLine> feed,
             DynamicBuffer<ResourceInfo> info,
             DynamicBuffer<EraTributeLine> tribute,
-            DynamicBuffer<EraLine> eras,
-            int eraIndex,
-            float maxEnergy)
+            int eraIndex)
         {
             EnsureRows(feed, info);
             suppress = true;
@@ -133,16 +134,12 @@ namespace TheyWillDescend.Presentation.GameHud
                 var row = rows[i];
                 var index = PyramidFeed.IndexOf(feed, row.ResourceId);
                 var perHour = index >= 0 ? feed[index].PerHour : 0f;
-                var unit = tribute.IsCreated && eras.IsCreated
-                    ? PyramidFeed.UnitEnergy(info, tribute, eras, eraIndex, row.ResourceId)
-                    : 1f;
-                var max = unit > 0.0001f ? maxEnergy / unit : 0f;
                 if (row.Slider != null)
                 {
                     row.Slider.minValue = 0f;
-                    row.Slider.maxValue = max > 0.0001f ? max : 1f;
+                    row.Slider.maxValue = ExpandedSoftRange(row.Slider.maxValue, perHour);
                     row.Slider.SetValueWithoutNotify(perHour);
-                    row.Slider.interactable = max > 0.0001f;
+                    row.Slider.interactable = true;
                 }
 
                 if (row.Label != null)
@@ -295,11 +292,32 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (suppress)
                 return;
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row.ResourceId != resourceId || row.Slider == null)
+                    continue;
+                row.Slider.maxValue = ExpandedSoftRange(row.Slider.maxValue, perHour);
+                break;
+            }
+
             SimCommands.TryPost(new SetPyramidFeedCommand
             {
                 ResourceId = resourceId,
                 PerHour = perHour
             });
+        }
+
+        static float ExpandedSoftRange(float currentRange, float perHour)
+        {
+            var range = Mathf.Max(InitialFeedSoftRange, currentRange);
+            while (perHour >= range * SoftRangeExpansionThreshold
+                && range <= float.MaxValue / SoftRangeExpansionFactor)
+            {
+                range *= SoftRangeExpansionFactor;
+            }
+
+            return range;
         }
 
         void OnClose()

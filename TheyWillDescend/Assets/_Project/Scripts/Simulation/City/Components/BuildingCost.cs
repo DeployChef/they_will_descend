@@ -24,6 +24,24 @@ namespace TheyWillDescend.Simulation.City
         public float Amount;
     }
 
+    /// <summary>
+    /// Immutable prefab-default cost row. Run setup rebuilds the resolved
+    /// <see cref="BuildingCatalogCost"/> buffer from these rows.
+    /// </summary>
+    public struct BaseBuildingCatalogCost : IBufferElementData
+    {
+        public FixedString64Bytes TypeId;
+        public FixedString64Bytes ResourceId;
+        public float Amount;
+
+        public BuildingCatalogCost ToResolved() => new()
+        {
+            TypeId = TypeId,
+            ResourceId = ResourceId,
+            Amount = Amount
+        };
+    }
+
     public static class BuildingCosts
     {
         public static bool HasCost(DynamicBuffer<BuildingCost> costs)

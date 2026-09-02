@@ -1,5 +1,5 @@
+using TheyWillDescend.Content;
 using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Content;
 using UnityEngine;
 
 namespace TheyWillDescend.Authoring.City
@@ -27,11 +27,6 @@ namespace TheyWillDescend.Authoring.City
                 return false;
             footprint = stamp.Footprint;
             return footprint.IsValid;
-        }
-
-        public static float MeshSize(GameObject prefab)
-        {
-            return BuildingPrefabMetrics.HorizontalSize(prefab);
         }
     }
 }

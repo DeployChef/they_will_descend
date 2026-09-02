@@ -1,14 +1,14 @@
 using System;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
 using UnityEngine;
 
-namespace TheyWillDescend.Simulation.Content
+namespace TheyWillDescend.Content
 {
     /// <summary>
-    /// One card on a house prefab. Catalog bake copies digits onto the session
-    /// spec; empty / toggled-off packs are not copied. HUD name and world UI
-    /// live on <c>BuildingView</c>, not here. Difficulty / A/B overlays replace
-    /// numbers on the session snapshot at run start — they do not live here.
+    /// Canonical default description on a building prefab. Catalog bake copies
+    /// these numbers into immutable base rows; run setup resolves overlays into
+    /// the runtime catalog. Presentation metadata stays on BuildingView.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BuildingStamp : MonoBehaviour

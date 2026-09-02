@@ -22,10 +22,6 @@ namespace TheyWillDescend.Authoring.City
                     Id = authoring.buildingId > 0 ? authoring.buildingId : 1
                 });
                 AddComponent<Headquarters>(entity);
-                AddComponent(entity, new BuildingMeshSize
-                {
-                    Horizontal = BuildingPrefabMetrics.HorizontalSize(authoring.gameObject)
-                });
                 AddBuffer<PyramidFeedLine>(entity);
             }
         }
