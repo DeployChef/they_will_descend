@@ -137,7 +137,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 if (row.Slider != null)
                 {
                     row.Slider.minValue = 0f;
-                    row.Slider.maxValue = ExpandedSoftRange(row.Slider.maxValue, perHour);
+                    row.Slider.maxValue = 100f;
                     row.Slider.SetValueWithoutNotify(perHour);
                     row.Slider.interactable = true;
                 }
@@ -297,7 +297,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 var row = rows[i];
                 if (row.ResourceId != resourceId || row.Slider == null)
                     continue;
-                row.Slider.maxValue = ExpandedSoftRange(row.Slider.maxValue, perHour);
                 break;
             }
 
@@ -308,17 +307,7 @@ namespace TheyWillDescend.Presentation.GameHud
             });
         }
 
-        static float ExpandedSoftRange(float currentRange, float perHour)
-        {
-            var range = Mathf.Max(InitialFeedSoftRange, currentRange);
-            while (perHour >= range * SoftRangeExpansionThreshold
-                && range <= float.MaxValue / SoftRangeExpansionFactor)
-            {
-                range *= SoftRangeExpansionFactor;
-            }
-
-            return range;
-        }
+  
 
         void OnClose()
         {
