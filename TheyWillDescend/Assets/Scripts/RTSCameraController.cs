@@ -23,7 +23,8 @@ public class RTSCameraController : MonoBehaviour
     [Header("Zoom Steps & Parabola")]
     [SerializeField] float minRadius = 8f;        
     [SerializeField] float maxRadius = 15f;       
-    [SerializeField] float radiusStep = 2f;       
+    [Tooltip("Сколько шагов зума между minRadius и maxRadius (включая оба края)")]
+    [SerializeField, Min(2)] int zoomStepCount = 3;
     [SerializeField] float zoomSmoothness = 10f;  
     [SerializeField] AnimationCurve angleCurve = AnimationCurve.Linear(0, 20, 1, 75);
 
@@ -37,8 +38,12 @@ public class RTSCameraController : MonoBehaviour
     private InputAction zoom;
     private InputAction sprintAction;
     private float currentSpeedMultiplier = 1f;
+    private int targetStep;
     private float targetRadius;
     private float currentRadius;
+
+    /// <summary>Радиус одного шага зума, вычисляется из диапазона и числа шагов.</summary>
+    float StepSize => (maxRadius - minRadius) / Mathf.Max(1, zoomStepCount - 1);
 
     private void OnValidate()
     {
@@ -75,6 +80,9 @@ public class RTSCameraController : MonoBehaviour
         if (orbitalFollow != null)
         {
             targetRadius = orbitalFollow.RadialAxis.Value;
+            targetStep = Mathf.RoundToInt((targetRadius - minRadius) / StepSize);
+            targetStep = Mathf.Clamp(targetStep, 0, zoomStepCount - 1);
+            targetRadius = minRadius + targetStep * StepSize;
             currentRadius = targetRadius;
         }
     }
@@ -115,15 +123,15 @@ public class RTSCameraController : MonoBehaviour
 
     void HandleZoomInput()
     {
-        if (zoom == null)
+        if (zoom == null || zoomStepCount < 2)
             return;
 
         float scrollInput = zoom.ReadValue<float>();
-        
+
         if (Mathf.Abs(scrollInput) > 0.1f)
         {
-            targetRadius -= Mathf.Sign(scrollInput) * radiusStep;
-            targetRadius = Mathf.Clamp(targetRadius, minRadius, maxRadius);
+            targetStep = Mathf.Clamp(targetStep + (scrollInput > 0f ? -1 : 1), 0, zoomStepCount - 1);
+            targetRadius = minRadius + targetStep * StepSize;
         }
 
         if (orbitalFollow != null)
