@@ -300,7 +300,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 ResourceId = resourceId,
                 PerHour = perHour
             });
-            SimCommands.Playback();
         }
 
         void OnClose()

@@ -6,11 +6,13 @@ namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumeDespawnAgentsSystem))]
+    [UpdateBefore(typeof(ConsumePendingScenarioSpawnsSystem))]
     public partial struct ConsumeDespawnBuildingsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
+            state.RequireForUpdate<DespawnAllBuildingsCommand>();
             state.RequireForUpdate<CityGrid>();
         }
 
@@ -21,13 +23,15 @@ namespace TheyWillDescend.Simulation.City
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out var session)
+                || !em.HasBuffer<DespawnAllBuildingsCommand>(session))
                 return;
 
-            var bridge = em.GetComponentData<SimBridge>(session);
-            if (bridge.DespawnAllBuildings == 0)
+            var commands = em.GetBuffer<DespawnAllBuildingsCommand>(session);
+            if (commands.Length == 0)
                 return;
 
+            commands.Clear();
             using var buildings = em.CreateEntityQuery(
                 ComponentType.ReadOnly<Building>(),
                 ComponentType.Exclude<Headquarters>());
@@ -36,8 +40,6 @@ namespace TheyWillDescend.Simulation.City
             var grid = em.GetComponentData<CityGrid>(session);
             grid.NextBuildingId = 1;
             em.SetComponentData(session, grid);
-            bridge.DespawnAllBuildings = 0;
-            em.SetComponentData(session, bridge);
         }
     }
 }

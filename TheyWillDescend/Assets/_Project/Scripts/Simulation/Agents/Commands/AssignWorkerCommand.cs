@@ -9,6 +9,8 @@ namespace TheyWillDescend.Simulation.Agents
         public int AgentId;
         /// <summary>How many idle workers to send. 0 or 1 = one.</summary>
         public int Count;
+        /// <summary>Snapshot hydration may restore an already-arrived assignment.</summary>
+        public byte Arrived;
     }
 
     public struct UnassignWorkerCommand : IBufferElementData

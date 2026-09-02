@@ -21,7 +21,12 @@
 Внутри ECS:
 
 ```
-CommandSystemGroup (consume + ApplySimDeltaTime последним)
+CommandSystemGroup
+  → clock → reset agents → reset buildings
+  → scenario spawn → spawn → place
+  → assign → unassign → workplace pause → pyramid feed
+  → FinalizeSimSessionLifecycle
+  → ApplySimDeltaTime
   → commute / plaza / locomotion
   → construction
   → produce
@@ -33,7 +38,8 @@ Presentation отображает и шлёт Intent/Commands вниз. Обол
 ## Временное (явно)
 
 - Один слот save JSON
-- Имя `SimBridge` на session — флаги despawn + `NextAgentId`, не «мост UI»
+
+Session-root — `SimSession` с unmanaged-фазой `Unprepared → Preparing → Ready` и `Ready → Resetting → Unprepared`; `AgentIdSequence` и типизированные lifecycle command buffers хранят отдельные ответственности. Finalizer подтверждает переход только после drain всех входящих setup/reset-команд. Shell ждёт эту фазу асинхронно и никогда не запускает consume вручную.
 
 Производство: `WorkingCount / WorkplaceSlots` × рецепт (дошедшие). Бар над домом: `AssignedCount / слоты` (кого назначил).
 

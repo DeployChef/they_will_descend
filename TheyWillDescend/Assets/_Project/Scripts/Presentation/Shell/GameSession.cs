@@ -6,6 +6,7 @@ using TheyWillDescend.Content;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.ShellUi;
+using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
 using UnityEngine;
@@ -85,21 +86,17 @@ namespace TheyWillDescend.Shell
                 return;
             }
 
-            await WaitUntilSimulationReady(ct);
-            if (ct.IsCancellationRequested)
-                return;
-            if (!IsSimulationReady())
+            if (!await WaitUntilSimulationReady(ct))
             {
                 GameLog.Error("GameSession.Start failed — simulation not ready.");
-                await AbortAsync(ct);
+                await AbortAsync(CancellationToken.None);
                 return;
             }
 
+            var setupBegan = false;
             if (_loadSlot)
             {
-                RunPublisher.ResetDynamics();
-                RunSessionSnapshot.Apply(snapshot);
-                PauseMenuScreen.Current?.RebuildViews();
+                setupBegan = RunSessionSnapshot.BeginApply(snapshot);
             }
             else
             {
@@ -112,14 +109,18 @@ namespace TheyWillDescend.Shell
                     $"Run kit: {(debug ? "Debug" : "Normal")} " +
                     $"scenario={(scenario != null ? scenario.name : "null")} " +
                     $"overlay={(difficulty != null ? difficulty.name : "stamp defaults")}.");
-                if (!RunPublisher.Apply(scenario, difficulty))
-                {
-                    GameLog.Error("GameSession.Start failed — run publisher.");
-                    await AbortAsync(ct);
-                    return;
-                }
+                setupBegan = RunPublisher.BeginRun(scenario, difficulty);
             }
 
+            if (!setupBegan || !await WaitForPhaseAsync(SimSessionPhase.Ready, ct))
+            {
+                GameLog.Error("GameSession.Start failed — ECS setup did not reach Ready.");
+                await AbortAsync(CancellationToken.None);
+                return;
+            }
+
+            if (_loadSlot)
+                PauseMenuScreen.Current?.RebuildViews();
             await _scenes.Unload(loadingScene, ct);
             IsActive = true;
             _loadSlot = false;
@@ -141,18 +142,26 @@ namespace TheyWillDescend.Shell
             }
             finally
             {
-                await _scenes.Unload(loadingScene, cancellationToken);
+                await _scenes.Unload(loadingScene, CancellationToken.None);
             }
         }
 
         public async UniTask DisposeAsync(CancellationToken cancellationToken = default)
         {
             Cancel();
-            RunPublisher.ResetDynamics();
             if (!_scenes.IsLoaded(loadingScene))
                 await _scenes.LoadAdditive(loadingScene, setActive: false, cancellationToken);
-            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
-            await UniTask.NextFrame(cancellationToken);
+
+            if (_scenes.IsLoaded(gameScene))
+            {
+                if (!RunPublisher.BeginReset()
+                    || !await WaitForPhaseAsync(SimSessionPhase.Unprepared, cancellationToken))
+                {
+                    GameLog.Error("GameSession.Dispose stopped — ECS reset was not confirmed.");
+                    return;
+                }
+            }
+
             await _scenes.Unload(gameScene, cancellationToken);
             await _scenes.LoadAdditive(mainMenuScene, setActive: false, cancellationToken);
             IsActive = false;
@@ -176,9 +185,16 @@ namespace TheyWillDescend.Shell
 
         async UniTask AbortAsync(CancellationToken cancellationToken)
         {
-            RunPublisher.ResetDynamics();
             if (_scenes.IsLoaded(gameScene))
+            {
+                if (!RunPublisher.BeginReset()
+                    || !await WaitForPhaseAsync(SimSessionPhase.Unprepared, cancellationToken))
+                {
+                    GameLog.Error("GameSession.Abort stopped — ECS reset was not confirmed.");
+                    return;
+                }
                 await _scenes.Unload(gameScene, cancellationToken);
+            }
             if (!_scenes.IsLoaded(mainMenuScene))
                 await _scenes.LoadAdditive(mainMenuScene, setActive: false, cancellationToken);
             await _scenes.Unload(loadingScene, cancellationToken);
@@ -196,27 +212,65 @@ namespace TheyWillDescend.Shell
                 return false;
             if (!em.HasBuffer<BuildingPrototype>(session))
                 return false;
-            return em.GetBuffer<BuildingPrototype>(session).Length > 0;
+            if (em.GetBuffer<BuildingPrototype>(session).Length == 0)
+                return false;
+            if (!em.HasComponent<SimPrototypes>(session)
+                || em.GetComponentData<SimPrototypes>(session).Agent == Unity.Entities.Entity.Null)
+                return false;
+            return SimSessionAccess.HasLifecycleQueues(em, session);
         }
 
         void OnDestroy() => Cancel();
 
-        async UniTask WaitUntilSimulationReady(CancellationToken cancellationToken)
+        public UniTask<bool> WaitForPhaseAsync(
+            SimSessionPhase phase,
+            CancellationToken cancellationToken = default)
+        {
+            return AwaitCondition(
+                () => IsSessionPhase(phase),
+                $"ECS session did not reach {phase}.",
+                cancellationToken);
+        }
+
+        UniTask<bool> WaitUntilSimulationReady(CancellationToken cancellationToken)
+        {
+            return AwaitCondition(
+                IsSimulationReady,
+                "Catalog/grid never appeared (SubScene bake). Check Simulation SubScene is in Game and Building Catalog is assigned.",
+                cancellationToken);
+        }
+
+        async UniTask<bool> AwaitCondition(
+            Func<bool> condition,
+            string timeoutMessage,
+            CancellationToken cancellationToken)
         {
             var timeout = simulationReadyTimeoutSeconds > 0f ? simulationReadyTimeoutSeconds : 30f;
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeout));
             try
             {
                 await UniTask.WaitUntil(
-                        IsSimulationReady,
-                        cancellationToken: cancellationToken)
-                    .Timeout(TimeSpan.FromSeconds(timeout));
+                        condition,
+                        cancellationToken: timeoutCts.Token);
+                return true;
             }
-            catch (TimeoutException)
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                GameLog.Error(
-                    "GameSession: catalog/grid never appeared (SubScene bake). " +
-                    "Check Simulation SubScene is in Game and Building Catalog is assigned.");
+                GameLog.Error($"GameSession: {timeoutMessage}");
+                return false;
             }
+            catch (OperationCanceledException)
+            {
+                GameLog.Info("GameSession: lifecycle wait cancelled.");
+                return false;
+            }
+        }
+
+        static bool IsSessionPhase(SimSessionPhase phase)
+        {
+            return SimWorld.TryGet(out var em, out var session)
+                && em.GetComponentData<SimSession>(session).Phase == phase;
         }
     }
 }

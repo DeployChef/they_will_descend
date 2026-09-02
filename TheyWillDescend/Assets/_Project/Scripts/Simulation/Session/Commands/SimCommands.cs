@@ -3,7 +3,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Session
 {
     /// <summary>
-    /// Posts a command onto the singleton entity's buffer. Systems consume it.
+    /// Presentation-facing command posting boundary. Gameplay posts commands and lets
+    /// <see cref="CommandSystemGroup"/> consume them on the next simulation tick.
     /// </summary>
     public static class SimCommands
     {
@@ -13,36 +14,9 @@ namespace TheyWillDescend.Simulation.Session
             if (!SimWorld.TryGet(out var em, out var bag))
                 return false;
             if (!em.HasBuffer<T>(bag))
-                em.AddBuffer<T>(bag);
+                return false;
             em.GetBuffer<T>(bag).Add(command);
             return true;
-        }
-
-        public static bool TryRequestDespawnAllAgents()
-        {
-            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<SimBridge>(bag))
-                return false;
-            var data = em.GetComponentData<SimBridge>(bag);
-            data.DespawnAllAgents = 1;
-            em.SetComponentData(bag, data);
-            return true;
-        }
-
-        public static bool TryRequestDespawnAllBuildings()
-        {
-            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasComponent<SimBridge>(bag))
-                return false;
-            var data = em.GetComponentData<SimBridge>(bag);
-            data.DespawnAllBuildings = 1;
-            em.SetComponentData(bag, data);
-            return true;
-        }
-
-        public static void Playback()
-        {
-            if (!SimWorld.TryGet(out var em, out _))
-                return;
-            SimCommandPlayback.Run(em);
         }
     }
 }

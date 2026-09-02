@@ -368,7 +368,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 BuildingId = selection.SelectedBuildingId,
                 Count = 256
             });
-            SimCommands.Playback();
         }
 
         void OnMaxPlus()
@@ -380,7 +379,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 BuildingId = selection.SelectedBuildingId,
                 Count = 256
             });
-            SimCommands.Playback();
         }
 
         void OnPower()
@@ -395,7 +393,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 BuildingId = selection.SelectedBuildingId,
                 Paused = paused ? (byte)0 : (byte)1
             });
-            SimCommands.Playback();
         }
 
         void UpdatePowerIcon(bool paused)

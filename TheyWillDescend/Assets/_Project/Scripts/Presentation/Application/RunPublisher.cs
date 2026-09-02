@@ -17,29 +17,37 @@ namespace TheyWillDescend.Shell
     /// </summary>
     public static class RunPublisher
     {
-        public static bool Apply(ScenarioDefinition scenario, DifficultyProfile difficulty)
+        public static bool BeginRun(ScenarioDefinition scenario, DifficultyProfile difficulty)
         {
             if (!SimWorld.TryGet(out var em, out var session))
             {
-                GameLog.Error("RunPublisher: SimControl missing.");
+                GameLog.Error("RunPublisher: SimSession missing.");
+                return false;
+            }
+            if (!SimSessionAccess.HasLifecycleQueues(em, session))
+            {
+                GameLog.Error("RunPublisher: required lifecycle queues are missing from the session bake.");
                 return false;
             }
 
-            ResetDynamics();
+            em.CompleteAllTrackedJobs();
+            ClearLifecycleQueues(em, session);
+            var lifecycle = em.GetComponentData<SimSession>(session);
+            lifecycle.Phase = SimSessionPhase.Preparing;
+            em.SetComponentData(session, lifecycle);
+            SetSimulationOff(em, session);
+
+            em.GetBuffer<DespawnAllAgentsCommand>(session).Add(
+                new DespawnAllAgentsCommand { Requested = 1 });
+            em.GetBuffer<DespawnAllBuildingsCommand>(session).Add(
+                new DespawnAllBuildingsCommand { Requested = 1 });
             ApplyDifficulty(em, session, difficulty);
             ApplyScenario(em, session, scenario);
 
-            var control = em.GetComponentData<SimControl>(session);
-            control.RunPrepared = 1;
-            em.SetComponentData(session, control);
-
             var name = scenario != null ? scenario.name : "none";
             var diff = difficulty != null ? difficulty.name : "stamp defaults";
-            var houses = 0;
-            if (em.HasBuffer<PendingScenarioPlace>(session))
-                houses = em.GetBuffer<PendingScenarioPlace>(session).Length;
-            SimCommands.Playback();
-            GameLog.Info($"Run ready: scenario {name} ({houses} houses), overlay {diff}.");
+            var houses = em.GetBuffer<PendingScenarioPlace>(session).Length;
+            GameLog.Info($"Run setup queued: scenario {name} ({houses} houses), overlay {diff}.");
             return true;
         }
 
@@ -47,23 +55,53 @@ namespace TheyWillDescend.Shell
         /// Runtime houses/agents live in the default world, not the SubScene.
         /// Unloading Game does not destroy them — a new run must wipe first.
         /// </summary>
-        public static void ResetDynamics()
+        public static bool BeginReset()
         {
             if (!SimWorld.TryGet(out var em, out var session))
-                return;
+                return false;
+            if (!SimSessionAccess.HasLifecycleQueues(em, session))
+            {
+                GameLog.Error("RunPublisher reset: required lifecycle queues are missing.");
+                return false;
+            }
 
-            if (em.HasComponent<PendingScenarioSpawns>(session))
-                em.SetComponentData(session, new PendingScenarioSpawns { Workers = 0 });
-            if (em.HasBuffer<PendingScenarioPlace>(session))
-                em.GetBuffer<PendingScenarioPlace>(session).Clear();
-            if (em.HasBuffer<PlaceBuildingCommand>(session))
-                em.GetBuffer<PlaceBuildingCommand>(session).Clear();
-            if (em.HasBuffer<SpawnAgentCommand>(session))
-                em.GetBuffer<SpawnAgentCommand>(session).Clear();
+            em.CompleteAllTrackedJobs();
+            ClearLifecycleQueues(em, session);
+            var lifecycle = em.GetComponentData<SimSession>(session);
+            lifecycle.Phase = SimSessionPhase.Resetting;
+            em.SetComponentData(session, lifecycle);
+            SetSimulationOff(em, session);
+            em.GetBuffer<DespawnAllAgentsCommand>(session).Add(
+                new DespawnAllAgentsCommand { Requested = 1 });
+            em.GetBuffer<DespawnAllBuildingsCommand>(session).Add(
+                new DespawnAllBuildingsCommand { Requested = 1 });
+            return true;
+        }
 
-            SimCommands.TryRequestDespawnAllAgents();
-            SimCommands.TryRequestDespawnAllBuildings();
-            SimCommands.Playback();
+        static void SetSimulationOff(EntityManager em, Entity session)
+        {
+            var control = em.GetComponentData<SimControl>(session);
+            control.Mode = SimRunMode.Off;
+            control.SessionInGame = 0;
+            control.PlayerPaused = 0;
+            control.BuildLocked = 0;
+            control.DeltaTime = 0f;
+            em.SetComponentData(session, control);
+        }
+
+        internal static void ClearLifecycleQueues(EntityManager em, Entity session)
+        {
+            em.SetComponentData(session, new PendingScenarioSpawns());
+            em.GetBuffer<PendingScenarioPlace>(session).Clear();
+            em.GetBuffer<SimClockCommand>(session).Clear();
+            em.GetBuffer<DespawnAllAgentsCommand>(session).Clear();
+            em.GetBuffer<DespawnAllBuildingsCommand>(session).Clear();
+            em.GetBuffer<SpawnAgentCommand>(session).Clear();
+            em.GetBuffer<PlaceBuildingCommand>(session).Clear();
+            em.GetBuffer<AssignWorkerCommand>(session).Clear();
+            em.GetBuffer<UnassignWorkerCommand>(session).Clear();
+            em.GetBuffer<SetWorkplacePausedCommand>(session).Clear();
+            em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
         }
 
         static void ApplyDifficulty(EntityManager em, Entity session, DifficultyProfile difficulty)
@@ -193,8 +231,6 @@ namespace TheyWillDescend.Shell
 
         static void WritePendingPlaces(EntityManager em, Entity session, ScenarioDefinition scenario)
         {
-            if (!em.HasBuffer<PendingScenarioPlace>(session))
-                em.AddBuffer<PendingScenarioPlace>(session);
             var pending = em.GetBuffer<PendingScenarioPlace>(session);
             pending.Clear();
             if (scenario == null)
@@ -247,10 +283,7 @@ namespace TheyWillDescend.Shell
         static void WriteWorkers(EntityManager em, Entity session, ScenarioDefinition scenario)
         {
             var workers = scenario != null ? scenario.StartingWorkers : 0;
-            if (em.HasComponent<PendingScenarioSpawns>(session))
-                em.SetComponentData(session, new PendingScenarioSpawns { Workers = workers });
-            else
-                em.AddComponentData(session, new PendingScenarioSpawns { Workers = workers });
+            em.SetComponentData(session, new PendingScenarioSpawns { Workers = workers });
         }
     }
 }

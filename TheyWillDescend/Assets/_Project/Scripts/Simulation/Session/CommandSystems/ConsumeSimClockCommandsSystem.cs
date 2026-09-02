@@ -4,11 +4,12 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Session
 {
     [UpdateInGroup(typeof(CommandSystemGroup), OrderFirst = true)]
+    [UpdateBefore(typeof(TheyWillDescend.Simulation.Agents.ConsumeDespawnAgentsSystem))]
     public partial struct ConsumeSimClockCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
             state.RequireForUpdate<SimClockCommand>();
         }
 
@@ -16,7 +17,7 @@ namespace TheyWillDescend.Simulation.Session
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session) || !em.HasBuffer<SimClockCommand>(session))
+            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<SimClockCommand>(session))
                 return;
 
             var commands = em.GetBuffer<SimClockCommand>(session);
@@ -39,8 +40,9 @@ namespace TheyWillDescend.Simulation.Session
             {
                 case SimClockCommandKind.SetSessionInGame:
                     control.SessionInGame = command.Value != 0 ? (byte)1 : (byte)0;
-                    control.PlayerPaused = 0;
                     control.BuildLocked = 0;
+                    if (control.SessionInGame == 0)
+                        control.PlayerPaused = 0;
                     break;
                 case SimClockCommandKind.TogglePlayerPause:
                     if (control.SessionInGame == 0 || control.BuildLocked != 0)

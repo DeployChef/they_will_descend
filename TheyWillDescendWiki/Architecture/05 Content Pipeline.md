@@ -34,7 +34,7 @@ DifficultyProfile overlay (+ позже A/B pack — тот же шаг)
 
 Меню: **Start Game** = DefaultScenario, цифры со штампа. **Start Debug** = DebugScenario + DebugDifficulty (кухня output 50 еды/ч, лесопилка стройка 1 с).
 
-A/B позже — ещё один оверлей в `RunPublisher.Apply`, не `ISystem` и не второй префаб. Pack приходит с тем же `typeId`.
+A/B позже — ещё один оверлей в `RunPublisher.BeginRun`, не `ISystem` и не второй префаб. Pack приходит с тем же `typeId`.
 
 Имя кнопки и цвета HUD берёт с `BuildingView` на корне штампа. Меш — ребёнок `Body` (не печётся в ECS). В Play доска **Instantiates тот же префаб**; живой `BuildingView.Sync` читает пакеты своей entity. Призрак — арт-каталог. Overlay клетки — отдельный префаб.
 
@@ -245,7 +245,7 @@ Kitchen                 ← BuildingStamp + BuildingView
 | Capture scene → config | Превью → список домов в SO. Запас не трогает |
 | Move tool | Тащишь превью — snap в клетку, MouseUp пишет SO |
 
-Bake сценария: starting stock в леджер; дома — `PendingScenarioPlace`, люди — `PendingScenarioSpawns` на session. Это **seed**. Первый Playback после `RunPublisher` спавнит дома через тот же `SpawnHouse`, InstantComplete, без команды. Пока `SimControl.RunPrepared == 0`, spawn и Place не идут. Load слота — тот же замок: `RunSessionSnapshot.Apply` ставит `RunPrepared = 1` до Place, иначе старт из меню оставит поле пустым.
+Bake сценария: starting stock в леджер; дома — `PendingScenarioPlace`, люди — `PendingScenarioSpawns` на session. Это **seed**. `RunPublisher.BeginRun` атомарно ставит reset + seed и переводит session в `Preparing`; следующий `CommandSystemGroup` спавнит дома через тот же `SpawnHouse`, InstantComplete, после чего lifecycle-finalizer подтверждает `Ready`. Ручного bootstrap playback нет. `PendingScenarioPlace` разрешён только в `Preparing`; обычный player `PlaceBuildingCommand` — только в `Ready`. Snapshot-place помечен отдельным `SnapshotRestore` source и тоже проходит pipeline в `Preparing`.
 
 `ScenarioAuthoring` нельзя вешать на SimControl: BakingOnly снял бы session singleton.
 
@@ -257,7 +257,7 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 На **одном** GO `SimControl` (соседи authoring, один bake-entity):
 
-1. `SimControlAuthoring` — `SimControl` + `SimBridge` + буфер `SimClockCommand`
+1. `SimControlAuthoring` — `SimSession` + `SimControl` + `AgentIdSequence` + clock/lifecycle command buffers
 2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока, час эры, потолок жжения, cap стока)
 3. `TimelineCatalogAuthoring` → `DefaultTimeline`
 4. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
@@ -278,7 +278,7 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на префабе, кост с `BuildingCatalogCost`.
 
-Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, `CreateEntity` из spec (`Construction`, если duration > 0). После `Playback()` режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
+Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → gameplay `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, `CreateEntity` из spec (`Construction`, если duration > 0). После постановки режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
 
 Сценарий и load (`BuildingId > 0` или `InstantComplete`) кост не берут.
 
@@ -321,7 +321,7 @@ Sheet / live pack  →  typeId, cost, recipe, slots, duration
 RunPublisher       →  DifficultyProfile / A/B overlay на снимок
 ```
 
-A/B не тикает из `ISystem` и не клонирует кухню. Pack приходит с теми же `typeId` и подменяется в `RunPublisher.Apply` до `RunPrepared`. Импортёра и HTTP в этом срезе нет.
+A/B не тикает из `ISystem` и не клонирует кухню. Pack приходит с теми же `typeId` и подменяется в `RunPublisher.BeginRun` до постановки seed-команд; `Ready` подтвердит только ECS-finalizer. Импортёра и HTTP в этом срезе нет.
 
 Не пишите в ячейку `Assets/…/house.prefab`.
 

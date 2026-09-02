@@ -158,14 +158,21 @@ namespace TheyWillDescend.Shell.States
 
         async UniTaskVoid LoadSlot(RunSnapshot snapshot, CancellationToken cancellationToken)
         {
+            var ready = false;
             try
             {
                 await _session.RunWithLoadingAsync(
-                    _ =>
+                    async ct =>
                     {
-                        RunSessionSnapshot.Apply(snapshot);
+                        if (!RunSessionSnapshot.BeginApply(snapshot))
+                            return;
+                        if (!await _session.WaitForPhaseAsync(SimSessionPhase.Ready, ct))
+                            return;
+
+                        if (!SimCommands.TryPost(SimClockCommand.InGame(true)))
+                            return;
                         _screen?.RebuildViews();
-                        return UniTask.CompletedTask;
+                        ready = true;
                     },
                     cancellationToken);
             }
@@ -175,8 +182,14 @@ namespace TheyWillDescend.Shell.States
             finally
             {
                 _busy = false;
-                if (_fsm.CurrentId == AppStateId.Playing)
+                if (ready && _fsm.CurrentId == AppStateId.Playing)
                     _input.EnableGame();
+                else if (!cancellationToken.IsCancellationRequested)
+                {
+                    GameLog.Error("Playing load failed — ECS did not reach Ready; input remains disabled.");
+                    if (_fsm.CurrentId == AppStateId.Playing)
+                        _fsm.TransitionTo(AppStateId.ReturningToMenu);
+                }
             }
         }
 

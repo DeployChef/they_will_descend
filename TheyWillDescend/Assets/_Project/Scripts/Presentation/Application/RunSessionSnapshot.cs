@@ -7,6 +7,7 @@ using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Gods;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
+using TheyWillDescend.Shell;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -147,22 +148,35 @@ namespace TheyWillDescend.App
             return snapshot;
         }
 
-        public static void Apply(RunSnapshot snapshot)
+        public static bool BeginApply(RunSnapshot snapshot)
         {
             if (snapshot == null)
-                return;
+                return false;
+            if (!SimWorld.TryGet(out var em, out var session)
+                || !SimSessionAccess.HasLifecycleQueues(em, session))
+            {
+                GameLog.Error("Snapshot apply: required session lifecycle queues are missing.");
+                return false;
+            }
 
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world != null && world.IsCreated)
-                world.EntityManager.CompleteAllTrackedJobs();
+            em.CompleteAllTrackedJobs();
+            RunPublisher.ClearLifecycleQueues(em, session);
+            var lifecycle = em.GetComponentData<SimSession>(session);
+            lifecycle.Phase = SimSessionPhase.Preparing;
+            em.SetComponentData(session, lifecycle);
+            var control = em.GetComponentData<SimControl>(session);
+            control.Mode = SimRunMode.Off;
+            control.SessionInGame = 0;
+            control.BuildLocked = 0;
+            control.DeltaTime = 0f;
+            em.SetComponentData(session, control);
 
-            SimCommands.TryPost(SimClockCommand.Restore(snapshot.speed, playerPaused: true));
-
-            SimCommands.TryRequestDespawnAllAgents();
-            SimCommands.TryRequestDespawnAllBuildings();
-            SimCommands.Playback();
-
-            MarkRunPrepared();
+            em.GetBuffer<SimClockCommand>(session).Add(
+                SimClockCommand.Restore(snapshot.speed, snapshot.playerPaused));
+            em.GetBuffer<DespawnAllAgentsCommand>(session).Add(
+                new DespawnAllAgentsCommand { Requested = 1 });
+            em.GetBuffer<DespawnAllBuildingsCommand>(session).Add(
+                new DespawnAllBuildingsCommand { Requested = 1 });
             ApplyGameTime(snapshot);
 
             if (snapshot.buildings != null)
@@ -180,7 +194,8 @@ namespace TheyWillDescend.App
                         AnchorRadial = record.anchorRadial,
                         ConstructionElapsed = record.constructionElapsed,
                         ConstructionDuration = record.constructionDuration,
-                        InstantComplete = record.built != 0 ? (byte)1 : (byte)0
+                        InstantComplete = record.built != 0 ? (byte)1 : (byte)0,
+                        Source = PlaceBuildingCommandSource.SnapshotRestore
                     });
                 }
             }
@@ -191,30 +206,12 @@ namespace TheyWillDescend.App
                     EnqueueAgent(snapshot.agents[i]);
             }
 
-            SimCommands.Playback();
             ApplyPausedBuildings(snapshot);
             ApplyResources(snapshot);
             ApplyGods(snapshot);
             GameLog.Info(
-                $"Applied snapshot v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
-        }
-
-        static void MarkRunPrepared()
-        {
-            if (!SimWorld.TryGet(out var em, out var session) || !em.HasComponent<SimControl>(session))
-            {
-                GameLog.Error("Snapshot apply: SimControl missing.");
-                return;
-            }
-
-            if (em.HasComponent<PendingScenarioSpawns>(session))
-                em.SetComponentData(session, new PendingScenarioSpawns { Workers = 0 });
-            if (em.HasBuffer<PendingScenarioPlace>(session))
-                em.GetBuffer<PendingScenarioPlace>(session).Clear();
-
-            var control = em.GetComponentData<SimControl>(session);
-            control.RunPrepared = 1;
-            em.SetComponentData(session, control);
+                $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
+            return true;
         }
 
         static void ApplyPausedBuildings(RunSnapshot snapshot)
@@ -222,7 +219,6 @@ namespace TheyWillDescend.App
             if (snapshot.buildings == null)
                 return;
 
-            var any = false;
             for (var i = 0; i < snapshot.buildings.Length; i++)
             {
                 var record = snapshot.buildings[i];
@@ -233,11 +229,7 @@ namespace TheyWillDescend.App
                     BuildingId = record.id,
                     Paused = 1
                 });
-                any = true;
             }
-
-            if (any)
-                SimCommands.Playback();
         }
 
         static void ApplyResources(RunSnapshot snapshot)
@@ -341,7 +333,6 @@ namespace TheyWillDescend.App
                 });
             }
 
-            SimCommands.Playback();
         }
 
         static void EnqueueAgent(AgentSnapshot record)
@@ -353,8 +344,6 @@ namespace TheyWillDescend.App
                 Target = new float3(record.targetX, record.targetY, record.targetZ),
                 Speed = record.speed > 0.001f ? record.speed : 2f,
                 AgentId = record.agentId,
-                WorkplaceBuildingId = record.workplaceBuildingId,
-                Arrived = record.arrived,
                 Moving = record.moving,
                 PlazaWalking = record.plazaWalking,
                 PlazaTimer = record.plazaTimer,
@@ -363,6 +352,16 @@ namespace TheyWillDescend.App
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });
+
+            if (record.workplaceBuildingId > 0)
+            {
+                SimCommands.TryPost(new AssignWorkerCommand
+                {
+                    BuildingId = record.workplaceBuildingId,
+                    AgentId = record.agentId,
+                    Arrived = record.arrived
+                });
+            }
         }
 
         static void ApplyGameTime(RunSnapshot snapshot)

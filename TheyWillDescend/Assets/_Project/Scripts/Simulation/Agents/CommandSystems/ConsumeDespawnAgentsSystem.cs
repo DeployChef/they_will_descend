@@ -4,11 +4,15 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Agents
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
+    [UpdateAfter(typeof(ConsumeSimClockCommandsSystem))]
+    [UpdateBefore(typeof(TheyWillDescend.Simulation.City.ConsumeDespawnBuildingsSystem))]
     public partial struct ConsumeDespawnAgentsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
+            state.RequireForUpdate<AgentIdSequence>();
+            state.RequireForUpdate<DespawnAllAgentsCommand>();
         }
 
         public void OnUpdate(ref SystemState state)
@@ -18,18 +22,18 @@ namespace TheyWillDescend.Simulation.Agents
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out var session)
+                || !em.HasBuffer<DespawnAllAgentsCommand>(session))
                 return;
 
-            var bridge = em.GetComponentData<SimBridge>(session);
-            if (bridge.DespawnAllAgents == 0)
+            var commands = em.GetBuffer<DespawnAllAgentsCommand>(session);
+            if (commands.Length == 0)
                 return;
 
+            commands.Clear();
             using var agents = em.CreateEntityQuery(ComponentType.ReadOnly<AgentId>());
             SimEntityDestroy.DestroyQuery(em, agents);
-            bridge.DespawnAllAgents = 0;
-            bridge.NextAgentId = 0;
-            em.SetComponentData(session, bridge);
+            em.SetComponentData(session, new AgentIdSequence());
         }
     }
 }

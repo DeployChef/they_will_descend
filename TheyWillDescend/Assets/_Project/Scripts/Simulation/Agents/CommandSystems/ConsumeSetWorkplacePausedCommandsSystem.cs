@@ -7,18 +7,19 @@ namespace TheyWillDescend.Simulation.Agents
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumeUnassignWorkerCommandsSystem))]
+    [UpdateBefore(typeof(TheyWillDescend.Simulation.Gods.ConsumeSetPyramidFeedCommandsSystem))]
     public partial struct ConsumeSetWorkplacePausedCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
         }
 
         public void OnUpdate(ref SystemState state) => Run(state.EntityManager);
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session) || !em.HasBuffer<SetWorkplacePausedCommand>(session))
+            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<SetWorkplacePausedCommand>(session))
                 return;
 
             var commands = em.GetBuffer<SetWorkplacePausedCommand>(session);

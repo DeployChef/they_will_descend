@@ -76,12 +76,12 @@ Assets/_Project/Scripts/
 | `CommandSystems/` | consume команд (`CommandSystemGroup`) |
 | `Systems/` | тик (commute, construction, produce) |
 
-`CommandSystemGroup` живёт в `Session/CommandSystems`. Namespace остаётся на уровне фичи (`TheyWillDescend.Simulation.City`), не `City.Commands`.
+`CommandSystemGroup` живёт в `Session/CommandSystems`. Его pipeline линеен: clock → reset agents → reset buildings → scenario spawn → spawn → place → assign → unassign → workplace pause → pyramid feed → lifecycle finalizer → delta time. Finalizer переводит `SimSession.Phase` только после опустошения всех входящих очередей. Namespace остаётся на уровне фичи (`TheyWillDescend.Simulation.City`), не `City.Commands`.
 
-Папка `Simulation/Io` — **не канон** (старый дубль). Порт: `Session/Components/SimWorld`, `SimBridge`, `SimBridgeAccess`; `Session/Commands/SimCommands`.
+Папка `Simulation/Io` — **не канон** (старый дубль). Порт: `Session/Components/SimWorld`, `SimSession`, `SimSessionAccess`; `Session/Commands/SimCommands`.
 
 Новая механика: система в `Simulation/<фича>/Systems`, команда рядом в `Commands`, consume в `CommandSystems`, вид в `Presentation/<фича>`.  
-Одна команда / один флаг сноса — **своя система** в `CommandSystemGroup`. Не общий `SimCommandProcessor`. HUD только `SimCommands.TryPost<T>`.
+Одна команда / один флаг сноса — **своя система** в `CommandSystemGroup`. Не общий `SimCommandProcessor`. HUD только `SimCommands.TryPost<T>`. Presentation не вызывает consume-системы вручную: `GameSession` асинхронно ждёт ECS-фазы `Ready` / `Unprepared`.
 
 `GameHud` — оверлей-виджеты. `*View` / `*ViewBoard` — меш в мире следует за entity. Меню: экраны на сцене регистрируют `.Current` в Awake; стейты читают их в Enter.
 

@@ -3,6 +3,12 @@ using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.City
 {
+    public enum PlaceBuildingCommandSource : byte
+    {
+        Gameplay = 0,
+        SnapshotRestore = 1
+    }
+
     public struct PlaceBuildingCommand : IBufferElementData
     {
         public FixedString64Bytes TypeId;
@@ -14,5 +20,6 @@ namespace TheyWillDescend.Simulation.City
         public float ConstructionDuration;
         public byte InstantComplete;
         public int BuildingId;
+        public PlaceBuildingCommandSource Source;
     }
 }

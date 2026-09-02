@@ -29,7 +29,7 @@ namespace TheyWillDescend.Simulation.City
 
         public static void Run(EntityManager em, EntityQuery sites)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
             var control = em.GetComponentData<SimControl>(session);

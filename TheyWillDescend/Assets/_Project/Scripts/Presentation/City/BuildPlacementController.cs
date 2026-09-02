@@ -194,7 +194,6 @@ namespace TheyWillDescend.Presentation.City
             }
 
             GameLog.Info($"Place command type={_typeId} c={_anchorCluster} r={_anchorRadial}.");
-            SimCommands.Playback();
             if (CanAfford(_typeId))
                 return;
 

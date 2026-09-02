@@ -7,18 +7,19 @@ namespace TheyWillDescend.Simulation.Agents
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumePlaceBuildingCommandsSystem))]
+    [UpdateBefore(typeof(ConsumeUnassignWorkerCommandsSystem))]
     public partial struct ConsumeAssignWorkerCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
         }
 
         public void OnUpdate(ref SystemState state) => Run(state.EntityManager);
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
             var commands = em.GetBuffer<AssignWorkerCommand>(session);
@@ -34,7 +35,7 @@ namespace TheyWillDescend.Simulation.Agents
                 var preferred = command.AgentId;
                 for (var n = 0; n < repeats; n++)
                 {
-                    if (!Assign(em, command.BuildingId, preferred))
+                    if (!Assign(em, command.BuildingId, preferred, command.Arrived))
                         break;
                     preferred = 0;
                 }
@@ -42,7 +43,7 @@ namespace TheyWillDescend.Simulation.Agents
             copy.Dispose();
         }
 
-        static bool Assign(EntityManager em, int buildingId, int preferredAgentId)
+        static bool Assign(EntityManager em, int buildingId, int preferredAgentId, byte arrived)
         {
             if (buildingId <= 0)
                 return false;
@@ -87,7 +88,7 @@ namespace TheyWillDescend.Simulation.Agents
             em.SetComponentData(agentEntity, new AgentAssignment
             {
                 WorkplaceBuildingId = buildingId,
-                Arrived = 0
+                Arrived = arrived != 0 ? (byte)1 : (byte)0
             });
             return true;
         }

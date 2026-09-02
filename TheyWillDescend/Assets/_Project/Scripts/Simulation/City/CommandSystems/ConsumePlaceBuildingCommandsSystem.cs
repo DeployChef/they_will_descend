@@ -10,11 +10,12 @@ namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumeSpawnAgentCommandsSystem))]
+    [UpdateBefore(typeof(ConsumeAssignWorkerCommandsSystem))]
     public partial struct ConsumePlaceBuildingCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
             state.RequireForUpdate<CityGrid>();
         }
 
@@ -25,7 +26,7 @@ namespace TheyWillDescend.Simulation.City
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
             var grid = em.GetComponentData<CityGrid>(session);
@@ -34,15 +35,9 @@ namespace TheyWillDescend.Simulation.City
             em.SetComponentData(session, grid);
         }
 
-        static bool IsRunPrepared(EntityManager em, Entity session)
-        {
-            return em.HasComponent<SimControl>(session)
-                && em.GetComponentData<SimControl>(session).RunPrepared != 0;
-        }
-
         static void DrainPendingScenario(EntityManager em, Entity session, ref CityGrid grid)
         {
-            if (!IsRunPrepared(em, session))
+            if (!em.GetComponentData<SimSession>(session).AcceptsSetupCommands)
                 return;
             if (!em.HasBuffer<PendingScenarioPlace>(session))
                 return;
@@ -52,10 +47,7 @@ namespace TheyWillDescend.Simulation.City
                 return;
 
             if (!em.HasBuffer<BuildingPrototype>(session))
-            {
-                pending.Clear();
                 return;
-            }
 
             var copy = pending.ToNativeArray(Allocator.Temp);
             pending.Clear();
@@ -77,8 +69,6 @@ namespace TheyWillDescend.Simulation.City
 
         static void DrainCommands(EntityManager em, Entity session, ref CityGrid grid)
         {
-            if (!IsRunPrepared(em, session))
-                return;
             if (!em.HasBuffer<PlaceBuildingCommand>(session))
                 return;
 
@@ -87,15 +77,20 @@ namespace TheyWillDescend.Simulation.City
                 return;
 
             if (!em.HasBuffer<BuildingPrototype>(session))
-            {
-                commands.Clear();
                 return;
-            }
 
             var copy = commands.ToNativeArray(Allocator.Temp);
             commands.Clear();
+            var lifecycle = em.GetComponentData<SimSession>(session);
             for (var i = 0; i < copy.Length; i++)
             {
+                var sourceAllowed = lifecycle.IsReady
+                    ? copy[i].Source == PlaceBuildingCommandSource.Gameplay
+                    : lifecycle.AcceptsSetupCommands
+                        && copy[i].Source == PlaceBuildingCommandSource.SnapshotRestore;
+                if (!sourceAllowed)
+                    continue;
+
                 var catalog = em.GetBuffer<BuildingPrototype>(session);
                 Place(em, session, ref grid, catalog, copy[i]);
             }

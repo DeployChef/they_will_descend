@@ -26,7 +26,7 @@ namespace TheyWillDescend.Simulation.Session
                 return true;
             }
 
-            if (!SimBridgeAccess.TryGet(em, out bag))
+            if (!SimSessionAccess.TryGet(em, out bag))
             {
                 _world = null;
                 _bag = default;

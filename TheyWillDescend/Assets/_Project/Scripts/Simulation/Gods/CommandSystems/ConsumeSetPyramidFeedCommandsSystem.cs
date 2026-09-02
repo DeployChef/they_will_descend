@@ -8,18 +8,19 @@ namespace TheyWillDescend.Simulation.Gods
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(TheyWillDescend.Simulation.Agents.ConsumeSetWorkplacePausedCommandsSystem))]
+    [UpdateBefore(typeof(FinalizeSimSessionLifecycleSystem))]
     public partial struct ConsumeSetPyramidFeedCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
         }
 
         public void OnUpdate(ref SystemState state) => Run(state.EntityManager);
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session) || !em.HasBuffer<SetPyramidFeedCommand>(session))
+            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<SetPyramidFeedCommand>(session))
                 return;
 
             var commands = em.GetBuffer<SetPyramidFeedCommand>(session);

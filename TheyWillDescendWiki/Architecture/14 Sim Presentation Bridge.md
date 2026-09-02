@@ -7,7 +7,7 @@
 World — единственный write model игры. Стрелки не симметричны:
 
 ```text
-Presentation  →  SimCommands.TryPost     единственная запись из UI
+Presentation  →  SimCommands.TryPost     единственная запись из gameplay UI
 Presentation  ←  query / pull            единственное чтение в вид
 Simulation    ✕  TimeWidget / ViewBoard / Animator
 ```
@@ -16,9 +16,11 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 Редкое исключение наружу: `BuildingRejectedEvent` (тост). Не спавн, не тик дня.
 
-Пауза/скорость — команды на `SimControl`, не запись стоков.
+Пауза/скорость — команды на `SimControl`, не запись стоков. Готовность забега — unmanaged lifecycle `SimSession.Phase`: `Unprepared`, `Preparing`, `Ready`, `Resetting`. Это не состояние часов.
 
-`SimCommands.Playback()` — тот же кадр применить consume (load, постановка дома, чтобы ghost сразу увидел occupy/сток). Обычный клик HUD может положиться на следующий тик `CommandSystemGroup`.
+Gameplay Presentation **никогда не запускает consume вручную**. Постановка дома, назначение рабочих и слайдеры пирамиды только вызывают `SimCommands.TryPost`; команды применяет следующий тик `CommandSystemGroup`.
+
+Исключений для ручного playback нет. `RunPublisher.BeginRun`, `RunSessionSnapshot.BeginApply` и `RunPublisher.BeginReset` только атомарно ставят входящие команды и фазу. Линейный `CommandSystemGroup` исполняет их, lifecycle-finalizer подтверждает `Ready` / `Unprepared`, а `GameSession` асинхронно ждёт подтверждение с timeout/cancellation. Loading и gameplay input снимаются только после `Ready`; Game scene выгружается только после `Unprepared`.
 
 ## Меши и поза
 
@@ -58,12 +60,12 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 | --- | --- |
 | `SpawnAgentCommand`, `PlaceBuildingCommand`, `AssignWorkerCommand`, `SimCommands` | Simulation |
 | `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceAmount` | Simulation |
-| Session singleton | SubScene: `SimControlAuthoring` + соседние authoring |
+| Session singleton | SubScene: `SimControlAuthoring` печёт `SimSession`, `SimControl`, sequence и lifecycle buffers |
 | Плаза HQ | SubScene bake; не `PlaceBuilding` |
 | `AgentViewBoard` / `BuildingViewBoard` / `BuildingSelection` / `TimeWidget` | Presentation **читает** World |
 | Пауза / x1 x2 x3 | `SimClockCommand` → `SimControl` |
 
-`SimBridge` — leftover-имя: `NextAgentId` + флаги despawn. Не путать с Presentation.
+`SimSessionAccess` находит session singleton по `SimSession`. Генератор ID живёт отдельно в `AgentIdSequence`; reset — типизированные `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`. Полный pipeline: clock → reset agents → reset buildings → scenario spawn → spawn → place → assign → unassign → workplace pause → pyramid feed → lifecycle finalizer → delta time. `BuildingRejectedEvent` — outbound и в drain-check не входит.
 
 `AgentSpawner` только постит spawn (площадка/скорость). Префабы Mixamo и `spawnParent` — на `AgentViewBoard` (тот же GO).
 

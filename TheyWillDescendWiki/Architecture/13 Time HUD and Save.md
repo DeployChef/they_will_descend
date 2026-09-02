@@ -203,17 +203,17 @@ SavePayload v15
 ### Load (последовательность)
 
 1. Нет файла → лог, ничего не трогать.
-2. На время применения: команды + `SimCommands.Playback()` в том же кадре (не «полкадра дыры»).
-3. Снести **только динамику рана**: `DespawnAllAgents` / `DespawnAllBuildings`. Не выгружать `Game.unity`.
-4. Записать `GameTime` + Speed/PlayerPaused через `SimClockCommand.Restore`.
-5. Заспавнить агентов и дома теми же командами, что кнопка/placement, с полями из файла. Перед этим `RunPrepared = 1` — иначе Place из меню-load молча отбросится (свежий bake ещё не publisher).
-6. Восстановить Mode как в файле («тот же кадр»).
+2. `RunSessionSnapshot.BeginApply` при остановленной sim переводит `SimSession.Phase` в `Preparing` и атомарно ставит reset + restore-команды.
+3. Следующий `CommandSystemGroup` сносит **только динамику рана**: `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`, затем восстанавливает clock/buildings/agents/paused/feed. Не выгружать `Game.unity`.
+4. Snapshot-place имеет source `SnapshotRestore`: он разрешён в `Preparing`; gameplay-place разрешён только в `Ready`.
+5. Lifecycle-finalizer переводит `Preparing → Ready` лишь когда все входящие очереди drained.
+6. `GameSession` ждёт `Ready` с cancellation/timeout и только потом перестраивает views, снимает Loading и возвращает input.
 
 Load **не** = `GameSession.Dispose` + полный reload сцены.
 
-Перед apply `GameSession.RunWithLoadingAsync` показывает сцену Loading (сортировка 500, поверх HUD). После apply `PauseMenuScreen` качает `AgentViewBoard` и `BuildingViewBoard.RebuildViews()`, затем Loading снимается. Выход в главное меню — стейт `ReturningToMenu` (тот же Loading, выгрузка Game). Load из главного меню — `LoadingGame` + apply слота (не `RunPublisher`).
+Перед apply `GameSession.RunWithLoadingAsync` показывает сцену Loading (сортировка 500, поверх HUD). После подтверждённого `Ready` `PauseMenuScreen` качает `AgentViewBoard` и `BuildingViewBoard.RebuildViews()`, затем Loading снимается. Выход в главное меню — стейт `ReturningToMenu`: `BeginReset`, ожидание `Unprepared`, затем выгрузка Game. Load из главного меню — `LoadingGame` + apply слота (не `RunPublisher`).
 
-Новый **Start Game / Start Debug** всегда зовёт `RunPublisher.ResetDynamics()`: runtime-дома не в SubScene, выгрузка Game их не уничтожает.
+Новый **Start Game / Start Debug** зовёт `RunPublisher.BeginRun`: runtime-дома не в SubScene, поэтому reset входит в тот же ECS pipeline до scenario seed.
 
 ---
 
