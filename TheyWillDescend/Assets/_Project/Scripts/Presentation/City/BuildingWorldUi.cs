@@ -9,15 +9,27 @@ namespace TheyWillDescend.Presentation.City
     /// </summary>
     public sealed class BuildingWorldUi : MonoBehaviour
     {
-        [SerializeField] GameObject barRoot;
-        [SerializeField] Image fill;
+        [Header("Construction group")]
+        [SerializeField] GameObject constructionRoot;
+        [SerializeField] Image constructionBackground;
+        [SerializeField] Image constructionFill;
+
+        [Header("Worker group")]
+        [SerializeField] GameObject workerRoot;
+        [SerializeField] Image workerBackground;
+        [SerializeField] Image workerFill;
+
         [SerializeField] GameObject statusRoot;
 
         static Sprite _white;
 
-        public GameObject BarRoot => barRoot;
+        public GameObject ConstructionRoot => constructionRoot;
+        public Image ConstructionBackground => constructionBackground;
+        public Image ConstructionFill => constructionFill;
 
-        public Image Fill => fill;
+        public GameObject WorkerRoot => workerRoot;
+        public Image WorkerBackground => workerBackground;
+        public Image WorkerFill => workerFill;
 
         public GameObject StatusRoot => statusRoot;
 
@@ -30,44 +42,6 @@ namespace TheyWillDescend.Presentation.City
                 if (canvas.sortingOrder < 20)
                     canvas.sortingOrder = 20;
             }
-
-            EnsureSprites();
-        }
-
-        void EnsureSprites()
-        {
-            if (fill != null)
-            {
-                if (fill.sprite == null)
-                    fill.sprite = WhiteSprite();
-                fill.type = Image.Type.Filled;
-                fill.fillMethod = Image.FillMethod.Horizontal;
-                fill.fillOrigin = (int)Image.OriginHorizontal.Left;
-            }
-
-            if (barRoot == null)
-                return;
-
-            var images = barRoot.GetComponentsInChildren<Image>(true);
-            for (var i = 0; i < images.Length; i++)
-            {
-                if (images[i] != null && images[i].sprite == null)
-                    images[i].sprite = WhiteSprite();
-            }
-        }
-
-        static Sprite WhiteSprite()
-        {
-            if (_white != null)
-                return _white;
-            var texture = Texture2D.whiteTexture;
-            _white = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f),
-                100f);
-            _white.name = "BuildingWorldUiWhite";
-            return _white;
         }
     }
 }
