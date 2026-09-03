@@ -8,7 +8,8 @@ namespace TheyWillDescend.Infrastructure.Save
         /// <summary>
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 24;
+        public const int CurrentVersion = 25;
+
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -84,7 +85,9 @@ namespace TheyWillDescend.Infrastructure.Save
         public byte dismantling;
         public int workerAgentId;
         public byte paused;
+        public int desiredWorkers;
     }
+
 
     [Serializable]
     public sealed class ResolvedBuildingPrototypeSnapshot

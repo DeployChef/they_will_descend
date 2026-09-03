@@ -44,15 +44,16 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var assignment in SystemAPI.Query<RefRO<AgentAssignment>>())
             {
                 var job = assignment.ValueRO;
-                if (job.WorkplaceBuildingId == 0 || job.HasConstructionTask)
+                if (job.WorkplaceBuildingId == 0)
                     continue;
                 if (!houses.TryGetValue(job.WorkplaceBuildingId, out var house))
                     continue;
                 var workplace = SystemAPI.GetComponentRW<Workplace>(house);
                 workplace.ValueRW.AssignedCount++;
-                if (job.Arrived != 0)
+                if (job.Arrived != 0 && !job.HasConstructionTask)
                     workplace.ValueRW.WorkingCount++;
             }
+
         }
     }
 }

@@ -186,7 +186,13 @@ namespace TheyWillDescend.Simulation.City
                     construction = site;
             }
 
-            SpawnHouse(em, session, spec, building, transform, construction);
+            var desired = command.Source == PlaceBuildingCommandSource.SnapshotRestore
+                ? command.DesiredWorkers
+                : 0;
+            var paused = command.Source == PlaceBuildingCommandSource.SnapshotRestore
+                ? command.Paused
+                : (byte)0;
+            SpawnHouse(em, session, spec, building, transform, construction, desired, paused);
         }
 
         public static void SpawnHouse(
@@ -195,13 +201,23 @@ namespace TheyWillDescend.Simulation.City
             in BuildingPrototype spec,
             in Building building,
             LocalTransform transform,
-            Construction? construction)
+            Construction? construction,
+            int desiredWorkers = 0,
+            byte paused = 0)
         {
             var entity = em.CreateEntity();
             em.AddComponentData(entity, building);
             em.AddComponentData(entity, spec.ToBuildingType());
             if (spec.WorkplaceSlots > 0)
-                em.AddComponentData(entity, new Workplace { DesiredWorkers = 0 });
+            {
+                em.AddComponentData(entity, new Workplace
+                {
+                    DesiredWorkers = desiredWorkers,
+                    Paused = paused
+                });
+            }
+
+
 
 
             if (spec.ResearchWorkplace != 0)

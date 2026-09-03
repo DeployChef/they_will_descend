@@ -130,7 +130,12 @@ namespace TheyWillDescend.App
                     built = 1
                 };
                 if (em.HasComponent<Workplace>(buildingEntities[i]))
-                    record.paused = em.GetComponentData<Workplace>(buildingEntities[i]).Paused;
+                {
+                    var wp = em.GetComponentData<Workplace>(buildingEntities[i]);
+                    record.paused = wp.Paused;
+                    record.desiredWorkers = wp.DesiredWorkers;
+                }
+
                 if (em.HasComponent<Construction>(buildingEntities[i]))
                 {
                     var construction = em.GetComponentData<Construction>(buildingEntities[i]);
@@ -208,8 +213,11 @@ namespace TheyWillDescend.App
                         ConstructionDuration = record.constructionDuration,
                         InstantComplete = record.built != 0 && record.dismantling == 0 ? (byte)1 : (byte)0,
                         Dismantling = record.dismantling,
-                        Source = PlaceBuildingCommandSource.SnapshotRestore
+                        Source = PlaceBuildingCommandSource.SnapshotRestore,
+                        DesiredWorkers = record.desiredWorkers,
+                        Paused = record.paused
                     });
+
                 }
             }
 

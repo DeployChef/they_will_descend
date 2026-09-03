@@ -180,16 +180,15 @@ namespace TheyWillDescend.Presentation.GameHud
             var onShift = TryGetGameTime(em, out var time) && time.IsWorkShift;
             if (slots < 0)
                 slots = 0;
-            var idleCount = CountIdleWorkers(em);
+            CountWorkforce(em, out var totalWorkers, out var totalDesired, out var freeWorkers);
             if (workers != null)
             {
-                workers.text = workplace.DesiredWorkers != occupied && !workplace.IsPaused
-                    ? $"{occupied} ({workplace.DesiredWorkers}) / {slots}"
-                    : $"{occupied} / {slots}";
+                workers.text = $"{workplace.DesiredWorkers} / {slots}";
             }
 
             if (idle != null)
-                idle.text = $"Idle workers  {idleCount}";
+                idle.text = $"Idle workers  {freeWorkers}";
+
 
             if (constructing)
             {
@@ -258,10 +257,11 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             var canStaff = !constructing && slots > 0;
-            HudButtons.SetInteractable(plusButton, canStaff && occupied < slots && idleCount > 0);
-            HudButtons.SetInteractable(minusButton, canStaff && occupied > 0);
-            HudButtons.SetInteractable(maxPlusButton, canStaff && occupied < slots && idleCount > 0);
-            HudButtons.SetInteractable(maxMinusButton, canStaff && occupied > 0);
+            HudButtons.SetInteractable(plusButton, canStaff && workplace.DesiredWorkers < slots && freeWorkers > 0);
+            HudButtons.SetInteractable(minusButton, canStaff && workplace.DesiredWorkers > 0);
+            HudButtons.SetInteractable(maxPlusButton, canStaff && workplace.DesiredWorkers < slots && freeWorkers > 0);
+            HudButtons.SetInteractable(maxMinusButton, canStaff && workplace.DesiredWorkers > 0);
+
             HudButtons.SetInteractable(powerButton, !constructing && slots > 0);
             HudButtons.SetInteractable(destroyButton, !dismantling);
             UpdatePowerIcon(paused);
@@ -371,20 +371,31 @@ namespace TheyWillDescend.Presentation.GameHud
             return resourceId.ToString();
         }
 
-        static int CountIdleWorkers(EntityManager em)
+        static void CountWorkforce(EntityManager em, out int totalWorkers, out int totalDesired, out int freeWorkers)
         {
-            using var query = em.CreateEntityQuery(
+            using var agentQuery = em.CreateEntityQuery(
                 ComponentType.ReadOnly<AgentId>(),
-                ComponentType.ReadOnly<AgentAssignment>());
-            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
-            var idle = 0;
-            for (var i = 0; i < assignments.Length; i++)
+                ComponentType.ReadOnly<AgentType>());
+            using var types = agentQuery.ToComponentDataArray<AgentType>(Allocator.Temp);
+            totalWorkers = 0;
+            for (var i = 0; i < types.Length; i++)
             {
-                if (assignments[i].WorkplaceBuildingId == 0)
-                    idle++;
+                if (types[i].Kind == AgentKind.Worker)
+                    totalWorkers++;
             }
 
-            return idle;
+            using var buildingQuery = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadOnly<Workplace>());
+            using var workplaces = buildingQuery.ToComponentDataArray<Workplace>(Allocator.Temp);
+            totalDesired = 0;
+            for (var i = 0; i < workplaces.Length; i++)
+            {
+                if (!workplaces[i].IsPaused)
+                    totalDesired += workplaces[i].DesiredWorkers;
+            }
+
+            freeWorkers = Mathf.Max(0, totalWorkers - totalDesired);
         }
 
         static void CountConstructionCrew(
@@ -421,8 +432,12 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
 
             var workplace = em.GetComponentData<Workplace>(entity);
-            workplace.DesiredWorkers = Mathf.Max(0, workplace.DesiredWorkers - 1);
+            if (workplace.DesiredWorkers <= 0)
+                return;
+
+            workplace.DesiredWorkers--;
             em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnPlus()
@@ -442,12 +457,13 @@ namespace TheyWillDescend.Presentation.GameHud
             if (workplace.DesiredWorkers >= slots)
                 return;
 
-            var idleCount = CountIdleWorkers(em);
-            if (idleCount <= 0)
+            CountWorkforce(em, out _, out _, out var freeWorkers);
+            if (freeWorkers <= 0)
                 return;
 
             workplace.DesiredWorkers++;
             em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnMaxMinus()
@@ -462,6 +478,7 @@ namespace TheyWillDescend.Presentation.GameHud
             var workplace = em.GetComponentData<Workplace>(entity);
             workplace.DesiredWorkers = 0;
             em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnMaxPlus()
@@ -478,16 +495,19 @@ namespace TheyWillDescend.Presentation.GameHud
                 : 0;
             var workplace = em.GetComponentData<Workplace>(entity);
 
-            var idleCount = CountIdleWorkers(em);
             var needed = slots - workplace.DesiredWorkers;
-            if (needed <= 0 || idleCount <= 0)
+            if (needed <= 0)
                 return;
 
-            var add = Mathf.Min(needed, idleCount);
+            CountWorkforce(em, out _, out _, out var freeWorkers);
+            if (freeWorkers <= 0)
+                return;
+
+            var add = Mathf.Min(needed, freeWorkers);
             workplace.DesiredWorkers += add;
             em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
-
 
         void OnPower()
         {
@@ -501,7 +521,9 @@ namespace TheyWillDescend.Presentation.GameHud
             var workplace = em.GetComponentData<Workplace>(entity);
             workplace.Paused = workplace.IsPaused ? (byte)0 : (byte)1;
             em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
+
 
 
         void UpdatePowerIcon(bool paused)

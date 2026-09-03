@@ -23,5 +23,8 @@ namespace TheyWillDescend.Simulation.City
         public byte Dismantling;
         public int BuildingId;
         public PlaceBuildingCommandSource Source;
+        public int DesiredWorkers;
+        public byte Paused;
     }
+
 }
