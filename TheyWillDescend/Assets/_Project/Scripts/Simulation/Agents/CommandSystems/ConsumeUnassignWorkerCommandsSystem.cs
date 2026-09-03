@@ -40,6 +40,15 @@ namespace TheyWillDescend.Simulation.Agents
             copy.Dispose();
         }
 
+        public static void UnassignAll(EntityManager em, int buildingId)
+        {
+            if (buildingId <= 0)
+                return;
+            while (UnassignOne(em, buildingId))
+            {
+            }
+        }
+
         public static bool UnassignOne(EntityManager em, int buildingId)
         {
             if (buildingId <= 0)
@@ -55,7 +64,11 @@ namespace TheyWillDescend.Simulation.Agents
             {
                 if (assignments[i].WorkplaceBuildingId != buildingId)
                     continue;
-                em.SetComponentData(agentEntities[i], new AgentAssignment());
+                var job = assignments[i];
+                job.WorkplaceBuildingId = 0;
+                if (!job.HasConstructionTask)
+                    job.Arrived = 0;
+                em.SetComponentData(agentEntities[i], job);
                 removed = true;
                 break;
             }

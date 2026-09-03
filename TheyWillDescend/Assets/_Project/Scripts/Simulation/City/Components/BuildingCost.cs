@@ -121,5 +121,22 @@ namespace TheyWillDescend.Simulation.City
                 ResourceLedger.Add(stock, row.ResourceId, -row.Amount);
             }
         }
+
+        public static void Refund(
+            DynamicBuffer<BuildingCatalogCost> catalog,
+            in FixedString64Bytes typeId,
+            DynamicBuffer<ResourceAmount> stock,
+            DynamicBuffer<ResourceInfo> info)
+        {
+            if (!catalog.IsCreated || typeId.IsEmpty)
+                return;
+            for (var i = 0; i < catalog.Length; i++)
+            {
+                var row = catalog[i];
+                if (row.TypeId != typeId || row.Amount <= 0.0001f)
+                    continue;
+                ResourceLedger.AddClamped(stock, info, row.ResourceId, row.Amount);
+            }
+        }
     }
 }

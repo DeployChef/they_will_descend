@@ -23,6 +23,10 @@ namespace TheyWillDescend.Content
         [Min(0f)]
         [Tooltip("Seconds to raise this house. 0 = appears finished.")]
         float constructionDuration = 8f;
+        [SerializeField]
+        [Min(1)]
+        [Tooltip("Max workers who walk to this site. Progress starts when the first arrives.")]
+        int constructionCrewSlots = ConstructionCrew.DefaultSlots;
         [SerializeField] BuildingCostEntry[] costs = Array.Empty<BuildingCostEntry>();
 
         [Header("Workplace")]
@@ -41,6 +45,8 @@ namespace TheyWillDescend.Content
         public int DepthRadialRings => depthRadialRings > 0 ? depthRadialRings : 1;
 
         public float ConstructionDuration => constructionDuration < 0f ? 0f : constructionDuration;
+
+        public int ConstructionCrewSlots => ConstructionCrew.ResolveSlots(constructionCrewSlots);
 
         public BuildingCostEntry[] Costs => costs ?? Array.Empty<BuildingCostEntry>();
 

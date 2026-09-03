@@ -47,7 +47,7 @@ Gameplay Presentation **никогда не запускает consume вруч�
   ← стройка / загрузка: бар на Widget-ребёнке штампа
   ← зона `_BuildingOverlay` (клетка, не дом)
   ← HQ: `_HqOverlay` (кольцо + клик)
-  ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived → меш выключен
+  ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived (дом или стройка) → меш выключен
   ← сток HUD pull ResourceAmount
   ← слот дома: BuildingInspectPanel +/− → Assign/Unassign
 ```
@@ -58,14 +58,14 @@ Gameplay Presentation **никогда не запускает consume вруч�
 
 | Кусок | Слой |
 | --- | --- |
-| `SpawnAgentCommand`, `PlaceBuildingCommand`, `AssignWorkerCommand`, `SimCommands` | Simulation |
+| `SpawnAgentCommand`, `PlaceBuildingCommand`, `DeconstructBuildingCommand`, `AssignWorkerCommand`, `SimCommands` | Simulation |
 | `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceAmount` | Simulation |
 | Session singleton | SubScene: `SimControlAuthoring` печёт `SimSession`, `SimControl`, sequence и lifecycle buffers |
 | Плаза HQ | SubScene bake; не `PlaceBuilding` |
 | `AgentViewBoard` / `BuildingViewBoard` / `BuildingSelection` / `TimeWidget` | Presentation **читает** World |
 | Пауза / x1 x2 x3 | `SimClockCommand` → `SimControl` |
 
-`SimSessionAccess` находит session singleton по `SimSession`. Генератор ID живёт отдельно в `AgentIdSequence`; reset — типизированные `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`. Полный pipeline: clock → reset agents → reset buildings → scenario spawn → spawn → place → assign → unassign → workplace pause → pyramid feed → lifecycle finalizer → delta time. `BuildingRejectedEvent` — outbound и в drain-check не входит.
+`SimSessionAccess` находит session singleton по `SimSession`. Генератор ID живёт отдельно в `AgentIdSequence`; reset — типизированные `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`. Полный pipeline: clock → reset agents → reset buildings → scenario spawn → spawn → place → assign → unassign → deconstruct → workplace pause → pyramid feed → lifecycle finalizer → delta time. `BuildingRejectedEvent` — outbound и в drain-check не входит.
 
 `AgentSpawner` только постит spawn (площадка/скорость). Префабы Mixamo и `spawnParent` — на `AgentViewBoard` (тот же GO).
 

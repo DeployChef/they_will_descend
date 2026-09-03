@@ -163,13 +163,16 @@ namespace TheyWillDescend.Simulation.City
                 : spec.ConstructionDuration;
 
             Construction? construction = null;
-            if (command.InstantComplete == 0 && duration > 0.001f)
+            if (command.InstantComplete == 0)
             {
                 var site = new Construction
                 {
                     Elapsed = math.max(0f, command.ConstructionElapsed),
-                    Duration = duration
+                    Duration = duration,
+                    Dismantling = command.Dismantling
                 };
+                if (site.IsDismantling && site.Elapsed <= 0.0001f && duration > 0.001f)
+                    site.Elapsed = duration;
                 if (!site.IsComplete)
                     construction = site;
             }

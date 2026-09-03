@@ -11,7 +11,7 @@ namespace TheyWillDescend.Simulation.Agents
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(AdvanceAgentCommuteSystem))]
+    [UpdateAfter(typeof(AdvanceConstructionSystem))]
     public partial struct SyncWorkplaceLoadSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -44,7 +44,7 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var assignment in SystemAPI.Query<RefRO<AgentAssignment>>())
             {
                 var job = assignment.ValueRO;
-                if (job.WorkplaceBuildingId == 0)
+                if (job.WorkplaceBuildingId == 0 || job.HasConstructionTask)
                     continue;
                 if (!houses.TryGetValue(job.WorkplaceBuildingId, out var house))
                     continue;

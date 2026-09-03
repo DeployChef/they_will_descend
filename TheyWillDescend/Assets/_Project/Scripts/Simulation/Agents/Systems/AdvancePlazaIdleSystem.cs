@@ -9,7 +9,7 @@ using Unity.Transforms;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Unassigned, or assigned off-shift: stand or walk a ring around CityGrid.Center.
+    /// Unassigned, assigned off-shift, or not claimed for construction: stand or walk a ring around CityGrid.Center.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -46,6 +46,8 @@ namespace TheyWillDescend.Simulation.Agents
                      SystemAPI.Query<RefRW<AgentPlazaIdle>, RefRO<AgentAssignment>, RefRW<AgentLocomotion>,
                          RefRO<LocalTransform>, RefRO<AgentId>>())
             {
+                if (assignment.ValueRO.HasConstructionTask)
+                    continue;
                 if (assignment.ValueRO.WorkplaceBuildingId != 0 && onShift)
                     continue;
 
