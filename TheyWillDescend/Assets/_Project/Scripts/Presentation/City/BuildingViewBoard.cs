@@ -31,10 +31,13 @@ namespace TheyWillDescend.Presentation.City
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
+        readonly List<int> _stale = new();
         Material _placedZoneMaterial;
         Material _selectedZoneMaterial;
         Color _selectedZoneColor = new(0.95f, 0.82f, 0.2f, 0.55f);
         PlacedView _hqView;
+        EntityQuery _buildingQuery;
+        Camera _cam;
 
         sealed class PlacedView
         {
@@ -62,9 +65,11 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             var em = world.EntityManager;
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
-            Sync(em, query);
+            if (_buildingQuery == default)
+                _buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            Sync(em, _buildingQuery);
         }
+
 
         public void ClearViews()
         {
@@ -104,6 +109,13 @@ namespace TheyWillDescend.Presentation.City
             _selectedZoneMaterial = null;
         }
 
+        void OnDestroy()
+        {
+            _buildingQuery = default;
+            _cam = null;
+        }
+
+
         void Sync(EntityManager em, EntityQuery query)
         {
             try
@@ -130,7 +142,8 @@ namespace TheyWillDescend.Presentation.City
             var entities = query.ToEntityArray(Allocator.Temp);
             var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
             _seen.Clear();
-            var cam = Camera.main;
+            if (_cam == null)
+                _cam = Camera.main;
             for (var i = 0; i < buildings.Length; i++)
             {
                 var building = buildings[i];
@@ -147,7 +160,7 @@ namespace TheyWillDescend.Presentation.City
                     continue;
 
                 if (placed.View != null)
-                    placed.View.Sync(em, entity, cam);
+                    placed.View.Sync(em, entity, _cam);
                 else
                     placed.Root.transform.position = (Vector3)position;
 
@@ -158,16 +171,17 @@ namespace TheyWillDescend.Presentation.City
 
             if (_views.Count != _seen.Count)
             {
-                var stale = new List<int>();
+                _stale.Clear();
                 foreach (var pair in _views)
                 {
                     if (!_seen.Contains(pair.Key))
-                        stale.Add(pair.Key);
+                        _stale.Add(pair.Key);
                 }
 
-                for (var i = 0; i < stale.Count; i++)
-                    DestroyView(stale[i]);
+                for (var i = 0; i < _stale.Count; i++)
+                    DestroyView(_stale[i]);
             }
+
 
             entities.Dispose();
             buildings.Dispose();

@@ -201,7 +201,7 @@ namespace TheyWillDescend.App
                 for (var i = 0; i < snapshot.buildings.Length; i++)
                 {
                     var record = snapshot.buildings[i];
-                    SimCommands.TryPost(new PlaceBuildingCommand
+                    SimCommands.Request(new PlaceBuildingRequest
                     {
                         BuildingId = record.id,
                         TypeId = record.typeId,
@@ -217,6 +217,7 @@ namespace TheyWillDescend.App
                         DesiredWorkers = record.desiredWorkers,
                         Paused = record.paused
                     });
+
 
                 }
             }

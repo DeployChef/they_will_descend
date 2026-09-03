@@ -75,9 +75,8 @@ namespace TheyWillDescend.Shell
             EnsureBuffer<DespawnAllAgentsCommand>(em, session);
             EnsureBuffer<DespawnAllBuildingsCommand>(em, session);
             EnsureBuffer<SpawnAgentCommand>(em, session);
-            EnsureBuffer<PlaceBuildingCommand>(em, session);
-            EnsureBuffer<DeconstructBuildingCommand>(em, session);
             EnsureBuffer<BuildingRejectedEvent>(em, session);
+
             EnsureBuffer<PendingScenarioPlace>(em, session);
             EnsureBuffer<SetPyramidFeedCommand>(em, session);
 

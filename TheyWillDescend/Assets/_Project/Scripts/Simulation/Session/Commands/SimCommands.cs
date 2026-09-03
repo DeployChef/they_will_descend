@@ -23,5 +23,16 @@ namespace TheyWillDescend.Simulation.Session
             em.GetBuffer<T>(bag).Add(command);
             return true;
         }
+
+        public static bool Request<T>(in T request)
+            where T : unmanaged, IComponentData
+        {
+            if (!SimWorld.TryGetEntityManager(out var em))
+                return false;
+            var entity = em.CreateEntity();
+            em.AddComponentData(entity, request);
+            return true;
+        }
     }
+
 }

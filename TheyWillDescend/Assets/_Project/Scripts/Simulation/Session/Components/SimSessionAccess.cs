@@ -32,8 +32,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.HasBuffer<DespawnAllAgentsCommand>(session)
                 && em.HasBuffer<DespawnAllBuildingsCommand>(session)
                 && em.HasBuffer<SpawnAgentCommand>(session)
-                && em.HasBuffer<PlaceBuildingCommand>(session)
                 && em.HasBuffer<PendingScenarioPlace>(session)
+
                 && em.HasBuffer<OccupiedCell>(session)
                 && em.HasBuffer<BaseBuildingPrototype>(session)
                 && em.HasBuffer<BaseBuildingCatalogCost>(session)
@@ -56,8 +56,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.GetBuffer<DespawnAllAgentsCommand>(session).Length == 0
                 && em.GetBuffer<DespawnAllBuildingsCommand>(session).Length == 0
                 && em.GetBuffer<SpawnAgentCommand>(session).Length == 0
-                && em.GetBuffer<PlaceBuildingCommand>(session).Length == 0
                 && em.GetBuffer<PendingScenarioPlace>(session).Length == 0
+
                 && em.GetBuffer<SetPyramidFeedCommand>(session).Length == 0
 
                 && ResearchWorld.CommandsDrained(em);

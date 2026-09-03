@@ -10,7 +10,8 @@ namespace TheyWillDescend.Simulation.City
         Setup = 2
     }
 
-    public struct PlaceBuildingCommand : IBufferElementData
+    public struct PlaceBuildingRequest : IComponentData
+
     {
         public FixedString64Bytes TypeId;
         public int WidthClusters;
@@ -26,5 +27,4 @@ namespace TheyWillDescend.Simulation.City
         public int DesiredWorkers;
         public byte Paused;
     }
-
 }

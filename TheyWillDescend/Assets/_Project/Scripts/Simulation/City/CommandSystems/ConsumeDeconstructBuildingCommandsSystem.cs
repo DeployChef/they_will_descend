@@ -13,29 +13,31 @@ namespace TheyWillDescend.Simulation.City
             state.RequireForUpdate<SimSession>();
         }
 
-        public void OnUpdate(ref SystemState state) => Run(state.EntityManager);
-
-        public static void Run(EntityManager em)
+        public void OnUpdate(ref SystemState state)
         {
-            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<DeconstructBuildingCommand>(session))
+            var em = state.EntityManager;
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
-            var commands = em.GetBuffer<DeconstructBuildingCommand>(session);
-            if (commands.Length == 0)
+            var query = SystemAPI.QueryBuilder().WithAll<DemolishBuildingRequest>().Build();
+            if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var copy = commands.ToNativeArray(Allocator.Temp);
-            commands.Clear();
             var lifecycle = em.GetComponentData<SimSession>(session);
-            for (var i = 0; i < copy.Length; i++)
-            {
-                if (!lifecycle.IsReady)
-                    continue;
-                Apply(em, copy[i].BuildingId);
-            }
+            using var requestEntities = query.ToEntityArray(Allocator.Temp);
+            using var requests = query.ToComponentDataArray<DemolishBuildingRequest>(Allocator.Temp);
 
-            copy.Dispose();
+            for (var i = 0; i < requests.Length; i++)
+            {
+                if (lifecycle.IsReady)
+                {
+                    Apply(em, requests[i].BuildingId);
+                }
+                em.DestroyEntity(requestEntities[i]);
+            }
         }
+
+
 
         static void Apply(EntityManager em, int buildingId)
         {

@@ -552,10 +552,11 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (selection == null || selection.SelectedBuildingId <= 0)
                 return;
-            SimCommands.TryPost(new DeconstructBuildingCommand
+            SimCommands.Request(new DemolishBuildingRequest
             {
                 BuildingId = selection.SelectedBuildingId
             });
         }
+
     }
 }
