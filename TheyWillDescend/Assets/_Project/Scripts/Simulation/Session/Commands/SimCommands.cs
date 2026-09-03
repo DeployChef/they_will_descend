@@ -15,10 +15,10 @@ namespace TheyWillDescend.Simulation.Session
                 return false;
             if (!em.HasBuffer<T>(bag))
             {
-                if (!SimSessionAccess.TryGetResearch(em, bag, out var research)
-                    || !em.HasBuffer<T>(research))
+                using var query = em.CreateEntityQuery(ComponentType.ReadWrite<T>());
+                if (query.CalculateEntityCount() != 1)
                     return false;
-                bag = research;
+                bag = query.GetSingletonEntity();
             }
             em.GetBuffer<T>(bag).Add(command);
             return true;

@@ -166,7 +166,7 @@ namespace TheyWillDescend.Shell.States
                 await _session.RunWithLoadingAsync(
                     async ct =>
                     {
-                        if (!RunSessionSnapshot.BeginApply(snapshot))
+                        if (!RunSessionSnapshot.BeginApply(snapshot, _session.TechCatalogs))
                             return;
                         if (!await _session.WaitForPhaseAsync(SimSessionPhase.Ready, ct))
                             return;

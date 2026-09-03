@@ -144,7 +144,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 if (prototype.TypeId.IsEmpty)
                     continue;
                 if (prototype.RequiresUnlock != 0
-                    && !ResearchRules.IsBuildingUnlocked(em, bag, prototype.TypeId))
+                    && !ResearchRules.IsBuildingUnlocked(em, prototype.TypeId))
                     continue;
                 count++;
                 var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);

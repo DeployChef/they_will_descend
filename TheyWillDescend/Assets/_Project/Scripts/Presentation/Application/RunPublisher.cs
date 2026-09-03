@@ -18,7 +18,10 @@ namespace TheyWillDescend.Shell
     /// </summary>
     public static class RunPublisher
     {
-        public static bool BeginRun(ScenarioDefinition scenario, DifficultyProfile difficulty)
+        public static bool BeginRun(
+            ScenarioDefinition scenario,
+            DifficultyProfile difficulty,
+            TechCatalogAsset[] techCatalogs)
         {
             var requestedDifficulty = difficulty;
             if (scenario != null
@@ -57,13 +60,13 @@ namespace TheyWillDescend.Shell
                 new DespawnAllBuildingsCommand { Requested = 1 });
             ApplyDifficulty(em, session, difficulty);
             ApplyScenario(em, session, scenario);
-            ResearchRules.ResetRun(em, session);
+            var techs = ResearchWorld.Populate(em, techCatalogs);
 
             var name = scenario != null ? scenario.name : "none";
             var diff = difficulty != null ? difficulty.name : "stamp defaults";
             var houses = em.GetBuffer<PendingScenarioPlace>(session).Length;
             GameLog.Info(
-                $"Run setup queued: scenario={name}, difficulty={diff}, houses={houses}.");
+                $"Run setup queued: scenario={name}, difficulty={diff}, houses={houses}, techs={techs}.");
             return true;
         }
 
@@ -82,6 +85,7 @@ namespace TheyWillDescend.Shell
             }
 
             em.CompleteAllTrackedJobs();
+            ResearchWorld.DestroyAll(em);
             ClearLifecycleQueues(em, session);
             var lifecycle = em.GetComponentData<SimSession>(session);
             lifecycle.Phase = SimSessionPhase.Resetting;
@@ -99,6 +103,7 @@ namespace TheyWillDescend.Shell
             var control = em.GetComponentData<SimControl>(session);
             control.Mode = SimRunMode.Off;
             control.SessionInGame = 0;
+            control.TimePaused = 0;
             control.PlayerPaused = 0;
             control.BuildLocked = 0;
             control.DeltaTime = 0f;
@@ -118,9 +123,6 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<UnassignWorkerCommand>(session).Clear();
             em.GetBuffer<SetWorkplacePausedCommand>(session).Clear();
             em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
-            if (SimSessionAccess.TryGetResearch(em, session, out var research)
-                && em.HasBuffer<SetActiveResearchCommand>(research))
-                em.GetBuffer<SetActiveResearchCommand>(research).Clear();
             if (em.HasBuffer<DeconstructBuildingCommand>(session))
                 em.GetBuffer<DeconstructBuildingCommand>(session).Clear();
         }

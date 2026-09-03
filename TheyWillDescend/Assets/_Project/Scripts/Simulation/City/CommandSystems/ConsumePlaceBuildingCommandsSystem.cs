@@ -114,7 +114,7 @@ namespace TheyWillDescend.Simulation.City
 
             if (spec.RequiresUnlock != 0
                 && command.Source == PlaceBuildingCommandSource.Gameplay
-                && !ResearchRules.IsBuildingUnlocked(em, session, spec.TypeId))
+                && !ResearchRules.IsBuildingUnlocked(em, spec.TypeId))
             {
                 Reject(em, session, command, BuildingRejectedEvent.Locked);
                 return;

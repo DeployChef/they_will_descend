@@ -42,23 +42,32 @@ namespace TheyWillDescend.Simulation.Session
                     control.SessionInGame = command.Value != 0 ? (byte)1 : (byte)0;
                     control.BuildLocked = 0;
                     if (control.SessionInGame == 0)
+                    {
+                        control.TimePaused = 0;
                         control.PlayerPaused = 0;
+                    }
                     break;
                 case SimClockCommandKind.TogglePlayerPause:
+                case SimClockCommandKind.ToggleTimePause:
                     if (control.SessionInGame == 0 || control.BuildLocked != 0)
                         return;
-                    control.PlayerPaused = control.PlayerPaused == 0 ? (byte)1 : (byte)0;
+                    control.TimePaused = control.TimePaused == 0 ? (byte)1 : (byte)0;
                     break;
                 case SimClockCommandKind.SetPlayerPause:
                     if (control.SessionInGame == 0 || control.BuildLocked != 0)
                         return;
                     control.PlayerPaused = command.Value != 0 ? (byte)1 : (byte)0;
                     break;
+                case SimClockCommandKind.SetTimePause:
+                    if (control.SessionInGame == 0 || control.BuildLocked != 0)
+                        return;
+                    control.TimePaused = command.Value != 0 ? (byte)1 : (byte)0;
+                    break;
                 case SimClockCommandKind.SetSpeed:
                     if (control.SessionInGame == 0 || control.BuildLocked != 0)
                         return;
                     control.Speed = ClampSpeed(command.Value);
-                    control.PlayerPaused = 0;
+                    control.TimePaused = 0;
                     break;
                 case SimClockCommandKind.SetBuildLocked:
                     if (command.Value != 0 && control.SessionInGame == 0)
@@ -67,7 +76,8 @@ namespace TheyWillDescend.Simulation.Session
                     break;
                 case SimClockCommandKind.Restore:
                     control.Speed = ClampSpeed(command.Value);
-                    control.PlayerPaused = command.Secondary != 0 ? (byte)1 : (byte)0;
+                    control.TimePaused = command.Secondary != 0 ? (byte)1 : (byte)0;
+                    control.PlayerPaused = 0;
                     break;
             }
         }
@@ -89,7 +99,9 @@ namespace TheyWillDescend.Simulation.Session
                 return;
             }
 
-            control.Mode = control.PlayerPaused != 0 || control.BuildLocked != 0
+            control.Mode = control.TimePaused != 0
+                || control.PlayerPaused != 0
+                || control.BuildLocked != 0
                 ? SimRunMode.Frozen
                 : SimRunMode.Running;
         }

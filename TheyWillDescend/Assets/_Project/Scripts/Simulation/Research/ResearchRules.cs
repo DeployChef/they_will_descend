@@ -1,6 +1,5 @@
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
-using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -8,67 +7,6 @@ namespace TheyWillDescend.Simulation.Research
 {
     public static class ResearchRules
     {
-        public static int IndexOf(DynamicBuffer<ResearchLine> lines, in FixedString64Bytes techId)
-        {
-            if (techId.IsEmpty)
-                return -1;
-            for (var i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].TechId == techId)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        public static bool TryGetInfo(
-            DynamicBuffer<TechInfo> catalog,
-            in FixedString64Bytes techId,
-            out TechInfo info)
-        {
-            info = default;
-            if (techId.IsEmpty || !catalog.IsCreated)
-                return false;
-            for (var i = 0; i < catalog.Length; i++)
-            {
-                if (catalog[i].TechId != techId)
-                    continue;
-                info = catalog[i];
-                return true;
-            }
-
-            return false;
-        }
-
-        public static bool IsAvailable(
-            in TechInfo info,
-            in ResearchControl control,
-            DynamicBuffer<ResearchLine> lines,
-            DynamicBuffer<TechPrerequisite> prereqs)
-        {
-            if (info.TechId.IsEmpty)
-                return false;
-            var index = IndexOf(lines, info.TechId);
-            if (index >= 0 && lines[index].IsCompleted)
-                return false;
-            var requiredTier = info.RequiredTier < 1 ? 1 : info.RequiredTier;
-            if (requiredTier > control.UnlockedTier)
-                return false;
-            if (!prereqs.IsCreated)
-                return true;
-            for (var i = 0; i < prereqs.Length; i++)
-            {
-                var row = prereqs[i];
-                if (row.TechId != info.TechId || row.RequiresTechId.IsEmpty)
-                    continue;
-                var parent = IndexOf(lines, row.RequiresTechId);
-                if (parent < 0 || !lines[parent].IsCompleted)
-                    return false;
-            }
-
-            return true;
-        }
-
         public static EntityQueryDesc FinishedWorkshopQuery => new()
         {
             All = new[]
@@ -84,16 +22,27 @@ namespace TheyWillDescend.Simulation.Research
             }
         };
 
-        public static bool IsBuildingUnlocked(
+        public static bool IsAvailable(
             EntityManager em,
-            Entity session,
-            in FixedString64Bytes typeId)
+            in TechInfo info,
+            in ResearchProgress progress,
+            in ResearchControl control)
+        {
+            if (info.TechId.IsEmpty || progress.IsCompleted)
+                return false;
+            var requiredTier = info.RequiredTier < 1 ? 1 : info.RequiredTier;
+            if (requiredTier > control.UnlockedTier)
+                return false;
+            return ParentsCompleted(em, info.TechId);
+        }
+
+        public static bool IsBuildingUnlocked(EntityManager em, in FixedString64Bytes typeId)
         {
             if (typeId.IsEmpty
-                || !SimSessionAccess.TryGetResearch(em, session, out var research)
-                || !em.HasBuffer<UnlockedBuilding>(research))
+                || !ResearchWorld.TryGetBoard(em, out var board)
+                || !em.HasBuffer<UnlockedBuilding>(board))
                 return false;
-            var unlocked = em.GetBuffer<UnlockedBuilding>(research);
+            var unlocked = em.GetBuffer<UnlockedBuilding>(board);
             for (var i = 0; i < unlocked.Length; i++)
             {
                 if (unlocked[i].TypeId == typeId)
@@ -131,56 +80,35 @@ namespace TheyWillDescend.Simulation.Research
             };
         }
 
-        public static void ResetRun(EntityManager em, Entity session)
+        public static void RebuildEffects(EntityManager em)
         {
-            if (!SimSessionAccess.TryGetResearch(em, session, out var research)
-                || !em.HasComponent<ResearchControl>(research)
-                || !em.HasBuffer<ResearchLine>(research))
+            if (!ResearchWorld.TryGetBoard(em, out var board)
+                || !em.HasComponent<ResearchControl>(board))
                 return;
 
-            em.SetComponentData(research, ResearchControl.Initial);
-            var lines = em.GetBuffer<ResearchLine>(research);
-            for (var i = 0; i < lines.Length; i++)
-            {
-                var row = lines[i];
-                row.AccumulatedHours = 0f;
-                row.Completed = 0;
-                row.CostPaid = 0;
-                lines[i] = row;
-            }
-
-            RebuildEffects(em, research);
-        }
-
-        public static void RebuildEffects(EntityManager em, Entity research)
-        {
-            if (!em.HasComponent<ResearchControl>(research)
-                || !em.HasBuffer<ResearchLine>(research)
-                || !em.HasBuffer<TechInfo>(research))
-                return;
-
-            var control = em.GetComponentData<ResearchControl>(research);
+            var control = em.GetComponentData<ResearchControl>(board);
             control.UnlockedTier = 1;
-            if (em.HasBuffer<UnlockedBuilding>(research))
-                em.GetBuffer<UnlockedBuilding>(research).Clear();
+            if (em.HasBuffer<UnlockedBuilding>(board))
+                em.GetBuffer<UnlockedBuilding>(board).Clear();
 
-            var lines = em.GetBuffer<ResearchLine>(research);
-            var catalog = em.GetBuffer<TechInfo>(research);
-            for (var i = 0; i < lines.Length; i++)
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<TechInfo>(),
+                ComponentType.ReadOnly<ResearchProgress>());
+            using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
+            using var progress = query.ToComponentDataArray<ResearchProgress>(Allocator.Temp);
+            for (var i = 0; i < infos.Length; i++)
             {
-                if (!lines[i].IsCompleted)
+                if (!progress[i].IsCompleted)
                     continue;
-                if (!TryGetInfo(catalog, lines[i].TechId, out var info))
-                    continue;
-                ApplyEffect(em, research, info, ref control);
+                ApplyEffect(em, board, infos[i], ref control);
             }
 
-            em.SetComponentData(research, control);
+            em.SetComponentData(board, control);
         }
 
         public static void ApplyEffect(
             EntityManager em,
-            Entity research,
+            Entity board,
             in TechInfo info,
             ref ResearchControl control)
         {
@@ -192,9 +120,9 @@ namespace TheyWillDescend.Simulation.Research
                         control.UnlockedTier = tier;
                     break;
                 case TechEffectKind.UnlockBuilding:
-                    if (info.EffectTarget.IsEmpty || !em.HasBuffer<UnlockedBuilding>(research))
+                    if (info.EffectTarget.IsEmpty || !em.HasBuffer<UnlockedBuilding>(board))
                         break;
-                    var unlocked = em.GetBuffer<UnlockedBuilding>(research);
+                    var unlocked = em.GetBuffer<UnlockedBuilding>(board);
                     var already = false;
                     for (var i = 0; i < unlocked.Length; i++)
                     {
@@ -217,47 +145,53 @@ namespace TheyWillDescend.Simulation.Research
             bool hasWorkshop)
         {
             if (techId.IsEmpty
-                || !SimSessionAccess.TryGetResearch(em, session, out var research)
-                || !em.HasComponent<ResearchControl>(research)
-                || !em.HasBuffer<ResearchLine>(research)
-                || !em.HasBuffer<TechInfo>(research))
+                || !ResearchWorld.TryGetBoard(em, out var board)
+                || !ResearchWorld.TryFindCard(em, techId, out var card, out var info, out var progress))
                 return false;
 
-            var control = em.GetComponentData<ResearchControl>(research);
+            var control = em.GetComponentData<ResearchControl>(board);
             if (control.ActiveTechId == techId)
                 return true;
             if (!hasWorkshop)
                 return false;
-            if (!TryGetInfo(em.GetBuffer<TechInfo>(research), techId, out var info))
+            if (!IsAvailable(em, info, progress, control))
                 return false;
 
-            var lines = em.GetBuffer<ResearchLine>(research);
-            var prereqs = em.HasBuffer<TechPrerequisite>(research)
-                ? em.GetBuffer<TechPrerequisite>(research)
-                : default;
-            if (!IsAvailable(info, control, lines, prereqs))
-                return false;
-
-            var index = IndexOf(lines, techId);
-            if (index < 0)
-                return false;
-
-            var row = lines[index];
-            if (!row.IsCostPaid)
+            if (!progress.IsCostPaid)
             {
-                if (!em.HasBuffer<TechCatalogCost>(research) || !em.HasBuffer<ResourceAmount>(session))
+                if (!em.HasBuffer<TechCatalogCost>(card) || !em.HasBuffer<ResourceAmount>(session))
                     return false;
-                var costs = em.GetBuffer<TechCatalogCost>(research);
+                var costs = em.GetBuffer<TechCatalogCost>(card);
                 var stock = em.GetBuffer<ResourceAmount>(session);
-                if (!TechCosts.CanAfford(costs, techId, stock))
+                if (!TechCosts.CanAfford(costs, stock))
                     return false;
-                TechCosts.Pay(costs, techId, stock);
-                row.CostPaid = 1;
-                lines[index] = row;
+                TechCosts.Pay(costs, stock);
+                progress.CostPaid = 1;
+                em.SetComponentData(card, progress);
             }
 
             control.ActiveTechId = techId;
-            em.SetComponentData(research, control);
+            em.SetComponentData(board, control);
+            return true;
+        }
+
+        static bool ParentsCompleted(EntityManager em, in FixedString64Bytes techId)
+        {
+            if (!ResearchWorld.TryFindCard(em, techId, out var card, out _, out _))
+                return false;
+            if (!em.HasBuffer<TechPrerequisite>(card))
+                return true;
+            var prereqs = em.GetBuffer<TechPrerequisite>(card);
+            for (var i = 0; i < prereqs.Length; i++)
+            {
+                var required = prereqs[i].RequiresTechId;
+                if (required.IsEmpty)
+                    continue;
+                if (!ResearchWorld.TryFindCard(em, required, out _, out _, out var parent)
+                    || !parent.IsCompleted)
+                    return false;
+            }
+
             return true;
         }
     }

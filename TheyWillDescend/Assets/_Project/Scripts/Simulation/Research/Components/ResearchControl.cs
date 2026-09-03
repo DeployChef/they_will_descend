@@ -4,8 +4,7 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Research
 {
     /// <summary>
-    /// City research: one active tech, current tree tier. Progress lives on
-    /// <see cref="ResearchLine"/> rows.
+    /// Run-level research knobs. Active progress lives on the tech card.
     /// </summary>
     public struct ResearchControl : IComponentData
     {

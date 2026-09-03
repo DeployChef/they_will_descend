@@ -10,6 +10,7 @@ namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
     /// Clock buttons post clock commands. Day label pulls GameTime.
+    /// ⏸ pauses the city clock. Esc opens the game menu.
     /// </summary>
     public sealed class TimeWidget : MonoBehaviour
     {
@@ -41,12 +42,12 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.SetInteractable(speed1Button, !buildLocked && !pauseMenuOpen);
             HudButtons.SetInteractable(speed2Button, !buildLocked && !pauseMenuOpen);
             HudButtons.SetInteractable(speed3Button, !buildLocked && !pauseMenuOpen);
-            HudButtons.SetInteractable(pauseButton, !buildLocked);
+            HudButtons.SetInteractable(pauseButton, !buildLocked && !pauseMenuOpen);
 
-            HudButtons.Tint(speed1Button, hasControl && control.Speed == 1);
-            HudButtons.Tint(speed2Button, hasControl && control.Speed == 2);
-            HudButtons.Tint(speed3Button, hasControl && control.Speed == 3);
-            HudButtons.Tint(pauseButton, hasControl && control.PlayerPaused != 0);
+            HudButtons.Tint(speed1Button, hasControl && control.Speed == 1 && control.TimePaused == 0);
+            HudButtons.Tint(speed2Button, hasControl && control.Speed == 2 && control.TimePaused == 0);
+            HudButtons.Tint(speed3Button, hasControl && control.Speed == 3 && control.TimePaused == 0);
+            HudButtons.Tint(pauseButton, hasControl && control.TimePaused != 0);
 
             if (clockLabel == null)
                 return;
@@ -71,10 +72,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
         static void OnPauseClicked()
         {
-            if (PauseMenuScreen.Current != null)
-                PauseMenuScreen.Current.RequestToggle();
-            else
-                SimCommands.TryPost(SimClockCommand.TogglePause());
+            SimCommands.TryPost(SimClockCommand.TogglePause());
         }
 
         static void OnSpeedClicked(int speed)

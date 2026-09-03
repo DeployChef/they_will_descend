@@ -4,10 +4,12 @@ using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Research
 {
-    [InternalBufferCapacity(0)]
+    /// <summary>
+    /// One resource cost on a tech card. Packs/difficulty may rewrite Amount later.
+    /// </summary>
+    [InternalBufferCapacity(4)]
     public struct TechCatalogCost : IBufferElementData
     {
-        public FixedString64Bytes TechId;
         public FixedString64Bytes ResourceId;
         public float Amount;
     }
@@ -16,15 +18,14 @@ namespace TheyWillDescend.Simulation.Research
     {
         public static bool CanAfford(
             DynamicBuffer<TechCatalogCost> costs,
-            in FixedString64Bytes techId,
             DynamicBuffer<ResourceAmount> stock)
         {
-            if (!costs.IsCreated || techId.IsEmpty)
+            if (!costs.IsCreated)
                 return true;
             for (var i = 0; i < costs.Length; i++)
             {
                 var row = costs[i];
-                if (row.TechId != techId || row.Amount <= 0.0001f)
+                if (row.Amount <= 0.0001f)
                     continue;
                 if (!ResourceLedger.Has(stock, row.ResourceId, row.Amount))
                     return false;
@@ -35,15 +36,14 @@ namespace TheyWillDescend.Simulation.Research
 
         public static void Pay(
             DynamicBuffer<TechCatalogCost> costs,
-            in FixedString64Bytes techId,
             DynamicBuffer<ResourceAmount> stock)
         {
-            if (!costs.IsCreated || techId.IsEmpty)
+            if (!costs.IsCreated)
                 return;
             for (var i = 0; i < costs.Length; i++)
             {
                 var row = costs[i];
-                if (row.TechId != techId || row.Amount <= 0.0001f)
+                if (row.Amount <= 0.0001f)
                     continue;
                 ResourceLedger.Add(stock, row.ResourceId, -row.Amount);
             }

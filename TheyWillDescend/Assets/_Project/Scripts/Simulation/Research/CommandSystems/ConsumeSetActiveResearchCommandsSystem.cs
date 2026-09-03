@@ -14,6 +14,7 @@ namespace TheyWillDescend.Simulation.Research
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<SimSession>();
+            state.RequireForUpdate<ResearchControl>();
             _workshops = state.GetEntityQuery(ResearchRules.FinishedWorkshopQuery);
         }
 
@@ -22,11 +23,11 @@ namespace TheyWillDescend.Simulation.Research
         public static void Run(EntityManager em, EntityQuery workshops)
         {
             if (!SimSessionAccess.TryGet(em, out var session)
-                || !SimSessionAccess.TryGetResearch(em, session, out var research)
-                || !em.HasBuffer<SetActiveResearchCommand>(research))
+                || !ResearchWorld.TryGetBoard(em, out var board)
+                || !em.HasBuffer<SetActiveResearchCommand>(board))
                 return;
 
-            var commands = em.GetBuffer<SetActiveResearchCommand>(research);
+            var commands = em.GetBuffer<SetActiveResearchCommand>(board);
             if (commands.Length == 0)
                 return;
 

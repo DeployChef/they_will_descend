@@ -31,7 +31,7 @@ namespace TheyWillDescend.App
 
             var control = em.GetComponentData<SimControl>(bag);
             snapshot.speed = control.Speed;
-            snapshot.playerPaused = control.PlayerPaused != 0;
+            snapshot.playerPaused = control.TimePaused != 0;
 
             using var timeQuery = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
             if (!timeQuery.IsEmptyIgnoreFilter)
@@ -152,7 +152,7 @@ namespace TheyWillDescend.App
             return snapshot;
         }
 
-        public static bool BeginApply(RunSnapshot snapshot)
+        public static bool BeginApply(RunSnapshot snapshot, TechCatalogAsset[] techCatalogs)
         {
             if (snapshot == null)
                 return false;
@@ -176,6 +176,8 @@ namespace TheyWillDescend.App
             var control = em.GetComponentData<SimControl>(session);
             control.Mode = SimRunMode.Off;
             control.SessionInGame = 0;
+            control.TimePaused = 0;
+            control.PlayerPaused = 0;
             control.BuildLocked = 0;
             control.DeltaTime = 0f;
             em.SetComponentData(session, control);
@@ -219,6 +221,7 @@ namespace TheyWillDescend.App
             ApplyPausedBuildings(snapshot);
             ApplyResources(snapshot);
             ApplyGods(snapshot);
+            ResearchWorld.Populate(em, techCatalogs);
             ApplyResearch(snapshot);
             GameLog.Info(
                 $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
@@ -525,51 +528,49 @@ namespace TheyWillDescend.App
 
         static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)
         {
-            if (!SimSessionAccess.TryGetResearch(em, bag, out var research))
-                return;
+            if (ResearchWorld.TryGetBoard(em, out var board)
+                && em.HasComponent<ResearchControl>(board))
+                snapshot.activeTechId = em.GetComponentData<ResearchControl>(board).ActiveTechId.ToString();
 
-            if (em.HasComponent<ResearchControl>(research))
-                snapshot.activeTechId = em.GetComponentData<ResearchControl>(research).ActiveTechId.ToString();
-
-            if (!em.HasBuffer<ResearchLine>(research))
-                return;
-
-            var lines = em.GetBuffer<ResearchLine>(research);
-            snapshot.research = new ResearchLineSnapshot[lines.Length];
-            for (var i = 0; i < lines.Length; i++)
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<TechInfo>(),
+                ComponentType.ReadOnly<ResearchProgress>());
+            using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
+            using var progress = query.ToComponentDataArray<ResearchProgress>(Allocator.Temp);
+            snapshot.research = new ResearchLineSnapshot[infos.Length];
+            for (var i = 0; i < infos.Length; i++)
             {
-                var row = lines[i];
                 snapshot.research[i] = new ResearchLineSnapshot
                 {
-                    techId = row.TechId.ToString(),
-                    accumulatedHours = row.AccumulatedHours,
-                    completed = row.Completed,
-                    costPaid = row.CostPaid
+                    techId = infos[i].TechId.ToString(),
+                    accumulatedHours = progress[i].AccumulatedHours,
+                    completed = progress[i].Completed,
+                    costPaid = progress[i].CostPaid
                 };
             }
         }
 
         static void ApplyResearch(RunSnapshot snapshot)
         {
-            if (!SimWorld.TryGet(out var em, out var bag)
-                || !SimSessionAccess.TryGetResearch(em, bag, out var research)
-                || !em.HasComponent<ResearchControl>(research)
-                || !em.HasBuffer<ResearchLine>(research))
+            if (!SimWorld.TryGet(out var em, out _)
+                || !ResearchWorld.TryGetBoard(em, out var board))
                 return;
 
-            var lines = em.GetBuffer<ResearchLine>(research);
-            for (var i = 0; i < lines.Length; i++)
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadWrite<TechInfo>(),
+                ComponentType.ReadWrite<ResearchProgress>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
+            for (var i = 0; i < entities.Length; i++)
             {
-                var row = lines[i];
-                row.AccumulatedHours = 0f;
-                row.Completed = 0;
-                row.CostPaid = 0;
+                var row = new ResearchProgress();
                 if (snapshot.research != null)
                 {
+                    var techId = infos[i].TechId.ToString();
                     for (var s = 0; s < snapshot.research.Length; s++)
                     {
                         var saved = snapshot.research[s];
-                        if (saved == null || saved.techId != row.TechId.ToString())
+                        if (saved == null || saved.techId != techId)
                             continue;
                         row.AccumulatedHours = math.max(0f, saved.accumulatedHours);
                         row.Completed = saved.completed;
@@ -578,13 +579,13 @@ namespace TheyWillDescend.App
                     }
                 }
 
-                lines[i] = row;
+                em.SetComponentData(entities[i], row);
             }
 
             var control = ResearchControl.Initial;
             control.ActiveTechId = ContentId.EncodeOrEmpty(snapshot.activeTechId);
-            em.SetComponentData(research, control);
-            ResearchRules.RebuildEffects(em, research);
+            em.SetComponentData(board, control);
+            ResearchRules.RebuildEffects(em);
         }
 
         static void ApplyGameTime(RunSnapshot snapshot)

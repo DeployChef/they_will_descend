@@ -8,6 +8,7 @@ using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
 using UnityEngine;
 
@@ -36,6 +37,7 @@ namespace TheyWillDescend.Shell
         [Header("Run kits")]
         [SerializeField] ScenarioDefinition defaultScenario;
         [SerializeField] ScenarioDefinition debugScenario;
+        [SerializeField] TechCatalogAsset[] techCatalogs;
 
         readonly SceneLoader _scenes = new();
         CancellationTokenSource _runCts;
@@ -45,6 +47,8 @@ namespace TheyWillDescend.Shell
         bool _loadSlot;
 
         public bool IsActive { get; private set; }
+
+        public TechCatalogAsset[] TechCatalogs => techCatalogs;
 
         public void SetRunKind(RunKind kind)
         {
@@ -123,7 +127,7 @@ namespace TheyWillDescend.Shell
             var setupBegan = false;
             if (_loadSlot)
             {
-                setupBegan = RunSessionSnapshot.BeginApply(snapshot);
+                setupBegan = RunSessionSnapshot.BeginApply(snapshot, techCatalogs);
             }
             else
             {
@@ -144,7 +148,7 @@ namespace TheyWillDescend.Shell
                     $"Run kit: {(debug ? "Debug" : "Normal")} " +
                     $"scenario={(scenario != null ? scenario.name : "null")} " +
                     $"difficulty={(difficulty != null ? difficulty.name : "stamp defaults")}.");
-                setupBegan = RunPublisher.BeginRun(scenario, difficulty);
+                setupBegan = RunPublisher.BeginRun(scenario, difficulty, techCatalogs);
             }
 
             if (!setupBegan || !await WaitForPhaseAsync(SimSessionPhase.Ready, ct))

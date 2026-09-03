@@ -4,11 +4,9 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Research
 {
     /// <summary>
-    /// Immutable catalog row for one technology. Runtime progress is
-    /// <see cref="ResearchLine"/>. Heap-backed: Summary is too large for a chunk.
+    /// Immutable rule on a tech card. Progress is <see cref="ResearchProgress"/>.
     /// </summary>
-    [InternalBufferCapacity(0)]
-    public struct TechInfo : IBufferElementData
+    public struct TechInfo : IComponentData
     {
         public FixedString64Bytes TechId;
         public FixedString64Bytes DisplayName;

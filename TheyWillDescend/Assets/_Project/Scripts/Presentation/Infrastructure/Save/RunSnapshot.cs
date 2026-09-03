@@ -12,6 +12,7 @@ namespace TheyWillDescend.Infrastructure.Save
 
         public int version = CurrentVersion;
         public int speed = 1;
+        /// <summary>HUD clock pause. Esc overlay is not saved.</summary>
         public bool playerPaused;
         public int day;
         public float elapsedInDay;

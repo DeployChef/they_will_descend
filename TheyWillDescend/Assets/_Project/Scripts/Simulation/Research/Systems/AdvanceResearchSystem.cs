@@ -1,4 +1,3 @@
-using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using Unity.Entities;
@@ -26,12 +25,12 @@ namespace TheyWillDescend.Simulation.Research
         {
             var em = state.EntityManager;
             if (!SimSessionAccess.TryGet(em, out var session)
-                || !SimSessionAccess.TryGetResearch(em, session, out var research))
+                || !ResearchWorld.TryGetBoard(em, out var board))
                 return;
 
             var capacity = ResearchRules.MeasureCapacity(_workshops);
-            if (em.HasComponent<ResearchCapacity>(research))
-                em.SetComponentData(research, capacity);
+            if (em.HasComponent<ResearchCapacity>(board))
+                em.SetComponentData(board, capacity);
 
             var control = em.GetComponentData<SimControl>(session);
             if (!control.IsRunning)
@@ -44,27 +43,17 @@ namespace TheyWillDescend.Simulation.Research
             if (!time.IsWorkShift)
                 return;
 
-            var researchControl = em.GetComponentData<ResearchControl>(research);
-            if (researchControl.ActiveTechId.IsEmpty
-                || !em.HasBuffer<ResearchLine>(research)
-                || !em.HasBuffer<TechInfo>(research))
+            var research = em.GetComponentData<ResearchControl>(board);
+            if (research.ActiveTechId.IsEmpty
+                || !ResearchWorld.TryFindCard(em, research.ActiveTechId, out var card, out var info, out var progress))
                 return;
 
-            var lines = em.GetBuffer<ResearchLine>(research);
-            var index = ResearchRules.IndexOf(lines, researchControl.ActiveTechId);
-            if (index < 0)
-                return;
-
-            var row = lines[index];
-            if (row.IsCompleted)
+            if (progress.IsCompleted)
             {
-                researchControl.ActiveTechId = default;
-                em.SetComponentData(research, researchControl);
+                research.ActiveTechId = default;
+                em.SetComponentData(board, research);
                 return;
             }
-
-            if (!ResearchRules.TryGetInfo(em.GetBuffer<TechInfo>(research), row.TechId, out var info))
-                return;
 
             var required = info.RequiredHours > 0.0001f ? info.RequiredHours : 1f;
             var load = capacity.WorkshopLoad;
@@ -72,17 +61,17 @@ namespace TheyWillDescend.Simulation.Research
                 return;
 
             var dayDuration = time.DayDuration > 0.0001f ? time.DayDuration : 1f;
-            row.AccumulatedHours += load * dt * 24f / dayDuration;
-            if (row.AccumulatedHours + 0.0001f >= required)
+            progress.AccumulatedHours += load * dt * 24f / dayDuration;
+            if (progress.AccumulatedHours + 0.0001f >= required)
             {
-                row.AccumulatedHours = required;
-                row.Completed = 1;
-                researchControl.ActiveTechId = default;
-                ResearchRules.ApplyEffect(em, research, info, ref researchControl);
+                progress.AccumulatedHours = required;
+                progress.Completed = 1;
+                research.ActiveTechId = default;
+                ResearchRules.ApplyEffect(em, board, info, ref research);
             }
 
-            lines[index] = row;
-            em.SetComponentData(research, researchControl);
+            em.SetComponentData(card, progress);
+            em.SetComponentData(board, research);
         }
     }
 }

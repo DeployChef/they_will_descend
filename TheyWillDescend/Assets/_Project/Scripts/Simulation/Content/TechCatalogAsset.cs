@@ -21,6 +21,11 @@ namespace TheyWillDescend.Simulation.Content
         public BuildingCostEntry[] costs;
     }
 
+    /// <summary>
+    /// Design-time tech table. Runtime truth is one entity per row, spawned
+    /// into the world at run start. Extra assets (DLC/plugins) append to the
+    /// same list on GameSession.
+    /// </summary>
     [CreateAssetMenu(
         fileName = "TechCatalog",
         menuName = "They Will Descend/Tech Catalog")]
