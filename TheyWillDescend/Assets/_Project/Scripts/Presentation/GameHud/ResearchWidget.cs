@@ -7,18 +7,19 @@ using TMPro;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Frostpunk-style research tree. Scene-authored HUD: fills prefab slots,
-    /// posts <see cref="SetActiveResearchCommand"/>. Does not spawn UI.
+    /// Research catalog lives on the canvas like <see cref="BuildWidget"/>.
+    /// <see cref="researchModeButton"/> opens <see cref="researchPanel"/>.
     /// </summary>
     public sealed class ResearchWidget : MonoBehaviour
     {
-        [SerializeField] Button openButton;
-        [SerializeField] GameObject overlay;
+        [SerializeField, FormerlySerializedAs("openButton")] Button researchModeButton;
+        [SerializeField, FormerlySerializedAs("overlay")] GameObject researchPanel;
         [SerializeField] ResearchNodeView[] nodes;
         [SerializeField] TMP_Text title;
         [SerializeField] TMP_Text summary;
@@ -26,11 +27,12 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] TMP_Text timeLabel;
         [SerializeField] TMP_Text status;
         [SerializeField] Image progressFill;
-        [SerializeField] Button researchButton;
+        [SerializeField] Image modeButtonProgress;
+        [SerializeField, FormerlySerializedAs("researchButton")] Button studyButton;
         [SerializeField] Button closeButton;
 
         string _selectedId = string.Empty;
-        bool _overlayOpen;
+        bool _panelOpen;
         bool _bound;
 
         static readonly Color Locked = new(0.22f, 0.22f, 0.24f, 0.95f);
@@ -40,24 +42,24 @@ namespace TheyWillDescend.Presentation.GameHud
 
         public static ResearchWidget Current { get; private set; }
 
-        public bool IsBusy => _overlayOpen;
+        public bool IsBusy => _panelOpen;
 
         void Awake()
         {
             Current = this;
-            if (openButton == null || overlay == null || nodes == null || nodes.Length == 0)
+            if (researchModeButton == null || researchPanel == null || nodes == null || nodes.Length == 0)
             {
-                GameLog.Error("ResearchWidget: assign the ResearchHud prefab refs. UI is not spawned from code.");
+                GameLog.Error("ResearchWidget: assign ResearchButton and ResearchPanel on the canvas. UI is not spawned from code.");
                 enabled = false;
                 return;
             }
 
-            HudButtons.Bind(openButton, OnOpenClicked);
-            HudButtons.Bind(researchButton, OnResearchClicked);
+            HudButtons.Bind(researchModeButton, OnOpenClicked);
+            HudButtons.Bind(studyButton, OnResearchClicked);
             HudButtons.Bind(closeButton, OnCloseClicked);
             BindNodes();
             HideAllNodes();
-            SetOverlayVisible(false);
+            SetPanelVisible(false);
         }
 
         void OnDestroy()
@@ -66,15 +68,16 @@ namespace TheyWillDescend.Presentation.GameHud
                 Current = null;
             if (!_bound)
                 return;
-            HudButtons.Unbind(openButton, OnOpenClicked);
-            HudButtons.Unbind(researchButton, OnResearchClicked);
+            HudButtons.Unbind(researchModeButton, OnOpenClicked);
+            HudButtons.Unbind(studyButton, OnResearchClicked);
             HudButtons.Unbind(closeButton, OnCloseClicked);
             UnbindNodes();
         }
 
         void Update()
         {
-            if (!_overlayOpen)
+            RefreshModeButtonProgress();
+            if (!_panelOpen)
                 return;
             RefreshDetail();
             RefreshNodes();
@@ -131,7 +134,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnOpenClicked()
         {
-            if (_overlayOpen)
+            if (_panelOpen)
             {
                 Close();
                 return;
@@ -139,16 +142,16 @@ namespace TheyWillDescend.Presentation.GameHud
 
             BuildWidget.Current?.CloseIfBusy();
             BindCards();
-            _overlayOpen = true;
-            SetOverlayVisible(true);
+            _panelOpen = true;
+            SetPanelVisible(true);
             RefreshDetail();
             RefreshNodes();
         }
 
         void Close()
         {
-            _overlayOpen = false;
-            SetOverlayVisible(false);
+            _panelOpen = false;
+            SetPanelVisible(false);
         }
 
         void OnResearchClicked()
@@ -277,7 +280,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 title.text = "Исследования";
                 if (summary != null)
                     summary.text = "Выберите технологию.";
-                HudButtons.SetInteractable(researchButton, false);
+                HudButtons.SetInteractable(studyButton, false);
                 return;
             }
 
@@ -306,8 +309,8 @@ namespace TheyWillDescend.Presentation.GameHud
                 progressFill.fillAmount = completed ? 1f : Mathf.Clamp01(progress.AccumulatedHours / required);
 
             var canStart = available && hasWorkshop && canAfford && !completed && !researching;
-            HudButtons.SetInteractable(researchButton, canStart);
-            HudButtons.SetLabel(researchButton, completed ? "Изучено" : researching ? "Изучается" : "Изучить");
+            HudButtons.SetInteractable(studyButton, canStart);
+            HudButtons.SetLabel(studyButton, completed ? "Изучено" : researching ? "Изучается" : "Изучить");
             if (status != null)
             {
                 if (completed)
@@ -373,10 +376,28 @@ namespace TheyWillDescend.Presentation.GameHud
             return parts.Count == 0 ? "Бесплатно" : string.Join(", ", parts);
         }
 
-        void SetOverlayVisible(bool visible)
+        void RefreshModeButtonProgress()
         {
-            if (overlay != null)
-                overlay.SetActive(visible);
+            if (modeButtonProgress == null)
+                return;
+            if (!TryReadBoard(out var em, out _, out _, out var control)
+                || control.ActiveTechId.IsEmpty
+                || !ResearchWorld.TryFindCard(em, control.ActiveTechId, out _, out var info, out var progress))
+            {
+                modeButtonProgress.fillAmount = 0f;
+                return;
+            }
+
+            var required = info.RequiredHours > 0.0001f ? info.RequiredHours : 1f;
+            modeButtonProgress.fillAmount = progress.IsCompleted
+                ? 1f
+                : Mathf.Clamp01(progress.AccumulatedHours / required);
+        }
+
+        void SetPanelVisible(bool visible)
+        {
+            if (researchPanel != null)
+                researchPanel.SetActive(visible);
         }
     }
 }
