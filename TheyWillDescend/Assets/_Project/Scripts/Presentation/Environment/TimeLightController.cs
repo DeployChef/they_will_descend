@@ -12,33 +12,6 @@ namespace TheyWillDescend.Presentation.Environment
     /// </summary>
     public class TimeLightController : MonoBehaviour
     {
-        private bool _ecsReady = false;
-        private float _initTimer = 0f;
-        
-        private void Update()
-        {
-            // Ждём инициализации ECS (до 5 секунд)
-            if (!_ecsReady)
-            {
-                _initTimer += Time.deltaTime;
-                if (_initTimer > 5f)
-                {
-                    Debug.LogError("[TimeLightController] ECS не инициализировался за 5 секунд!");
-                    _ecsReady = true; // Остановить спамер
-                    return;
-                }
-                if (SimWorld.TryGet(out var em, out var bag))
-                {
-                    var simControl = em.GetComponentData<SimControl>(bag);
-                    if (simControl.IsRunning)
-                    {
-                        _ecsReady = true;
-                        Debug.Log("[TimeLightController] ECS готов!");
-                    }
-                }
-            }
-        }
-
         [Header("Light Setup")]
         [SerializeField] private Light dayLight;
 
@@ -203,32 +176,18 @@ namespace TheyWillDescend.Presentation.Environment
 
         private void LateUpdate()
         {
-            if (!_ecsReady) return;
-            
             if (dayLight == null)
-            {
-                Debug.LogWarning("[TimeLightController] dayLight не назначен!");
                 return;
-            }
 
-            // Читаем из ECS через SimWorld (канон проекта — как в TimeWidget)
             if (!SimWorld.TryGet(out var em, out var bag))
-            {
-                Debug.LogWarning("[TimeLightController] SimWorld.TryGet failed");
                 return;
-            }
 
             var simControl = em.GetComponentData<SimControl>(bag);
-
-            // Если часы на паузе - не обновляем (свет стоит на последнем кадре)
-            if (!simControl.IsRunning) return;
-
-            var gameTime = TryGetGameTime(em, out var gt) ? gt : default;
-            if (gameTime.DayDuration <= 0f)
-            {
-                Debug.LogWarning("[TimeLightController] DayDuration = 0");
+            if (!simControl.IsRunning)
                 return;
-            }
+
+            if (!TryGetGameTime(em, out var gameTime) || gameTime.DayDuration <= 0f)
+                return;
 
             // Доля дня: 0 = полночь, 0.25 = утро, 0.5 = полдень, 0.75 = вечер, 1 = полночь
             float dayProgress = gameTime.ElapsedInDay / gameTime.DayDuration;
