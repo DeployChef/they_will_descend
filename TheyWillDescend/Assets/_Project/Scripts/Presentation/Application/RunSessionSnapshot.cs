@@ -5,6 +5,7 @@ using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Gods;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using TheyWillDescend.Shell;
@@ -145,6 +146,7 @@ namespace TheyWillDescend.App
             buildingEntities.Dispose();
             buildings.Dispose();
             CaptureGods(em, bag, snapshot);
+            CaptureResearch(em, bag, snapshot);
             GameLog.Info(
                 $"Captured snapshot: day {snapshot.day}, agents {snapshot.agents.Length}, buildings {snapshot.buildings.Length} ({constructing} constructing).");
             return snapshot;
@@ -217,6 +219,7 @@ namespace TheyWillDescend.App
             ApplyPausedBuildings(snapshot);
             ApplyResources(snapshot);
             ApplyGods(snapshot);
+            ApplyResearch(snapshot);
             GameLog.Info(
                 $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
             return true;
@@ -244,7 +247,9 @@ namespace TheyWillDescend.App
                     depthRadialRings = row.DepthRadialRings,
                     constructionDuration = row.ConstructionDuration,
                     constructionCrewSlots = row.ConstructionCrewSlots,
-                    workplaceSlots = row.WorkplaceSlots
+                    workplaceSlots = row.WorkplaceSlots,
+                    researchWorkplace = row.ResearchWorkplace,
+                    requiresUnlock = row.RequiresUnlock
                 };
             }
 
@@ -310,7 +315,9 @@ namespace TheyWillDescend.App
                     DepthRadialRings = row.depthRadialRings,
                     ConstructionDuration = math.max(0f, row.constructionDuration),
                     ConstructionCrewSlots = ConstructionCrew.ResolveSlots(row.constructionCrewSlots),
-                    WorkplaceSlots = math.max(0, row.workplaceSlots)
+                    WorkplaceSlots = math.max(0, row.workplaceSlots),
+                    ResearchWorkplace = row.researchWorkplace,
+                    RequiresUnlock = row.requiresUnlock
                 });
             }
 
@@ -514,6 +521,70 @@ namespace TheyWillDescend.App
                     Arrived = record.arrived
                 });
             }
+        }
+
+        static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)
+        {
+            if (!SimSessionAccess.TryGetResearch(em, bag, out var research))
+                return;
+
+            if (em.HasComponent<ResearchControl>(research))
+                snapshot.activeTechId = em.GetComponentData<ResearchControl>(research).ActiveTechId.ToString();
+
+            if (!em.HasBuffer<ResearchLine>(research))
+                return;
+
+            var lines = em.GetBuffer<ResearchLine>(research);
+            snapshot.research = new ResearchLineSnapshot[lines.Length];
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var row = lines[i];
+                snapshot.research[i] = new ResearchLineSnapshot
+                {
+                    techId = row.TechId.ToString(),
+                    accumulatedHours = row.AccumulatedHours,
+                    completed = row.Completed,
+                    costPaid = row.CostPaid
+                };
+            }
+        }
+
+        static void ApplyResearch(RunSnapshot snapshot)
+        {
+            if (!SimWorld.TryGet(out var em, out var bag)
+                || !SimSessionAccess.TryGetResearch(em, bag, out var research)
+                || !em.HasComponent<ResearchControl>(research)
+                || !em.HasBuffer<ResearchLine>(research))
+                return;
+
+            var lines = em.GetBuffer<ResearchLine>(research);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var row = lines[i];
+                row.AccumulatedHours = 0f;
+                row.Completed = 0;
+                row.CostPaid = 0;
+                if (snapshot.research != null)
+                {
+                    for (var s = 0; s < snapshot.research.Length; s++)
+                    {
+                        var saved = snapshot.research[s];
+                        if (saved == null || saved.techId != row.TechId.ToString())
+                            continue;
+                        row.AccumulatedHours = math.max(0f, saved.accumulatedHours);
+                        row.Completed = saved.completed;
+                        row.CostPaid = saved.costPaid;
+                        break;
+                    }
+                }
+
+                lines[i] = row;
+            }
+
+            var control = ResearchControl.Initial;
+            control.ActiveTechId = ContentId.EncodeOrEmpty(snapshot.activeTechId);
+            em.SetComponentData(research, control);
+            ResearchRules.RebuildEffects(em, research);
         }
 
         static void ApplyGameTime(RunSnapshot snapshot)

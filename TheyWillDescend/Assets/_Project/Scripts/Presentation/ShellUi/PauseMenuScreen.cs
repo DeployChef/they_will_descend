@@ -56,7 +56,11 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         public void RequestToggle() => ToggleRequested?.Invoke();
 
-        public void CloseBuildIfBusy() => buildWidget?.CloseIfBusy();
+        public void CloseBuildIfBusy()
+        {
+            buildWidget?.CloseIfBusy();
+            ResearchWidget.Current?.CloseIfBusy();
+        }
 
         public void RebuildViews()
         {

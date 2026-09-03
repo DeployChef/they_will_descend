@@ -87,6 +87,8 @@ namespace TheyWillDescend.Shell.States
         {
             if (_busy)
                 return;
+            if (ResearchWidget.Current != null && ResearchWidget.Current.TryHandleEscape())
+                return;
             if (BuildWidget.Current != null && BuildWidget.Current.TryHandleEscape())
                 return;
 

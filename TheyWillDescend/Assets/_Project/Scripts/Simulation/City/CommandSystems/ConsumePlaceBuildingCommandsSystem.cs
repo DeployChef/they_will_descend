@@ -1,5 +1,6 @@
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
@@ -60,7 +61,8 @@ namespace TheyWillDescend.Simulation.City
                     TypeId = place.TypeId,
                     AnchorCluster = place.Cluster,
                     AnchorRadial = place.Radial,
-                    InstantComplete = 1
+                    InstantComplete = 1,
+                    Source = PlaceBuildingCommandSource.Setup
                 });
             }
 
@@ -107,6 +109,14 @@ namespace TheyWillDescend.Simulation.City
             if (!BuildingCatalog.TryResolve(catalog, command.TypeId, out var spec))
             {
                 Reject(em, session, command, BuildingRejectedEvent.UnknownType);
+                return;
+            }
+
+            if (spec.RequiresUnlock != 0
+                && command.Source == PlaceBuildingCommandSource.Gameplay
+                && !ResearchRules.IsBuildingUnlocked(em, session, spec.TypeId))
+            {
+                Reject(em, session, command, BuildingRejectedEvent.Locked);
                 return;
             }
 
@@ -193,6 +203,8 @@ namespace TheyWillDescend.Simulation.City
             em.AddComponentData(entity, spec.ToBuildingType());
             if (spec.WorkplaceSlots > 0)
                 em.AddComponentData(entity, new Workplace());
+            if (spec.ResearchWorkplace != 0)
+                em.AddComponentData(entity, new ResearchWorkplace());
             CopyRecipes(em, session, spec.TypeId, entity);
             SimEntityPose.Apply(em, entity, transform);
             if (construction.HasValue)

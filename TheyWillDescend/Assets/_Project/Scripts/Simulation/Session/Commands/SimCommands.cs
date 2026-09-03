@@ -14,7 +14,12 @@ namespace TheyWillDescend.Simulation.Session
             if (!SimWorld.TryGet(out var em, out var bag))
                 return false;
             if (!em.HasBuffer<T>(bag))
-                return false;
+            {
+                if (!SimSessionAccess.TryGetResearch(em, bag, out var research)
+                    || !em.HasBuffer<T>(research))
+                    return false;
+                bag = research;
+            }
             em.GetBuffer<T>(bag).Add(command);
             return true;
         }

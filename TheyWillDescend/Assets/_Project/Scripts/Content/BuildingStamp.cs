@@ -32,6 +32,12 @@ namespace TheyWillDescend.Content
         [Header("Workplace")]
         [SerializeField] bool workplace;
         [SerializeField] [Min(0)] int workplaceSlots = 10;
+        [SerializeField]
+        [Tooltip("Finished house contributes research load. Requires workplace.")]
+        bool researchWorkplace;
+        [SerializeField]
+        [Tooltip("Hidden from the build catalog until a completed tech unlocks this typeId.")]
+        bool requiresUnlock;
 
         [Header("Recipe")]
         [SerializeField] bool recipe;
@@ -53,6 +59,10 @@ namespace TheyWillDescend.Content
         public bool HasWorkplace => workplace && workplaceSlots > 0;
 
         public int WorkplaceSlots => HasWorkplace ? workplaceSlots : 0;
+
+        public bool IsResearchWorkplace => researchWorkplace && HasWorkplace;
+
+        public bool RequiresUnlock => requiresUnlock;
 
         public bool HasRecipe => recipe && (HasAnyRate(recipeInputs) || HasAnyRate(recipeOutputs));
 

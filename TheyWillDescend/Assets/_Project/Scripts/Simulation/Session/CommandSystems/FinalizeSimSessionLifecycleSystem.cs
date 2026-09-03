@@ -1,4 +1,5 @@
 using TheyWillDescend.Simulation.Gods;
+using TheyWillDescend.Simulation.Research;
 using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Session
@@ -7,7 +8,7 @@ namespace TheyWillDescend.Simulation.Session
     /// Completes lifecycle transitions only after the full command pipeline drained.
     /// </summary>
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(ConsumeSetPyramidFeedCommandsSystem))]
+    [UpdateAfter(typeof(ConsumeSetActiveResearchCommandsSystem))]
     [UpdateBefore(typeof(TheyWillDescend.Simulation.Time.ApplySimDeltaTimeSystem))]
     public partial struct FinalizeSimSessionLifecycleSystem : ISystem
     {

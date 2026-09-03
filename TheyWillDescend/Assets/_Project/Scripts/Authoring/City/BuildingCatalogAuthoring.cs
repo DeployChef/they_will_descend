@@ -114,7 +114,9 @@ namespace TheyWillDescend.Authoring.City
                     DepthRadialRings = stamp.DepthRadialRings,
                     ConstructionDuration = stamp.ConstructionDuration,
                     ConstructionCrewSlots = stamp.ConstructionCrewSlots,
-                    WorkplaceSlots = stamp.WorkplaceSlots
+                    WorkplaceSlots = stamp.WorkplaceSlots,
+                    ResearchWorkplace = stamp.IsResearchWorkplace ? (byte)1 : (byte)0,
+                    RequiresUnlock = stamp.RequiresUnlock ? (byte)1 : (byte)0
                 };
                 basePrototypes.Add(basePrototype);
                 prototypes.Add(basePrototype.ToResolved());

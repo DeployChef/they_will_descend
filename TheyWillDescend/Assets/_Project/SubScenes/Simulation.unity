@@ -140,6 +140,7 @@ GameObject:
   - component: {fileID: 568820918}
   - component: {fileID: 568820919}
   - component: {fileID: 568820920}
+  - component: {fileID: 568820921}
   m_Layer: 0
   m_Name: SimControl
   m_TagString: Untagged
@@ -255,6 +256,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Session.TimelineCatalogAuthoring
   catalog: {fileID: 11400000, guid: 4f9b2d6e8a035c7f91b3d5e7f9a1c2d4, type: 2}
+--- !u!114 &568820921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568820912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a760dbd7b1e14a846831f65640470d36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Authoring::TheyWillDescend.Authoring.Session.TechCatalogAuthoring
+  catalog: {fileID: 11400000, guid: 945ff0b82490c4a40b9b4ccfeab74597, type: 2}
 --- !u!1 &615145529
 GameObject:
   m_ObjectHideFlags: 0

@@ -10201,6 +10201,7 @@ GameObject:
   - component: {fileID: 1531915640}
   - component: {fileID: 1531915639}
   - component: {fileID: 1531915643}
+  - component: {fileID: 1531915644}
   m_Layer: 0
   m_Name: GameHudCanvas
   m_TagString: Untagged
@@ -10318,6 +10319,29 @@ MonoBehaviour:
   catalogButtonTemplate: {fileID: 1149129526}
   unusedLegacyCatalogButton: {fileID: 1462102000}
   placement: {fileID: 1884302425}
+--- !u!114 &1531915644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1531915637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2a056526f928a145bf017884371a80e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.GameHud.ResearchWidget
+  openButton: {fileID: 0}
+  overlay: {fileID: 0}
+  nodeRoot: {fileID: 0}
+  title: {fileID: 0}
+  summary: {fileID: 0}
+  costLabel: {fileID: 0}
+  timeLabel: {fileID: 0}
+  status: {fileID: 0}
+  progressFill: {fileID: 0}
+  researchButton: {fileID: 0}
+  closeButton: {fileID: 0}
 --- !u!1 &1557076190
 GameObject:
   m_ObjectHideFlags: 0

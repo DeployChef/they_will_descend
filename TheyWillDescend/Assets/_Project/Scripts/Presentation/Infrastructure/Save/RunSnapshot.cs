@@ -8,7 +8,7 @@ namespace TheyWillDescend.Infrastructure.Save
         /// <summary>
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 22;
+        public const int CurrentVersion = 24;
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -33,6 +33,8 @@ namespace TheyWillDescend.Infrastructure.Save
         public float previousMaxLoyalty;
         public float targetMaxLoyalty;
         public PyramidFeedSnapshot[] pyramidFeed = Array.Empty<PyramidFeedSnapshot>();
+        public string activeTechId = string.Empty;
+        public ResearchLineSnapshot[] research = Array.Empty<ResearchLineSnapshot>();
     }
 
     [Serializable]
@@ -92,6 +94,8 @@ namespace TheyWillDescend.Infrastructure.Save
         public float constructionDuration;
         public int constructionCrewSlots;
         public int workplaceSlots;
+        public byte researchWorkplace;
+        public byte requiresUnlock;
     }
 
     [Serializable]
@@ -109,6 +113,15 @@ namespace TheyWillDescend.Infrastructure.Save
         public byte kind;
         public string resourceId;
         public float perHour;
+    }
+
+    [Serializable]
+    public sealed class ResearchLineSnapshot
+    {
+        public string techId;
+        public float accumulatedHours;
+        public byte completed;
+        public byte costPaid;
     }
 
     [Serializable]

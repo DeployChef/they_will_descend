@@ -4,6 +4,7 @@ using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
@@ -56,6 +57,7 @@ namespace TheyWillDescend.Shell
                 new DespawnAllBuildingsCommand { Requested = 1 });
             ApplyDifficulty(em, session, difficulty);
             ApplyScenario(em, session, scenario);
+            ResearchRules.ResetRun(em, session);
 
             var name = scenario != null ? scenario.name : "none";
             var diff = difficulty != null ? difficulty.name : "stamp defaults";
@@ -116,6 +118,9 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<UnassignWorkerCommand>(session).Clear();
             em.GetBuffer<SetWorkplacePausedCommand>(session).Clear();
             em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
+            if (SimSessionAccess.TryGetResearch(em, session, out var research)
+                && em.HasBuffer<SetActiveResearchCommand>(research))
+                em.GetBuffer<SetActiveResearchCommand>(research).Clear();
             if (em.HasBuffer<DeconstructBuildingCommand>(session))
                 em.GetBuffer<DeconstructBuildingCommand>(session).Clear();
         }

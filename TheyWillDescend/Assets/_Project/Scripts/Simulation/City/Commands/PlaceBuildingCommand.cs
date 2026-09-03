@@ -6,7 +6,8 @@ namespace TheyWillDescend.Simulation.City
     public enum PlaceBuildingCommandSource : byte
     {
         Gameplay = 0,
-        SnapshotRestore = 1
+        SnapshotRestore = 1,
+        Setup = 2
     }
 
     public struct PlaceBuildingCommand : IBufferElementData
