@@ -80,10 +80,6 @@ MonoBehaviour:
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
   workingPulseHz: 1.15
-  uiHeight: 2.2
-  uiReferenceDistance: 25
-  uiBaseScale: 0.02
-  uiHideBelowCameraHeight: 25
 --- !u!1 &5085933263608069467
 GameObject:
   m_ObjectHideFlags: 0
@@ -220,7 +216,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2326273514062946615, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: 2326273514062946615, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -248,7 +244,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2326273514062946615, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: 2326273514062946615, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -264,7 +260,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5927249818930253296, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_Name
-      value: WorldUi
+      value: Widget
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

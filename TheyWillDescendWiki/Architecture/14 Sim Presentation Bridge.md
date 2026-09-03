@@ -44,7 +44,7 @@ Gameplay Presentation **никогда не запускает consume вруч�
 вид (LateUpdate pull)
   ← query какие entity есть
   ← доска Instantiate(Unity-штамп) один раз; `BuildingView.Sync` читает свою entity
-  ← стройка / загрузка: бар на WorldUi ребёнке штампа
+  ← стройка / загрузка: бар на Widget-ребёнке штампа
   ← зона `_BuildingOverlay` (клетка, не дом)
   ← HQ: `_HqOverlay` (кольцо + клик)
   ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived → меш выключен

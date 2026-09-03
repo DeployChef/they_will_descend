@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace TheyWillDescend.Authoring.Editor
 {
     /// <summary>
-    /// Cube stamps + shared overlay / world-UI prefabs + catalog.
+        /// Cube stamps + shared overlay / widget prefabs + catalog.
     /// </summary>
     public static class BuildingCubePrefabFactory
     {
@@ -18,7 +18,7 @@ namespace TheyWillDescend.Authoring.Editor
         const string WoodPath = "Assets/_Project/Content/Economy/Wood.asset";
         const string FoodPath = "Assets/_Project/Content/Economy/Food.asset";
         const string MaterialPath = "Assets/_Project/Content/Buildings/Prefabs/BuildingCube.mat";
-        const string WorldUiPath = Folder + "/_BuildingWorldUi.prefab";
+        const string WidgetPath = Folder + "/_BuildingWidget.prefab";
         const string OverlayPath = Folder + "/_BuildingOverlay.prefab";
         const string HqOverlayPath = Folder + "/_HqOverlay.prefab";
 
@@ -34,7 +34,7 @@ namespace TheyWillDescend.Authoring.Editor
                 return;
             }
 
-            var worldUi = CreateWorldUiPrefab();
+            var widget = CreateWidgetPrefab();
             var overlay = CreateOverlayPrefab();
             var hqOverlay = CreateHqOverlayPrefab();
             var mat = CreateMaterial();
@@ -54,7 +54,7 @@ namespace TheyWillDescend.Authoring.Editor
                 working: new Color(0.35f, 0.82f, 0.42f),
                 construction: new Color(0.95f, 0.78f, 0.28f),
                 mat,
-                worldUi,
+                widget,
                 displayName: "Kitchen");
 
             var sawmill = CreateStamp(
@@ -73,7 +73,7 @@ namespace TheyWillDescend.Authoring.Editor
                 working: new Color(0.35f, 0.82f, 0.42f),
                 construction: new Color(0.95f, 0.78f, 0.28f),
                 mat,
-                worldUi,
+                widget,
                 displayName: "Sawmill");
 
             var catalog = AssetDatabase.LoadAssetAtPath<BuildingCatalogAsset>(CatalogPath);
@@ -90,10 +90,10 @@ namespace TheyWillDescend.Authoring.Editor
             list.GetArrayElementAtIndex(1).objectReferenceValue = sawmill;
             cat.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
-            WireScene(overlay, hqOverlay, worldUi);
+            WireScene(overlay, hqOverlay, widget);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("Cube stamps + overlay/world-UI prefabs created. Kitchen + Sawmill are in DefaultBuildingCatalog.");
+            Debug.Log("Cube stamps + overlay/widget prefabs created. Kitchen + Sawmill are in DefaultBuildingCatalog.");
         }
 
         static (ResourceDefinition Resource, float Amount) Cost(ResourceDefinition resource, float amount) =>
@@ -118,7 +118,7 @@ namespace TheyWillDescend.Authoring.Editor
             Color working,
             Color construction,
             Material mat,
-            BuildingWorldUi worldUi,
+            BuildingWidget widget,
             string displayName)
         {
             var go = new GameObject(fileName);
@@ -148,10 +148,11 @@ namespace TheyWillDescend.Authoring.Editor
             Write(view, "workingColor", working);
             Write(view, "constructionColor", construction);
 
-            if (worldUi != null)
+            if (widget != null)
             {
-                var nested = (GameObject)PrefabUtility.InstantiatePrefab(worldUi.gameObject, go.transform);
-                nested.name = "WorldUi";
+                var nested = (GameObject)PrefabUtility.InstantiatePrefab(widget.gameObject, go.transform);
+                nested.name = "Widget";
+                nested.transform.localPosition = new Vector3(0f, 2.2f, 0f);
             }
 
             var path = $"{Folder}/{fileName}.prefab";
@@ -160,9 +161,9 @@ namespace TheyWillDescend.Authoring.Editor
             return prefab;
         }
 
-        static BuildingWorldUi CreateWorldUiPrefab()
+        static BuildingWidget CreateWidgetPrefab()
         {
-            var root = new GameObject("WorldUi", typeof(RectTransform));
+            var root = new GameObject("Widget", typeof(RectTransform));
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.overrideSorting = true;
@@ -172,6 +173,7 @@ namespace TheyWillDescend.Authoring.Editor
             group.blocksRaycasts = false;
             var rect = root.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(180f, 48f);
+            root.transform.localPosition = new Vector3(0f, 2.2f, 0f);
             root.transform.localScale = Vector3.one * 0.02f;
 
             var bar = CreateUiPanel(root.transform, "Bar", new Vector2(180f, 22f));
@@ -195,16 +197,16 @@ namespace TheyWillDescend.Authoring.Editor
             statusRect.anchoredPosition = new Vector2(0f, 6f);
             statusRect.sizeDelta = new Vector2(180f, 24f);
 
-            var ui = root.AddComponent<BuildingWorldUi>();
+            var ui = root.AddComponent<BuildingWidget>();
             var so = new SerializedObject(ui);
-            so.FindProperty("barRoot").objectReferenceValue = bar;
-            so.FindProperty("fill").objectReferenceValue = fill;
+            so.FindProperty("constructionRoot").objectReferenceValue = bar;
+            so.FindProperty("constructionFill").objectReferenceValue = fill;
             so.FindProperty("statusRoot").objectReferenceValue = status;
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            var prefab = PrefabUtility.SaveAsPrefabAsset(root, WorldUiPath);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, WidgetPath);
             Object.DestroyImmediate(root);
-            return prefab.GetComponent<BuildingWorldUi>();
+            return prefab.GetComponent<BuildingWidget>();
         }
 
         static BuildingOverlay CreateOverlayPrefab()
@@ -256,7 +258,7 @@ namespace TheyWillDescend.Authoring.Editor
             return prefab.GetComponent<HqOverlay>();
         }
 
-        static void WireScene(BuildingOverlay overlay, HqOverlay hq, BuildingWorldUi worldUi)
+        static void WireScene(BuildingOverlay overlay, HqOverlay hq, BuildingWidget widget)
         {
             var boards = Object.FindObjectsByType<BuildingViewBoard>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None);

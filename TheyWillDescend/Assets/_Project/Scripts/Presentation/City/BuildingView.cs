@@ -25,27 +25,12 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] Color constructionColor = new(0.95f, 0.78f, 0.28f, 1f);
         [SerializeField] float workingPulseHz = 1.15f;
 
-        [Header("World UI billboard")]
-        [Tooltip("Высота иконки над зданием, в метрах")]
-        [SerializeField] float uiHeight = 2.2f;
-        [Tooltip("Дистанция, на которой иконка имеет базовый масштаб (как на префабе). Крупнее — иконки крупнее на экране")]
-        [SerializeField] float uiReferenceDistance = 25f;
-        [Tooltip("Базовый масштаб UI из префаба (_BuildingWorldUi). Должен совпадать с localScale префаба")]
-        [SerializeField] float uiBaseScale = 0.02f;
-        [Header("World UI visibility")]
-        [Tooltip("Камера ниже этой высоты (Y) — ВСЕ иконки зданий скрыты разом. Одно значение для всех зданий")]
-        [SerializeField] float uiHideBelowCameraHeight = 18f;
-
         readonly List<MeshRenderer> _bodyRenderers = new(4);
         MaterialPropertyBlock _block;
 
-        BuildingWorldUi _worldUi;
+        BuildingWidget _widget;
         Animator _animator;
         bool _cached;
-
-        // Глобальное решение «видны ли иконки» — одно на кадр для всех зданий сразу
-        static int _visibilityFrame = -1;
-        static bool _iconsVisible = true;
 
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
 
@@ -76,7 +61,7 @@ namespace TheyWillDescend.Presentation.City
             if (_cached)
                 return;
             _cached = true;
-            _worldUi = GetComponentInChildren<BuildingWorldUi>(true);
+            _widget = GetComponentInChildren<BuildingWidget>(true);
 
             _animator = GetComponentInChildren<Animator>(true);
             _block ??= new MaterialPropertyBlock();
@@ -84,7 +69,7 @@ namespace TheyWillDescend.Presentation.City
             var renderers = GetComponentsInChildren<MeshRenderer>(true);
             for (var i = 0; i < renderers.Length; i++)
             {
-                if (renderers[i].GetComponentInParent<BuildingWorldUi>(true) != null)
+                if (renderers[i].GetComponentInParent<BuildingWidget>(true) != null)
                     continue;
                 if (renderers[i].GetComponentInParent<BuildingOverlay>(true) != null)
                     continue;
@@ -109,7 +94,7 @@ namespace TheyWillDescend.Presentation.City
 
         void ApplyBar(EntityManager em, Entity entity, Camera cam)
         {
-            if (_worldUi == null)
+            if (_widget == null)
                 return;
 
             var constructing = em.HasComponent<Construction>(entity);
@@ -121,63 +106,21 @@ namespace TheyWillDescend.Presentation.City
                 ? em.GetComponentData<Workplace>(entity)
                 : default;
 
-            // Переключаем группы
-            if (_worldUi.ConstructionRoot != null)
-                _worldUi.ConstructionRoot.SetActive(constructing);
-            if (_worldUi.WorkerRoot != null)
-                _worldUi.WorkerRoot.SetActive(!constructing && slots > 0);
+            if (_widget.ConstructionRoot != null)
+                _widget.ConstructionRoot.SetActive(constructing);
+            if (_widget.WorkerRoot != null)
+                _widget.WorkerRoot.SetActive(!constructing && slots > 0);
 
-            // Заполнение полосы строительства
-            var fill = constructing && _worldUi.ConstructionFill != null
-                ? _worldUi.ConstructionFill
-                : _worldUi.ConstructionFill;
-            if (constructing && fill != null)
+            if (constructing && _widget.ConstructionFill != null)
             {
                 var construction = em.GetComponentData<Construction>(entity);
-                fill.fillAmount = construction.Normalized;
+                _widget.ConstructionFill.fillAmount = construction.Normalized;
             }
 
-            // Заполнение полосы рабочих
-            var workerFill = _worldUi.WorkerFill;
-            if (!constructing && workerFill != null && slots > 0)
-            {
-                workerFill.fillAmount = Workplace.Load01(workplace.AssignedCount, slots);
-            }
+            if (!constructing && _widget.WorkerFill != null && slots > 0)
+                _widget.WorkerFill.fillAmount = Workplace.Load01(workplace.AssignedCount, slots);
 
-            var roof = _worldUi.transform;
-            roof.position = transform.position + Vector3.up * uiHeight;
-
-            if (cam == null)
-                return;
-
-            var toUi = roof.position - cam.transform.position;
-            var distance = toUi.magnitude;
-
-            // Billboard: канвас всегда плоскостью к камере
-            roof.rotation = Quaternion.LookRotation(toUi);
-
-            // Компенсация перспективы: масштаб растёт с дистанцией →
-            // размер иконки на экране постоянный
-            var refDist = Mathf.Max(0.1f, uiReferenceDistance);
-            roof.localScale = Vector3.one * (uiBaseScale * distance / refDist);
-
-            // Все иконки скрываются разом, когда камера опускается ниже порога
-            roof.gameObject.SetActive(IsIconsVisible(cam));
-        }
-
-        /// <summary>
-        /// Решение общее для всех зданий: считается один раз за кадр.
-        /// Камера выше порога — иконки видны, ниже — скрыты у всех зданий.
-        /// </summary>
-        bool IsIconsVisible(Camera cam)
-        {
-            if (Time.frameCount != _visibilityFrame)
-            {
-                _visibilityFrame = Time.frameCount;
-                _iconsVisible = cam.transform.position.y >= uiHideBelowCameraHeight;
-            }
-
-            return _iconsVisible;
+            _widget.FaceCamera(cam);
         }
 
         void ApplyBody(EntityManager em, Entity entity)

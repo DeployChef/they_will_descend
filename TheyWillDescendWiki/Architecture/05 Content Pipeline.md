@@ -52,7 +52,7 @@ Assets/_Project/Content/
     Prefabs/
       Kitchen.prefab
       Sawmill.prefab
-      _BuildingWorldUi.prefab ← бар + статусы, общий
+      _BuildingWidget.prefab ← бар + статусы, общий
       _BuildingOverlay.prefab ← зона клетки / клик
       _HqOverlay.prefab       ← кольцо площади + ClickProxy
   Economy/
@@ -150,7 +150,7 @@ Baker копирует:
 
 ## 5. Здание
 
-Документ типа — **один префаб**. Корень — паспорт (`BuildingStamp` + `BuildingView`): identity, footprint **и дефолтные цифры**. `Body` / WorldUi — одежда. Catalog baker копирует штамп на session. Play-вид — Instantiate того же префаба. Сложность/A/B потом подменяет цифры на снимке, не на префабе.
+Документ типа — **один префаб**. Корень — паспорт (`BuildingStamp` + `BuildingView`): identity, footprint **и дефолтные цифры**. `Body` / Widget — одежда. Catalog baker копирует штамп на session. Play-вид — Instantiate того же префаба. Сложность/A/B потом подменяет цифры на снимке, не на префабе.
 
 Срез после `Create Cube Stamps`: `sawmill` (6×2, 15 wood, +12 Wood/ч) и `kitchen` (2×2, 8 wood, −6 Wood/ч → +12 Food/ч). Цифры смотри на штампе. RPGPP-меши в пакете оставлены, со штампов сняты.
 
@@ -159,7 +159,7 @@ Baker копирует:
 | Этаж | Где | Что |
 | --- | --- | --- |
 | Штамп | `Kitchen.prefab` | корень: `BuildingStamp` + `BuildingView`; `Body` (меш); позже Scaffold / FX |
-| World UI | `_BuildingWorldUi.prefab` | бар и иконки статуса над **всеми** домами |
+| Widget | `_BuildingWidget.prefab` | бар и иконки статуса над **всеми** домами |
 | HUD канвас | сцена Game | инспект, ± рабочие, дань. Не ребёнок дома |
 | Зона сетки | `_BuildingOverlay.prefab` | сектор клетки; не ребёнок кухни |
 
@@ -173,7 +173,7 @@ Duplicate ближайший дом из каталога, не пустой ш�
 2. Нужны люди — галка Workplace + слоты. Склад: галки Workplace/Recipe выкл.
 3. Нужно варить — галка Recipe (те же `ResourceDefinition`).
 4. Платный — список cost. Долгая стройка — `constructionDuration` (0 = сразу готовый).
-5. `BuildingView` — display name, цвета куба. Крыша — ребёнок `WorldUi` на штампе. Не печётся в ECS.
+5. `BuildingView` — display name, цвета куба. Виджет — ребёнок `Widget` на штампе. Высота — `localPosition` на штампе, не поле на `BuildingView`. Не печётся в ECS.
 6. Префаб в `DefaultBuildingCatalog` (список префабов).
 7. Play: кнопка, призрак = этот префаб, Place = `CreateEntity` из spec (с `Construction`, пока duration > 0).
 
@@ -204,14 +204,14 @@ Bake падает, если нет `BuildingStamp`, пустой или слиш
 ```text
 Kitchen                 ← BuildingStamp + BuildingView
   Body                  ← меш (+ Animator / Light позже)
-  WorldUi               ← макет крыши
+  Widget                ← бар и статусы (`_BuildingWidget`)
 ```
 
 Корень без меша. `BuildingView` не вешать на `Body`. Overlay клетки — не ребёнок кухни.
 
 `BuildingViewBoard` — реестр (появился entity → Instantiate штампа + overlay). Бар, цвет, купол — `BuildingView.Sync` по компонентам entity, не `if (typeId)`.
 
-Стройка: тот же entity, что готовый дом. `Construction` висит, пока не достроено (сейчас таймер; люди на сайт — позже). Меш штампа в мире **с кадра Place**. Бар на `_BuildingWorldUi` заполняется, пока висит `Construction`; снятие компонента = построен.
+Стройка: тот же entity, что готовый дом. `Construction` висит, пока не достроено (сейчас таймер; люди на сайт — позже). Меш штампа в мире **с кадра Place**. Бар на `_BuildingWidget` заполняется, пока висит `Construction`; снятие компонента = построен.
 
 ### 5.3 Каталог
 

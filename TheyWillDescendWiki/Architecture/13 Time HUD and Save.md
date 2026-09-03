@@ -176,7 +176,7 @@ SavePayload v20
 
 Пока разрабатываем — **миграций нет**. Слот с другим `version` удаляется при load.
 
-`built = 0` → load `CreateEntity` из spec с `Construction` (тот же меш на доске, бар World UI).  
+`built = 0` → load `CreateEntity` из spec с `Construction` (тот же меш на доске, бар виджета).  
 `built = 1` → сразу готовый дом (без `Construction`).
 
 Канон агента: **`LocalTransform` = где стоит**. Мотор = `AgentLocomotion`. Без работы — `AgentPlazaIdle`. На слоте — `AgentAssignment`. Сток — `ResourceAmount` на session.

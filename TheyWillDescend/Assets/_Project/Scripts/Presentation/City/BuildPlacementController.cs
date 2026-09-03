@@ -286,7 +286,7 @@ namespace TheyWillDescend.Presentation.City
             var instance = Instantiate(_ghostPrefab, _ghostRoot);
             instance.name = "GhostHouse";
             StripColliders(instance);
-            HideWorldUi(instance);
+            HideWidget(instance);
             _ghostBuilding = instance.transform;
         }
 
@@ -295,11 +295,11 @@ namespace TheyWillDescend.Presentation.City
             t.SetPositionAndRotation(pos, rot);
         }
 
-        static void HideWorldUi(GameObject go)
+        static void HideWidget(GameObject go)
         {
-            var ui = go.GetComponentsInChildren<BuildingWorldUi>(true);
-            for (var i = 0; i < ui.Length; i++)
-                ui[i].gameObject.SetActive(false);
+            var widgets = go.GetComponentsInChildren<BuildingWidget>(true);
+            for (var i = 0; i < widgets.Length; i++)
+                widgets[i].gameObject.SetActive(false);
         }
 
         static void StripColliders(GameObject go)
