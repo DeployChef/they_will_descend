@@ -1,6 +1,7 @@
 using TheyWillDescend.Authoring.City;
 using TheyWillDescend.Content;
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using UnityEditor;
 using UnityEngine;
@@ -135,6 +136,7 @@ namespace TheyWillDescend.Authoring.Editor
             Write(stamp, "widthClusters", width);
             Write(stamp, "depthRadialRings", depth);
             Write(stamp, "constructionDuration", duration);
+            Write(stamp, "constructionCrewSlots", ConstructionCrew.DefaultSlots);
             Write(stamp, "workplace", workplace);
             Write(stamp, "workplaceSlots", slots);
             Write(stamp, "recipe", recipe);

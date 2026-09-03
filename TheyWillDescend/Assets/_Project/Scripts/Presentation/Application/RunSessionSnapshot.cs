@@ -241,6 +241,7 @@ namespace TheyWillDescend.App
                     widthClusters = row.WidthClusters,
                     depthRadialRings = row.DepthRadialRings,
                     constructionDuration = row.ConstructionDuration,
+                    constructionCrewSlots = row.ConstructionCrewSlots,
                     workplaceSlots = row.WorkplaceSlots
                 };
             }
@@ -306,6 +307,7 @@ namespace TheyWillDescend.App
                     WidthClusters = row.widthClusters,
                     DepthRadialRings = row.depthRadialRings,
                     ConstructionDuration = math.max(0f, row.constructionDuration),
+                    ConstructionCrewSlots = ConstructionCrew.ResolveSlots(row.constructionCrewSlots),
                     WorkplaceSlots = math.max(0, row.workplaceSlots)
                 });
             }

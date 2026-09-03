@@ -47,7 +47,7 @@ Gameplay Presentation **никогда не запускает consume вруч�
   ← стройка / загрузка: бар на Widget-ребёнке штампа
   ← зона `_BuildingOverlay` (клетка, не дом)
   ← HQ: `_HqOverlay` (кольцо + клик)
-  ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived → меш выключен
+  ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived (дом или стройка) → меш выключен
   ← сток HUD pull ResourceAmount
   ← слот дома: BuildingInspectPanel +/− → Assign/Unassign
 ```

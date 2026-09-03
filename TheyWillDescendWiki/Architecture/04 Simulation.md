@@ -27,10 +27,11 @@ CommandSystemGroup
   → assign → unassign → workplace pause → pyramid feed
   → FinalizeSimSessionLifecycle
   → ApplySimDeltaTime
-  → commute / plaza / locomotion
-  → construction
-  → produce
   → day clock
+  → claim construction crew
+  → commute / plaza / locomotion
+  → construction (Elapsed if crew arrived)
+  → produce
 ```
 
 Presentation отображает и шлёт Intent/Commands вниз. Оболочка: [[09 App Shell]].

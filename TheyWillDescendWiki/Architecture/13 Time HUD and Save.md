@@ -165,8 +165,8 @@ HUD **читает** `GameTime` + `SimControl`. Кнопки → `SimClockComman
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v20
-  version: 20
+SavePayload v21
+  version: 21
   clock, time
   resources: [{ resourceId: "wood", amount }]
   resolved building catalog: prototype / cost / recipe rows

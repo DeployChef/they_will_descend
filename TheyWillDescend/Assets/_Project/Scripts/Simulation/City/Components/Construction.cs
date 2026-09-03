@@ -5,7 +5,7 @@ namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
     /// Present = still unbuilt. Same stamp entity as the finished house.
-    /// People will drive Elapsed later; now a timer.
+    /// Elapsed advances only while at least one claimed worker has arrived.
     /// </summary>
     public struct Construction : IComponentData
     {

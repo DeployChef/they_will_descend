@@ -1,63 +1,59 @@
+using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Session;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Transforms;
 
 namespace TheyWillDescend.Simulation.City
 {
+    [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(TransformSystemGroup))]
+    [UpdateAfter(typeof(AdvanceAgentCommuteSystem))]
     public partial struct AdvanceConstructionSystem : ISystem
     {
-        EntityQuery _sites;
-
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<SimControl>();
             state.RequireForUpdate<Construction>();
-            _sites = state.GetEntityQuery(
-                ComponentType.ReadWrite<Construction>(),
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<LocalTransform>());
         }
 
         public void OnUpdate(ref SystemState state)
         {
-            Run(state.EntityManager, _sites);
-        }
-
-        public static void Run(EntityManager em, EntityQuery sites)
-        {
-            if (!SimSessionAccess.TryGet(em, out var session))
-                return;
-
-            var control = em.GetComponentData<SimControl>(session);
+            var control = SystemAPI.GetSingleton<SimControl>();
             if (!control.IsRunning)
                 return;
             var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;
 
-            if (sites.IsEmptyIgnoreFilter)
-                return;
-
-            using var entities = sites.ToEntityArray(Allocator.Temp);
-            var finished = new NativeList<Entity>(8, Allocator.Temp);
-            for (var i = 0; i < entities.Length; i++)
+            var arrivedBySite = new NativeHashMap<int, int>(8, state.WorldUpdateAllocator);
+            foreach (var assignment in SystemAPI.Query<RefRO<AgentAssignment>>())
             {
-                var entity = entities[i];
-                var construction = em.GetComponentData<Construction>(entity);
-                construction.Elapsed += dt;
-                if (construction.IsComplete)
-                    finished.Add(entity);
-                else
-                    em.SetComponentData(entity, construction);
+                var job = assignment.ValueRO;
+                if (job.ConstructionBuildingId == 0 || job.Arrived == 0)
+                    continue;
+                arrivedBySite.TryGetValue(job.ConstructionBuildingId, out var arrived);
+                arrivedBySite[job.ConstructionBuildingId] = arrived + 1;
             }
 
+            var finished = new NativeList<Entity>(8, state.WorldUpdateAllocator);
+            foreach (var (construction, building, entity) in
+                     SystemAPI.Query<RefRW<Construction>, RefRO<Building>>().WithEntityAccess())
+            {
+                if (!arrivedBySite.TryGetValue(building.ValueRO.Id, out var arrived) || arrived < 1)
+                    continue;
+
+                var site = construction.ValueRO;
+                site.Elapsed += dt;
+                construction.ValueRW = site;
+                if (site.IsComplete)
+                    finished.Add(entity);
+            }
+
+            var em = state.EntityManager;
             for (var i = 0; i < finished.Length; i++)
                 FinishSite(em, finished[i]);
-            finished.Dispose();
         }
 
         static void FinishSite(EntityManager em, Entity site)
@@ -65,7 +61,12 @@ namespace TheyWillDescend.Simulation.City
             if (!em.Exists(site) || !em.HasComponent<Construction>(site))
                 return;
 
+            var buildingId = em.HasComponent<Building>(site)
+                ? em.GetComponentData<Building>(site).Id
+                : 0;
             em.RemoveComponent<Construction>(site);
+            if (buildingId > 0)
+                ReleaseCrew(em, buildingId);
 #if UNITY_EDITOR
             if (em.HasComponent<Building>(site))
             {
@@ -73,6 +74,24 @@ namespace TheyWillDescend.Simulation.City
                 em.SetName(site, $"Building_{building.Id}");
             }
 #endif
+        }
+
+        static void ReleaseCrew(EntityManager em, int buildingId)
+        {
+            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<AgentAssignment>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                var job = assignments[i];
+                if (job.ConstructionBuildingId != buildingId)
+                    continue;
+                job.ConstructionBuildingId = 0;
+                job.Arrived = 0;
+                em.SetComponentData(entities[i], job);
+            }
+
+            assignments.Dispose();
         }
     }
 }

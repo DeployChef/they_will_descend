@@ -14,6 +14,7 @@ namespace TheyWillDescend.Simulation.City
         public int DepthRadialRings;
         public float ConstructionDuration;
         public int WorkplaceSlots;
+        public int ConstructionCrewSlots;
 
         public BuildingFootprint Footprint => new()
         {

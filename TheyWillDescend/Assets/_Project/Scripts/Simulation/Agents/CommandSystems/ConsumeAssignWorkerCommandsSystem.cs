@@ -85,11 +85,11 @@ namespace TheyWillDescend.Simulation.Agents
 
             if (!em.HasComponent<AgentAssignment>(agentEntity))
                 em.AddComponent<AgentAssignment>(agentEntity);
-            em.SetComponentData(agentEntity, new AgentAssignment
-            {
-                WorkplaceBuildingId = buildingId,
-                Arrived = arrived != 0 ? (byte)1 : (byte)0
-            });
+            var job = em.GetComponentData<AgentAssignment>(agentEntity);
+            job.WorkplaceBuildingId = buildingId;
+            if (!job.HasConstructionTask)
+                job.Arrived = arrived != 0 ? (byte)1 : (byte)0;
+            em.SetComponentData(agentEntity, job);
             return true;
         }
 

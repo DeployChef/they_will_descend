@@ -113,6 +113,7 @@ namespace TheyWillDescend.Authoring.City
                     WidthClusters = stamp.WidthClusters,
                     DepthRadialRings = stamp.DepthRadialRings,
                     ConstructionDuration = stamp.ConstructionDuration,
+                    ConstructionCrewSlots = stamp.ConstructionCrewSlots,
                     WorkplaceSlots = stamp.WorkplaceSlots
                 };
                 basePrototypes.Add(basePrototype);

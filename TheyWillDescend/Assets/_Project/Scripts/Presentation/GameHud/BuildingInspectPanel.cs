@@ -164,9 +164,20 @@ namespace TheyWillDescend.Presentation.GameHud
             if (constructing)
             {
                 var construction = em.GetComponentData<Construction>(entity);
+                CountConstructionCrew(em, building.Id, out var crewAssigned, out var crewArrived);
+                if (workers != null)
+                    workers.text = $"{construction.Normalized * 100f:0}%";
                 UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
-                    status.text = "Crew locked until the house stands.";
+                {
+                    if (crewArrived < 1)
+                        status.text = crewAssigned > 0
+                            ? "Crew walking to the site."
+                            : "Waiting for workers.";
+                    else
+                        status.text = $"{crewArrived} building.";
+                }
+
                 if (workFill != null)
                     workFill.fillAmount = construction.Normalized;
             }
@@ -342,6 +353,30 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             return idle;
+        }
+
+        static void CountConstructionCrew(
+            EntityManager em,
+            int buildingId,
+            out int assigned,
+            out int arrived)
+        {
+            assigned = 0;
+            arrived = 0;
+            if (buildingId <= 0)
+                return;
+
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<AgentAssignment>());
+            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                var job = assignments[i];
+                if (job.ConstructionBuildingId != buildingId)
+                    continue;
+                assigned++;
+                if (job.Arrived != 0)
+                    arrived++;
+            }
         }
 
         void OnMinus()

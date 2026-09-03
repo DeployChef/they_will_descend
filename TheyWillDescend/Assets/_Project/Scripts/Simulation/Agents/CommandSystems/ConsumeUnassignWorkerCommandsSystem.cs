@@ -55,7 +55,11 @@ namespace TheyWillDescend.Simulation.Agents
             {
                 if (assignments[i].WorkplaceBuildingId != buildingId)
                     continue;
-                em.SetComponentData(agentEntities[i], new AgentAssignment());
+                var job = assignments[i];
+                job.WorkplaceBuildingId = 0;
+                if (!job.HasConstructionTask)
+                    job.Arrived = 0;
+                em.SetComponentData(agentEntities[i], job);
                 removed = true;
                 break;
             }
