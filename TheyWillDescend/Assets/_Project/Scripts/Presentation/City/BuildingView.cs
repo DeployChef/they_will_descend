@@ -36,8 +36,6 @@ namespace TheyWillDescend.Presentation.City
         [Tooltip("Камера ниже этой высоты (Y) — ВСЕ иконки зданий скрыты разом. Одно значение для всех зданий")]
         [SerializeField] float uiHideBelowCameraHeight = 18f;
 
-        readonly Color _constructionFill = new(0.25f, 0.85f, 0.45f, 0.95f);
-        readonly Color _loadFill = new(0.95f, 0.72f, 0.18f, 0.95f);
         readonly List<MeshRenderer> _bodyRenderers = new(4);
         MaterialPropertyBlock _block;
 
@@ -118,29 +116,32 @@ namespace TheyWillDescend.Presentation.City
             var slots = em.HasComponent<BuildingType>(entity)
                 ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
                 : 0;
-            var showBar = constructing || slots > 0;
-            if (_worldUi.BarRoot != null)
-                _worldUi.BarRoot.SetActive(showBar);
 
-            var fill = _worldUi.Fill;
-            if (showBar && fill != null)
+            var workplace = em.HasComponent<Workplace>(entity)
+                ? em.GetComponentData<Workplace>(entity)
+                : default;
+
+            // Переключаем группы
+            if (_worldUi.ConstructionRoot != null)
+                _worldUi.ConstructionRoot.SetActive(constructing);
+            if (_worldUi.WorkerRoot != null)
+                _worldUi.WorkerRoot.SetActive(!constructing && slots > 0);
+
+            // Заполнение полосы строительства
+            var fill = constructing && _worldUi.ConstructionFill != null
+                ? _worldUi.ConstructionFill
+                : _worldUi.ConstructionFill;
+            if (constructing && fill != null)
             {
-                if (constructing)
-                {
-                    var construction = em.GetComponentData<Construction>(entity);
-                    fill.color = _constructionFill;
-                    fill.fillAmount = construction.Normalized;
-                }
-                else
-                {
-                    var workplace = em.HasComponent<Workplace>(entity)
-                        ? em.GetComponentData<Workplace>(entity)
-                        : default;
-                    fill.color = workplace.IsPaused
-                        ? new Color(0.45f, 0.45f, 0.48f, 0.9f)
-                        : _loadFill;
-                    fill.fillAmount = Workplace.Load01(workplace.AssignedCount, slots);
-                }
+                var construction = em.GetComponentData<Construction>(entity);
+                fill.fillAmount = construction.Normalized;
+            }
+
+            // Заполнение полосы рабочих
+            var workerFill = _worldUi.WorkerFill;
+            if (!constructing && workerFill != null && slots > 0)
+            {
+                workerFill.fillAmount = Workplace.Load01(workplace.AssignedCount, slots);
             }
 
             var roof = _worldUi.transform;
