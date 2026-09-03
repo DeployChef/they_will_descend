@@ -13,8 +13,8 @@ namespace TheyWillDescend.Main
     public sealed class Startup : MonoBehaviour
     {
         [Header("Temporary debug")]
-        [Tooltip("Skip PressAnyKey/MainMenu and load Game immediately. Turn OFF before shipping flow work.")]
-        [SerializeField] bool skipMenuToGameTemporarily;
+        [SerializeField] bool skipMenuToGameTemporarily = true;
+
 
         [SerializeField] GameAudio gameAudio;
         [SerializeField] GameInput gameInput;
@@ -62,6 +62,10 @@ namespace TheyWillDescend.Main
             _fsm = AppFlowFactory.Create(gameSession, gameAudio, gameInput);
 
             if (skipMenuToGameTemporarily)
+
+
+
+
             {
                 GameLog.Warning("TEMPORARY: skipMenuToGame — starting at LoadingGame (MainMenu not loaded).");
                 _fsm.Start(AppStateId.LoadingGame);

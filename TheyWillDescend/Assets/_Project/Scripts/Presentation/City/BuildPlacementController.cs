@@ -178,7 +178,7 @@ namespace TheyWillDescend.Presentation.City
 
         void PlaceBuilding()
         {
-            if (!SimCommands.TryPost(new PlaceBuildingCommand
+            if (!SimCommands.Request(new PlaceBuildingRequest
                 {
                     TypeId = _typeId,
                     WidthClusters = _footprint.WidthClusters,
@@ -186,6 +186,7 @@ namespace TheyWillDescend.Presentation.City
                     AnchorCluster = _anchorCluster,
                     AnchorRadial = _anchorRadial
                 }))
+
             {
                 GameLog.Error("PlaceBuilding: sim world not ready.");
                 return;

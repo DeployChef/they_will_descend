@@ -46,7 +46,8 @@ namespace TheyWillDescend.Simulation.Economy
             foreach (var (workplace, type, recipes) in
                      SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>, DynamicBuffer<BuildingRecipeLine>>()
                          .WithAll<Building>()
-                         .WithNone<Construction, Headquarters>())
+                         .WithNone<Construction>())
+
             {
                 if (workplace.ValueRO.IsPaused || workplace.ValueRO.WorkingCount <= 0)
                     continue;

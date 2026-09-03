@@ -25,7 +25,7 @@ namespace TheyWillDescend.Simulation.Agents
         {
             foreach (var workplace in SystemAPI.Query<RefRW<Workplace>>()
                          .WithAll<Building>()
-                         .WithNone<Construction, Headquarters>())
+                         .WithNone<Construction>())
             {
                 workplace.ValueRW.AssignedCount = 0;
                 workplace.ValueRW.WorkingCount = 0;
@@ -35,7 +35,7 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var (building, entity) in
                      SystemAPI.Query<RefRO<Building>>()
                          .WithAll<Workplace>()
-                         .WithNone<Construction, Headquarters>()
+                         .WithNone<Construction>()
                          .WithEntityAccess())
             {
                 houses.TryAdd(building.ValueRO.Id, entity);
@@ -44,15 +44,16 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var assignment in SystemAPI.Query<RefRO<AgentAssignment>>())
             {
                 var job = assignment.ValueRO;
-                if (job.WorkplaceBuildingId == 0 || job.HasConstructionTask)
+                if (job.WorkplaceBuildingId == 0)
                     continue;
                 if (!houses.TryGetValue(job.WorkplaceBuildingId, out var house))
                     continue;
                 var workplace = SystemAPI.GetComponentRW<Workplace>(house);
                 workplace.ValueRW.AssignedCount++;
-                if (job.Arrived != 0)
+                if (job.Arrived != 0 && !job.HasConstructionTask)
                     workplace.ValueRW.WorkingCount++;
             }
+
         }
     }
 }

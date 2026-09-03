@@ -87,6 +87,8 @@ namespace TheyWillDescend.Shell.States
         {
             if (_busy)
                 return;
+            if (ResearchWidget.Current != null && ResearchWidget.Current.TryHandleEscape())
+                return;
             if (BuildWidget.Current != null && BuildWidget.Current.TryHandleEscape())
                 return;
 
@@ -164,7 +166,7 @@ namespace TheyWillDescend.Shell.States
                 await _session.RunWithLoadingAsync(
                     async ct =>
                     {
-                        if (!RunSessionSnapshot.BeginApply(snapshot))
+                        if (!RunSessionSnapshot.BeginApply(snapshot, _session.TechCatalogs))
                             return;
                         if (!await _session.WaitForPhaseAsync(SimSessionPhase.Ready, ct))
                             return;

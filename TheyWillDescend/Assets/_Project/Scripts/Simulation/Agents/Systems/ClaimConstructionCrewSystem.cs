@@ -38,8 +38,8 @@ namespace TheyWillDescend.Simulation.Agents
             var sites = new NativeList<Site>(8, state.WorldUpdateAllocator);
             foreach (var (building, type, transform) in
                      SystemAPI.Query<RefRO<Building>, RefRO<BuildingType>, RefRO<LocalTransform>>()
-                         .WithAll<Construction>()
-                         .WithNone<Headquarters>())
+                         .WithAll<Construction>())
+
             {
                 sites.Add(new Site
                 {

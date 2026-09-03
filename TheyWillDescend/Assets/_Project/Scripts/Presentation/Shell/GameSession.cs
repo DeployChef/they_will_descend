@@ -8,6 +8,7 @@ using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
 using UnityEngine;
 
@@ -36,6 +37,14 @@ namespace TheyWillDescend.Shell
         [Header("Run kits")]
         [SerializeField] ScenarioDefinition defaultScenario;
         [SerializeField] ScenarioDefinition debugScenario;
+        [SerializeField] TechCatalogAsset[] techCatalogs;
+
+        [Header("Catalogs & Rules")]
+        [SerializeField] BuildingCatalogAsset buildingCatalog;
+        [SerializeField] ResourceCatalogAsset resourceCatalog;
+        [SerializeField] SimRulesAsset simRules;
+        [SerializeField] TimelineCatalogAsset timelineCatalog;
+
 
         readonly SceneLoader _scenes = new();
         CancellationTokenSource _runCts;
@@ -45,6 +54,8 @@ namespace TheyWillDescend.Shell
         bool _loadSlot;
 
         public bool IsActive { get; private set; }
+
+        public TechCatalogAsset[] TechCatalogs => techCatalogs;
 
         public void SetRunKind(RunKind kind)
         {
@@ -113,6 +124,17 @@ namespace TheyWillDescend.Shell
                 return;
             }
 
+            EnsureDefaultAssets();
+            if (SimWorld.TryGetEntityManager(out var em))
+            {
+                SimulationBootstrap.InitializeRun(
+                    em,
+                    buildingCatalog,
+                    resourceCatalog,
+                    simRules,
+                    timelineCatalog);
+            }
+
             if (!await WaitUntilSimulationReady(ct))
             {
                 GameLog.Error("GameSession.Start failed — simulation not ready.");
@@ -120,10 +142,11 @@ namespace TheyWillDescend.Shell
                 return;
             }
 
+
             var setupBegan = false;
             if (_loadSlot)
             {
-                setupBegan = RunSessionSnapshot.BeginApply(snapshot);
+                setupBegan = RunSessionSnapshot.BeginApply(snapshot, techCatalogs);
             }
             else
             {
@@ -144,7 +167,7 @@ namespace TheyWillDescend.Shell
                     $"Run kit: {(debug ? "Debug" : "Normal")} " +
                     $"scenario={(scenario != null ? scenario.name : "null")} " +
                     $"difficulty={(difficulty != null ? difficulty.name : "stamp defaults")}.");
-                setupBegan = RunPublisher.BeginRun(scenario, difficulty);
+                setupBegan = RunPublisher.BeginRun(scenario, difficulty, techCatalogs);
             }
 
             if (!setupBegan || !await WaitForPhaseAsync(SimSessionPhase.Ready, ct))
@@ -317,5 +340,22 @@ namespace TheyWillDescend.Shell
             return SimWorld.TryGet(out var em, out var session)
                 && em.GetComponentData<SimSession>(session).Phase == phase;
         }
+
+        void Awake() => EnsureDefaultAssets();
+
+        void EnsureDefaultAssets()
+        {
+#if UNITY_EDITOR
+            if (buildingCatalog == null)
+                buildingCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingCatalogAsset>("Assets/_Project/Content/Buildings/DefaultBuildingCatalog.asset");
+            if (resourceCatalog == null)
+                resourceCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<ResourceCatalogAsset>("Assets/_Project/Content/Economy/DefaultResourceCatalog.asset");
+            if (simRules == null)
+                simRules = UnityEditor.AssetDatabase.LoadAssetAtPath<SimRulesAsset>("Assets/_Project/Content/Rules/DefaultSimRules.asset");
+            if (timelineCatalog == null)
+                timelineCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<TimelineCatalogAsset>("Assets/_Project/Content/Timeline/DefaultTimeline.asset");
+#endif
+        }
     }
 }
+

@@ -24,14 +24,20 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] HqOverlay hqOverlayPrefab;
+        [SerializeField] GameObject hqVisualPrefab;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+
 
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
+        readonly List<int> _stale = new();
         Material _placedZoneMaterial;
         Material _selectedZoneMaterial;
         Color _selectedZoneColor = new(0.95f, 0.82f, 0.2f, 0.55f);
+        PlacedView _hqView;
+        EntityQuery _buildingQuery;
+        Camera _cam;
 
         sealed class PlacedView
         {
@@ -59,17 +65,25 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             var em = world.EntityManager;
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
-            Sync(em, query);
+            if (_buildingQuery == default)
+                _buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            Sync(em, _buildingQuery);
         }
+
 
         public void ClearViews()
         {
             foreach (var view in _views.Values)
                 DestroyPlaced(view);
             _views.Clear();
+            if (_hqView != null)
+            {
+                DestroyPlaced(_hqView);
+                _hqView = null;
+            }
             selection?.Deselect();
         }
+
 
         void OnDisable()
         {
@@ -95,19 +109,41 @@ namespace TheyWillDescend.Presentation.City
             _selectedZoneMaterial = null;
         }
 
+        void OnDestroy()
+        {
+            _buildingQuery = default;
+            _cam = null;
+        }
+
+
         void Sync(EntityManager em, EntityQuery query)
         {
+            try
+            {
+                SyncHqView(em);
+            }
+            catch (System.Exception ex)
+            {
+                GameLog.Error($"BuildingViewBoard: SyncHqView error: {ex.Message}");
+            }
+
+
             if (query.IsEmptyIgnoreFilter)
             {
                 if (_views.Count > 0)
-                    ClearViews();
+                {
+                    foreach (var view in _views.Values)
+                        DestroyPlaced(view);
+                    _views.Clear();
+                }
                 return;
             }
 
             var entities = query.ToEntityArray(Allocator.Temp);
             var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
             _seen.Clear();
-            var cam = Camera.main;
+            if (_cam == null)
+                _cam = Camera.main;
             for (var i = 0; i < buildings.Length; i++)
             {
                 var building = buildings[i];
@@ -116,16 +152,15 @@ namespace TheyWillDescend.Presentation.City
                 _seen.Add(building.Id);
                 if (!_views.TryGetValue(building.Id, out var placed) || placed?.Root == null)
                 {
-                    placed = em.HasComponent<Headquarters>(entity)
-                        ? CreateHqView(building, position)
-                        : CreateHouseView(em, entity, building, position);
+                    placed = CreateHouseView(em, entity, building, position);
                 }
+
 
                 if (placed == null)
                     continue;
 
                 if (placed.View != null)
-                    placed.View.Sync(em, entity, cam);
+                    placed.View.Sync(em, entity, _cam);
                 else
                     placed.Root.transform.position = (Vector3)position;
 
@@ -136,16 +171,17 @@ namespace TheyWillDescend.Presentation.City
 
             if (_views.Count != _seen.Count)
             {
-                var stale = new List<int>();
+                _stale.Clear();
                 foreach (var pair in _views)
                 {
                     if (!_seen.Contains(pair.Key))
-                        stale.Add(pair.Key);
+                        _stale.Add(pair.Key);
                 }
 
-                for (var i = 0; i < stale.Count; i++)
-                    DestroyView(stale[i]);
+                for (var i = 0; i < _stale.Count; i++)
+                    DestroyView(_stale[i]);
             }
+
 
             entities.Dispose();
             buildings.Dispose();
@@ -160,7 +196,35 @@ namespace TheyWillDescend.Presentation.City
             return default;
         }
 
-        PlacedView CreateHqView(in Building building, float3 position)
+        void SyncHqView(EntityManager em)
+        {
+            using var hqQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Headquarters>());
+            if (hqQuery.IsEmptyIgnoreFilter)
+            {
+                if (_hqView != null)
+                {
+                    DestroyPlaced(_hqView);
+                    _hqView = null;
+                }
+                return;
+            }
+
+            var hqEntity = hqQuery.GetSingletonEntity();
+            var position = PositionOf(em, hqEntity);
+
+            if (_hqView == null || _hqView.Root == null)
+                _hqView = CreateHqView(position);
+
+            if (_hqView != null)
+            {
+                _hqView.Root.transform.position = (Vector3)position;
+                var selected = selection != null && selection.SelectedBuildingId == 1;
+                if (_hqView.ZoneRenderer != null)
+                    _hqView.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
+            }
+        }
+
+        PlacedView CreateHqView(float3 position)
         {
             EnsureReady();
             if (hqOverlayPrefab == null)
@@ -171,10 +235,46 @@ namespace TheyWillDescend.Presentation.City
 
             EnsureMaterial();
             var overlay = Object.Instantiate(hqOverlayPrefab, _root);
-            overlay.name = $"Headquarters_{building.Id}";
+            overlay.name = "Headquarters";
             overlay.transform.position = (Vector3)position;
             if (overlay.IdTag != null)
-                overlay.IdTag.Id = building.Id;
+                overlay.IdTag.Id = 1;
+
+            var visualPrefab = hqVisualPrefab;
+#if UNITY_EDITOR
+            if (visualPrefab == null)
+            {
+                visualPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/Packages/RPGPP_LT/Prefabs/Buildings/Bld_closed/rpgpp_lt_building_03.prefab");
+            }
+#endif
+            if (visualPrefab != null)
+            {
+                try
+                {
+                    var visual = Object.Instantiate(visualPrefab, overlay.transform);
+                    visual.name = "Visual";
+                    visual.transform.localPosition = Vector3.zero;
+                    visual.transform.localRotation = Quaternion.identity;
+                    visual.transform.localScale = Vector3.one;
+
+                    var meshFilter = visual.GetComponentInChildren<MeshFilter>();
+                    if (meshFilter != null && meshFilter.sharedMesh != null)
+                    {
+                        var collider = visual.GetComponent<MeshCollider>();
+                        if (collider == null)
+                            collider = visual.AddComponent<MeshCollider>();
+                        collider.sharedMesh = meshFilter.sharedMesh;
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    GameLog.Error($"BuildingViewBoard: failed to instantiate hq visual: {ex.Message}");
+                }
+            }
+
+
+
 
             var plaza = PlazaRadius();
             if (overlay.PlazaFilter != null)
@@ -196,15 +296,14 @@ namespace TheyWillDescend.Presentation.City
                 overlay.ClickProxy.direction = 1;
             }
 
-            var placed = new PlacedView
+            return new PlacedView
             {
                 Root = overlay.gameObject,
                 Overlay = overlay.gameObject,
                 ZoneRenderer = overlay.PlazaRenderer
             };
-            _views[building.Id] = placed;
-            return placed;
         }
+
 
         static Mesh BuildAnnulusMesh(float inner, float outer, int segments, float y)
         {
@@ -359,8 +458,12 @@ namespace TheyWillDescend.Presentation.City
             if (go == null)
                 return;
             go.SetActive(false);
-            Object.DestroyImmediate(go);
+            if (Application.isPlaying)
+                Object.Destroy(go);
+            else
+                Object.DestroyImmediate(go);
         }
+
 
         void EnsureMaterial()
         {

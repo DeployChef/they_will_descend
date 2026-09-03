@@ -89,14 +89,16 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Show(int id)
         {
-            if (!SimWorld.TryGet(out var em, out var bag)
-                || !TryFindHq(em, id, out var entity)
+            if (id != 1
+                || !SimWorld.TryGet(out var em, out var bag)
+                || !TryFindHq(em, out var entity)
                 || !em.HasBuffer<PyramidFeedLine>(entity)
                 || !em.HasBuffer<ResourceInfo>(bag))
             {
                 Hide();
                 return;
             }
+
 
             EnsureUi();
             if (card != null)
@@ -443,23 +445,15 @@ namespace TheyWillDescend.Presentation.GameHud
             return resourceId.ToString();
         }
 
-        static bool TryFindHq(EntityManager em, int id, out Entity entity)
+        static bool TryFindHq(EntityManager em, out Entity entity)
         {
             entity = Entity.Null;
-            using var query = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<Headquarters>());
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            using var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
-            for (var i = 0; i < buildings.Length; i++)
-            {
-                if (buildings[i].Id != id)
-                    continue;
-                entity = entities[i];
-                return true;
-            }
-
-            return false;
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Headquarters>());
+            if (query.IsEmptyIgnoreFilter)
+                return false;
+            entity = query.GetSingletonEntity();
+            return true;
         }
+
     }
 }

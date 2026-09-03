@@ -15,6 +15,8 @@ namespace TheyWillDescend.Simulation.City
         public float ConstructionDuration;
         public int WorkplaceSlots;
         public int ConstructionCrewSlots;
+        public byte ResearchWorkplace;
+        public byte RequiresUnlock;
 
         public BuildingFootprint Footprint => new()
         {
@@ -45,6 +47,8 @@ namespace TheyWillDescend.Simulation.City
         public float ConstructionDuration;
         public int WorkplaceSlots;
         public int ConstructionCrewSlots;
+        public byte ResearchWorkplace;
+        public byte RequiresUnlock;
 
         public BuildingPrototype ToResolved() => new()
         {
@@ -53,7 +57,9 @@ namespace TheyWillDescend.Simulation.City
             DepthRadialRings = DepthRadialRings,
             ConstructionDuration = ConstructionDuration,
             WorkplaceSlots = WorkplaceSlots,
-            ConstructionCrewSlots = ConstructionCrew.ResolveSlots(ConstructionCrewSlots)
+            ConstructionCrewSlots = ConstructionCrew.ResolveSlots(ConstructionCrewSlots),
+            ResearchWorkplace = ResearchWorkplace,
+            RequiresUnlock = RequiresUnlock
         };
     }
 

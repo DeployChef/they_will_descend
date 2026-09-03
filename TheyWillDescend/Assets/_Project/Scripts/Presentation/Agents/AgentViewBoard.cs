@@ -20,6 +20,9 @@ namespace TheyWillDescend.Presentation.Agents
 
         readonly Dictionary<int, AgentView> _views = new();
         readonly HashSet<int> _seen = new();
+        readonly List<int> _stale = new();
+        readonly Dictionary<GameObject, Stack<AgentView>> _pool = new();
+        EntityQuery _agentQuery;
 
         void LateUpdate() => Pump();
 
@@ -29,13 +32,17 @@ namespace TheyWillDescend.Presentation.Agents
             if (world == null || !world.IsCreated)
                 return;
 
-            using var query = world.EntityManager.CreateEntityQuery(
-                ComponentType.ReadOnly<AgentId>(),
-                ComponentType.ReadOnly<AgentType>(),
-                ComponentType.ReadOnly<AgentLocomotion>(),
-                ComponentType.ReadOnly<AgentAssignment>(),
-                ComponentType.ReadOnly<LocalTransform>());
-            Sync(query);
+            var em = world.EntityManager;
+            if (_agentQuery == default)
+            {
+                _agentQuery = em.CreateEntityQuery(
+                    ComponentType.ReadOnly<AgentId>(),
+                    ComponentType.ReadOnly<AgentType>(),
+                    ComponentType.ReadOnly<AgentLocomotion>(),
+                    ComponentType.ReadOnly<AgentAssignment>(),
+                    ComponentType.ReadOnly<LocalTransform>());
+            }
+            Sync(_agentQuery);
         }
 
         void OnDisable()
@@ -43,19 +50,54 @@ namespace TheyWillDescend.Presentation.Agents
             ClearViews();
         }
 
+        void OnDestroy()
+        {
+            _agentQuery = default;
+            ClearPool();
+        }
+
+        void ClearPool()
+        {
+            foreach (var stack in _pool.Values)
+            {
+                while (stack.Count > 0)
+                {
+                    var view = stack.Pop();
+                    if (view != null)
+                        DestroyGo(view.gameObject);
+                }
+            }
+            _pool.Clear();
+        }
+
         public void ClearViews()
         {
-            foreach (var view in _views.Values)
+            foreach (var pair in _views)
             {
+                var view = pair.Value;
                 if (view == null)
                     continue;
-                var go = view.gameObject;
-                go.SetActive(false);
-                Object.DestroyImmediate(go);
+
+                view.gameObject.SetActive(false);
+                var prefab = ResolvePrefab(AgentKind.Worker, pair.Key);
+                if (prefab != null)
+                {
+                    if (!_pool.TryGetValue(prefab, out var stack))
+                    {
+                        stack = new Stack<AgentView>();
+                        _pool[prefab] = stack;
+                    }
+                    stack.Push(view);
+                }
+                else
+                {
+                    DestroyGo(view.gameObject);
+                }
             }
 
             _views.Clear();
         }
+
 
         void Sync(EntityQuery query)
         {
@@ -92,15 +134,15 @@ namespace TheyWillDescend.Presentation.Agents
 
             if (_views.Count != _seen.Count)
             {
-                var stale = new List<int>();
+                _stale.Clear();
                 foreach (var pair in _views)
                 {
                     if (!_seen.Contains(pair.Key))
-                        stale.Add(pair.Key);
+                        _stale.Add(pair.Key);
                 }
 
-                for (var i = 0; i < stale.Count; i++)
-                    DestroyView(stale[i]);
+                for (var i = 0; i < _stale.Count; i++)
+                    DestroyView(_stale[i]);
             }
 
             ids.Dispose();
@@ -119,18 +161,38 @@ namespace TheyWillDescend.Presentation.Agents
                 return null;
             }
 
-            var instance = Instantiate(
-                prefab,
-                (Vector3)transform.Position,
-                (Quaternion)transform.Rotation);
-            instance.name = $"{prefab.name}_{agentId}";
-            if (spawnParent != null)
-                instance.transform.SetParent(spawnParent, true);
+            AgentView view = null;
+            if (_pool.TryGetValue(prefab, out var stack) && stack.Count > 0)
+            {
+                while (stack.Count > 0 && view == null)
+                {
+                    view = stack.Pop();
+                }
 
-            var view = instance.GetComponent<AgentView>();
+                if (view != null)
+                {
+                    view.gameObject.name = $"{prefab.name}_{agentId}";
+                    view.transform.SetPositionAndRotation((Vector3)transform.Position, (Quaternion)transform.Rotation);
+                    view.gameObject.SetActive(true);
+                }
+            }
+
             if (view == null)
-                view = instance.AddComponent<AgentView>();
-            view.Bind();
+            {
+                var instance = Instantiate(
+                    prefab,
+                    (Vector3)transform.Position,
+                    (Quaternion)transform.Rotation);
+                instance.name = $"{prefab.name}_{agentId}";
+                if (spawnParent != null)
+                    instance.transform.SetParent(spawnParent, true);
+
+                view = instance.GetComponent<AgentView>();
+                if (view == null)
+                    view = instance.AddComponent<AgentView>();
+                view.Bind();
+            }
+
             _views[agentId] = view;
             return view;
         }
@@ -142,10 +204,36 @@ namespace TheyWillDescend.Presentation.Agents
             _views.Remove(agentId);
             if (view == null)
                 return;
-            var go = view.gameObject;
-            go.SetActive(false);
-            Object.DestroyImmediate(go);
+
+            view.gameObject.SetActive(false);
+            var prefab = ResolvePrefab(AgentKind.Worker, agentId);
+            if (prefab != null)
+            {
+                if (!_pool.TryGetValue(prefab, out var stack))
+                {
+                    stack = new Stack<AgentView>();
+                    _pool[prefab] = stack;
+                }
+                stack.Push(view);
+            }
+            else
+            {
+                DestroyGo(view.gameObject);
+            }
         }
+
+
+        static void DestroyGo(GameObject go)
+        {
+            if (go == null)
+                return;
+            go.SetActive(false);
+            if (Application.isPlaying)
+                Object.Destroy(go);
+            else
+                Object.DestroyImmediate(go);
+        }
+
 
         GameObject ResolvePrefab(AgentKind kind, int agentId)
         {

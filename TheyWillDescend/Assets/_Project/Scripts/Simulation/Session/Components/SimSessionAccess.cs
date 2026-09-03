@@ -1,6 +1,7 @@
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Gods;
+using TheyWillDescend.Simulation.Research;
 using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Session
@@ -31,8 +32,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.HasBuffer<DespawnAllAgentsCommand>(session)
                 && em.HasBuffer<DespawnAllBuildingsCommand>(session)
                 && em.HasBuffer<SpawnAgentCommand>(session)
-                && em.HasBuffer<PlaceBuildingCommand>(session)
                 && em.HasBuffer<PendingScenarioPlace>(session)
+
                 && em.HasBuffer<OccupiedCell>(session)
                 && em.HasBuffer<BaseBuildingPrototype>(session)
                 && em.HasBuffer<BaseBuildingCatalogCost>(session)
@@ -41,10 +42,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.HasBuffer<BuildingCatalogCost>(session)
                 && em.HasBuffer<BuildingCatalogRecipe>(session)
                 && em.HasBuffer<BuildingRejectedEvent>(session)
-                && em.HasBuffer<AssignWorkerCommand>(session)
-                && em.HasBuffer<UnassignWorkerCommand>(session)
-                && em.HasBuffer<SetWorkplacePausedCommand>(session)
                 && em.HasBuffer<SetPyramidFeedCommand>(session);
+
         }
 
         public static bool AreLifecycleQueuesDrained(EntityManager em, Entity session)
@@ -57,12 +56,11 @@ namespace TheyWillDescend.Simulation.Session
                 && em.GetBuffer<DespawnAllAgentsCommand>(session).Length == 0
                 && em.GetBuffer<DespawnAllBuildingsCommand>(session).Length == 0
                 && em.GetBuffer<SpawnAgentCommand>(session).Length == 0
-                && em.GetBuffer<PlaceBuildingCommand>(session).Length == 0
                 && em.GetBuffer<PendingScenarioPlace>(session).Length == 0
-                && em.GetBuffer<AssignWorkerCommand>(session).Length == 0
-                && em.GetBuffer<UnassignWorkerCommand>(session).Length == 0
-                && em.GetBuffer<SetWorkplacePausedCommand>(session).Length == 0
-                && em.GetBuffer<SetPyramidFeedCommand>(session).Length == 0;
+
+                && em.GetBuffer<SetPyramidFeedCommand>(session).Length == 0
+
+                && ResearchWorld.CommandsDrained(em);
         }
     }
 }

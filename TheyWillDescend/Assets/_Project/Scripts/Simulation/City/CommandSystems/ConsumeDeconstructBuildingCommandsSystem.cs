@@ -6,8 +6,6 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(ConsumeUnassignWorkerCommandsSystem))]
-    [UpdateBefore(typeof(TheyWillDescend.Simulation.Agents.ConsumeSetWorkplacePausedCommandsSystem))]
     public partial struct ConsumeDeconstructBuildingCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -15,38 +13,61 @@ namespace TheyWillDescend.Simulation.City
             state.RequireForUpdate<SimSession>();
         }
 
-        public void OnUpdate(ref SystemState state) => Run(state.EntityManager);
-
-        public static void Run(EntityManager em)
+        public void OnUpdate(ref SystemState state)
         {
-            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<DeconstructBuildingCommand>(session))
+            var em = state.EntityManager;
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
-            var commands = em.GetBuffer<DeconstructBuildingCommand>(session);
-            if (commands.Length == 0)
+            var query = SystemAPI.QueryBuilder().WithAll<DemolishBuildingRequest>().Build();
+            if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var copy = commands.ToNativeArray(Allocator.Temp);
-            commands.Clear();
             var lifecycle = em.GetComponentData<SimSession>(session);
-            for (var i = 0; i < copy.Length; i++)
-            {
-                if (!lifecycle.IsReady)
-                    continue;
-                Apply(em, copy[i].BuildingId);
-            }
+            using var requestEntities = query.ToEntityArray(Allocator.Temp);
+            using var requests = query.ToComponentDataArray<DemolishBuildingRequest>(Allocator.Temp);
 
-            copy.Dispose();
+            for (var i = 0; i < requests.Length; i++)
+            {
+                if (lifecycle.IsReady)
+                {
+                    Apply(em, requests[i].BuildingId);
+                }
+                em.DestroyEntity(requestEntities[i]);
+            }
         }
+
+
 
         static void Apply(EntityManager em, int buildingId)
         {
             if (buildingId <= 0 || !TryGetBuilding(em, buildingId, out var entity))
                 return;
-            if (em.HasComponent<Headquarters>(entity))
-                return;
 
-            ConsumeUnassignWorkerCommandsSystem.UnassignAll(em, buildingId);
+            if (em.HasComponent<Workplace>(entity))
+            {
+                var wp = em.GetComponentData<Workplace>(entity);
+                wp.DesiredWorkers = 0;
+                wp.Paused = 1;
+                wp.AssignedCount = 0;
+                wp.WorkingCount = 0;
+                em.SetComponentData(entity, wp);
+            }
+
+            using var agentsQuery = em.CreateEntityQuery(ComponentType.ReadWrite<AgentAssignment>());
+            using var agentEntities = agentsQuery.ToEntityArray(Allocator.Temp);
+            var assignments = agentsQuery.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                if (assignments[i].WorkplaceBuildingId != buildingId)
+                    continue;
+                var job = assignments[i];
+                job.WorkplaceBuildingId = 0;
+                if (!job.HasConstructionTask)
+                    job.Arrived = 0;
+                em.SetComponentData(agentEntities[i], job);
+            }
+            assignments.Dispose();
 
             if (em.HasComponent<Construction>(entity))
             {

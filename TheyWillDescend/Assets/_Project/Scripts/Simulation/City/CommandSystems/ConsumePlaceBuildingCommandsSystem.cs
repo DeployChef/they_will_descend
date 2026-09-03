@@ -1,5 +1,6 @@
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
@@ -10,7 +11,6 @@ namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumeSpawnAgentCommandsSystem))]
-    [UpdateBefore(typeof(ConsumeAssignWorkerCommandsSystem))]
     public partial struct ConsumePlaceBuildingCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -21,17 +21,13 @@ namespace TheyWillDescend.Simulation.City
 
         public void OnUpdate(ref SystemState state)
         {
-            Run(state.EntityManager);
-        }
-
-        public static void Run(EntityManager em)
-        {
+            var em = state.EntityManager;
             if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
             var grid = em.GetComponentData<CityGrid>(session);
             DrainPendingScenario(em, session, ref grid);
-            DrainCommands(em, session, ref grid);
+            DrainRequests(ref state, em, session, ref grid);
             em.SetComponentData(session, grid);
         }
 
@@ -53,60 +49,73 @@ namespace TheyWillDescend.Simulation.City
             pending.Clear();
             for (var i = 0; i < copy.Length; i++)
             {
-                var catalog = em.GetBuffer<BuildingPrototype>(session);
                 var place = copy[i];
-                Place(em, session, ref grid, catalog, new PlaceBuildingCommand
+                Place(em, session, ref grid, new PlaceBuildingRequest
                 {
                     TypeId = place.TypeId,
                     AnchorCluster = place.Cluster,
                     AnchorRadial = place.Radial,
-                    InstantComplete = 1
+                    InstantComplete = 1,
+                    Source = PlaceBuildingCommandSource.Setup
                 });
             }
 
             copy.Dispose();
         }
 
-        static void DrainCommands(EntityManager em, Entity session, ref CityGrid grid)
+        void DrainRequests(ref SystemState state, EntityManager em, Entity session, ref CityGrid grid)
         {
-            if (!em.HasBuffer<PlaceBuildingCommand>(session))
-                return;
-
-            var commands = em.GetBuffer<PlaceBuildingCommand>(session);
-            if (commands.Length == 0)
+            var query = SystemAPI.QueryBuilder().WithAll<PlaceBuildingRequest>().Build();
+            if (query.IsEmptyIgnoreFilter)
                 return;
 
             if (!em.HasBuffer<BuildingPrototype>(session))
                 return;
 
-            var copy = commands.ToNativeArray(Allocator.Temp);
-            commands.Clear();
             var lifecycle = em.GetComponentData<SimSession>(session);
-            for (var i = 0; i < copy.Length; i++)
-            {
-                var sourceAllowed = lifecycle.IsReady
-                    ? copy[i].Source == PlaceBuildingCommandSource.Gameplay
-                    : lifecycle.AcceptsSetupCommands
-                        && copy[i].Source == PlaceBuildingCommandSource.SnapshotRestore;
-                if (!sourceAllowed)
-                    continue;
+            using var requestEntities = query.ToEntityArray(Allocator.Temp);
+            using var requests = query.ToComponentDataArray<PlaceBuildingRequest>(Allocator.Temp);
 
-                var catalog = em.GetBuffer<BuildingPrototype>(session);
-                Place(em, session, ref grid, catalog, copy[i]);
+            for (var i = 0; i < requests.Length; i++)
+            {
+                var request = requests[i];
+                var sourceAllowed = lifecycle.IsReady
+                    ? request.Source == PlaceBuildingCommandSource.Gameplay
+                    : lifecycle.AcceptsSetupCommands
+                        && request.Source == PlaceBuildingCommandSource.SnapshotRestore;
+
+                if (sourceAllowed)
+                {
+                    Place(em, session, ref grid, in request);
+                }
+
+                em.DestroyEntity(requestEntities[i]);
             }
-            copy.Dispose();
         }
+
 
         static void Place(
             EntityManager em,
             Entity session,
             ref CityGrid grid,
-            DynamicBuffer<BuildingPrototype> catalog,
-            in PlaceBuildingCommand command)
+            in PlaceBuildingRequest command)
         {
+            if (!em.HasBuffer<BuildingPrototype>(session))
+                return;
+
+            var catalog = em.GetBuffer<BuildingPrototype>(session);
             if (!BuildingCatalog.TryResolve(catalog, command.TypeId, out var spec))
             {
                 Reject(em, session, command, BuildingRejectedEvent.UnknownType);
+                return;
+            }
+
+
+            if (spec.RequiresUnlock != 0
+                && command.Source == PlaceBuildingCommandSource.Gameplay
+                && !ResearchRules.IsBuildingUnlocked(em, spec.TypeId))
+            {
+                Reject(em, session, command, BuildingRejectedEvent.Locked);
                 return;
             }
 
@@ -177,7 +186,13 @@ namespace TheyWillDescend.Simulation.City
                     construction = site;
             }
 
-            SpawnHouse(em, session, spec, building, transform, construction);
+            var desired = command.Source == PlaceBuildingCommandSource.SnapshotRestore
+                ? command.DesiredWorkers
+                : 0;
+            var paused = command.Source == PlaceBuildingCommandSource.SnapshotRestore
+                ? command.Paused
+                : (byte)0;
+            SpawnHouse(em, session, spec, building, transform, construction, desired, paused);
         }
 
         public static void SpawnHouse(
@@ -186,13 +201,27 @@ namespace TheyWillDescend.Simulation.City
             in BuildingPrototype spec,
             in Building building,
             LocalTransform transform,
-            Construction? construction)
+            Construction? construction,
+            int desiredWorkers = 0,
+            byte paused = 0)
         {
             var entity = em.CreateEntity();
             em.AddComponentData(entity, building);
             em.AddComponentData(entity, spec.ToBuildingType());
             if (spec.WorkplaceSlots > 0)
-                em.AddComponentData(entity, new Workplace());
+            {
+                em.AddComponentData(entity, new Workplace
+                {
+                    DesiredWorkers = desiredWorkers,
+                    Paused = paused
+                });
+            }
+
+
+
+
+            if (spec.ResearchWorkplace != 0)
+                em.AddComponentData(entity, new ResearchWorkplace());
             CopyRecipes(em, session, spec.TypeId, entity);
             SimEntityPose.Apply(em, entity, transform);
             if (construction.HasValue)
@@ -244,7 +273,7 @@ namespace TheyWillDescend.Simulation.City
             EntityManager em,
             Entity session,
             in FixedString64Bytes typeId,
-            in PlaceBuildingCommand command)
+            in PlaceBuildingRequest command)
         {
             if (command.InstantComplete != 0 || command.BuildingId > 0)
                 return true;
@@ -263,7 +292,8 @@ namespace TheyWillDescend.Simulation.City
             return true;
         }
 
-        static void Reject(EntityManager em, Entity session, in PlaceBuildingCommand command, byte reason)
+        static void Reject(EntityManager em, Entity session, in PlaceBuildingRequest command, byte reason)
+
         {
             em.GetBuffer<BuildingRejectedEvent>(session).Add(new BuildingRejectedEvent
             {

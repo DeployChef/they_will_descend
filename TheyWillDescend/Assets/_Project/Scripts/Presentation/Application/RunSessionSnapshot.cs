@@ -1,10 +1,13 @@
+using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
+
 using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Gods;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using TheyWillDescend.Shell;
@@ -30,7 +33,7 @@ namespace TheyWillDescend.App
 
             var control = em.GetComponentData<SimControl>(bag);
             snapshot.speed = control.Speed;
-            snapshot.playerPaused = control.PlayerPaused != 0;
+            snapshot.playerPaused = control.TimePaused != 0;
 
             using var timeQuery = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
             if (!timeQuery.IsEmptyIgnoreFilter)
@@ -107,9 +110,8 @@ namespace TheyWillDescend.App
             assignments.Dispose();
             plazas.Dispose();
 
-            using var buildingQuery = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.Exclude<Headquarters>());
+            using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+
             var buildingEntities = buildingQuery.ToEntityArray(Allocator.Temp);
             var buildings = buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
             snapshot.buildings = new BuildingSnapshot[buildings.Length];
@@ -128,7 +130,12 @@ namespace TheyWillDescend.App
                     built = 1
                 };
                 if (em.HasComponent<Workplace>(buildingEntities[i]))
-                    record.paused = em.GetComponentData<Workplace>(buildingEntities[i]).Paused;
+                {
+                    var wp = em.GetComponentData<Workplace>(buildingEntities[i]);
+                    record.paused = wp.Paused;
+                    record.desiredWorkers = wp.DesiredWorkers;
+                }
+
                 if (em.HasComponent<Construction>(buildingEntities[i]))
                 {
                     var construction = em.GetComponentData<Construction>(buildingEntities[i]);
@@ -145,12 +152,13 @@ namespace TheyWillDescend.App
             buildingEntities.Dispose();
             buildings.Dispose();
             CaptureGods(em, bag, snapshot);
+            CaptureResearch(em, bag, snapshot);
             GameLog.Info(
                 $"Captured snapshot: day {snapshot.day}, agents {snapshot.agents.Length}, buildings {snapshot.buildings.Length} ({constructing} constructing).");
             return snapshot;
         }
 
-        public static bool BeginApply(RunSnapshot snapshot)
+        public static bool BeginApply(RunSnapshot snapshot, TechCatalogAsset[] techCatalogs)
         {
             if (snapshot == null)
                 return false;
@@ -174,6 +182,8 @@ namespace TheyWillDescend.App
             var control = em.GetComponentData<SimControl>(session);
             control.Mode = SimRunMode.Off;
             control.SessionInGame = 0;
+            control.TimePaused = 0;
+            control.PlayerPaused = 0;
             control.BuildLocked = 0;
             control.DeltaTime = 0f;
             em.SetComponentData(session, control);
@@ -191,7 +201,7 @@ namespace TheyWillDescend.App
                 for (var i = 0; i < snapshot.buildings.Length; i++)
                 {
                     var record = snapshot.buildings[i];
-                    SimCommands.TryPost(new PlaceBuildingCommand
+                    SimCommands.Request(new PlaceBuildingRequest
                     {
                         BuildingId = record.id,
                         TypeId = record.typeId,
@@ -203,8 +213,12 @@ namespace TheyWillDescend.App
                         ConstructionDuration = record.constructionDuration,
                         InstantComplete = record.built != 0 && record.dismantling == 0 ? (byte)1 : (byte)0,
                         Dismantling = record.dismantling,
-                        Source = PlaceBuildingCommandSource.SnapshotRestore
+                        Source = PlaceBuildingCommandSource.SnapshotRestore,
+                        DesiredWorkers = record.desiredWorkers,
+                        Paused = record.paused
                     });
+
+
                 }
             }
 
@@ -217,6 +231,8 @@ namespace TheyWillDescend.App
             ApplyPausedBuildings(snapshot);
             ApplyResources(snapshot);
             ApplyGods(snapshot);
+            ResearchWorld.Populate(em, techCatalogs);
+            ApplyResearch(snapshot);
             GameLog.Info(
                 $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
             return true;
@@ -244,7 +260,9 @@ namespace TheyWillDescend.App
                     depthRadialRings = row.DepthRadialRings,
                     constructionDuration = row.ConstructionDuration,
                     constructionCrewSlots = row.ConstructionCrewSlots,
-                    workplaceSlots = row.WorkplaceSlots
+                    workplaceSlots = row.WorkplaceSlots,
+                    researchWorkplace = row.ResearchWorkplace,
+                    requiresUnlock = row.RequiresUnlock
                 };
             }
 
@@ -310,7 +328,9 @@ namespace TheyWillDescend.App
                     DepthRadialRings = row.depthRadialRings,
                     ConstructionDuration = math.max(0f, row.constructionDuration),
                     ConstructionCrewSlots = ConstructionCrew.ResolveSlots(row.constructionCrewSlots),
-                    WorkplaceSlots = math.max(0, row.workplaceSlots)
+                    WorkplaceSlots = math.max(0, row.workplaceSlots),
+                    ResearchWorkplace = row.researchWorkplace,
+                    RequiresUnlock = row.requiresUnlock
                 });
             }
 
@@ -367,22 +387,37 @@ namespace TheyWillDescend.App
         }
 
         static void ApplyPausedBuildings(RunSnapshot snapshot)
+
         {
-            if (snapshot.buildings == null)
+            if (snapshot.buildings == null || !SimWorld.TryGet(out var em, out _))
                 return;
 
+            var pausedIds = new HashSet<int>();
             for (var i = 0; i < snapshot.buildings.Length; i++)
             {
-                var record = snapshot.buildings[i];
-                if (record.paused == 0)
-                    continue;
-                SimCommands.TryPost(new SetWorkplacePausedCommand
-                {
-                    BuildingId = record.id,
-                    Paused = 1
-                });
+                if (snapshot.buildings[i].paused != 0)
+                    pausedIds.Add(snapshot.buildings[i].id);
             }
+
+            if (pausedIds.Count == 0)
+                return;
+
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadWrite<Workplace>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
+            for (var b = 0; b < buildings.Length; b++)
+            {
+                if (!pausedIds.Contains(buildings[b].Id))
+                    continue;
+                var workplace = em.GetComponentData<Workplace>(entities[b]);
+                workplace.Paused = 1;
+                em.SetComponentData(entities[b], workplace);
+            }
+            buildings.Dispose();
         }
+
 
         static void ApplyResources(RunSnapshot snapshot)
         {
@@ -430,8 +465,9 @@ namespace TheyWillDescend.App
                 ComponentType.ReadOnly<PyramidFeedLine>());
             if (hq.IsEmptyIgnoreFilter)
                 return;
-            using var entities = hq.ToEntityArray(Allocator.Temp);
-            var feed = em.GetBuffer<PyramidFeedLine>(entities[0]);
+            var hqEntity = hq.GetSingletonEntity();
+            var feed = em.GetBuffer<PyramidFeedLine>(hqEntity);
+
             snapshot.pyramidFeed = new PyramidFeedSnapshot[feed.Length];
             for (var i = 0; i < feed.Length; i++)
             {
@@ -496,6 +532,8 @@ namespace TheyWillDescend.App
                 Target = new float3(record.targetX, record.targetY, record.targetZ),
                 Speed = record.speed > 0.001f ? record.speed : 2f,
                 AgentId = record.agentId,
+                WorkplaceBuildingId = record.workplaceBuildingId,
+                Arrived = record.arrived,
                 Moving = record.moving,
                 PlazaWalking = record.plazaWalking,
                 PlazaTimer = record.plazaTimer,
@@ -504,16 +542,69 @@ namespace TheyWillDescend.App
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });
+        }
 
-            if (record.workplaceBuildingId > 0)
+
+        static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)
+        {
+            if (ResearchWorld.TryGetBoard(em, out var board)
+                && em.HasComponent<ResearchControl>(board))
+                snapshot.activeTechId = em.GetComponentData<ResearchControl>(board).ActiveTechId.ToString();
+
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<TechInfo>(),
+                ComponentType.ReadOnly<ResearchProgress>());
+            using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
+            using var progress = query.ToComponentDataArray<ResearchProgress>(Allocator.Temp);
+            snapshot.research = new ResearchLineSnapshot[infos.Length];
+            for (var i = 0; i < infos.Length; i++)
             {
-                SimCommands.TryPost(new AssignWorkerCommand
+                snapshot.research[i] = new ResearchLineSnapshot
                 {
-                    BuildingId = record.workplaceBuildingId,
-                    AgentId = record.agentId,
-                    Arrived = record.arrived
-                });
+                    techId = infos[i].TechId.ToString(),
+                    accumulatedHours = progress[i].AccumulatedHours,
+                    completed = progress[i].Completed,
+                    costPaid = progress[i].CostPaid
+                };
             }
+        }
+
+        static void ApplyResearch(RunSnapshot snapshot)
+        {
+            if (!SimWorld.TryGet(out var em, out _)
+                || !ResearchWorld.TryGetBoard(em, out var board))
+                return;
+
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadWrite<TechInfo>(),
+                ComponentType.ReadWrite<ResearchProgress>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
+            for (var i = 0; i < entities.Length; i++)
+            {
+                var row = new ResearchProgress();
+                if (snapshot.research != null)
+                {
+                    var techId = infos[i].TechId.ToString();
+                    for (var s = 0; s < snapshot.research.Length; s++)
+                    {
+                        var saved = snapshot.research[s];
+                        if (saved == null || saved.techId != techId)
+                            continue;
+                        row.AccumulatedHours = math.max(0f, saved.accumulatedHours);
+                        row.Completed = saved.completed;
+                        row.CostPaid = saved.costPaid;
+                        break;
+                    }
+                }
+
+                em.SetComponentData(entities[i], row);
+            }
+
+            var control = ResearchControl.Initial;
+            control.ActiveTechId = ContentId.EncodeOrEmpty(snapshot.activeTechId);
+            em.SetComponentData(board, control);
+            ResearchRules.RebuildEffects(em);
         }
 
         static void ApplyGameTime(RunSnapshot snapshot)

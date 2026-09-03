@@ -23,6 +23,8 @@
 - [[12 Radial City Grid]] — полярный cluster underlay; occupy в ECS
 - [[13 Time HUD and Save]] — пауза/x1/x2/x3, часы дня, однослотовый save/load
 - [[14 Sim Presentation Bridge]] — `SimCommands.TryPost`, pull видов, Playback
+- [[15 Refactoring — Target ECS & Interaction]] — целевой рефакторинг UI ↔ ECS (Reconciliation Loop + Request Entities)
+
 
 ## Связь с GDD
 

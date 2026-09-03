@@ -7,7 +7,6 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Gods
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(TheyWillDescend.Simulation.Agents.ConsumeSetWorkplacePausedCommandsSystem))]
     [UpdateBefore(typeof(FinalizeSimSessionLifecycleSystem))]
     public partial struct ConsumeSetPyramidFeedCommandsSystem : ISystem
     {
@@ -45,8 +44,8 @@ namespace TheyWillDescend.Simulation.Gods
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            var hq = entities[0];
+            var hq = query.GetSingletonEntity();
+
             var feed = em.GetBuffer<PyramidFeedLine>(hq);
             var info = em.GetBuffer<ResourceInfo>(session);
             PyramidFeed.SetPerHour(feed, info, command.ResourceId, command.PerHour);

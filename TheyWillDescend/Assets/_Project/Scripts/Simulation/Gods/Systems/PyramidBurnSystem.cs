@@ -70,8 +70,8 @@ namespace TheyWillDescend.Simulation.Gods
 
             foreach (var feed in
                      SystemAPI.Query<DynamicBuffer<PyramidFeedLine>>()
-                         .WithAll<Headquarters, Building>()
-                         .WithNone<Construction>())
+                         .WithAll<Headquarters>())
+
             {
                 for (var i = 0; i < feed.Length; i++)
                 {

@@ -18,9 +18,7 @@ namespace TheyWillDescend.Authoring.Agents
             {
                 var entity = GetEntity(TransformUsageFlags.None);
                 AddBuffer<SpawnAgentCommand>(entity);
-                AddBuffer<AssignWorkerCommand>(entity);
-                AddBuffer<UnassignWorkerCommand>(entity);
-                AddBuffer<SetWorkplacePausedCommand>(entity);
+
 
                 var rules = GetComponent<SimRulesAuthoring>();
                 var so = rules != null ? rules.Rules : null;

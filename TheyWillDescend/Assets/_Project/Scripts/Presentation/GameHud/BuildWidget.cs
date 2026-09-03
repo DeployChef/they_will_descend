@@ -3,6 +3,7 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using TMPro;
 using Unity.Collections;
@@ -74,6 +75,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnBuildModeClicked()
         {
+            ResearchWidget.Current?.CloseIfBusy();
             if (IsBusy)
                 Close(resumeSim: true);
             else
@@ -140,6 +142,9 @@ namespace TheyWillDescend.Presentation.GameHud
             {
                 var prototype = catalog[i];
                 if (prototype.TypeId.IsEmpty)
+                    continue;
+                if (prototype.RequiresUnlock != 0
+                    && !ResearchRules.IsBuildingUnlocked(em, prototype.TypeId))
                     continue;
                 count++;
                 var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);

@@ -35,6 +35,7 @@ namespace TheyWillDescend.Presentation.City
                 BuildingRejectedEvent.InvalidCell => "invalid cell",
                 BuildingRejectedEvent.Overlap => "overlap",
                 BuildingRejectedEvent.Unaffordable => "not enough resources",
+                BuildingRejectedEvent.Locked => "locked by research",
                 _ => "rejected"
             };
         }
