@@ -74,11 +74,9 @@ namespace TheyWillDescend.Shell
             EnsureBuffer<SimClockCommand>(em, session);
             EnsureBuffer<DespawnAllAgentsCommand>(em, session);
             EnsureBuffer<DespawnAllBuildingsCommand>(em, session);
-            EnsureBuffer<SpawnAgentCommand>(em, session);
             EnsureBuffer<BuildingRejectedEvent>(em, session);
-
             EnsureBuffer<PendingScenarioPlace>(em, session);
-            EnsureBuffer<SetPyramidFeedCommand>(em, session);
+
 
 
             // City Grid

@@ -15,40 +15,38 @@ namespace TheyWillDescend.Simulation.Gods
             state.RequireForUpdate<SimSession>();
         }
 
-        public void OnUpdate(ref SystemState state) => Run(state.EntityManager);
-
-        public static void Run(EntityManager em)
+        public void OnUpdate(ref SystemState state)
         {
-            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<SetPyramidFeedCommand>(session))
+            var em = state.EntityManager;
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
-            var commands = em.GetBuffer<SetPyramidFeedCommand>(session);
-            if (commands.Length == 0)
-                return;
-
-            var copy = commands.ToNativeArray(Allocator.Temp);
-            commands.Clear();
-            for (var i = 0; i < copy.Length; i++)
-                Apply(em, session, copy[i]);
-            copy.Dispose();
-        }
-
-        static void Apply(EntityManager em, Entity session, in SetPyramidFeedCommand command)
-        {
-            if (command.ResourceId.IsEmpty || !em.HasBuffer<ResourceInfo>(session))
-                return;
-
-            using var query = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Headquarters>(),
-                ComponentType.ReadWrite<PyramidFeedLine>());
+            var query = SystemAPI.QueryBuilder().WithAll<SetPyramidFeedRequest>().Build();
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var hq = query.GetSingletonEntity();
+            if (!SystemAPI.TryGetSingletonEntity<Headquarters>(out var hq))
+                return;
+
+            if (!em.HasBuffer<PyramidFeedLine>(hq) || !em.HasBuffer<ResourceInfo>(session))
+                return;
 
             var feed = em.GetBuffer<PyramidFeedLine>(hq);
             var info = em.GetBuffer<ResourceInfo>(session);
-            PyramidFeed.SetPerHour(feed, info, command.ResourceId, command.PerHour);
+
+            using var requestEntities = query.ToEntityArray(Allocator.Temp);
+            using var requests = query.ToComponentDataArray<SetPyramidFeedRequest>(Allocator.Temp);
+
+            for (var i = 0; i < requests.Length; i++)
+            {
+                var req = requests[i];
+                if (!req.ResourceId.IsEmpty)
+                {
+                    PyramidFeed.SetPerHour(feed, info, req.ResourceId, req.PerHour);
+                }
+                em.DestroyEntity(requestEntities[i]);
+            }
         }
     }
 }
+

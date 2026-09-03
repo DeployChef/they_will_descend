@@ -21,16 +21,12 @@ namespace TheyWillDescend.Simulation.Agents
 
         public void OnUpdate(ref SystemState state)
         {
-            Run(state.EntityManager);
-        }
-
-        public static void Run(EntityManager em)
-        {
+            var em = state.EntityManager;
             if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
-            var commands = em.GetBuffer<SpawnAgentCommand>(session);
-            if (commands.Length == 0)
+            var query = SystemAPI.QueryBuilder().WithAll<SpawnAgentRequest>().Build();
+            if (query.IsEmptyIgnoreFilter)
                 return;
 
             var catalog = em.GetComponentData<SimPrototypes>(session);
@@ -38,11 +34,17 @@ namespace TheyWillDescend.Simulation.Agents
                 return;
 
             var sequence = em.GetComponentData<AgentIdSequence>(session);
-            var copy = commands.ToNativeArray(Allocator.Temp);
-            commands.Clear();
-            for (var i = 0; i < copy.Length; i++)
-                Spawn(em, ref sequence, catalog.Agent, copy[i]);
-            copy.Dispose();
+            using var requestEntities = query.ToEntityArray(Allocator.Temp);
+            using var requests = query.ToComponentDataArray<SpawnAgentRequest>(Allocator.Temp);
+
+            for (var i = 0; i < requests.Length; i++)
+            {
+                var req = requests[i];
+                Spawn(em, ref sequence, catalog.Agent, in req);
+                em.DestroyEntity(requestEntities[i]);
+            }
+
+
             em.SetComponentData(session, sequence);
         }
 
@@ -50,7 +52,8 @@ namespace TheyWillDescend.Simulation.Agents
             EntityManager em,
             ref AgentIdSequence sequence,
             Entity prototype,
-            in SpawnAgentCommand command)
+            in SpawnAgentRequest command)
+
         {
             sequence.NextAgentId += 1;
             var agentId = command.AgentId > 0 ? command.AgentId : sequence.NextAgentId;

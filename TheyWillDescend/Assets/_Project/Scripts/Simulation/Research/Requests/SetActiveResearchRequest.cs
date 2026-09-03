@@ -3,7 +3,7 @@ using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Research
 {
-    public struct SetActiveResearchCommand : IBufferElementData
+    public struct SetActiveResearchRequest : IComponentData
     {
         public FixedString64Bytes TechId;
     }

@@ -135,13 +135,8 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Show(int id)
         {
-            if (id == 1)
-            {
-                Hide();
-                return;
-            }
-
             if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
+
 
             {
                 selection?.ClearIf(id);
