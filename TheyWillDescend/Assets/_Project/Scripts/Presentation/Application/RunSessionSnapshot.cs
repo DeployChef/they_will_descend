@@ -132,9 +132,10 @@ namespace TheyWillDescend.App
                 if (em.HasComponent<Construction>(buildingEntities[i]))
                 {
                     var construction = em.GetComponentData<Construction>(buildingEntities[i]);
-                    record.built = 0;
+                    record.built = construction.IsDismantling ? (byte)1 : (byte)0;
                     record.constructionElapsed = construction.Elapsed;
                     record.constructionDuration = construction.Duration;
+                    record.dismantling = construction.Dismantling;
                     constructing++;
                 }
 
@@ -200,7 +201,8 @@ namespace TheyWillDescend.App
                         AnchorRadial = record.anchorRadial,
                         ConstructionElapsed = record.constructionElapsed,
                         ConstructionDuration = record.constructionDuration,
-                        InstantComplete = record.built != 0 ? (byte)1 : (byte)0,
+                        InstantComplete = record.built != 0 && record.dismantling == 0 ? (byte)1 : (byte)0,
+                        Dismantling = record.dismantling,
                         Source = PlaceBuildingCommandSource.SnapshotRestore
                     });
                 }

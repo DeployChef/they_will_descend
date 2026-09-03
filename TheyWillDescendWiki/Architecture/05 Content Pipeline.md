@@ -211,7 +211,7 @@ Kitchen                 ← BuildingStamp + BuildingView
 
 `BuildingViewBoard` — реестр (появился entity → Instantiate штампа + overlay). Бар, цвет, купол — `BuildingView.Sync` по компонентам entity, не `if (typeId)`.
 
-Стройка: тот же entity, что готовый дом. `Construction` висит, пока не достроено. Claim зовёт ближайших свободных (ночь = все без другого сайта; смена = без workplace) до `ConstructionCrewSlots` на типе. Бар идёт, когда дошёл хотя бы один; снятие компонента = построен.
+Стройка: тот же entity, что готовый дом. `Construction` висит, пока не достроено **или пока разбирают**. Claim зовёт ближайших свободных (ночь = все без другого сайта; смена = без workplace) до `ConstructionCrewSlots` на типе. Бар идёт, когда дошёл хотя бы один. Raising: снятие компонента = построен. Dismantling: штат снят сразу, в конце кост возвращается (clamp по cap), occupancy и entity снимаются.
 
 ### 5.3 Каталог
 

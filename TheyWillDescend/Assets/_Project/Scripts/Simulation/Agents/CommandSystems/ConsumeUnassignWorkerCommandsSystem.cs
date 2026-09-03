@@ -40,6 +40,15 @@ namespace TheyWillDescend.Simulation.Agents
             copy.Dispose();
         }
 
+        public static void UnassignAll(EntityManager em, int buildingId)
+        {
+            if (buildingId <= 0)
+                return;
+            while (UnassignOne(em, buildingId))
+            {
+            }
+        }
+
         public static bool UnassignOne(EntityManager em, int buildingId)
         {
             if (buildingId <= 0)

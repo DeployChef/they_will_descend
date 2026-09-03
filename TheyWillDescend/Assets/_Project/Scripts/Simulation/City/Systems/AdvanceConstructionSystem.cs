@@ -45,7 +45,15 @@ namespace TheyWillDescend.Simulation.City
                     continue;
 
                 var site = construction.ValueRO;
-                site.Elapsed += dt;
+                if (site.IsDismantling)
+                {
+                    site.Elapsed -= dt;
+                    if (site.Elapsed < 0f)
+                        site.Elapsed = 0f;
+                }
+                else
+                    site.Elapsed += dt;
+
                 construction.ValueRW = site;
                 if (site.IsComplete)
                     finished.Add(entity);
@@ -61,37 +69,25 @@ namespace TheyWillDescend.Simulation.City
             if (!em.Exists(site) || !em.HasComponent<Construction>(site))
                 return;
 
+            if (em.GetComponentData<Construction>(site).IsDismantling)
+            {
+                BuildingDismantle.Complete(em, site);
+                return;
+            }
+
             var buildingId = em.HasComponent<Building>(site)
                 ? em.GetComponentData<Building>(site).Id
                 : 0;
             em.RemoveComponent<Construction>(site);
             if (buildingId > 0)
-                ReleaseCrew(em, buildingId);
+                BuildingDismantle.ReleaseCrew(em, buildingId);
 #if UNITY_EDITOR
-            if (em.HasComponent<Building>(site))
+            if (em.Exists(site) && em.HasComponent<Building>(site))
             {
                 var building = em.GetComponentData<Building>(site);
                 em.SetName(site, $"Building_{building.Id}");
             }
 #endif
-        }
-
-        static void ReleaseCrew(EntityManager em, int buildingId)
-        {
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<AgentAssignment>());
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
-            for (var i = 0; i < assignments.Length; i++)
-            {
-                var job = assignments[i];
-                if (job.ConstructionBuildingId != buildingId)
-                    continue;
-                job.ConstructionBuildingId = 0;
-                job.Arrived = 0;
-                em.SetComponentData(entities[i], job);
-            }
-
-            assignments.Dispose();
         }
     }
 }

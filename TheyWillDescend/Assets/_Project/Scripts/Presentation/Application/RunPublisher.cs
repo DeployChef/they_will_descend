@@ -116,6 +116,8 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<UnassignWorkerCommand>(session).Clear();
             em.GetBuffer<SetWorkplacePausedCommand>(session).Clear();
             em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
+            if (em.HasBuffer<DeconstructBuildingCommand>(session))
+                em.GetBuffer<DeconstructBuildingCommand>(session).Clear();
         }
 
         internal static bool RebuildResolvedCatalog(EntityManager em, Entity session)

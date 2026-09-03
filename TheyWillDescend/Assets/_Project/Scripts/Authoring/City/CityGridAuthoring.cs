@@ -31,6 +31,7 @@ namespace TheyWillDescend.Authoring.City
                 });
                 AddBuffer<OccupiedCell>(entity);
                 AddBuffer<PlaceBuildingCommand>(entity);
+                AddBuffer<DeconstructBuildingCommand>(entity);
                 AddBuffer<BuildingRejectedEvent>(entity);
                 AddBuffer<PendingScenarioPlace>(entity);
             }

@@ -19,6 +19,7 @@ namespace TheyWillDescend.Simulation.City
         public float ConstructionElapsed;
         public float ConstructionDuration;
         public byte InstantComplete;
+        public byte Dismantling;
         public int BuildingId;
         public PlaceBuildingCommandSource Source;
     }

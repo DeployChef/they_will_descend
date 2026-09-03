@@ -37,6 +37,7 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button maxPlusButton;
         [SerializeField] Button powerButton;
         [SerializeField] Button closeButton;
+        [SerializeField] Button destroyButton;
         [SerializeField] Image workFill;
         [Tooltip("Спрайт для состояния Start (производство остановлено)")]
         [SerializeField] Sprite powerStartSprite;
@@ -50,12 +51,14 @@ namespace TheyWillDescend.Presentation.GameHud
         void Awake()
         {
             EnsureExtraButtons();
+            EnsureDestroyButton();
             HudButtons.Bind(minusButton, OnMinus);
             HudButtons.Bind(plusButton, OnPlus);
             HudButtons.Bind(maxMinusButton, OnMaxMinus);
             HudButtons.Bind(maxPlusButton, OnMaxPlus);
             HudButtons.Bind(powerButton, OnPower);
             HudButtons.Bind(closeButton, OnClose);
+            HudButtons.Bind(destroyButton, OnDestroyBuilding);
             if (Application.isPlaying)
                 Hide();
         }
@@ -68,6 +71,7 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.Unbind(maxPlusButton, OnMaxPlus);
             HudButtons.Unbind(powerButton, OnPower);
             HudButtons.Unbind(closeButton, OnClose);
+            HudButtons.Unbind(destroyButton, OnDestroyBuilding);
         }
 
         void EnsureExtraButtons()
@@ -80,6 +84,22 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (powerButton == null && plusButton != null)
                 powerButton = CloneButton(plusButton, "PowerButton", "Stop");
+        }
+
+        void EnsureDestroyButton()
+        {
+            if (destroyButton != null)
+                return;
+            var root = card != null ? card.transform : transform;
+            var marked = root.Find("ImageDestroyBuilding");
+            if (marked == null)
+                return;
+            destroyButton = marked.GetComponent<Button>();
+            if (destroyButton == null)
+                destroyButton = marked.gameObject.AddComponent<Button>();
+            var graphic = marked.GetComponent<Image>();
+            if (graphic != null)
+                destroyButton.targetGraphic = graphic;
         }
 
         static Button CloneButton(Button source, string name, string label)
@@ -117,6 +137,7 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
             {
+                selection?.ClearIf(id);
                 Hide();
                 return;
             }
@@ -128,6 +149,8 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             var constructing = em.HasComponent<Construction>(entity);
+            var construction = constructing ? em.GetComponentData<Construction>(entity) : default;
+            var dismantling = constructing && construction.IsDismantling;
             var workplace = em.HasComponent<Workplace>(entity)
                 ? em.GetComponentData<Workplace>(entity)
                 : default;
@@ -163,7 +186,6 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (constructing)
             {
-                var construction = em.GetComponentData<Construction>(entity);
                 CountConstructionCrew(em, building.Id, out var crewAssigned, out var crewArrived);
                 if (workers != null)
                     workers.text = $"{construction.Normalized * 100f:0}%";
@@ -172,10 +194,12 @@ namespace TheyWillDescend.Presentation.GameHud
                 {
                     if (crewArrived < 1)
                         status.text = crewAssigned > 0
-                            ? "Crew walking to the site."
-                            : "Waiting for workers.";
+                            ? (dismantling ? "Crew walking to dismantle." : "Crew walking to the site.")
+                            : (dismantling ? "Waiting to dismantle." : "Waiting for workers.");
                     else
-                        status.text = $"{crewArrived} building.";
+                        status.text = dismantling
+                            ? $"{crewArrived} dismantling."
+                            : $"{crewArrived} building.";
                 }
 
                 if (workFill != null)
@@ -232,6 +256,7 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.SetInteractable(maxPlusButton, canStaff && occupied < slots && idleCount > 0);
             HudButtons.SetInteractable(maxMinusButton, canStaff && occupied > 0);
             HudButtons.SetInteractable(powerButton, !constructing && slots > 0);
+            HudButtons.SetInteractable(destroyButton, !dismantling);
             UpdatePowerIcon(paused);
         }
 
@@ -450,6 +475,16 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             selection?.Deselect();
             Hide();
+        }
+
+        void OnDestroyBuilding()
+        {
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            SimCommands.TryPost(new DeconstructBuildingCommand
+            {
+                BuildingId = selection.SelectedBuildingId
+            });
         }
     }
 }
