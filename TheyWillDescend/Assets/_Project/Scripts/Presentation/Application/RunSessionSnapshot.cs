@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
+
 using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
@@ -108,9 +110,8 @@ namespace TheyWillDescend.App
             assignments.Dispose();
             plazas.Dispose();
 
-            using var buildingQuery = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.Exclude<Headquarters>());
+            using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+
             var buildingEntities = buildingQuery.ToEntityArray(Allocator.Temp);
             var buildings = buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
             snapshot.buildings = new BuildingSnapshot[buildings.Length];
@@ -377,22 +378,37 @@ namespace TheyWillDescend.App
         }
 
         static void ApplyPausedBuildings(RunSnapshot snapshot)
+
         {
-            if (snapshot.buildings == null)
+            if (snapshot.buildings == null || !SimWorld.TryGet(out var em, out _))
                 return;
 
+            var pausedIds = new HashSet<int>();
             for (var i = 0; i < snapshot.buildings.Length; i++)
             {
-                var record = snapshot.buildings[i];
-                if (record.paused == 0)
-                    continue;
-                SimCommands.TryPost(new SetWorkplacePausedCommand
-                {
-                    BuildingId = record.id,
-                    Paused = 1
-                });
+                if (snapshot.buildings[i].paused != 0)
+                    pausedIds.Add(snapshot.buildings[i].id);
             }
+
+            if (pausedIds.Count == 0)
+                return;
+
+            using var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadWrite<Workplace>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
+            for (var b = 0; b < buildings.Length; b++)
+            {
+                if (!pausedIds.Contains(buildings[b].Id))
+                    continue;
+                var workplace = em.GetComponentData<Workplace>(entities[b]);
+                workplace.Paused = 1;
+                em.SetComponentData(entities[b], workplace);
+            }
+            buildings.Dispose();
         }
+
 
         static void ApplyResources(RunSnapshot snapshot)
         {
@@ -440,8 +456,9 @@ namespace TheyWillDescend.App
                 ComponentType.ReadOnly<PyramidFeedLine>());
             if (hq.IsEmptyIgnoreFilter)
                 return;
-            using var entities = hq.ToEntityArray(Allocator.Temp);
-            var feed = em.GetBuffer<PyramidFeedLine>(entities[0]);
+            var hqEntity = hq.GetSingletonEntity();
+            var feed = em.GetBuffer<PyramidFeedLine>(hqEntity);
+
             snapshot.pyramidFeed = new PyramidFeedSnapshot[feed.Length];
             for (var i = 0; i < feed.Length; i++)
             {
@@ -506,6 +523,8 @@ namespace TheyWillDescend.App
                 Target = new float3(record.targetX, record.targetY, record.targetZ),
                 Speed = record.speed > 0.001f ? record.speed : 2f,
                 AgentId = record.agentId,
+                WorkplaceBuildingId = record.workplaceBuildingId,
+                Arrived = record.arrived,
                 Moving = record.moving,
                 PlazaWalking = record.plazaWalking,
                 PlazaTimer = record.plazaTimer,
@@ -514,17 +533,8 @@ namespace TheyWillDescend.App
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });
-
-            if (record.workplaceBuildingId > 0)
-            {
-                SimCommands.TryPost(new AssignWorkerCommand
-                {
-                    BuildingId = record.workplaceBuildingId,
-                    AgentId = record.agentId,
-                    Arrived = record.arrived
-                });
-            }
         }
+
 
         static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)
         {

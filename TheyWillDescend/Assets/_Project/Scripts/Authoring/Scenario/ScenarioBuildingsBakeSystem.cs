@@ -17,7 +17,6 @@ namespace TheyWillDescend.Authoring.Scenario
     /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
     [UpdateInGroup(typeof(PostBakingSystemGroup))]
-    [UpdateAfter(typeof(HeadquartersCenterBakeSystem))]
     public partial struct ScenarioBuildingsBakeSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)

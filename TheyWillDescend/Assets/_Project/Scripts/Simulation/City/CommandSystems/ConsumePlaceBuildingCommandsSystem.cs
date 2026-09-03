@@ -11,7 +11,6 @@ namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumeSpawnAgentCommandsSystem))]
-    [UpdateBefore(typeof(ConsumeAssignWorkerCommandsSystem))]
     public partial struct ConsumePlaceBuildingCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -202,7 +201,9 @@ namespace TheyWillDescend.Simulation.City
             em.AddComponentData(entity, building);
             em.AddComponentData(entity, spec.ToBuildingType());
             if (spec.WorkplaceSlots > 0)
-                em.AddComponentData(entity, new Workplace());
+                em.AddComponentData(entity, new Workplace { DesiredWorkers = 0 });
+
+
             if (spec.ResearchWorkplace != 0)
                 em.AddComponentData(entity, new ResearchWorkplace());
             CopyRecipes(em, session, spec.TypeId, entity);

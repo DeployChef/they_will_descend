@@ -17,9 +17,9 @@ namespace TheyWillDescend.Simulation.Research
             },
             None = new[]
             {
-                ComponentType.ReadOnly<Construction>(),
-                ComponentType.ReadOnly<Headquarters>()
+                ComponentType.ReadOnly<Construction>()
             }
+
         };
 
         public static bool IsAvailable(

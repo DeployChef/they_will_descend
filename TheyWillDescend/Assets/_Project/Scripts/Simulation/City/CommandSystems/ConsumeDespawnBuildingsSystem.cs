@@ -32,9 +32,8 @@ namespace TheyWillDescend.Simulation.City
                 return;
 
             commands.Clear();
-            using var buildings = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.Exclude<Headquarters>());
+            using var buildings = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+
             SimEntityDestroy.DestroyQuery(em, buildings);
             em.GetBuffer<OccupiedCell>(session).Clear();
             var grid = em.GetComponentData<CityGrid>(session);

@@ -25,7 +25,7 @@ namespace TheyWillDescend.Simulation.Agents
         {
             foreach (var workplace in SystemAPI.Query<RefRW<Workplace>>()
                          .WithAll<Building>()
-                         .WithNone<Construction, Headquarters>())
+                         .WithNone<Construction>())
             {
                 workplace.ValueRW.AssignedCount = 0;
                 workplace.ValueRW.WorkingCount = 0;
@@ -35,7 +35,7 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var (building, entity) in
                      SystemAPI.Query<RefRO<Building>>()
                          .WithAll<Workplace>()
-                         .WithNone<Construction, Headquarters>()
+                         .WithNone<Construction>()
                          .WithEntityAccess())
             {
                 houses.TryAdd(building.ValueRO.Id, entity);

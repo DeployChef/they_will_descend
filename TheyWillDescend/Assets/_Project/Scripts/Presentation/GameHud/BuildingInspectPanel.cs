@@ -135,18 +135,20 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Show(int id)
         {
+            if (id == 1)
+            {
+                Hide();
+                return;
+            }
+
             if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
+
             {
                 selection?.ClearIf(id);
                 Hide();
                 return;
             }
 
-            if (em.HasComponent<Headquarters>(entity))
-            {
-                Hide();
-                return;
-            }
 
             var constructing = em.HasComponent<Construction>(entity);
             var construction = constructing ? em.GetComponentData<Construction>(entity) : default;
@@ -180,7 +182,12 @@ namespace TheyWillDescend.Presentation.GameHud
                 slots = 0;
             var idleCount = CountIdleWorkers(em);
             if (workers != null)
-                workers.text = $"{occupied} / {slots}";
+            {
+                workers.text = workplace.DesiredWorkers != occupied && !workplace.IsPaused
+                    ? $"{occupied} ({workplace.DesiredWorkers}) / {slots}"
+                    : $"{occupied} / {slots}";
+            }
+
             if (idle != null)
                 idle.text = $"Idle workers  {idleCount}";
 
@@ -406,40 +413,81 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnMinus()
         {
-            if (selection != null && selection.SelectedBuildingId > 0)
-                SimCommands.TryPost(new UnassignWorkerCommand { BuildingId = selection.SelectedBuildingId });
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var workplace = em.GetComponentData<Workplace>(entity);
+            workplace.DesiredWorkers = Mathf.Max(0, workplace.DesiredWorkers - 1);
+            em.SetComponentData(entity, workplace);
         }
 
         void OnPlus()
         {
-            if (selection != null && selection.SelectedBuildingId > 0)
-                SimCommands.TryPost(new AssignWorkerCommand
-                {
-                    BuildingId = selection.SelectedBuildingId
-                });
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var slots = em.HasComponent<BuildingType>(entity)
+                ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
+                : 0;
+            var workplace = em.GetComponentData<Workplace>(entity);
+
+            if (workplace.DesiredWorkers >= slots)
+                return;
+
+            var idleCount = CountIdleWorkers(em);
+            if (idleCount <= 0)
+                return;
+
+            workplace.DesiredWorkers++;
+            em.SetComponentData(entity, workplace);
         }
 
         void OnMaxMinus()
         {
             if (selection == null || selection.SelectedBuildingId <= 0)
                 return;
-            SimCommands.TryPost(new UnassignWorkerCommand
-            {
-                BuildingId = selection.SelectedBuildingId,
-                Count = 256
-            });
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var workplace = em.GetComponentData<Workplace>(entity);
+            workplace.DesiredWorkers = 0;
+            em.SetComponentData(entity, workplace);
         }
 
         void OnMaxPlus()
         {
             if (selection == null || selection.SelectedBuildingId <= 0)
                 return;
-            SimCommands.TryPost(new AssignWorkerCommand
-            {
-                BuildingId = selection.SelectedBuildingId,
-                Count = 256
-            });
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var slots = em.HasComponent<BuildingType>(entity)
+                ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
+                : 0;
+            var workplace = em.GetComponentData<Workplace>(entity);
+
+            var idleCount = CountIdleWorkers(em);
+            var needed = slots - workplace.DesiredWorkers;
+            if (needed <= 0 || idleCount <= 0)
+                return;
+
+            var add = Mathf.Min(needed, idleCount);
+            workplace.DesiredWorkers += add;
+            em.SetComponentData(entity, workplace);
         }
+
 
         void OnPower()
         {
@@ -447,13 +495,14 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
             if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
                 return;
-            var paused = em.HasComponent<Workplace>(entity) && em.GetComponentData<Workplace>(entity).IsPaused;
-            SimCommands.TryPost(new SetWorkplacePausedCommand
-            {
-                BuildingId = selection.SelectedBuildingId,
-                Paused = paused ? (byte)0 : (byte)1
-            });
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var workplace = em.GetComponentData<Workplace>(entity);
+            workplace.Paused = workplace.IsPaused ? (byte)0 : (byte)1;
+            em.SetComponentData(entity, workplace);
         }
+
 
         void UpdatePowerIcon(bool paused)
         {

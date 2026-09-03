@@ -39,6 +39,13 @@ namespace TheyWillDescend.Shell
         [SerializeField] ScenarioDefinition debugScenario;
         [SerializeField] TechCatalogAsset[] techCatalogs;
 
+        [Header("Catalogs & Rules")]
+        [SerializeField] BuildingCatalogAsset buildingCatalog;
+        [SerializeField] ResourceCatalogAsset resourceCatalog;
+        [SerializeField] SimRulesAsset simRules;
+        [SerializeField] TimelineCatalogAsset timelineCatalog;
+
+
         readonly SceneLoader _scenes = new();
         CancellationTokenSource _runCts;
         RunKind _kind;
@@ -117,12 +124,24 @@ namespace TheyWillDescend.Shell
                 return;
             }
 
+            EnsureDefaultAssets();
+            if (SimWorld.TryGetEntityManager(out var em))
+            {
+                SimulationBootstrap.InitializeRun(
+                    em,
+                    buildingCatalog,
+                    resourceCatalog,
+                    simRules,
+                    timelineCatalog);
+            }
+
             if (!await WaitUntilSimulationReady(ct))
             {
                 GameLog.Error("GameSession.Start failed — simulation not ready.");
                 await AbortAsync(CancellationToken.None);
                 return;
             }
+
 
             var setupBegan = false;
             if (_loadSlot)
@@ -321,5 +340,22 @@ namespace TheyWillDescend.Shell
             return SimWorld.TryGet(out var em, out var session)
                 && em.GetComponentData<SimSession>(session).Phase == phase;
         }
+
+        void Awake() => EnsureDefaultAssets();
+
+        void EnsureDefaultAssets()
+        {
+#if UNITY_EDITOR
+            if (buildingCatalog == null)
+                buildingCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingCatalogAsset>("Assets/_Project/Content/Buildings/DefaultBuildingCatalog.asset");
+            if (resourceCatalog == null)
+                resourceCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<ResourceCatalogAsset>("Assets/_Project/Content/Economy/DefaultResourceCatalog.asset");
+            if (simRules == null)
+                simRules = UnityEditor.AssetDatabase.LoadAssetAtPath<SimRulesAsset>("Assets/_Project/Content/Rules/DefaultSimRules.asset");
+            if (timelineCatalog == null)
+                timelineCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<TimelineCatalogAsset>("Assets/_Project/Content/Timeline/DefaultTimeline.asset");
+#endif
+        }
     }
 }
+

@@ -119,9 +119,7 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<DespawnAllBuildingsCommand>(session).Clear();
             em.GetBuffer<SpawnAgentCommand>(session).Clear();
             em.GetBuffer<PlaceBuildingCommand>(session).Clear();
-            em.GetBuffer<AssignWorkerCommand>(session).Clear();
-            em.GetBuffer<UnassignWorkerCommand>(session).Clear();
-            em.GetBuffer<SetWorkplacePausedCommand>(session).Clear();
+
             em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
             if (em.HasBuffer<DeconstructBuildingCommand>(session))
                 em.GetBuffer<DeconstructBuildingCommand>(session).Clear();

@@ -37,5 +37,16 @@ namespace TheyWillDescend.Simulation.Session
             _bag = bag;
             return true;
         }
+
+        public static bool TryGetEntityManager(out EntityManager em)
+        {
+            em = default;
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated)
+                return false;
+            em = world.EntityManager;
+            return true;
+        }
     }
 }
+

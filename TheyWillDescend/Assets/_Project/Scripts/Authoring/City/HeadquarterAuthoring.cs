@@ -17,12 +17,9 @@ namespace TheyWillDescend.Authoring.City
             public override void Bake(HeadquarterAuthoring authoring)
             {
                 var entity = GetEntity(TransformUsageFlags.Dynamic);
-                AddComponent(entity, new Building
-                {
-                    Id = authoring.buildingId > 0 ? authoring.buildingId : 1
-                });
                 AddComponent<Headquarters>(entity);
                 AddBuffer<PyramidFeedLine>(entity);
+
             }
         }
     }

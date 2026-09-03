@@ -42,10 +42,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.HasBuffer<BuildingCatalogCost>(session)
                 && em.HasBuffer<BuildingCatalogRecipe>(session)
                 && em.HasBuffer<BuildingRejectedEvent>(session)
-                && em.HasBuffer<AssignWorkerCommand>(session)
-                && em.HasBuffer<UnassignWorkerCommand>(session)
-                && em.HasBuffer<SetWorkplacePausedCommand>(session)
                 && em.HasBuffer<SetPyramidFeedCommand>(session);
+
         }
 
         public static bool AreLifecycleQueuesDrained(EntityManager em, Entity session)
@@ -60,10 +58,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.GetBuffer<SpawnAgentCommand>(session).Length == 0
                 && em.GetBuffer<PlaceBuildingCommand>(session).Length == 0
                 && em.GetBuffer<PendingScenarioPlace>(session).Length == 0
-                && em.GetBuffer<AssignWorkerCommand>(session).Length == 0
-                && em.GetBuffer<UnassignWorkerCommand>(session).Length == 0
-                && em.GetBuffer<SetWorkplacePausedCommand>(session).Length == 0
                 && em.GetBuffer<SetPyramidFeedCommand>(session).Length == 0
+
                 && ResearchWorld.CommandsDrained(em);
         }
     }

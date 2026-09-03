@@ -49,10 +49,9 @@ namespace TheyWillDescend.Presentation.Agents
             {
                 if (view == null)
                     continue;
-                var go = view.gameObject;
-                go.SetActive(false);
-                Object.DestroyImmediate(go);
+                DestroyGo(view.gameObject);
             }
+
 
             _views.Clear();
         }
@@ -142,10 +141,20 @@ namespace TheyWillDescend.Presentation.Agents
             _views.Remove(agentId);
             if (view == null)
                 return;
-            var go = view.gameObject;
-            go.SetActive(false);
-            Object.DestroyImmediate(go);
+            DestroyGo(view.gameObject);
         }
+
+        static void DestroyGo(GameObject go)
+        {
+            if (go == null)
+                return;
+            go.SetActive(false);
+            if (Application.isPlaying)
+                Object.Destroy(go);
+            else
+                Object.DestroyImmediate(go);
+        }
+
 
         GameObject ResolvePrefab(AgentKind kind, int agentId)
         {

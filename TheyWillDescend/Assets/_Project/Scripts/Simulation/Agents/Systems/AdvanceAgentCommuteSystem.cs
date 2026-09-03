@@ -41,8 +41,8 @@ namespace TheyWillDescend.Simulation.Agents
             var sites = new NativeList<HouseRef>(8, state.WorldUpdateAllocator);
             foreach (var (building, transform) in
                      SystemAPI.Query<RefRO<Building>, RefRO<LocalTransform>>()
-                         .WithAll<Construction>()
-                         .WithNone<Headquarters>())
+                         .WithAll<Construction>())
+
             {
                 sites.Add(new HouseRef
                 {
@@ -90,7 +90,8 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var (building, transform) in
                      SystemAPI.Query<RefRO<Building>, RefRO<LocalTransform>>()
                          .WithAll<Workplace>()
-                         .WithNone<Construction, Headquarters>())
+                         .WithNone<Construction>())
+
             {
                 houses.Add(new HouseRef
                 {
