@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
+using UnityEngine.InputSystem.Controls;
 
 public class RTSCameraController : MonoBehaviour
 {
@@ -31,6 +32,9 @@ public class RTSCameraController : MonoBehaviour
     [Header("Map Limits (Crater)")]
     [SerializeField] Vector3 mapCenter = Vector3.zero;
     [SerializeField] float maxMapRadius = 50f;
+
+    [Header("Right Mouse Drag")]
+    [SerializeField] float dragSensitivity = 0.15f;
 
     private Vector3 currentVelocity;
     private bool sprintInput;
@@ -91,6 +95,7 @@ public class RTSCameraController : MonoBehaviour
     {
         HandleMovementInput();
         HandleZoomInput();
+        HandleRightMouseDrag();
         UpdateMovement();
     }
 
@@ -143,6 +148,37 @@ public class RTSCameraController : MonoBehaviour
             float targetAngle = angleCurve.Evaluate(normalizedZoom);
             orbitalFollow.VerticalAxis.Value = targetAngle;
         }
+    }
+
+    void HandleRightMouseDrag()
+    {
+        if (camera == null || cameraTarget == null)
+            return;
+
+        Mouse mouse = Mouse.current;
+        if (mouse == null)
+            return;
+
+        if (!mouse.rightButton.IsPressed())
+            return;
+
+        Vector2 delta = mouse.delta.ReadValue();
+        if (delta.sqrMagnitude < Mathf.Epsilon)
+            return;
+
+        Vector3 forward = camera.transform.forward;
+        forward.y = 0f;
+        forward.Normalize();
+
+        Vector3 right = camera.transform.right;
+        right.y = 0f;
+        right.Normalize();
+
+        // Тянешь в любую сторону — камера едет в противоположную
+        Vector3 dragDirection = -(delta.x * right + delta.y * forward).normalized;
+        float dragDistance = delta.magnitude * dragSensitivity;
+
+        cameraTarget.position += dragDirection * dragDistance;
     }
 
     void UpdateMovement()

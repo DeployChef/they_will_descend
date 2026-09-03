@@ -9154,20 +9154,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 785603941513819648, guid: a4e77ca6de49e874cb877c6569b4ca31, type: 3}
   m_PrefabInstance: {fileID: 476892732}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1320224117
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: Camera/Orbit
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_ActionId: 3cc9fdc9-7b67-4be5-ac21-9567783e1fc3
 --- !u!1 &1342259143
 GameObject:
   m_ObjectHideFlags: 0
@@ -13616,6 +13602,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   mapCenter: {x: 0, y: 0, z: 0}
   maxMapRadius: 60
+  dragSensitivity: 0.1
 --- !u!114 &2122642356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13637,7 +13624,7 @@ MonoBehaviour:
       Owner: {fileID: 2122642358}
       Enabled: 1
       Input:
-        InputAction: {fileID: 1320224117}
+        InputAction: {fileID: -5551014823115444840, guid: 052faaac586de48259a63d0c4782560b, type: 3}
         Gain: 20
         CancelDeltaTime: 0
       InputValue: 0
@@ -13648,7 +13635,7 @@ MonoBehaviour:
       Owner: {fileID: 2122642358}
       Enabled: 1
       Input:
-        InputAction: {fileID: 1320224117}
+        InputAction: {fileID: 8552022565011884605, guid: 052faaac586de48259a63d0c4782560b, type: 3}
         Gain: -20
         CancelDeltaTime: 0
       InputValue: 0
