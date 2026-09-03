@@ -1,0 +1,125 @@
+Playback::frame, 0
+Playback::version, 2, 131857
+#
+# FMOD v2.03.11 command capture
+#   System::setSoftwareChannels(numsoftwarechannels: 64)
+#   System::setDSPBufferSize(bufferlength: 512, numbuffers: 4)
+#   System::setSoftwareFormat(samplerate: 48000, speakermode: 6, numrawspeakers: 6)
+#   System::setAdvancedSettings(settings: {maxMPEGCodecs: 0, maxADPCMCodecs: 0, maxXMACodecs: 0, maxVorbisCodecs: 0, maxAT9Codecs: 0, maxFADPCMCodecs: 0, maxOpusCodecs: 0
+#       ASIONumChannels: 0, vol0virtualvol: -1, defaultDecodeBufferSize: 400, geometryMaxFadeTime: 0,
+#       distanceFilterCenterFreq: 1500, reverb3Dinstance: 0, DSPBufferPoolSize: 8, resamplerMethod: 2, randomSeed: 0})
+#   Studio::System::setAdvancedSettings(settings: {commandqueuesize: 32768, handleinitialsize: 65536, studioupdateperiod: 20, idlesampledatapoolsize: 262144})
+#   Studio::System::initialize(maxchannels: 1024, studioflags: 0x00000024, flags: 0x00520000)
+#
+Playback::frame, 0
+# Printing initial instance state
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, true
+# Finished printing initial instance state
+Playback::frame, 5120
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 5120
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 0
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Manager::directLoadBankMemory
+Playback::frame, 49152
+Playback::frame, 53248
+Playback::frame, 48128
+Playback::frame, 52736
+Playback::frame, 48128
+Playback::frame, 52224
+Playback::frame, 50176
+Playback::frame, 53248
+Playback::frame, 49664
+Playback::frame, 49664
+Playback::frame, 48128
+Playback::frame, 48128
+Playback::frame, 50176
+Playback::frame, 48128
+Playback::frame, 49152
+Playback::frame, 48640
+Playback::frame, 48128
+Playback::frame, 50176
+Playback::frame, 48640
+Playback::frame, 49664
+Playback::frame, 50176
+Playback::frame, 48640
+Playback::frame, 48128
+Playback::frame, 48640
+Playback::frame, 49664
+Playback::frame, 52736
+Playback::frame, 48128
+Playback::frame, 53760
+Playback::frame, 55808
+Playback::frame, 48128
+Playback::frame, 49664
+Playback::frame, 51712
+Playback::frame, 49664
+Playback::frame, 55808
+Playback::frame, 50688
+Playback::frame, 52224
+Playback::frame, 51200
+Playback::frame, 55808
+Playback::frame, 50176
+Playback::frame, 51200
+Playback::frame, 55808
+Playback::frame, 51200
+Playback::frame, 52736
+Playback::frame, 49152
+Playback::frame, 56320
+Playback::frame, 57344
+Playback::frame, 54272
+Playback::frame, 52736
+Playback::frame, 52736
+Playback::frame, 54784
+Playback::frame, 54272
+Playback::frame, 56320
+Playback::frame, 56832
+Playback::frame, 48640
+Playback::frame, 48128
+Playback::frame, 50688
+Playback::frame, 57344
+Playback::frame, 56832
+Playback::frame, 54272
+Playback::frame, 55808
+Playback::frame, 48640
+Playback::frame, 52224
+Playback::frame, 51200
+Playback::frame, 51712
+Playback::frame, 57344
+Playback::frame, 56320
+Playback::frame, 55296
+Playback::frame, 56832
+Playback::frame, 49152
+Playback::frame, 48128
+Playback::frame, 53760
+Playback::frame, 53248
+Playback::frame, 58368
+Playback::frame, 50176
+Playback::frame, 50176
+Playback::frame, 52224
+Playback::frame, 58880
+Playback::frame, 55296
+Playback::frame, 49664
+Playback::frame, 53760
+Playback::frame, 52224
+Playback::frame, 51712
+Playback::frame, 50688
+Playback::frame, 52736
+Playback::frame, 50688
+Playback::frame, 61440
+Playback::frame, 53760
+Playback::frame, 55296
+Playback::frame, 49664
+Playback::frame, 57344
+Playback::frame, 56320
+Playback::frame, 54784
+Playback::frame, 54272
+Playback::frame, 51712
+Playback::frame, 50176
