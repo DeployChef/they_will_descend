@@ -8,7 +8,7 @@
 			<value>0</value>
 		</property>
 		<property name="profilerAutomaticScopeInMode">
-			<value>0</value>
+			<value>1</value>
 		</property>
 		<relationship name="folder">
 			<destination>{487fefec-7a54-4f00-8285-c4e03ed00f03}</destination>
@@ -31,6 +31,8 @@
 		<relationship name="profilerTracks">
 			<destination>{aed4dde3-5f6e-4f47-a173-df96e3499123}</destination>
 			<destination>{882d539b-0e1a-4436-9732-fbf8599c977e}</destination>
+			<destination>{53860b27-13c3-4c19-a0b4-9b4f947b2e70}</destination>
+			<destination>{7c321012-ab18-47e1-a8b7-d2ad96343967}</destination>
 		</relationship>
 		<relationship name="profilerSystemTrack">
 			<destination>{5305778c-3088-4615-8fb7-06f9be9773fe}</destination>
@@ -54,6 +56,8 @@
 			<destination>{4f1937de-3379-4a6b-b563-d3ff70238b94}</destination>
 			<destination>{5f92990d-136b-49db-9054-c584c395e25b}</destination>
 			<destination>{f315460f-d6fa-4203-a14f-75ca3d35d9c5}</destination>
+			<destination>{4339913b-001f-4536-ad09-2d19bde7cca5}</destination>
+			<destination>{8bf63f0f-718f-496e-aeef-2c002f6e7219}</destination>
 		</relationship>
 	</object>
 	<object class="ProfilerTrack" id="{aed4dde3-5f6e-4f47-a173-df96e3499123}">
@@ -64,6 +68,16 @@
 	<object class="ProfilerTrack" id="{882d539b-0e1a-4436-9732-fbf8599c977e}">
 		<relationship name="objectBeingTracked">
 			<destination>{cadb07b9-309c-49a6-a9f8-523539410f4a}</destination>
+		</relationship>
+	</object>
+	<object class="ProfilerTrack" id="{53860b27-13c3-4c19-a0b4-9b4f947b2e70}">
+		<relationship name="objectBeingTracked">
+			<destination>{f356e2b2-4c0e-40b6-aa60-aa92cc12c9e5}</destination>
+		</relationship>
+	</object>
+	<object class="ProfilerTrack" id="{7c321012-ab18-47e1-a8b7-d2ad96343967}">
+		<relationship name="objectBeingTracked">
+			<destination>{d68cf6f6-e70f-478f-8b13-d298efd17852}</destination>
 		</relationship>
 	</object>
 	<object class="ProfilerSystemTrack" id="{5305778c-3088-4615-8fb7-06f9be9773fe}">
@@ -144,6 +158,34 @@
 		</property>
 		<property name="name">
 			<value>06:45:13 PM</value>
+		</property>
+		<relationship name="timeline">
+			<destination>{8e34f6f4-8527-43c7-bec5-e06e1ff898cc}</destination>
+		</relationship>
+		<relationship name="markerTrack">
+			<destination>{b9f60f83-710d-4431-a791-017cd485910b}</destination>
+		</relationship>
+	</object>
+	<object class="ProfilerRecordingMarker" id="{4339913b-001f-4536-ad09-2d19bde7cca5}">
+		<property name="position">
+			<value>57.322729166666662</value>
+		</property>
+		<property name="name">
+			<value>08:23:52 PM</value>
+		</property>
+		<relationship name="timeline">
+			<destination>{8e34f6f4-8527-43c7-bec5-e06e1ff898cc}</destination>
+		</relationship>
+		<relationship name="markerTrack">
+			<destination>{b9f60f83-710d-4431-a791-017cd485910b}</destination>
+		</relationship>
+	</object>
+	<object class="ProfilerRecordingMarker" id="{8bf63f0f-718f-496e-aeef-2c002f6e7219}">
+		<property name="position">
+			<value>100.73608333333333</value>
+		</property>
+		<property name="name">
+			<value>08:31:56 PM</value>
 		</property>
 		<relationship name="timeline">
 			<destination>{8e34f6f4-8527-43c7-bec5-e06e1ff898cc}</destination>
