@@ -11,15 +11,46 @@ namespace TheyWillDescend.Simulation.City
     }
 
     /// <summary>
-    /// Catalog recipe row for a building type. Several rows per TypeId.
-    /// <see cref="PerHour"/> is the HUD unit (game hour). Instances store TypeId only.
+    /// Recipe row on a house instance. <see cref="PerHour"/> is the HUD unit
+    /// (game hour). Catalog rows live in <see cref="BuildingCatalogRecipe"/>.
     /// </summary>
     public struct BuildingRecipeLine : IBufferElementData
+    {
+        public BuildingRecipeKind Kind;
+        public FixedString64Bytes ResourceId;
+        public float PerHour;
+    }
+
+    /// <summary>
+    /// Recipe row for one catalog type. Lives on the session; Place copies matching
+    /// rows onto the instance as <see cref="BuildingRecipeLine"/>.
+    /// </summary>
+    public struct BuildingCatalogRecipe : IBufferElementData
     {
         public FixedString64Bytes TypeId;
         public BuildingRecipeKind Kind;
         public FixedString64Bytes ResourceId;
         public float PerHour;
+    }
+
+    /// <summary>
+    /// Immutable prefab-default recipe row. Run setup rebuilds the resolved
+    /// <see cref="BuildingCatalogRecipe"/> buffer from these rows.
+    /// </summary>
+    public struct BaseBuildingCatalogRecipe : IBufferElementData
+    {
+        public FixedString64Bytes TypeId;
+        public BuildingRecipeKind Kind;
+        public FixedString64Bytes ResourceId;
+        public float PerHour;
+
+        public BuildingCatalogRecipe ToResolved() => new()
+        {
+            TypeId = TypeId,
+            Kind = Kind,
+            ResourceId = ResourceId,
+            PerHour = PerHour
+        };
     }
 
     public static class BuildingRecipes
@@ -31,11 +62,11 @@ namespace TheyWillDescend.Simulation.City
             return perHour * deltaTime * 24f / dayDuration;
         }
 
-        public static bool HasLines(DynamicBuffer<BuildingRecipeLine> recipes, in FixedString64Bytes typeId)
+        public static bool HasLines(DynamicBuffer<BuildingRecipeLine> recipes)
         {
             for (var i = 0; i < recipes.Length; i++)
             {
-                if (recipes[i].TypeId == typeId && recipes[i].PerHour > 0.0001f)
+                if (recipes[i].PerHour > 0.0001f)
                     return true;
             }
 
@@ -45,7 +76,6 @@ namespace TheyWillDescend.Simulation.City
         public static bool CanRun(
             DynamicBuffer<BuildingRecipeLine> recipes,
             DynamicBuffer<ResourceAmount> stock,
-            in FixedString64Bytes typeId,
             float deltaTime,
             float dayDuration,
             float load01)
@@ -55,7 +85,7 @@ namespace TheyWillDescend.Simulation.City
             for (var i = 0; i < recipes.Length; i++)
             {
                 var line = recipes[i];
-                if (line.TypeId != typeId || line.Kind != BuildingRecipeKind.Input || line.PerHour <= 0.0001f)
+                if (line.Kind != BuildingRecipeKind.Input || line.PerHour <= 0.0001f)
                     continue;
                 var need = FrameAmount(line.PerHour, deltaTime, dayDuration) * load01;
                 if (!ResourceLedger.Has(stock, line.ResourceId, need))
@@ -68,18 +98,18 @@ namespace TheyWillDescend.Simulation.City
         public static void Apply(
             DynamicBuffer<BuildingRecipeLine> recipes,
             DynamicBuffer<ResourceAmount> stock,
-            in FixedString64Bytes typeId,
+            DynamicBuffer<ResourceInfo> info,
             float deltaTime,
             float dayDuration,
             float load01)
         {
-            if (!CanRun(recipes, stock, typeId, deltaTime, dayDuration, load01))
+            if (!CanRun(recipes, stock, deltaTime, dayDuration, load01))
                 return;
 
             for (var i = 0; i < recipes.Length; i++)
             {
                 var line = recipes[i];
-                if (line.TypeId != typeId || line.PerHour <= 0.0001f)
+                if (line.PerHour <= 0.0001f)
                     continue;
                 var amount = FrameAmount(line.PerHour, deltaTime, dayDuration) * load01;
                 if (amount <= 0f)
@@ -87,7 +117,7 @@ namespace TheyWillDescend.Simulation.City
                 if (line.Kind == BuildingRecipeKind.Input)
                     ResourceLedger.Add(stock, line.ResourceId, -amount);
                 else if (line.Kind == BuildingRecipeKind.Output)
-                    ResourceLedger.Add(stock, line.ResourceId, amount);
+                    ResourceLedger.AddClamped(stock, info, line.ResourceId, amount);
             }
         }
     }

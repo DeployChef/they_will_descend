@@ -298,6 +298,15 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
+    "com.unity.visualeffectgraph": {
+      "version": "17.4.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.shadergraph": "17.4.0",
+        "com.unity.render-pipelines.core": "17.4.0"
+      }
+    },
     "com.unity.visualscripting": {
       "version": "1.9.10",
       "depth": 0,
@@ -307,6 +316,12 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "xyz.staggartcreations.skyboxes": {
+      "version": "file:xyz.staggartcreations.skyboxes",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

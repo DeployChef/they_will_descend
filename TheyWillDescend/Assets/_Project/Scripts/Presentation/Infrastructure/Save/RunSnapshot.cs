@@ -8,10 +8,12 @@ namespace TheyWillDescend.Infrastructure.Save
         /// <summary>
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 18;
+        public const int CurrentVersion = 25;
+
 
         public int version = CurrentVersion;
         public int speed = 1;
+        /// <summary>HUD clock pause. Esc overlay is not saved.</summary>
         public bool playerPaused;
         public int day;
         public float elapsedInDay;
@@ -19,6 +21,22 @@ namespace TheyWillDescend.Infrastructure.Save
         public ResourceSnapshot[] resources = Array.Empty<ResourceSnapshot>();
         public AgentSnapshot[] agents = Array.Empty<AgentSnapshot>();
         public BuildingSnapshot[] buildings = Array.Empty<BuildingSnapshot>();
+        public ResolvedBuildingPrototypeSnapshot[] buildingCatalog =
+            Array.Empty<ResolvedBuildingPrototypeSnapshot>();
+        public ResolvedBuildingCostSnapshot[] buildingCosts =
+            Array.Empty<ResolvedBuildingCostSnapshot>();
+        public ResolvedBuildingRecipeSnapshot[] buildingRecipes =
+            Array.Empty<ResolvedBuildingRecipeSnapshot>();
+        public float faith;
+        public float faithMax;
+        public int eraIndex;
+        public int eraStartDay;
+        public float eraStartElapsed;
+        public float previousMaxLoyalty;
+        public float targetMaxLoyalty;
+        public PyramidFeedSnapshot[] pyramidFeed = Array.Empty<PyramidFeedSnapshot>();
+        public string activeTechId = string.Empty;
+        public ResearchLineSnapshot[] research = Array.Empty<ResearchLineSnapshot>();
     }
 
     [Serializable]
@@ -64,7 +82,56 @@ namespace TheyWillDescend.Infrastructure.Save
         public byte built;
         public float constructionElapsed;
         public float constructionDuration;
+        public byte dismantling;
         public int workerAgentId;
         public byte paused;
+        public int desiredWorkers;
+    }
+
+
+    [Serializable]
+    public sealed class ResolvedBuildingPrototypeSnapshot
+    {
+        public string typeId;
+        public int widthClusters;
+        public int depthRadialRings;
+        public float constructionDuration;
+        public int constructionCrewSlots;
+        public int workplaceSlots;
+        public byte researchWorkplace;
+        public byte requiresUnlock;
+    }
+
+    [Serializable]
+    public sealed class ResolvedBuildingCostSnapshot
+    {
+        public string typeId;
+        public string resourceId;
+        public float amount;
+    }
+
+    [Serializable]
+    public sealed class ResolvedBuildingRecipeSnapshot
+    {
+        public string typeId;
+        public byte kind;
+        public string resourceId;
+        public float perHour;
+    }
+
+    [Serializable]
+    public sealed class ResearchLineSnapshot
+    {
+        public string techId;
+        public float accumulatedHours;
+        public byte completed;
+        public byte costPaid;
+    }
+
+    [Serializable]
+    public sealed class PyramidFeedSnapshot
+    {
+        public string resourceId;
+        public float perHour;
     }
 }

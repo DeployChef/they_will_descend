@@ -1,3 +1,4 @@
+using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using TMPro;
@@ -9,6 +10,7 @@ namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
     /// Clock buttons post clock commands. Day label pulls GameTime.
+    /// ⏸ pauses the city clock. Esc opens the game menu.
     /// </summary>
     public sealed class TimeWidget : MonoBehaviour
     {
@@ -36,15 +38,16 @@ namespace TheyWillDescend.Presentation.GameHud
             var hasControl = SimWorld.TryGet(out var em, out var bag);
             var control = hasControl ? em.GetComponentData<SimControl>(bag) : default;
             var buildLocked = hasControl && control.BuildLocked != 0;
-            HudButtons.SetInteractable(speed1Button, !buildLocked);
-            HudButtons.SetInteractable(speed2Button, !buildLocked);
-            HudButtons.SetInteractable(speed3Button, !buildLocked);
-            HudButtons.SetInteractable(pauseButton, !buildLocked);
+            var pauseMenuOpen = PauseMenuScreen.Current != null && PauseMenuScreen.Current.IsOpen;
+            HudButtons.SetInteractable(speed1Button, !buildLocked && !pauseMenuOpen);
+            HudButtons.SetInteractable(speed2Button, !buildLocked && !pauseMenuOpen);
+            HudButtons.SetInteractable(speed3Button, !buildLocked && !pauseMenuOpen);
+            HudButtons.SetInteractable(pauseButton, !buildLocked && !pauseMenuOpen);
 
-            HudButtons.Tint(speed1Button, hasControl && control.Speed == 1);
-            HudButtons.Tint(speed2Button, hasControl && control.Speed == 2);
-            HudButtons.Tint(speed3Button, hasControl && control.Speed == 3);
-            HudButtons.Tint(pauseButton, hasControl && control.PlayerPaused != 0);
+            HudButtons.Tint(speed1Button, hasControl && control.Speed == 1 && control.TimePaused == 0);
+            HudButtons.Tint(speed2Button, hasControl && control.Speed == 2 && control.TimePaused == 0);
+            HudButtons.Tint(speed3Button, hasControl && control.Speed == 3 && control.TimePaused == 0);
+            HudButtons.Tint(pauseButton, hasControl && control.TimePaused != 0);
 
             if (clockLabel == null)
                 return;

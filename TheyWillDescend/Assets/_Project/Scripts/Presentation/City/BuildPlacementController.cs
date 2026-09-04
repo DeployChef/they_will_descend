@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TheyWillDescend.Content;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
@@ -22,6 +23,7 @@ namespace TheyWillDescend.Presentation.City
     {
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingCatalogAsset catalog;
+        [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] Color zoneValidColor = new(0.15f, 0.75f, 1f, 0.45f);
         [SerializeField] Color zoneInvalidColor = new(0.95f, 0.2f, 0.15f, 0.5f);
 
@@ -29,7 +31,6 @@ namespace TheyWillDescend.Presentation.City
 
         string _typeId;
         BuildingFootprint _footprint;
-        float _meshSize = 1f;
         GameObject _ghostPrefab;
 
         bool _placing;
@@ -45,6 +46,9 @@ namespace TheyWillDescend.Presentation.City
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
+        BuildingOverlay _ghostOverlay;
+
+        public BuildingCatalogAsset Catalog => catalog;
 
         public bool IsPlacing => _placing;
 
@@ -52,7 +56,7 @@ namespace TheyWillDescend.Presentation.City
 
         public void BeginPlacing(string typeId)
         {
-            if (!TryResolvePrototype(typeId, out var prototype) || !prototype.Footprint.IsValid)
+            if (!TryResolvePrototype(typeId, out var spec) || spec.TypeId.IsEmpty)
             {
                 GameLog.Error($"Place mode: unknown building type {typeId}.");
                 return;
@@ -64,15 +68,19 @@ namespace TheyWillDescend.Presentation.City
                 return;
             }
 
-            _typeId = prototype.TypeId.ToString();
-            _footprint = prototype.Footprint;
-            _meshSize = prototype.MeshSize > 0.001f ? prototype.MeshSize : 1f;
+            if (!spec.Footprint.IsValid)
+            {
+                GameLog.Error($"Place mode: invalid footprint for {typeId}.");
+                return;
+            }
+            _typeId = spec.TypeId.ToString();
+            _footprint = spec.Footprint;
             _ghostPrefab = ResolveGhostPrefab(_typeId);
             _placing = true;
             gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
-            GameLog.Info($"Place mode: {prototype.DisplayName}.");
+            GameLog.Info($"Place mode: {BuildingView.NameOf(_ghostPrefab)}.");
         }
 
         public void CancelPlacing()
@@ -170,7 +178,7 @@ namespace TheyWillDescend.Presentation.City
 
         void PlaceBuilding()
         {
-            if (!SimCommands.TryPost(new PlaceBuildingCommand
+            if (!SimCommands.Request(new PlaceBuildingRequest
                 {
                     TypeId = _typeId,
                     WidthClusters = _footprint.WidthClusters,
@@ -178,13 +186,13 @@ namespace TheyWillDescend.Presentation.City
                     AnchorCluster = _anchorCluster,
                     AnchorRadial = _anchorRadial
                 }))
+
             {
                 GameLog.Error("PlaceBuilding: sim world not ready.");
                 return;
             }
 
             GameLog.Info($"Place command type={_typeId} c={_anchorCluster} r={_anchorRadial}.");
-            SimCommands.Playback();
             if (CanAfford(_typeId))
                 return;
 
@@ -211,15 +219,15 @@ namespace TheyWillDescend.Presentation.City
             {
                 RadialFootprintMath.FootprintMarkerPose(
                     center, config, _anchorCluster, _anchorRadial, _footprint,
-                    out var pos, out var rot, out var targetSize);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot, targetSize);
+                    out var pos, out var rot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
             }
             else
             {
                 RadialFootprintMath.FootprintMarkerPoseFromTurns(
                     center, config, _anchorTurns0, _anchorRadial, _footprint,
-                    out var pos, out var rot, out var targetSize);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot, targetSize);
+                    out var pos, out var rot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
             }
         }
 
@@ -228,19 +236,36 @@ namespace TheyWillDescend.Presentation.City
             EnsureMaterials();
             if (_ghostRoot != null)
                 return;
+            if (overlayPrefab == null)
+            {
+                GameLog.Error("BuildPlacementController: assign BuildingOverlay prefab.");
+                return;
+            }
 
-            _ghostRoot = new GameObject("GhostPlacement").transform;
-            _ghostRoot.SetParent(transform, false);
+            _ghostOverlay = Instantiate(overlayPrefab, transform);
+            _ghostOverlay.name = "GhostPlacement";
+            _ghostRoot = _ghostOverlay.transform;
+            if (_ghostOverlay.ZoneCollider != null)
+                _ghostOverlay.ZoneCollider.enabled = false;
+            _ghostZoneFilter = _ghostOverlay.ZoneFilter;
+            _ghostZoneRenderer = _ghostOverlay.ZoneRenderer;
+            if (_ghostZoneFilter != null)
+            {
+                if (_ghostZoneFilter.sharedMesh == null)
+                {
+                    _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
+                    _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
+                }
+                else
+                    _ghostZoneMesh = _ghostZoneFilter.sharedMesh;
+            }
 
-            var zoneGo = new GameObject("GhostZone");
-            zoneGo.transform.SetParent(_ghostRoot, false);
-            _ghostZoneFilter = zoneGo.AddComponent<MeshFilter>();
-            _ghostZoneRenderer = zoneGo.AddComponent<MeshRenderer>();
-            _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
-            _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
-            _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
-            _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _ghostZoneRenderer.receiveShadows = false;
+            if (_ghostZoneRenderer != null)
+            {
+                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
+                _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                _ghostZoneRenderer.receiveShadows = false;
+            }
 
             _ghostRoot.gameObject.SetActive(false);
         }
@@ -248,6 +273,8 @@ namespace TheyWillDescend.Presentation.City
         void RecreateGhostBuilding()
         {
             EnsureGhost();
+            if (_ghostRoot == null)
+                return;
             if (_ghostBuilding != null)
             {
                 Destroy(_ghostBuilding.gameObject);
@@ -260,21 +287,20 @@ namespace TheyWillDescend.Presentation.City
             var instance = Instantiate(_ghostPrefab, _ghostRoot);
             instance.name = "GhostHouse";
             StripColliders(instance);
+            HideWidget(instance);
             _ghostBuilding = instance.transform;
-            _ghostBuilding.localScale = Vector3.one;
         }
 
-        void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot, float targetSize)
+        static void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot)
         {
-            t.localScale = Vector3.one;
             t.SetPositionAndRotation(pos, rot);
+        }
 
-            var size = _meshSize > 0.001f ? _meshSize : MeasureHorizontalSize(t.gameObject);
-            if (size > 0.001f)
-                t.localScale = Vector3.one * (targetSize / size);
-
-            t.position = pos;
-            t.rotation = rot;
+        static void HideWidget(GameObject go)
+        {
+            var widgets = go.GetComponentsInChildren<BuildingWidget>(true);
+            for (var i = 0; i < widgets.Length; i++)
+                widgets[i].gameObject.SetActive(false);
         }
 
         static void StripColliders(GameObject go)
@@ -282,19 +308,6 @@ namespace TheyWillDescend.Presentation.City
             var cols = go.GetComponentsInChildren<Collider>();
             for (var i = 0; i < cols.Length; i++)
                 Destroy(cols[i]);
-        }
-
-        static float MeasureHorizontalSize(GameObject go)
-        {
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers == null || renderers.Length == 0)
-                return 1f;
-
-            var bounds = renderers[0].bounds;
-            for (var i = 1; i < renderers.Length; i++)
-                bounds.Encapsulate(renderers[i].bounds);
-
-            return Mathf.Max(bounds.size.x, bounds.size.z);
         }
 
         void SetGhostVisible(bool visible)
@@ -383,7 +396,7 @@ namespace TheyWillDescend.Presentation.City
                 || !SimWorld.TryGet(out var em, out var bag)
                 || !em.HasBuffer<BuildingPrototype>(bag))
                 return false;
-            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, 0, 0, out prototype);
+            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), id, out prototype);
         }
 
         static bool OverlapsOccupied(List<(int cluster, int radial)> clusters)
@@ -408,15 +421,16 @@ namespace TheyWillDescend.Presentation.City
 
         static bool CanAfford(string typeId)
         {
-            var id = ContentId.EncodeOrEmpty(typeId);
-            if (id.IsEmpty
-                || !SimWorld.TryGet(out var em, out var bag)
-                || !em.HasBuffer<BuildingCost>(bag))
+            if (!TryResolvePrototype(typeId, out var spec))
                 return true;
-            var costs = em.GetBuffer<BuildingCost>(bag);
+            if (!SimWorld.TryGet(out var em, out var bag))
+                return true;
+            if (!em.HasBuffer<BuildingCatalogCost>(bag))
+                return true;
+            var costs = em.GetBuffer<BuildingCatalogCost>(bag);
             if (!em.HasBuffer<ResourceAmount>(bag))
-                return !BuildingCosts.HasCost(costs, id);
-            return BuildingCosts.CanAfford(costs, em.GetBuffer<ResourceAmount>(bag), id);
+                return !BuildingCosts.HasCost(costs, spec.TypeId);
+            return BuildingCosts.CanAfford(costs, spec.TypeId, em.GetBuffer<ResourceAmount>(bag));
         }
 
         void OnDisable()

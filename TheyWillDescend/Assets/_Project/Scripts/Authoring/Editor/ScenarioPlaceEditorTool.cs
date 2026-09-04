@@ -1,4 +1,7 @@
+using TheyWillDescend.Authoring.City;
 using TheyWillDescend.Authoring.Scenario;
+using TheyWillDescend.Content;
+using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.City;
 using Unity.Mathematics;
 using UnityEditor;
@@ -42,7 +45,7 @@ namespace TheyWillDescend.Authoring.Editor
 
         void DrawPalette(TheyWillDescend.Authoring.City.BuildingCatalogAuthoring catalog)
         {
-            var definitions = catalog.Catalog != null ? catalog.Catalog.Buildings : null;
+            var prefabs = catalog.Catalog != null ? catalog.Catalog.Prefabs : null;
             Handles.BeginGUI();
             GUILayout.BeginArea(PaletteRect, EditorStyles.helpBox);
             EditorGUILayout.LabelField("Scenario place", EditorStyles.boldLabel);
@@ -50,17 +53,20 @@ namespace TheyWillDescend.Authoring.Editor
                 string.IsNullOrEmpty(_typeId)
                     ? "Pick a type, then click the grid. RMB removes."
                     : $"Click to place {_typeId}. RMB removes.");
-            if (definitions != null)
+            if (prefabs != null)
             {
                 EditorGUILayout.BeginHorizontal();
-                for (var i = 0; i < definitions.Count; i++)
+                for (var i = 0; i < prefabs.Count; i++)
                 {
-                    var definition = definitions[i];
-                    if (definition == null)
+                    var prefab = prefabs[i];
+                    if (prefab == null)
                         continue;
-                    var pressed = _typeId == definition.TypeId;
-                    if (GUILayout.Toggle(pressed, definition.DisplayName, EditorStyles.miniButton) && !pressed)
-                        _typeId = definition.TypeId;
+                    var typeId = BuildingStampRead.TypeId(prefab);
+                    if (string.IsNullOrEmpty(typeId))
+                        continue;
+                    var pressed = _typeId == typeId;
+                    if (GUILayout.Toggle(pressed, BuildingView.NameOf(prefab), EditorStyles.miniButton) && !pressed)
+                        _typeId = typeId;
                 }
 
                 EditorGUILayout.EndHorizontal();
@@ -122,7 +128,10 @@ namespace TheyWillDescend.Authoring.Editor
 
             RadialFootprintMath.FootprintMarkerPose(
                 center, config, cluster, radial, footprint,
-                out var position, out var rotation, out var size);
+                out var position, out var rotation);
+            var width = footprint.WidthClusters * config.TargetClusterWorldWidth;
+            var depth = footprint.DepthRadialRings * config.RadialStep;
+            var size = math.max(0.35f, math.min(width, depth) * 0.85f);
             var matrix = Matrix4x4.TRS(position, rotation, Vector3.one * size);
             using (new Handles.DrawingScope(new Color(0.2f, 0.85f, 0.4f, 0.85f), matrix))
                 Handles.DrawWireCube(Vector3.zero, Vector3.one);

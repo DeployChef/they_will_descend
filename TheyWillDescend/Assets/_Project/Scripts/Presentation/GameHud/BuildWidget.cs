@@ -3,6 +3,7 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
 using TMPro;
 using Unity.Collections;
@@ -74,6 +75,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void OnBuildModeClicked()
         {
+            ResearchWidget.Current?.CloseIfBusy();
             if (IsBusy)
                 Close(resumeSim: true);
             else
@@ -133,13 +135,16 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             var catalog = em.GetBuffer<BuildingPrototype>(bag);
-            var costs = em.HasBuffer<BuildingCost>(bag) ? em.GetBuffer<BuildingCost>(bag) : default;
             var names = em.HasBuffer<ResourceInfo>(bag) ? em.GetBuffer<ResourceInfo>(bag) : default;
+            var viewCatalog = placement != null ? placement.Catalog : null;
             var count = 0;
             for (var i = 0; i < catalog.Length; i++)
             {
                 var prototype = catalog[i];
-                if (prototype.Prefab == Entity.Null || prototype.TypeId.IsEmpty)
+                if (prototype.TypeId.IsEmpty)
+                    continue;
+                if (prototype.RequiresUnlock != 0
+                    && !ResearchRules.IsBuildingUnlocked(em, prototype.TypeId))
                     continue;
                 count++;
                 var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
@@ -147,10 +152,14 @@ namespace TheyWillDescend.Presentation.GameHud
                 go.name = $"Catalog_{typeId}";
                 go.SetActive(true);
                 var button = go.GetComponent<Button>();
-                var cost = FormatBuildingCost(costs, names, prototype.TypeId);
-                var title = prototype.DisplayName.IsEmpty
-                    ? $"{prototype.WidthClusters}×{prototype.DepthRadialRings}"
-                    : prototype.DisplayName.ToString();
+                var costs = em.HasBuffer<BuildingCatalogCost>(bag)
+                    ? em.GetBuffer<BuildingCatalogCost>(bag)
+                    : default;
+                var cost = FormatBuildingCost(costs, prototype.TypeId, names);
+                var prefab = viewCatalog != null ? viewCatalog.FindPrefab(typeId) : null;
+                var title = BuildingView.NameOf(prefab);
+                if (string.IsNullOrEmpty(title))
+                    title = typeId;
                 SetButtonLabel(button, string.IsNullOrEmpty(cost) ? title : $"{title}\n{cost}");
                 HudButtons.Bind(button, () => BeginPlace(typeId));
                 _spawnedButtons.Add(button);
@@ -259,11 +268,11 @@ namespace TheyWillDescend.Presentation.GameHud
         }
 
         static string FormatBuildingCost(
-            DynamicBuffer<BuildingCost> costs,
-            DynamicBuffer<ResourceInfo> names,
-            in FixedString64Bytes typeId)
+            DynamicBuffer<BuildingCatalogCost> costs,
+            in FixedString64Bytes typeId,
+            DynamicBuffer<ResourceInfo> names)
         {
-            if (typeId.IsEmpty || !costs.IsCreated)
+            if (!costs.IsCreated || typeId.IsEmpty)
                 return string.Empty;
 
             var parts = new List<string>(4);

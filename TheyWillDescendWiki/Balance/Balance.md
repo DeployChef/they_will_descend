@@ -25,7 +25,7 @@
 ## Артефакты
 
 - Заметки тюнинга — здесь
-- Живые числа среза — [[../Architecture/05 Content Pipeline|05 Content Pipeline]] (`BuildingDefinition` / `ScenarioDefinition`)
+- Живые числа среза — [[../Architecture/05 Content Pipeline|05 Content Pipeline]] (префабы домов / `ScenarioDefinition`)
 - Таблицы (xlsx / Sheet) — рядом, когда появятся
 
 > Референс джема: `gmtk_2026/wiki/Balance/`

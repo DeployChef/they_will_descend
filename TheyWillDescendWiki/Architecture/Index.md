@@ -9,7 +9,7 @@
 ## Документы
 
 - [[00 Overview]] — стек и слои
-- [[01 Folder Structure]] — `Assets/_Project`, четыре сборки
+- [[01 Folder Structure]] — `Assets/_Project`, сборки-стены
 - [[02 Scenes & Lifetime]] — Bootstrap, MainMenu, Loading, Game, SubScene
 - [[03 Core Systems]] — AppFlow, GameSession, SimControl, GameLog
 - [[04 Simulation]] — город, люди, экономика (что есть / что ещё нет)
@@ -23,6 +23,8 @@
 - [[12 Radial City Grid]] — полярный cluster underlay; occupy в ECS
 - [[13 Time HUD and Save]] — пауза/x1/x2/x3, часы дня, однослотовый save/load
 - [[14 Sim Presentation Bridge]] — `SimCommands.TryPost`, pull видов, Playback
+- [[15 Refactoring — Target ECS & Interaction]] — целевой рефакторинг UI ↔ ECS (Reconciliation Loop + Request Entities)
+
 
 ## Связь с GDD
 
@@ -31,5 +33,5 @@
 | [[../GDD/02 Gameplay Loop\|Gameplay Loop]] | [[03 Core Systems]] · [[09 App Shell]] |
 | [[../GDD/03 City & People\|City & People]] | [[04 Simulation]] |
 | [[../GDD/04 Economy & Heat\|Economy & Heat]] | [[04 Simulation]] · [[05 Content Pipeline]] |
-| [[../GDD/05 Gods & Timeline\|Gods & Timeline]] | ещё не в коде; хуки — [[08 Production ECS]] |
+| [[../GDD/05 Gods & Timeline\|Gods & Timeline]] | срез 1 в коде; хуки — [[08 Production ECS]] |
 | [[../GDD/06 Laws & Choices\|Laws]] | content + simulation hooks, позже |

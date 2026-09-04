@@ -8,12 +8,14 @@ using Unity.Transforms;
 namespace TheyWillDescend.Simulation.Agents
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(ConsumeDespawnBuildingsSystem))]
+    [UpdateAfter(typeof(ConsumePendingScenarioSpawnsSystem))]
+    [UpdateBefore(typeof(ConsumePlaceBuildingCommandsSystem))]
     public partial struct ConsumeSpawnAgentCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
+            state.RequireForUpdate<AgentIdSequence>();
             state.RequireForUpdate<SimPrototypes>();
         }
 
@@ -24,7 +26,7 @@ namespace TheyWillDescend.Simulation.Agents
 
         public static void Run(EntityManager em)
         {
-            if (!SimBridgeAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
             var commands = em.GetBuffer<SpawnAgentCommand>(session);
@@ -33,30 +35,27 @@ namespace TheyWillDescend.Simulation.Agents
 
             var catalog = em.GetComponentData<SimPrototypes>(session);
             if (catalog.Agent == Entity.Null)
-            {
-                commands.Clear();
                 return;
-            }
 
-            var bridge = em.GetComponentData<SimBridge>(session);
+            var sequence = em.GetComponentData<AgentIdSequence>(session);
             var copy = commands.ToNativeArray(Allocator.Temp);
             commands.Clear();
             for (var i = 0; i < copy.Length; i++)
-                Spawn(em, ref bridge, catalog.Agent, copy[i]);
+                Spawn(em, ref sequence, catalog.Agent, copy[i]);
             copy.Dispose();
-            em.SetComponentData(session, bridge);
+            em.SetComponentData(session, sequence);
         }
 
         static void Spawn(
             EntityManager em,
-            ref SimBridge bridge,
+            ref AgentIdSequence sequence,
             Entity prototype,
             in SpawnAgentCommand command)
         {
-            bridge.NextAgentId += 1;
-            var agentId = command.AgentId > 0 ? command.AgentId : bridge.NextAgentId;
-            if (bridge.NextAgentId < agentId)
-                bridge.NextAgentId = agentId;
+            sequence.NextAgentId += 1;
+            var agentId = command.AgentId > 0 ? command.AgentId : sequence.NextAgentId;
+            if (sequence.NextAgentId < agentId)
+                sequence.NextAgentId = agentId;
 
             var facing = math.lengthsq(command.Facing) > 0.001f
                 ? command.Facing

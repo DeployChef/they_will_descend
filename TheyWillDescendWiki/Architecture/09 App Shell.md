@@ -62,13 +62,16 @@ IAppState (PressAnyKey, MainMenu, LoadingGame, Playing)
 
 GameSession
   StartAsync / DisposeAsync / LoadMainMenuAsync
-  load/unload контента рана; ждёт bake: SimWorld.TryGet
+  current buttons: DefaultScenario.DefaultDifficulty vs DebugScenario.DefaultDifficulty
+  future menu: SetRunSelection(scenario, allowed difficulty)
+  load/unload контента рана; ждёт bake: SimWorld.TryGet; затем RunPublisher
 
 SceneLoader (узкий)
   LoadAdditive / Unload — без знания экономики
 
 GameInput
-  клон TheyWillDescend.inputactions
+  клон TheyWillDescend.inputactions (инспектор: только этот asset)
+  Menu/Proceed и Game/Pause — FindAction на клоне, не InputActionReference в сцене
   Menu: Proceed (anyKey + ЛКМ/ПКМ/СКМ + gamepad south)
   Game: Pause (Esc)
 ```
@@ -90,18 +93,19 @@ GameInput
 Boot → PressAnyKey → MainMenu → (позже ScenarioSelect / Cutscene / Briefing)
   → LoadingGame (session.StartAsync: Loading + Game, unload MainMenu)
   → Playing
-  → выход в меню: session.DisposeAsync → MainMenu
+  → выход в меню: ReturningToMenu (session.DisposeAsync через Loading) → MainMenu
 ```
 
-Пауза **часов** — не стейт приложения. Esc в Playing: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе `SimClockCommand.TogglePause()`. FSM остаётся Playing.
+Пауза **часов** — не стейт приложения. Esc в Playing: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе оверлей `PauseMenuScreen` + `SimClockCommand.PlayerPaused`. FSM остаётся Playing.
 
-Меню паузы (Save/Quit) — позже отдельный оверлей, не путать с Frozen.
+Меню паузы (Continue / Save / Load / Main Menu) — оверлей на Game, не путать с Frozen и не `PausedState`.
 
 | State | SimControl | Заметка |
 | --- | --- | --- |
 | PressAnyKey / MainMenu | Off (`SessionInGame = 0`) | экраны живы, пока загружен MainMenu |
 | LoadingGame | Off | грузит Game, выгружает MainMenu |
-| Playing | Running или Frozen | Frozen = PlayerPaused / BuildLocked |
+| Playing | Running или Frozen | Frozen = PlayerPaused / BuildLocked; оверлей паузы живёт здесь |
+| ReturningToMenu | Off | Loading → выгрузка Game → MainMenu |
 
 ---
 
@@ -136,14 +140,17 @@ UI / стейты: `SimCommands.TryPost(SimClockCommand.…)` — не пишу�
 // AppFlowFactory — new + Register, без Find UI
 var fsm = new AppStateMachine();
 fsm.Register(new PressAnyKeyState(fsm, input));
-fsm.Register(new MainMenuState(fsm, input));
+fsm.Register(new MainMenuState(fsm, input, session));
 fsm.Register(new LoadingGameState(fsm, session, input));
-fsm.Register(new PlayingState(input, audio));
+fsm.Register(new PlayingState(fsm, session, input, audio));
+fsm.Register(new ReturningToMenuState(fsm, session, input));
 ```
 
-Экраны меню биндятся в Awake на своих панелях (`Current`). Стейты читают в Enter, не кэшируют с boot.
+Экраны биндятся в Awake на своих панелях (`Current`): `MainMenuScreen`, `PauseMenuScreen`. Стейты читают в Enter, не кэшируют с boot.
 
-`skipMenuToGameTemporarily` — debug: сразу LoadingGame, MainMenu не грузится. **По умолчанию выключен.**
+Меню: **Start Game** / **Load** / **Start Debug**. Список допустимых `DifficultyProfile` и default принадлежат `ScenarioDefinition`, а не отдельным полям `GameSession`. Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Null default = prefab-default balance. Load = слот (кнопка серая, если файла нет).
+
+`skipMenuToGameTemporarily` — debug: сразу LoadingGame, MainMenu не грузится. **По умолчанию выключен.** Сейчас выключен, чтобы проверить меню.
 
 Позже VContainer *может* регистрировать те же хосты. Контейнер = замена ручного new, не новая архитектура.
 
@@ -155,7 +162,7 @@ fsm.Register(new PlayingState(input, audio));
 | --- | --- |
 | Bootstrap | хосты + Main Camera. Без меню-canvas |
 | MainMenu | splash/menu + `PressAnyKeyScreen` / `MainMenuScreen` |
-| Loading | переход |
+| Loading | переход: старт рана, load слота, выход в меню |
 | Game | мир, HUD, SubScene Simulation |
 
 ---
@@ -174,8 +181,8 @@ Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в
 
 ## 8. Порядок дальше
 
-1. Ядро есть: `Startup` + `GameSession` + `SimControl`, пауза часов в Playing.
-2. Меню паузы / выбор сценария — позже.
+1. Ядро есть: `Startup` + `GameSession` + `SimControl`, пауза часов и оверлей в Playing.
+2. Выбор сценария — позже.
 3. VContainer — только если Composition Root станет невыносимым.
 
 ---

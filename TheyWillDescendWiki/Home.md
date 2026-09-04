@@ -40,3 +40,17 @@
 - [[Architecture/12 Radial City Grid|12 Radial City Grid]] — полярная сетка, occupancy в ECS
 - [[Architecture/13 Time HUD and Save|13 Time HUD & Save]] — часы, скорость, слот save/load
 - [[Architecture/14 Sim Presentation Bridge|14 Bridge]] — команды в ECS, pull видов
+- [[Architecture/15 Refactoring — Target ECS & Interaction|15 Refactoring]] — целевой рефакторинг UI ↔ ECS (Reconciliation Loop + Request Entities)
+
+## Refactoring (План перехода к целевой архитектуре)
+
+- [[Refactoring/Index|План рефакторинга]] — манифест и оглавление
+- [[Refactoring/01 ECS & Commands|01. Реформа ECS и команд]] — отказ от брокера команд, Desired State и Request Entities
+- [[Refactoring/02 Baking, SubScenes & World Bootstrap|02. Бейкинг и саб-сцены]] — отказ от SubScene для каталогов, мгновенный C# Bootstrap
+- [[Refactoring/03 Presentation & Performance|03. Презентация и память]] — устранение аллокаций в LateUpdate, пулинг, UI
+- [[Refactoring/04 Step-by-Step Roadmap|04. Дорожная карта]] — 4 изолированных шага миграции
+- [[Refactoring/05 Content Pipeline & CMS|05. Контент и CMS]] — разделение Data vs View, Scriptable Database, Google Sheets
+- [[Refactoring/06 Headquarters & City Core|06. Пирамида и Сердце Города]] — ликвидация SyncCityCenter, снятие Building с Пирамиды, C# спавн
+
+
+

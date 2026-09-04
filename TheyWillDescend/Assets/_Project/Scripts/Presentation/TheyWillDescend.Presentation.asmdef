@@ -3,9 +3,11 @@
     "rootNamespace": "TheyWillDescend.Presentation",
     "references": [
         "TheyWillDescend.Simulation",
+        "TheyWillDescend.Content",
         "FMODUnity",
         "Unity.Collections",
         "Unity.Entities",
+        "Unity.Entities.Graphics",
         "Unity.InputSystem",
         "Unity.Mathematics",
         "UniTask",

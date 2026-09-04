@@ -42,11 +42,19 @@ namespace TheyWillDescend.Presentation.City
             if (cam == null)
                 return false;
             var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (!Physics.Raycast(ray, out var hit, 500f))
-                return true;
+            var hits = Physics.RaycastAll(ray, 500f);
+            var bestDist = float.MaxValue;
+            BuildingIdTag best = null;
+            for (var i = 0; i < hits.Length; i++)
+            {
+                var tag = hits[i].collider.GetComponentInParent<BuildingIdTag>();
+                if (tag == null || hits[i].distance >= bestDist)
+                    continue;
+                bestDist = hits[i].distance;
+                best = tag;
+            }
 
-            var tag = hit.collider.GetComponentInParent<BuildingIdTag>();
-            buildingId = tag != null ? tag.Id : 0;
+            buildingId = best != null ? best.Id : 0;
             return true;
         }
     }

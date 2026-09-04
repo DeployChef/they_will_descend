@@ -1,4 +1,5 @@
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Content;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
@@ -18,29 +19,46 @@ namespace TheyWillDescend.Presentation.GameHud
     public sealed class BuildingInspectPanel : MonoBehaviour
     {
         [SerializeField] BuildingSelection selection;
+        public BuildingSelection Selection => selection;
         [SerializeField] GameObject card;
         [SerializeField] TMP_Text title;
-        [SerializeField] TMP_Text subtitle;
         [SerializeField] TMP_Text workers;
         [SerializeField] TMP_Text idle;
         [SerializeField] TMP_Text status;
+        [Tooltip("Тип: Workplace / Building")]
+        [SerializeField] TMP_Text buildingRole;
+        [Tooltip("Название производимого ресурса")]
+        [SerializeField] TMP_Text resourceName;
+        [Tooltip("Количество ресурса в час (без суффикса), например +2.5")]
+        [SerializeField] TMP_Text resourceRate;
         [SerializeField] Button minusButton;
         [SerializeField] Button plusButton;
         [SerializeField] Button maxMinusButton;
         [SerializeField] Button maxPlusButton;
         [SerializeField] Button powerButton;
         [SerializeField] Button closeButton;
+        [SerializeField] Button destroyButton;
         [SerializeField] Image workFill;
+        [Tooltip("Спрайт для состояния Start (производство остановлено)")]
+        [SerializeField] Sprite powerStartSprite;
+        [Tooltip("Спрайт для состояния Stop (производство работает)")]
+        [SerializeField] Sprite powerStopSprite;
+        [Tooltip("Image, в который подставляется спрайт. Если не назначен — берётся Image с самой кнопки")]
+        [SerializeField] Image powerIcon;
+
+        BuildPlacementController _placement;
 
         void Awake()
         {
             EnsureExtraButtons();
+            EnsureDestroyButton();
             HudButtons.Bind(minusButton, OnMinus);
             HudButtons.Bind(plusButton, OnPlus);
             HudButtons.Bind(maxMinusButton, OnMaxMinus);
             HudButtons.Bind(maxPlusButton, OnMaxPlus);
             HudButtons.Bind(powerButton, OnPower);
             HudButtons.Bind(closeButton, OnClose);
+            HudButtons.Bind(destroyButton, OnDestroyBuilding);
             if (Application.isPlaying)
                 Hide();
         }
@@ -53,24 +71,35 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.Unbind(maxPlusButton, OnMaxPlus);
             HudButtons.Unbind(powerButton, OnPower);
             HudButtons.Unbind(closeButton, OnClose);
+            HudButtons.Unbind(destroyButton, OnDestroyBuilding);
         }
 
         void EnsureExtraButtons()
         {
             if (maxMinusButton == null && minusButton != null)
                 maxMinusButton = CloneButton(minusButton, "MaxMinusButton", "Max");
-            else
-                HudButtons.SetLabel(maxMinusButton, "Max");
 
             if (maxPlusButton == null && plusButton != null)
                 maxPlusButton = CloneButton(plusButton, "MaxPlusButton", "Max");
-            else
-                HudButtons.SetLabel(maxPlusButton, "Max");
 
             if (powerButton == null && plusButton != null)
                 powerButton = CloneButton(plusButton, "PowerButton", "Stop");
+        }
 
-            LayoutStaffButtons();
+        void EnsureDestroyButton()
+        {
+            if (destroyButton != null)
+                return;
+            var root = card != null ? card.transform : transform;
+            var marked = root.Find("ImageDestroyBuilding");
+            if (marked == null)
+                return;
+            destroyButton = marked.GetComponent<Button>();
+            if (destroyButton == null)
+                destroyButton = marked.gameObject.AddComponent<Button>();
+            var graphic = marked.GetComponent<Image>();
+            if (graphic != null)
+                destroyButton.targetGraphic = graphic;
         }
 
         static Button CloneButton(Button source, string name, string label)
@@ -81,90 +110,6 @@ namespace TheyWillDescend.Presentation.GameHud
             button.onClick.RemoveAllListeners();
             HudButtons.SetLabel(button, label);
             return button;
-        }
-
-        void LayoutStaffButtons()
-        {
-            const float edge = 16f;
-            const float gap = 6f;
-            const float maxWidth = 56f;
-            var rowY = minusButton != null
-                ? minusButton.GetComponent<RectTransform>().anchoredPosition.y
-                : -232f;
-            var rowH = minusButton != null
-                ? minusButton.GetComponent<RectTransform>().sizeDelta.y
-                : 40f;
-
-            PlaceOnLeft(maxMinusButton, edge, rowY, maxWidth, rowH);
-            PlaceOnLeft(minusButton, edge + maxWidth + gap, rowY, 48f, rowH);
-            PlaceOnRight(maxPlusButton, edge, rowY, maxWidth, rowH);
-            PlaceOnRight(plusButton, edge + maxWidth + gap, rowY, 48f, rowH);
-            PlacePowerRow(powerButton, rowY, rowH);
-
-            if (workers != null)
-            {
-                var rt = workers.rectTransform;
-                rt.sizeDelta = new Vector2(-268f, rt.sizeDelta.y);
-            }
-
-            var powerRt = powerButton != null ? powerButton.GetComponent<RectTransform>() : null;
-            var idleRt = idle != null ? idle.rectTransform : null;
-            var statusRt = status != null ? status.rectTransform : null;
-            var barRt = workFill != null && workFill.transform.parent != null
-                ? workFill.transform.parent as RectTransform
-                : null;
-            PushBelow(idleRt, powerRt, 8f);
-            PushBelow(statusRt, idleRt, 8f);
-            PushBelow(barRt, statusRt, 12f);
-        }
-
-        static void PlaceOnLeft(Button button, float x, float y, float width, float height)
-        {
-            if (button == null)
-                return;
-
-            var rt = button.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(x, y);
-            rt.sizeDelta = new Vector2(width, height);
-        }
-
-        static void PlaceOnRight(Button button, float xFromRight, float y, float width, float height)
-        {
-            if (button == null)
-                return;
-
-            var rt = button.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-xFromRight, y);
-            rt.sizeDelta = new Vector2(width, height);
-        }
-
-        static void PlacePowerRow(Button power, float rowY, float rowH)
-        {
-            if (power == null)
-                return;
-
-            var rt = power.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = new Vector2(0f, rowY - rowH - 8f);
-            rt.sizeDelta = new Vector2(-32f, 40f);
-        }
-
-        static void PushBelow(RectTransform target, RectTransform above, float gap)
-        {
-            if (target == null || above == null)
-                return;
-
-            var needed = above.anchoredPosition.y - above.sizeDelta.y - gap;
-            if (target.anchoredPosition.y > needed)
-                target.anchoredPosition = new Vector2(target.anchoredPosition.x, needed);
         }
 
         void Update()
@@ -190,13 +135,24 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Show(int id)
         {
-            if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
+            if (id == 1)
             {
                 Hide();
                 return;
             }
 
+            if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
+
+            {
+                selection?.ClearIf(id);
+                Hide();
+                return;
+            }
+
+
             var constructing = em.HasComponent<Construction>(entity);
+            var construction = constructing ? em.GetComponentData<Construction>(entity) : default;
+            var dismantling = constructing && construction.IsDismantling;
             var workplace = em.HasComponent<Workplace>(entity)
                 ? em.GetComponentData<Workplace>(entity)
                 : default;
@@ -204,17 +160,13 @@ namespace TheyWillDescend.Presentation.GameHud
             var slots = em.HasComponent<BuildingType>(entity)
                 ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
                 : 0;
-            if (em.HasBuffer<BuildingPrototype>(bag)
-                && BuildingCatalog.TryResolve(
-                    em.GetBuffer<BuildingPrototype>(bag),
-                    building.TypeId,
-                    0,
-                    0,
-                    out var prototype))
+            var viewCatalog = FindViewCatalog();
+            if (viewCatalog != null)
             {
-                displayName = prototype.DisplayName.ToString();
-                if (slots <= 0)
-                    slots = prototype.WorkplaceSlots;
+                var prefab = viewCatalog.FindPrefab(building.TypeId.ToString());
+                var viewName = BuildingView.NameOf(prefab);
+                if (!string.IsNullOrEmpty(viewName))
+                    displayName = viewName;
             }
 
             if (card != null)
@@ -228,25 +180,40 @@ namespace TheyWillDescend.Presentation.GameHud
             var onShift = TryGetGameTime(em, out var time) && time.IsWorkShift;
             if (slots < 0)
                 slots = 0;
-            var idleCount = CountIdleWorkers(em);
+            CountWorkforce(em, out var totalWorkers, out var totalDesired, out var freeWorkers);
             if (workers != null)
-                workers.text = $"{occupied} / {slots}";
+            {
+                workers.text = $"{workplace.DesiredWorkers} / {slots}";
+            }
+
             if (idle != null)
-                idle.text = $"Idle workers  {idleCount}";
+                idle.text = $"Idle workers  {freeWorkers}";
+
 
             if (constructing)
             {
-                if (subtitle != null)
-                    subtitle.text = "Under construction";
+                CountConstructionCrew(em, building.Id, out var crewAssigned, out var crewArrived);
+                if (workers != null)
+                    workers.text = $"{construction.Normalized * 100f:0}%";
+                UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
-                    status.text = "Crew locked until the house stands.";
+                {
+                    if (crewArrived < 1)
+                        status.text = crewAssigned > 0
+                            ? (dismantling ? "Crew walking to dismantle." : "Crew walking to the site.")
+                            : (dismantling ? "Waiting to dismantle." : "Waiting for workers.");
+                    else
+                        status.text = dismantling
+                            ? $"{crewArrived} dismantling."
+                            : $"{crewArrived} building.";
+                }
+
                 if (workFill != null)
-                    workFill.fillAmount = 0.35f;
+                    workFill.fillAmount = construction.Normalized;
             }
             else if (!onShift)
             {
-                if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -263,8 +230,7 @@ namespace TheyWillDescend.Presentation.GameHud
             }
             else if (paused)
             {
-                if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, 0f);
+                UpdateRecipeLabels(em, entity, bag, slots, 0f);
                 if (status != null)
                     status.text = occupied == 0
                         ? "Production stopped. No one assigned."
@@ -275,8 +241,7 @@ namespace TheyWillDescend.Presentation.GameHud
             else
             {
                 var productionLoad = Workplace.Load01(working, slots);
-                if (subtitle != null)
-                    subtitle.text = FormatRecipeSubtitle(em, bag, building.TypeId, slots, productionLoad);
+                UpdateRecipeLabels(em, entity, bag, slots, productionLoad);
                 if (status != null)
                 {
                     if (occupied == 0)
@@ -292,13 +257,14 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             var canStaff = !constructing && slots > 0;
-            HudButtons.SetInteractable(plusButton, canStaff && occupied < slots && idleCount > 0);
-            HudButtons.SetInteractable(minusButton, canStaff && occupied > 0);
-            HudButtons.SetInteractable(maxPlusButton, canStaff && occupied < slots && idleCount > 0);
-            HudButtons.SetInteractable(maxMinusButton, canStaff && occupied > 0);
+            HudButtons.SetInteractable(plusButton, canStaff && workplace.DesiredWorkers < slots && freeWorkers > 0);
+            HudButtons.SetInteractable(minusButton, canStaff && workplace.DesiredWorkers > 0);
+            HudButtons.SetInteractable(maxPlusButton, canStaff && workplace.DesiredWorkers < slots && freeWorkers > 0);
+            HudButtons.SetInteractable(maxMinusButton, canStaff && workplace.DesiredWorkers > 0);
+
             HudButtons.SetInteractable(powerButton, !constructing && slots > 0);
-            HudButtons.SetLabel(powerButton, paused ? "Start" : "Stop");
-            HudButtons.Tint(powerButton, !paused);
+            HudButtons.SetInteractable(destroyButton, !dismantling);
+            UpdatePowerIcon(paused);
         }
 
         static bool TryFindBuilding(EntityManager em, int id, out Entity entity, out Building building)
@@ -333,48 +299,63 @@ namespace TheyWillDescend.Presentation.GameHud
             return true;
         }
 
-        static string FormatRecipeSubtitle(
+        BuildingCatalogAsset FindViewCatalog()
+        {
+            if (_placement == null)
+                _placement = FindFirstObjectByType<BuildPlacementController>();
+            return _placement != null ? _placement.Catalog : null;
+        }
+
+        void UpdateRecipeLabels(
             EntityManager em,
+            Entity buildingEntity,
             Entity session,
-            FixedString64Bytes typeId,
             int slots,
             float productionLoad)
         {
-            var role = slots > 0 ? "Workplace" : "Building";
-            if (!em.HasBuffer<BuildingRecipeLine>(session))
-                return role;
+            if (buildingRole != null)
+                buildingRole.text = slots > 0 ? "Workplace" : "Building";
 
-            var recipes = em.GetBuffer<BuildingRecipeLine>(session);
-            var hasNames = em.HasBuffer<ResourceInfo>(session);
-            var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
-            var parts = new System.Text.StringBuilder(role);
-            var any = false;
-            for (var i = 0; i < recipes.Length; i++)
+            if (resourceName == null && resourceRate == null)
+                return;
+
+            string name = null;
+            string rate = null;
+            if (em.HasBuffer<BuildingRecipeLine>(buildingEntity))
             {
-                var line = recipes[i];
-                if (line.TypeId != typeId || line.PerHour <= 0.0001f)
-                    continue;
-                if (!any)
+                var recipes = em.GetBuffer<BuildingRecipeLine>(buildingEntity);
+                var hasNames = em.HasBuffer<ResourceInfo>(session);
+                var names = hasNames ? em.GetBuffer<ResourceInfo>(session) : default;
+                var chosen = default(BuildingRecipeLine);
+                var found = false;
+                for (var i = 0; i < recipes.Length; i++)
                 {
-                    parts.Append("  ·  ");
-                    any = true;
+                    var line = recipes[i];
+                    if (line.PerHour <= 0.0001f)
+                        continue;
+                    if (!found || line.Kind == BuildingRecipeKind.Output)
+                    {
+                        chosen = line;
+                        found = true;
+                        if (line.Kind == BuildingRecipeKind.Output)
+                            break;
+                    }
                 }
-                else
-                    parts.Append("  ");
 
-                var name = hasNames
-                    ? DisplayName(names, line.ResourceId)
-                    : line.ResourceId.ToString();
-                var sign = line.Kind == BuildingRecipeKind.Input ? "−" : "+";
-                var current = line.PerHour * productionLoad;
-                parts.Append(name);
-                parts.Append(' ');
-                parts.Append(sign);
-                parts.Append(current.ToString("0.##"));
-                parts.Append("/h");
+                if (found)
+                {
+                    name = hasNames
+                        ? DisplayName(names, chosen.ResourceId)
+                        : chosen.ResourceId.ToString();
+                    var sign = chosen.Kind == BuildingRecipeKind.Input ? "−" : "+";
+                    rate = $"{sign}{chosen.PerHour * productionLoad:0.##}";
+                }
             }
 
-            return parts.ToString();
+            if (resourceName != null)
+                resourceName.text = name ?? string.Empty;
+            if (resourceRate != null)
+                resourceRate.text = rate ?? string.Empty;
         }
 
         static string DisplayName(DynamicBuffer<ResourceInfo> names, FixedString64Bytes resourceId)
@@ -390,59 +371,142 @@ namespace TheyWillDescend.Presentation.GameHud
             return resourceId.ToString();
         }
 
-        static int CountIdleWorkers(EntityManager em)
+        static void CountWorkforce(EntityManager em, out int totalWorkers, out int totalDesired, out int freeWorkers)
         {
-            using var query = em.CreateEntityQuery(
+            using var agentQuery = em.CreateEntityQuery(
                 ComponentType.ReadOnly<AgentId>(),
-                ComponentType.ReadOnly<AgentAssignment>());
-            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
-            var idle = 0;
-            for (var i = 0; i < assignments.Length; i++)
+                ComponentType.ReadOnly<AgentType>());
+            using var types = agentQuery.ToComponentDataArray<AgentType>(Allocator.Temp);
+            totalWorkers = 0;
+            for (var i = 0; i < types.Length; i++)
             {
-                if (assignments[i].WorkplaceBuildingId == 0)
-                    idle++;
+                if (types[i].Kind == AgentKind.Worker)
+                    totalWorkers++;
             }
 
-            return idle;
+            using var buildingQuery = em.CreateEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadOnly<Workplace>());
+            using var workplaces = buildingQuery.ToComponentDataArray<Workplace>(Allocator.Temp);
+            totalDesired = 0;
+            for (var i = 0; i < workplaces.Length; i++)
+            {
+                if (!workplaces[i].IsPaused)
+                    totalDesired += workplaces[i].DesiredWorkers;
+            }
+
+            freeWorkers = Mathf.Max(0, totalWorkers - totalDesired);
+        }
+
+        static void CountConstructionCrew(
+            EntityManager em,
+            int buildingId,
+            out int assigned,
+            out int arrived)
+        {
+            assigned = 0;
+            arrived = 0;
+            if (buildingId <= 0)
+                return;
+
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<AgentAssignment>());
+            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                var job = assignments[i];
+                if (job.ConstructionBuildingId != buildingId)
+                    continue;
+                assigned++;
+                if (job.Arrived != 0)
+                    arrived++;
+            }
         }
 
         void OnMinus()
         {
-            if (selection != null && selection.SelectedBuildingId > 0)
-                SimCommands.TryPost(new UnassignWorkerCommand { BuildingId = selection.SelectedBuildingId });
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var workplace = em.GetComponentData<Workplace>(entity);
+            if (workplace.DesiredWorkers <= 0)
+                return;
+
+            workplace.DesiredWorkers--;
+            em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnPlus()
         {
-            if (selection != null && selection.SelectedBuildingId > 0)
-                SimCommands.TryPost(new AssignWorkerCommand
-                {
-                    BuildingId = selection.SelectedBuildingId
-                });
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var slots = em.HasComponent<BuildingType>(entity)
+                ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
+                : 0;
+            var workplace = em.GetComponentData<Workplace>(entity);
+
+            if (workplace.DesiredWorkers >= slots)
+                return;
+
+            CountWorkforce(em, out _, out _, out var freeWorkers);
+            if (freeWorkers <= 0)
+                return;
+
+            workplace.DesiredWorkers++;
+            em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnMaxMinus()
         {
             if (selection == null || selection.SelectedBuildingId <= 0)
                 return;
-            SimCommands.TryPost(new UnassignWorkerCommand
-            {
-                BuildingId = selection.SelectedBuildingId,
-                Count = 256
-            });
-            SimCommands.Playback();
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var workplace = em.GetComponentData<Workplace>(entity);
+            workplace.DesiredWorkers = 0;
+            em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnMaxPlus()
         {
             if (selection == null || selection.SelectedBuildingId <= 0)
                 return;
-            SimCommands.TryPost(new AssignWorkerCommand
-            {
-                BuildingId = selection.SelectedBuildingId,
-                Count = 256
-            });
-            SimCommands.Playback();
+            if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
+                return;
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var slots = em.HasComponent<BuildingType>(entity)
+                ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
+                : 0;
+            var workplace = em.GetComponentData<Workplace>(entity);
+
+            var needed = slots - workplace.DesiredWorkers;
+            if (needed <= 0)
+                return;
+
+            CountWorkforce(em, out _, out _, out var freeWorkers);
+            if (freeWorkers <= 0)
+                return;
+
+            var add = Mathf.Min(needed, freeWorkers);
+            workplace.DesiredWorkers += add;
+            em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
         }
 
         void OnPower()
@@ -451,13 +515,31 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
             if (!SimWorld.TryGet(out var em, out _) || !TryFindBuilding(em, selection.SelectedBuildingId, out var entity, out _))
                 return;
-            var paused = em.HasComponent<Workplace>(entity) && em.GetComponentData<Workplace>(entity).IsPaused;
-            SimCommands.TryPost(new SetWorkplacePausedCommand
-            {
-                BuildingId = selection.SelectedBuildingId,
-                Paused = paused ? (byte)0 : (byte)1
-            });
-            SimCommands.Playback();
+            if (!em.HasComponent<Workplace>(entity))
+                return;
+
+            var workplace = em.GetComponentData<Workplace>(entity);
+            workplace.Paused = workplace.IsPaused ? (byte)0 : (byte)1;
+            em.SetComponentData(entity, workplace);
+            Show(selection.SelectedBuildingId);
+        }
+
+
+
+        void UpdatePowerIcon(bool paused)
+        {
+            // paused = производство остановлено → показываем Start
+            // работает → показываем Stop
+            var sprite = paused ? powerStartSprite : powerStopSprite;
+            if (sprite == null)
+                return;
+
+            var icon = powerIcon;
+            if (icon == null && powerButton != null)
+                icon = powerButton.GetComponent<Image>();
+
+            if (icon != null)
+                icon.sprite = sprite;
         }
 
         void OnClose()
@@ -465,5 +547,16 @@ namespace TheyWillDescend.Presentation.GameHud
             selection?.Deselect();
             Hide();
         }
+
+        void OnDestroyBuilding()
+        {
+            if (selection == null || selection.SelectedBuildingId <= 0)
+                return;
+            SimCommands.Request(new DemolishBuildingRequest
+            {
+                BuildingId = selection.SelectedBuildingId
+            });
+        }
+
     }
 }

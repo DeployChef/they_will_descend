@@ -2,7 +2,7 @@
 
 ← [[04 Simulation]] | [[Index]] | Далее → [[06 FMOD Audio]]
 
-Как заводить здания, ресурсы и стартовый город **сейчас**. Не Google Sheet и не blob — ScriptableObject + префаб + SubScene bake.
+Как заводить здания, ресурсы и стартовый город **сейчас**. Дефолт дома — поля на префабе (`BuildingStamp`). ScriptableObject наслаивается **поверх** этих цифр на старте рана (сложность, позже A/B). Не второй паспорт кухни.
 
 Связанные: [[12 Radial City Grid]] · [[13 Time HUD and Save]] · [[14 Sim Presentation Bridge]] · [[../Balance/Balance|Balance]]
 
@@ -10,27 +10,36 @@
 
 ## 1. Карта ролей
 
-Четыре разных объекта. Не мешать.
-
 | Что | Где лежит | Зачем |
 | --- | --- | --- |
 | **Ключ** | `typeId` / `resourceId` строка | Стык всего: симуляция, HUD, сейв, сценарий, позже таблица |
-| **Документ баланса** | `BuildingDefinition` / `ResourceDefinition` / `SimRules` | Числа типа или закона мира. Не живой дом в сцене |
-| **Меш** | префаб с `BuildingAuthoring` | Как выглядит. Не кост, не footprint |
-| **Каталог** | `DefaultBuildingCatalog` / `DefaultResourceCatalog` | Список «что существует в этом билде» |
-| **Стартовый город** | `ScenarioDefinition` | Какие дома стоят на старте и сколько ресурсов. Не сейв игрока |
+| **Дом (тип)** | префаб: `BuildingStamp` + `BuildingView`; ребёнок `Body` | identity, footprint, **дефолтные цифры**, арт |
+| **Оверлей цифр** | `DifficultyProfile` по `typeId` | Start Debug / позже A/B. Пустой флаг = оставить штамп |
+| **Ресурс / правила / эры** | `ResourceDefinition` / `SimRules` / `TimelineCatalog` | не пространственные документы |
+| **Каталог домов** | `DefaultBuildingCatalog` — список **префабов** | какой набор типов в ране |
+| **Стартовый город** | `ScenarioDefinition` | какие ключи стоят на старте. Не сейв игрока |
 
 Ран после bake:
 
 ```text
-SO + префаб  →  Baker
-                 ↓
-session: BuildingPrototype + BuildingCost + BuildingRecipeLine + ResourceAmount
-house stamp: BuildingType (числа типа)
-Play: PlaceBuildingCommand.TypeId = "sawmill"
+префаб.BuildingStamp (typeId, footprint, кост, рецепт, слоты, duration)
+             ↓ baker
+session: BaseBuildingPrototype + BaseCost / BaseRecipe (immutable defaults)
+             ↓ RunPublisher rebuild перед каждым BeginRun
+session: BuildingPrototype + Cost / Recipe   (resolved runtime catalog)
+             ↓ DifficultyProfile overlay (+ позже A/B pack — тот же шаг)
++ chosen ScenarioDefinition
+             ↓ Place копирует spec на дом
+вид: Instantiate префаба по typeId
 ```
 
-Симуляция **не** хранит `GameObject`. Меш для призрака HUD берёт тот же catalog asset на `BuildPlacementController`. Живой дом — entity + Entities Graphics.
+`ScenarioDefinition` владеет списком допустимых сложностей и default difficulty. Меню выбирает пару scenario+difficulty; null default означает чистые prefab defaults. **Start Game** временно берёт `DefaultScenario.DefaultDifficulty` (пустой `NormalDifficulty`), **Start Debug** — `DebugScenario.DefaultDifficulty` (`DebugDifficulty`: кухня output 50 еды/ч, лесопилка стройка 1 с).
+
+A/B позже — ещё один оверлей в `RunPublisher.BeginRun`, не `ISystem` и не второй префаб. Pack приходит с тем же `typeId`.
+
+Имя кнопки и цвета HUD берёт с `BuildingView` на корне штампа. Меш — ребёнок `Body` (не печётся в ECS). В Play доска **Instantiates тот же префаб**; живой `BuildingView.Sync` читает пакеты своей entity. Призрак — арт-каталог. Overlay клетки — отдельный префаб.
+
+Sheet позже пишет **в оверлей** по `typeId`, не клонирует префаб. Импортёра в этом срезе нет.
 
 ---
 
@@ -39,9 +48,13 @@ Play: PlaceBuildingCommand.TypeId = "sawmill"
 ```
 Assets/_Project/Content/
   Buildings/
-    Sawmill.asset
-    Kitchen.asset
     DefaultBuildingCatalog.asset
+    Prefabs/
+      Kitchen.prefab
+      Sawmill.prefab
+      _BuildingWidget.prefab ← бар + статусы, общий
+      _BuildingOverlay.prefab ← зона клетки / клик
+      _HqOverlay.prefab       ← кольцо площади + ClickProxy
   Economy/
     Wood.asset
     Food.asset
@@ -51,12 +64,16 @@ Assets/_Project/Content/
     DebugScenario.asset
   Rules/
     DefaultSimRules.asset
+  Difficulty/
+    NormalDifficulty.asset
+    DebugDifficulty.asset
 ```
 
 Меню создания (ПКМ в Project):
 
-- `They Will Descend / Building Definition`
 - `They Will Descend / Building Catalog`
+- `They Will Descend / Difficulty Profile`
+- меню `They Will Descend / Buildings / Create Cube Stamps` — один раз создаёт куб-штампы и пишет их в каталог
 - `They Will Descend / Resource Definition`
 - `They Will Descend / Resource Catalog`
 - `They Will Descend / Scenario Definition`
@@ -87,7 +104,9 @@ Bake приводит ключ к **lowercase** и обрезает пробел
 
 ## 4. Ресурс
 
-Сейчас в каталоге: `wood`, `food`.
+Сейчас в каталоге: `wood`, `food`, `energy`.
+
+Энергия — ресурс (`canFeed` выкл: слайдер пирамиды её не жжёт). `energyValue` — сколько энергии даёт единица при сжигании на пирамиде. `stockCap` 0 = взять `SimRules.DefaultStockCap` (временный потолок до складов).
 
 ### Новый ресурс
 
@@ -118,6 +137,12 @@ Baker копирует:
 | Day Duration | `GameTime.DayDuration` (на session) |
 | Work Shift Start/End | `GameTime.WorkShiftStartHour` / `EndHour` |
 | Worker Speed | штамп `AgentLocomotion.Speed` |
+| Era Change Hour | `PyramidConfig.EraChangeHour` (граница эры, не полночь) |
+| Default Stock Cap | временный потолок стока |
+
+У пирамиды нет общего потолка энергии/ч. Будущие ограничения подачи задаются отдельно для конкретных ресурсов; сейчас они не реализованы и в `SimRules` не живут.
+
+На том же GO: `TimelineCatalogAuthoring` → `DefaultTimeline` (эры, дань, max loyalty).
 
 Системы SO не читают. Play после правки ассета перепечёт SubScene.
 
@@ -125,72 +150,92 @@ Baker копирует:
 
 ## 5. Здание
 
-Сейчас: `sawmill` (6×2, 15 wood, +12 Wood/ч) и `kitchen` (2×2, 8 wood, −6 Wood/ч → +12 Food/ч).
+Документ типа — **один префаб**. Корень — паспорт (`BuildingStamp` + `BuildingView`): identity, footprint **и дефолтные цифры**. `Body` / Widget — одежда. Catalog baker копирует штамп на session. Play-вид — Instantiate того же префаба. Сложность/A/B потом подменяет цифры на снимке, не на префабе.
 
-### 5.1 Документ
+Срез после `Create Cube Stamps`: `sawmill` (6×2, 15 wood, +12 Wood/ч) и `kitchen` (2×2, 8 wood, −6 Wood/ч → +12 Food/ч). Цифры смотри на штампе. RPGPP-меши в пакете оставлены, со штампов сняты.
 
-1. ПКМ в `Content/Buildings` → `Building Definition`.
-2. Заполнить:
+Три этажа вида (не мешать):
 
-| Поле | Смысл | Срез |
+| Этаж | Где | Что |
 | --- | --- | --- |
-| Type Id | ключ | `kitchen` |
-| Display Name | HUD / инспектор | `Kitchen` |
-| Width Clusters | дуги сетки | как в [[12 Radial City Grid]] |
-| Depth Radial Rings | кольца вглубь | обычно 2 |
-| Construction Duration | секунды стройки этого типа; **0 = дом появляется сразу** | 8 |
-| Workplace Slots | рабочие на доме; рецепт при 10/10 = 100% | 10 |
-| Recipe Inputs | что ест **за игровой час**, пока рабочий на месте | Kitchen: 6 Wood |
-| Recipe Outputs | что даёт **за игровой час** | Sawmill: 12 Wood; Kitchen: 12 Food |
-| Build Cost | список (ресурс + amount), один раз при Place | 15 Wood |
-| Prefab | меш-префаб, см. ниже | |
+| Штамп | `Kitchen.prefab` | корень: `BuildingStamp` + `BuildingView`; `Body` (меш); позже Scaffold / FX |
+| Widget | `_BuildingWidget.prefab` | бар и иконки статуса над **всеми** домами |
+| HUD канвас | сцена Game | инспект, ± рабочие, дань. Не ребёнок дома |
+| Зона сетки | `_BuildingOverlay.prefab` | сектор клетки; не ребёнок кухни |
 
-Кост пустой → дом бесплатный. Несколько строк коста — все должны быть в наличии, списываются вместе.
+Запрещено в Play: `new GameObject` для баров, текстов, клик-прокси. Только `Instantiate(префаб)` / ECS `CreateEntity` из spec.
 
-Рецепт — справочник типа (каталог на session), не поле на каждом доме. Пустые оба списка → дом не варит (HQ). Нет входа на кадр → дом стоит, ничего не ест и не производит. Симуляция: `perHour * dt * 24 / DayDuration`.
+### 5.1 Новый дом (процесс ГД)
 
-### 5.2 Префаб
+Duplicate ближайший дом из каталога, не пустой шаблон. Первым меняешь `typeId`.
 
-Префаб = **меш**. Цифры на нём не дублировать.
+1. Duplicate `Kitchen` (или `Sawmill`, если ближе по footprint) → `Factory`. Сразу `BuildingStamp.typeId = factory` (уникальный, lowercase).
+2. Нужны люди — галка Workplace + слоты. Склад: галки Workplace/Recipe выкл.
+3. Нужно варить — галка Recipe (те же `ResourceDefinition`).
+4. Платный — список cost. Долгая стройка — `constructionDuration` (0 = сразу готовый).
+5. `BuildingView` — display name, цвета куба. Виджет — ребёнок `Widget` на штампе. Высота — `localPosition` на штампе, не поле на `BuildingView`. Не печётся в ECS.
+6. Префаб в `DefaultBuildingCatalog` (список префабов).
+7. Play: кнопка, призрак = этот префаб, Place = `CreateEntity` из spec (с `Construction`, пока duration > 0).
 
-1. Взять модель (или копию существующего `rpgpp_lt_building_*`).
-2. На корне: `BuildingAuthoring`.
-3. `Definition` = **тот же** `BuildingDefinition`, не соседний дом.
-4. В Definition поле Prefab = этот префаб ( circul: SO → prefab → SO ).
+Похожая кухня: duplicate `Kitchen`, сменить `typeId` первым. HQ / пирамида **не** в этом каталоге.
 
-Bake падает, если:
+Другие цифры на ране (debug, позже live pack) — `DifficultyProfile` с тем же `typeId`, не второй префаб.
 
-- у префаба нет `BuildingAuthoring`;
-- authoring смотрит на другой SO;
-- prefab пустой;
-- `typeId` пустой или дублируется.
+### 5.2 Карточка `BuildingStamp` (один скрипт)
 
-Размер меша для посадки на клетку считается с `MeshFilter` (горизонтальный max). Скейлить модель в префабе можно; footprint всё равно с Width/Depth документа.
+Код пакетов — отдельные ECS-типы, на префабе **один** MonoBehaviour. Пустое / галка выкл → catalog baker не копирует слоты/рецепт; spawn не кладёт `Workplace` / recipe buffer.
+
+| Поле | Смысл | Выкл / пусто = |
+| --- | --- | --- |
+| `typeId` | ключ | bake падает |
+| footprint | кластеры × кольца | bake падает, если невалидно |
+| `constructionDuration` | секунды; 0 = сразу готовый | мгновенно |
+| `costs` | списание при Place | бесплатно |
+| Workplace | слоты | HUD без +/−, production не ищет рабочих |
+| Recipe | in/out за игровой час | не варит |
+| `BuildingView` | имя, цвета | HUD показывает `typeId` |
+
+Bake падает, если нет `BuildingStamp`, пустой или слишком длинный `typeId`, дубликат ключа в каталоге, битый footprint.
+
+Рецепт живёт **на instance** (буфер, скопированный со spec). Симуляция: `perHour * dt * 24 / DayDuration`. Размер и scale арта не печатаются в ECS: prefab остаётся визуальным каноном, а runtime view, ghost и scenario preview меняют только position/rotation и сохраняют authored prefab scale.
+
+Композиция штампа:
+
+```text
+Kitchen                 ← BuildingStamp + BuildingView
+  Body                  ← меш (+ Animator / Light позже)
+  Widget                ← бар и статусы (`_BuildingWidget`)
+```
+
+Корень без меша. `BuildingView` не вешать на `Body`. Overlay клетки — не ребёнок кухни.
+
+`BuildingViewBoard` — реестр (появился entity → Instantiate штампа + overlay). Бар, цвет, купол — `BuildingView.Sync` по компонентам entity, не `if (typeId)`.
+
+Стройка: тот же entity, что готовый дом. `Construction` висит, пока не достроено **или пока разбирают**. Claim зовёт ближайших свободных (ночь = все без другого сайта; смена = без workplace) до `ConstructionCrewSlots` на типе. Бар идёт, когда дошёл хотя бы один. Raising: снятие компонента = построен. Dismantling: штат снят сразу, в конце кост возвращается (clamp по cap), occupancy и entity снимаются.
 
 ### 5.3 Каталог
 
-Открыть `DefaultBuildingCatalog` → добавить definition в массив.
+Открыть `DefaultBuildingCatalog` → массив префабов (не SO-карточек). Тип ассета — `TheyWillDescend.Content.BuildingCatalogAsset`: вид и ghost Instantiates по `typeId`. Симуляция этот тип не видит; baker копирует цифры `BuildingStamp` в буферы session.
 
-Один и тот же asset должен висеть:
+Один и тот же asset:
 
-1. `SimControl` → `BuildingCatalogAuthoring` (bake, сценарий, HUD-кнопки).
-2. Game → `BuildPlacementController` → Catalog (призрак при размещении).
+1. `SimControl` → `BuildingCatalogAuthoring`.
+2. Game → `BuildPlacementController` / `BuildingViewBoard` → Catalog.
 
-Забыл второй — Play поставит entity, призрак без меша.
-
-Не делай второй catalog «для UI». Один документ.
+Забыл второй — Play поставит entity, призрак без меша. Не делай второй catalog «для UI».
 
 ---
 
 ## 6. Сценарий (стартовый город)
 
-`DefaultScenario` — пустой/рабочий старт. `DebugScenario` — оба дома (Kitchen + Sawmill) на кольце 2 и 8 рабочих на плазе. Сейчас на GO `Scenario` висит debug. Сейв игрока — [[13 Time HUD and Save]].
+`DefaultScenario` — пустой/рабочий старт. `DebugScenario` — кухня + две лесопилки, 16 рабочих. **Play не берёт сценарий с GO `Scenario`.** Меню выбирает сценарий и одну из разрешённых им сложностей: Start Game = `DefaultScenario.DefaultDifficulty`; Start Debug = `DebugScenario.DefaultDifficulty`; Load = слот, без publisher. Bake SubScene — editor seed (превью/paint); `RunPublisher` **сначала пересобирает resolved catalog из base**, затем применяет difficulty, сносит runtime-дома/агентов и перезаписывает pending/stock/workers.
 
 На ассете:
 
 - **Buildings** — список `(typeId, cluster, ring)`. HQ и сетка сюда не входят.
 - **Starting Stock** — `Wood 50`, `Food 20`. Capture домов **не** затирает это.
 - **Starting Workers** — сколько людей на плазе в Play. Не назначение на дома. Capture домов это тоже не трогает. По умолчанию 8.
+- **Difficulties / Default Difficulty** — допустимые профили этого сценария и временный выбор меню. Default может быть null: тогда ран использует чистые prefab defaults.
 
 ### Editor на GO Scenario (SubScene)
 
@@ -204,7 +249,7 @@ Bake падает, если:
 | Capture scene → config | Превью → список домов в SO. Запас не трогает |
 | Move tool | Тащишь превью — snap в клетку, MouseUp пишет SO |
 
-Bake сценария: starting stock в леджер; дома — `PendingScenarioPlace`, люди — `PendingScenarioSpawns` на session. Первый тик **Play** делает Place/Spawn. В bake **нельзя** Instantiate штампа каталога: Live Conversion даёт DuplicateEntityGuid. Превью в SubScene unpack’аются полностью (не prefab instance).
+Bake сценария: starting stock в леджер; дома — `PendingScenarioPlace`, люди — `PendingScenarioSpawns` на session. Это **seed**. `RunPublisher.BeginRun` атомарно ставит reset + seed и переводит session в `Preparing`; следующий `CommandSystemGroup` спавнит дома через тот же `SpawnHouse`, InstantComplete, после чего lifecycle-finalizer подтверждает `Ready`. Ручного bootstrap playback нет. `PendingScenarioPlace` разрешён только в `Preparing`; обычный player `PlaceBuildingCommand` — только в `Ready`. Snapshot-place помечен отдельным `SnapshotRestore` source и тоже проходит pipeline в `Preparing`.
 
 `ScenarioAuthoring` нельзя вешать на SimControl: BakingOnly снял бы session singleton.
 
@@ -216,17 +261,18 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 На **одном** GO `SimControl` (соседи authoring, один bake-entity):
 
-1. `SimControlAuthoring` — `SimControl` + `SimBridge` + буфер `SimClockCommand`
-2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока)
-3. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
-4. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace`
-5. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
-6. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
+1. `SimControlAuthoring` — `SimSession` + `SimControl` + `AgentIdSequence` + clock/lifecycle command buffers
+2. `SimRulesAuthoring` → `DefaultSimRules` (сутки, смена, скорость ходока, час эры, cap стока)
+3. `TimelineCatalogAuthoring` → `DefaultTimeline`
+4. `AgentSessionAuthoring` — spawn/assign/unassign + штамп агента (`SimPrototypes`)
+5. `CityGridAuthoring` — сетка + `OccupiedCell` + place/reject + `PendingScenarioPlace`
+6. `BuildingCatalogAuthoring` → `DefaultBuildingCatalog`
+7. `ResourceCatalogAuthoring` → `DefaultResourceCatalog`
 
 Рядом, **отдельным** GO (не на SimControl: BakingOnly снял бы session singleton):
 
-7. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
-8. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
+8. `Scenario` + `ScenarioAuthoring` → `DefaultScenario`
+9. HQ (`HeadquarterAuthoring`) — центр сетки, не строка сценария
 
 После смены SO зайди в Play: SubScene перепечётся. Ошибки ключей/префабов — Console при bake, не «тихий нулевой дом».
 
@@ -234,17 +280,19 @@ Overlap на сетке: Inspector красный, bake лишние дома re
 
 ## 8. Что видит игрок
 
-Build HUD читает session-каталог → кнопка с именем и костом (`Sawmill` + `15 Wood`, `Kitchen` + `8 Wood`).
+Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на префабе, кост с `BuildingCatalogCost`.
 
-Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, ставит сайт (или сразу дом, если duration уже 0). После `Playback()` режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
+Клик по кнопке каталога → призрак. Красная зона: занято **или** не хватает ресурсов. **ЛКМ** → gameplay `PlaceBuildingCommand` без `BuildingId` → симуляция списывает кост, `CreateEntity` из spec (`Construction`, если duration > 0). После постановки режим **остаётся**, если ещё хватает ресурса. **ПКМ** / **Esc** — отмена.
 
 Сценарий и load (`BuildingId > 0` или `InstantComplete`) кост не берут.
 
-Производство: готовый дом, не стройка, не HQ, на слоте есть рабочий и `Working`. Рецепт из каталога (`BuildingRecipeLine`), единица — игровой час.
+Производство: готовый дом с `Workplace` + своим `BuildingRecipeLine`, не стройка, не HQ, `WorkingCount > 0`. Единица — игровой час.
 
-Инспектор дома берёт **Display Name из каталога**, не `Building_17`.
+Инспектор: имя с `BuildingView`, слоты с `BuildingType` / `Workplace` на entity.
 
-Сейв пишет `"sawmill"` / `"wood"` как есть. Старые слоты не мигрируем: несовпадение версии удаляет файл. Подробно — [[13 Time HUD and Save]].
+Куб зелёный, когда `WorkingCount > 0`; жёлтый на стройке; иначе idle. Потом те же флаги → Animator.
+
+Сейв пишет `"sawmill"` / `"wood"` как есть и сохраняет resolved building catalog (prototype/cost/recipe), поэтому load восстанавливает фактический баланс рана без поиска DifficultyProfile по имени. Старые слоты не мигрируем: несовпадение версии удаляет файл. Подробно — [[13 Time HUD and Save]].
 
 ---
 
@@ -252,42 +300,43 @@ Build HUD читает session-каталог → кнопка с именем �
 
 | Симптом | Что проверить |
 | --- | --- |
-| Console: duplicate typeId | Два SO с одним ключом в catalog |
-| Console: prefab must have BuildingAuthoring pointing at … | Забыл компонент или SO на префабе ≠ документ в каталоге |
+| Console: duplicate typeId | Два префаба с одним ключом в catalog |
+| Console: needs a BuildingStamp / invalid footprint | На префабе нет карточки или width/depth 0 |
 | HUD пустой / «catalog empty» | SubScene не запеклась; catalog не на SimControl |
+| Start Debug без домов | Console: `Run kit: Debug` и `N houses`; на `GameSession` висит DebugScenario |
+| Игрок ставит бесплатно | Пустой `costs` на `BuildingStamp` |
 | Сутки снова 5 с / нет смены | `SimRulesAuthoring` без ассета; править `DefaultSimRules`, не Inspector SubScene |
 | Призрак без меша, дом после клика есть | `BuildPlacementController.Catalog` не тот asset |
 | Стартовый запас 0 | Запас на Scenario, не на ResourceDefinition; Scenario GO есть? |
-| Игрок ставит бесплатно | Пустой Build Cost на definition |
 | Сценарий съел дерево | Не должно: InstantComplete. Если ест — сломан skip в Place |
 | Capture обнулил Wood | Не должно: Capture пишет только buildings |
 | Новый ресурс не на HUD | Имя чипа ≠ Display Name; свободных чипов нет |
-| Дом не того размера на сетке | Width/Depth на SO, не скейл префаба. Скейл только вписывает меш в клетку |
+| Дом не того размера на сетке | Footprint определяет занятые клетки, prefab scale — authored visual. Runtime его не подгоняет |
 
 ---
 
-## 10. Google Sheet — потом, не сейчас
+## 10. Google Sheet / A/B — потом, не сейчас
 
-Сейчас цифры и префаб на одном `BuildingDefinition`. Для двух домов так и надо.
-
-Таблица **не** хранит Unity-ссылку. Когда вынесете баланс:
+Цифры дома **по умолчанию на `BuildingStamp`**. Sheet / live pack позже пишет **оверлей** по `typeId`, не клонирует префаб.
 
 ```text
-Sheet  →  typeId, footprint, cost, recipe in/out per hour
-Unity registry  →  typeId → Prefab (иконка, FMOD)
-Baker склеивает по typeId
+Prefab stamp       →  canonical defaults
+Baker              →  immutable base catalog + usable resolved defaults
+RunPublisher       →  rebuild resolved из base → DifficultyProfile / A/B overlay
 ```
 
-Не пишите в ячейку `Assets/…/house.prefab`. Ключ уже строка — стык готов. Резать SO на два файла **до** импорта Sheet не нужно.
+A/B не тикает из `ISystem` и не клонирует кухню. Pack приходит с теми же `typeId` и подменяется в `RunPublisher.BeginRun` до постановки seed-команд; `Ready` подтвердит только ECS-finalizer. Импортёра и HTTP в этом срезе нет.
+
+Не пишите в ячейку `Assets/…/house.prefab`.
 
 ---
 
 ## 11. Контрольный прогон нового дома
 
-1. SO + префаб с `BuildingAuthoring` на этот SO + строка в `DefaultBuildingCatalog`.
-2. Play без ошибок duplicate / missing prefab.
+1. Duplicate `Kitchen` / `Sawmill` + карточка на штампе + строка в каталоге.
+2. Play без ошибок duplicate / missing BuildingStamp.
 3. В Build HUD есть кнопка с именем и костом.
-4. Призрак садится на сетку нужного размера.
+4. Призрак-куб садится на сетку нужного размера; цвет меняется, когда дом варит.
 5. Постановка списывает wood; при нехватке — красный призрак и reject.
 6. Сценарий с этим типом (если добавил) ставит дом без списания.
 7. Рабочий на готовом доме варит по рецепту (кухня без wood стоит).

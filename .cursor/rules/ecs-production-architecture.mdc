@@ -17,7 +17,7 @@ Simulation (ECS): source of truth
 Content: Authoring/Baker, blobs, prefabs, balance tables
 ```
 
-Assemblies are compile walls, not DDD layers. Four: Simulation, Authoring, Presentation, Main. See wiki `01 Folder Structure`.
+Assemblies are compile walls, not DDD layers. Simulation, Content (art catalogs), Authoring, Presentation, Main. See wiki `01 Folder Structure`. Simulation does not reference Content.
 
 ## Simulation folders (feature, then layer)
 
@@ -34,6 +34,7 @@ Tick: Commands → commute/construction → production → day clock. Needs/Laws
 - ScriptableObjects/authoring = design-time; runtime truth = entities
 - Workers are **agents** with assignment and commute; pathfinding later
 - Production scales with `WorkingCount / WorkplaceSlots` (recipe is the 100% rate)
+- Every resource has a stock cap derived from buildings (warehouses / energy grants). See `economy-stock-cap`
 - Prefer data-driven content for new buildings/resources/laws
 
 ## Anti-patterns

@@ -23,7 +23,7 @@ Speed **не затирают** стройкой. Тик = функция `(Sess
 | Тулза времени (⏸ x1 x2 x3) | HUD → `SimClockCommand` | отдельный `IAppState` |
 | Модалка стройки | HUD → `SetBuildLocked` | новый `IAppState` |
 
-Во Frostpunk пауза времени ≠ меню паузы. Esc и ⏸ — **Player-lock на вентиле**, стейт остаётся `Playing`. Меню Save/Quit — позже оверлей, не часы. `PausedState` в коде нет.
+Во Frostpunk пауза времени ≠ меню паузы. Esc и ⏸ открывают оверлей `PauseMenuScreen` и ставят **Player-lock на вентиле**. Стейт остаётся `Playing`. `PausedState` в коде нет.
 
 ---
 
@@ -39,7 +39,7 @@ Speed **не затирают** стройкой. Тик = функция `(Sess
 
 | Вид | Кто ставит | Скорости на тулзе | Что помним |
 | --- | --- | --- | --- |
-| **Пауза игрока** (кнопка ⏸ / Esc) | игрок | **можно** нажать x1/x2/x3 — это снять паузу и ехать с этой скоростью | Speed пишется только здесь |
+| **Пауза игрока** (кнопка ⏸ / Esc) | игрок | пока открыт оверлей — **нельзя**; без оверлея x1/x2/x3 снимают паузу | Speed пишется только здесь |
 | **Модальная пауза** (каталог / ghost дома) | UI стройки | **нельзя** переключить скорость | Speed не трогаем; по выходу снимаем только этот замок |
 
 `SimControl`:
@@ -60,7 +60,7 @@ DeltaTime      // кадр × Speed; системы сами skip, если не
 - x1/x2/x3 при BuildLocked — ignore; иначе Speed=n и PlayerPaused=0
 - Pause при BuildLocked — ignore
 
-Esc в `Playing`: сначала `BuildWidget.TryHandleEscape()`, иначе `TogglePause()`. **Не** `TransitionTo(Paused)`.
+Esc в `Playing`: сначала `BuildWidget.TryHandleEscape()`, иначе оверлей паузы + `PlayerPaused(true)`. **Не** `TransitionTo(Paused)`.
 
 API вентиля — `SimClockCommand`:
 
@@ -68,6 +68,7 @@ API вентиля — `SimClockCommand`:
 SetSessionInGame
 SetSpeed(1|2|3)
 TogglePlayerPause
+SetPlayerPause
 SetBuildLocked
 Restore (load)
 ```
@@ -164,20 +165,23 @@ HUD **читает** `GameTime` + `SimControl`. Кнопки → `SimClockComman
 Один слот, кнопки «Сохранить» / «Загрузить» на Game HUD. Путь `persistentDataPath/run_slot0.json`.
 
 ```text
-SavePayload v15
-  version: 15
+SavePayload v22
+  version: 22
   clock, time
   resources: [{ resourceId: "wood", amount }]
+  resolved building catalog: prototype / cost / recipe rows
   agents: [{ id, pose, motor, assignment, plaza idle }]
   buildings: [{ id, typeId: "sawmill", footprint, built, construction, workerAgentId }]
 ```
 
 Пока разрабатываем — **миграций нет**. Слот с другим `version` удаляется при load.
 
-`built = 0` → load создаёт **сайт** (`Building` + `Construction`), без меша, с прогресс-баром.  
-`built = 1` → сразу готовый дом.
+`built = 0` → load `CreateEntity` из spec с `Construction` (тот же меш на доске, бар виджета).  
+`built = 1` → сразу готовый дом (без `Construction`).
 
 Канон агента: **`LocalTransform` = где стоит**. Мотор = `AgentLocomotion`. Без работы — `AgentPlazaIdle`. На слоте — `AgentAssignment`. Сток — `ResourceAmount` на session.
+
+Слот сохраняет именно **resolved building catalog**, а не имя `DifficultyProfile`: это гарантирует, что in-game load и load из главного меню восстановят фактические duration/slots/cost/recipe этого рана. Immutable base catalog из prefab bake остаётся отдельно и нужен для нового `BeginRun`; profile id в save пока не требуется.
 
 `AgentId` — ключ моста на ран, не `Entity(53,1)`. После перезапуска Unity номера сущностей другие.
 
@@ -193,7 +197,7 @@ SavePayload v15
 
 ### Save (последовательность)
 
-1. UI → `SaveWidget` (не считает экономику).
+1. UI → `PauseMenuScreen` (не считает экономику).
 2. Отменить ghost-placing, если открыт.
 3. Прочитать синглтоны из ECS (`RunSessionSnapshot`).
 4. Собрать агентов и дома query’ем.
@@ -202,15 +206,17 @@ SavePayload v15
 ### Load (последовательность)
 
 1. Нет файла → лог, ничего не трогать.
-2. На время применения: команды + `SimCommands.Playback()` в том же кадре (не «полкадра дыры»).
-3. Снести **только динамику рана**: `DespawnAllAgents` / `DespawnAllBuildings`. Не выгружать `Game.unity`.
-4. Записать `GameTime` + Speed/PlayerPaused через `SimClockCommand.Restore`.
-5. Заспавнить агентов и дома теми же командами, что кнопка/placement, с полями из файла.
-6. Восстановить Mode как в файле («тот же кадр»).
+2. `RunSessionSnapshot.BeginApply` восстанавливает сохранённый resolved building catalog, затем при остановленной sim переводит `SimSession.Phase` в `Preparing` и атомарно ставит reset + restore-команды.
+3. Следующий `CommandSystemGroup` сносит **только динамику рана**: `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`, затем восстанавливает clock/buildings/agents/paused/feed. Не выгружать `Game.unity`.
+4. Snapshot-place имеет source `SnapshotRestore`: он разрешён в `Preparing`; gameplay-place разрешён только в `Ready`.
+5. Lifecycle-finalizer переводит `Preparing → Ready` лишь когда все входящие очереди drained.
+6. `GameSession` ждёт `Ready` с cancellation/timeout и только потом перестраивает views, снимает Loading и возвращает input.
 
 Load **не** = `GameSession.Dispose` + полный reload сцены.
 
-После load `SaveWidget` качает `AgentViewBoard` и `BuildingViewBoard.RebuildViews()`.
+Перед apply `GameSession.RunWithLoadingAsync` показывает сцену Loading (сортировка 500, поверх HUD). После подтверждённого `Ready` `PauseMenuScreen` качает `AgentViewBoard` и `BuildingViewBoard.RebuildViews()`, затем Loading снимается. Выход в главное меню — стейт `ReturningToMenu`: `BeginReset`, ожидание `Unprepared`, затем выгрузка Game. Load из главного меню — `LoadingGame` + apply слота (не `RunPublisher`).
+
+Новый **Start Game / Start Debug** зовёт `RunPublisher.BeginRun`: runtime-дома не в SubScene, поэтому reset входит в тот же ECS pipeline до scenario seed.
 
 ---
 
@@ -219,7 +225,7 @@ Load **не** = `GameSession.Dispose` + полный reload сцены.
 | Кусок | Слой |
 | --- | --- |
 | Тулза времени | Presentation (`TimeWidget` на `TimeBar`) |
-| Слот save/load | Presentation (`SaveWidget`) |
+| Слот save/load | Presentation (`PauseMenuScreen`) |
 | Спавн агента | Presentation (`AgentSpawner` → команда; вид — `AgentViewBoard`) |
 | Каталог / ghost стройки | Presentation (`BuildWidget`; Esc и `BuildLocked`) |
 | Часы | Simulation `SimControl` + `GameTime` |
@@ -247,10 +253,11 @@ Load **не** = `GameSession.Dispose` + полный reload сцены.
 ## 7. Чеклист Editor
 
 1. Верх Game HUD: Pause, x1, x2, x3, текст `Day N  HH:MM`.
-2. Save / Load — две кнопки, без красивого меню.
+2. Save / Load — в оверлее паузы; в главном меню тоже Load.
 3. Play: день на x3 бежит втрое быстрее, чем на x1; пауза стопит часы и ходоков, скорость подсвечена прежняя.
 4. Заспавнить 2 челиков, поставить 1 дом, крутануть день, Save, доспавнить ещё, Load — снова те же 2 челика, 1 дом, тот же день.
-5. Выключить Play, включить снова, Load — слот с диска жив.
+5. Start Debug → дома на поле → Main Menu → Start Game — поле пустое (DefaultScenario).
+6. Выключить Play, включить снова, Load из меню — слот с диска жив.
 
 Критерий провала: после Load дома на месте, а occupy пустой (можно ставить второе здание в ту же клетку).
 

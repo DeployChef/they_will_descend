@@ -10,13 +10,13 @@ using UnityEngine;
 namespace TheyWillDescend.Authoring.Scenario
 {
     /// <summary>
-    /// Copies scenario houses/stock/worker count onto the session.
-    /// Does not Instantiate catalog prefabs — that duplicates EntityGuid in Live Conversion.
+    /// Copies SubScene scenario houses/stock/worker count onto the session
+    /// at bake time (editor seed). Play overwrites the same buffers in
+    /// <c>RunPublisher</c> from the menu kit — this system does not run in Play.
     /// Runs after HQ writes CityGrid.Center so poses sit on the plaza origin.
     /// </summary>
     [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
     [UpdateInGroup(typeof(PostBakingSystemGroup))]
-    [UpdateAfter(typeof(HeadquartersCenterBakeSystem))]
     public partial struct ScenarioBuildingsBakeSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
@@ -35,13 +35,14 @@ namespace TheyWillDescend.Authoring.Scenario
             using var specQuery = em.CreateEntityQuery(ComponentType.ReadOnly<ScenarioResourceSpec>());
             if (specQuery.IsEmptyIgnoreFilter)
                 return;
-            if (!em.HasBuffer<ResourceAmount>(session))
+            if (!em.HasBuffer<ResourceAmount>(session) || !em.HasBuffer<ResourceInfo>(session))
             {
                 Debug.LogError("Scenario bake: session has no resource ledger. Add ResourceCatalogAuthoring on SimControl.");
                 return;
             }
 
             var stock = em.GetBuffer<ResourceAmount>(session);
+            var info = em.GetBuffer<ResourceInfo>(session);
             using var specEntities = specQuery.ToEntityArray(Unity.Collections.Allocator.Temp);
             for (var e = 0; e < specEntities.Length; e++)
             {
@@ -57,7 +58,7 @@ namespace TheyWillDescend.Authoring.Scenario
                         continue;
                     }
 
-                    ResourceLedger.Set(stock, spec.ResourceId, spec.Amount);
+                    ResourceLedger.SetClamped(stock, info, spec.ResourceId, spec.Amount);
                 }
             }
         }
@@ -73,9 +74,12 @@ namespace TheyWillDescend.Authoring.Scenario
             if (specQuery.IsEmptyIgnoreFilter)
                 return;
 
-            if (!em.HasBuffer<BuildingPrototype>(session))
+            if (!em.HasBuffer<BaseBuildingPrototype>(session)
+                || em.GetBuffer<BaseBuildingPrototype>(session).Length == 0
+                || !em.HasBuffer<BuildingPrototype>(session)
+                || em.GetBuffer<BuildingPrototype>(session).Length == 0)
             {
-                Debug.LogError("Scenario bake: session has no building catalog.");
+                Debug.LogError("Scenario bake: session has no base/resolved building catalog.");
                 return;
             }
 
@@ -88,7 +92,7 @@ namespace TheyWillDescend.Authoring.Scenario
                 for (var i = 0; i < specs.Length; i++)
                 {
                     var spec = specs[i];
-                    if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, 0, 0, out var prototype))
+                    if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, out var prototype))
                     {
                         Debug.LogError($"Scenario bake: unknown building type {spec.TypeId}.");
                         continue;

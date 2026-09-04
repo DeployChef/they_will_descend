@@ -7,6 +7,8 @@ namespace TheyWillDescend.Simulation.Time
     /// Day clock. HUD pulls GameTime; no DayChanged event.
     /// </summary>
     [Unity.Burst.BurstCompile]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(CommandSystemGroup))]
     public partial struct AdvanceGameTimeSystem : ISystem
     {
         [Unity.Burst.BurstCompile]

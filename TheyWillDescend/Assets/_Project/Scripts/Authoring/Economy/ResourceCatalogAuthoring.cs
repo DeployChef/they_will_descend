@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TheyWillDescend.Authoring.Session;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using Unity.Entities;
@@ -33,6 +34,14 @@ namespace TheyWillDescend.Authoring.Economy
                 }
 
                 DependsOn(so);
+                var defaultCap = 2000f;
+                var rules = GetComponent<SimRulesAuthoring>();
+                if (rules != null && rules.Rules != null)
+                {
+                    DependsOn(rules.Rules);
+                    defaultCap = rules.Rules.DefaultStockCap;
+                }
+
                 var seen = new HashSet<string>(System.StringComparer.Ordinal);
                 var resources = so.Resources;
                 for (var i = 0; i < resources.Count; i++)
@@ -59,10 +68,14 @@ namespace TheyWillDescend.Authoring.Economy
                     }
 
                     amounts.Add(new ResourceAmount { ResourceId = key, Amount = 0f });
+                    var cap = definition.StockCap > 0.0001f ? definition.StockCap : defaultCap;
                     info.Add(new ResourceInfo
                     {
                         ResourceId = key,
-                        DisplayName = definition.DisplayName
+                        DisplayName = definition.DisplayName,
+                        EnergyValue = definition.EnergyValue,
+                        StockCap = cap,
+                        CanFeed = definition.CanFeed ? (byte)1 : (byte)0
                     });
                 }
             }

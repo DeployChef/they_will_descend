@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using TheyWillDescend.Authoring.City;
 using TheyWillDescend.Authoring.Scenario;
+using TheyWillDescend.Content;
+using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Content;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -58,25 +59,28 @@ namespace TheyWillDescend.Authoring.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Add building", EditorStyles.boldLabel);
-            var definitions = catalog.Catalog != null ? catalog.Catalog.Buildings : null;
-            if (definitions == null || definitions.Count == 0)
+            var prefabs = catalog.Catalog != null ? catalog.Catalog.Prefabs : null;
+            if (prefabs == null || prefabs.Count == 0)
             {
                 EditorGUILayout.HelpBox(
-                    "Building catalog is empty. Add BuildingDefinition assets to the catalog.",
+                    "Building catalog is empty. Add house prefabs to the catalog.",
                     MessageType.Warning);
             }
             else
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    for (var i = 0; i < definitions.Count; i++)
+                    for (var i = 0; i < prefabs.Count; i++)
                     {
-                        var definition = definitions[i];
-                        if (definition == null)
+                        var prefab = prefabs[i];
+                        if (prefab == null)
                             continue;
-                        var label = $"{definition.DisplayName} ({definition.WidthClusters}×{definition.DepthRadialRings})";
+                        if (!BuildingStampRead.TryFootprint(prefab, out var footprint))
+                            continue;
+                        var typeId = BuildingStampRead.TypeId(prefab);
+                        var label = $"{BuildingView.NameOf(prefab)} ({footprint.WidthClusters}×{footprint.DepthRadialRings})";
                         if (GUILayout.Button(label))
-                            AddHouse(authoring, definition.TypeId);
+                            AddHouse(authoring, typeId);
                     }
                 }
             }
@@ -186,20 +190,19 @@ namespace TheyWillDescend.Authoring.Editor
             float3 center,
             ScenarioBuildingRecord record)
         {
-            if (!catalog.TryGet(record.TypeId, out var definition) || definition.Prefab == null)
+            if (!catalog.TryGet(record.TypeId, out var prefab) || prefab == null)
             {
                 Debug.LogError($"Scenario preview: missing prefab for type {record.TypeId}.");
                 return;
             }
 
-            var prefab = definition.Prefab;
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, authoring.PreviewRoot);
             if (go == null)
                 go = Object.Instantiate(prefab, authoring.PreviewRoot);
             if (PrefabUtility.IsPartOfPrefabInstance(go))
                 PrefabUtility.UnpackPrefabInstance(
                     go, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-            go.name = $"{definition.DisplayName}_c{record.Cluster}_r{record.Radial}";
+            go.name = $"{BuildingView.NameOf(prefab)}_c{record.Cluster}_r{record.Radial}";
             Undo.RegisterCreatedObjectUndo(go, "Spawn Scenario Preview");
             EnsureBakingOnly(authoring.gameObject);
             StripRuntimeAuthoring(go);
@@ -211,15 +214,15 @@ namespace TheyWillDescend.Authoring.Editor
             preview.TypeId = record.TypeId;
             preview.Cluster = record.Cluster;
             preview.Radial = record.Radial;
-            preview.ApplyPose(
-                config, center, definition.Footprint, BuildingPrefabMetrics.HorizontalSize(prefab));
+            BuildingStampRead.TryFootprint(prefab, out var footprint);
+            preview.ApplyPose(config, center, footprint);
         }
 
         static void StripRuntimeAuthoring(GameObject root)
         {
-            var buildings = root.GetComponentsInChildren<BuildingAuthoring>(true);
-            for (var i = 0; i < buildings.Length; i++)
-                Undo.DestroyObjectImmediate(buildings[i]);
+            var stamps = root.GetComponentsInChildren<BuildingStamp>(true);
+            for (var i = 0; i < stamps.Length; i++)
+                Undo.DestroyObjectImmediate(stamps[i]);
         }
 
         static void EnsureBakingOnly(GameObject go)
@@ -237,21 +240,11 @@ namespace TheyWillDescend.Authoring.Editor
 
         internal static bool TryFootprint(BuildingCatalogAuthoring catalog, string typeId, out BuildingFootprint footprint)
         {
-            if (catalog != null && catalog.TryGet(typeId, out var definition))
-            {
-                footprint = definition.Footprint;
-                return true;
-            }
+            if (catalog != null && catalog.TryGet(typeId, out var prefab))
+                return BuildingStampRead.TryFootprint(prefab, out footprint);
 
             footprint = default;
             return false;
-        }
-
-        internal static float MeshSize(BuildingCatalogAuthoring catalog, string typeId)
-        {
-            if (catalog == null || !catalog.TryGet(typeId, out var definition))
-                return 1f;
-            return BuildingPrefabMetrics.HorizontalSize(definition);
         }
 
         static List<BuildingFootprint> CollectFootprints(

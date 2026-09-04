@@ -190,14 +190,13 @@ namespace TheyWillDescend.Simulation.City
             int anchorRadial,
             in BuildingFootprint footprint,
             out float3 position,
-            out quaternion rotation,
-            out float stubWorldSize)
+            out quaternion rotation)
         {
             var nAnchor = config.GetClusterCount(anchorRadial);
             var turns0 = anchorCluster / (float)nAnchor;
             FootprintMarkerPoseFromTurns(
                 center, config, turns0, anchorRadial, footprint,
-                out position, out rotation, out stubWorldSize);
+                out position, out rotation);
         }
 
         public static void FootprintMarkerPoseFromTurns(
@@ -207,8 +206,7 @@ namespace TheyWillDescend.Simulation.City
             int anchorRadial,
             in BuildingFootprint footprint,
             out float3 position,
-            out quaternion rotation,
-            out float stubWorldSize)
+            out quaternion rotation)
         {
             var nAnchor = config.GetClusterCount(anchorRadial);
             var midRadial = anchorRadial + (footprint.DepthRadialRings - 1) * 0.5f;
@@ -220,11 +218,6 @@ namespace TheyWillDescend.Simulation.City
             var radialDir = new float3(math.sin(theta), 0f, math.cos(theta));
             position = center + radialDir * midRadius;
             rotation = quaternion.LookRotationSafe(radialDir, new float3(0f, 1f, 0f));
-
-            var padWidth = footprint.WidthClusters * config.TargetClusterWorldWidth;
-            var padDepth = footprint.DepthRadialRings * config.RadialStep;
-            stubWorldSize = math.min(padWidth, padDepth) * 0.85f;
-            stubWorldSize = math.max(0.35f, stubWorldSize);
         }
 
         static float Fract(float v)

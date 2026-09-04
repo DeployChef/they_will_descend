@@ -7,10 +7,11 @@ using UnityEngine;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// First Play tick: turn baked worker count into SpawnAgentCommand.
-    /// Skips Edit Mode so Live Conversion does not re-apply the queue.
+    /// Turns pending worker count into SpawnAgentCommand after the run publisher
+    /// has applied scenario + difficulty.
     /// </summary>
     [UpdateInGroup(typeof(CommandSystemGroup))]
+    [UpdateAfter(typeof(ConsumeDespawnBuildingsSystem))]
     [UpdateBefore(typeof(ConsumeSpawnAgentCommandsSystem))]
     public partial struct ConsumePendingScenarioSpawnsSystem : ISystem
     {
@@ -18,21 +19,35 @@ namespace TheyWillDescend.Simulation.Agents
         {
             state.RequireForUpdate<PendingScenarioSpawns>();
             state.RequireForUpdate<CityGrid>();
-            state.RequireForUpdate<SimBridge>();
+            state.RequireForUpdate<SimSession>();
         }
 
         public void OnUpdate(ref SystemState state)
         {
             if (!Application.isPlaying)
                 return;
+            Run(state.EntityManager);
+        }
 
-            var session = SystemAPI.GetSingletonEntity<PendingScenarioSpawns>();
-            var pending = SystemAPI.GetComponent<PendingScenarioSpawns>(session);
+        public static void Run(EntityManager em)
+        {
+            if (!SimSessionAccess.TryGet(em, out var session))
+                return;
+            if (!em.HasComponent<PendingScenarioSpawns>(session)
+                || !em.HasComponent<CityGrid>(session)
+                || !em.HasComponent<SimSession>(session))
+                return;
+            if (!em.GetComponentData<SimSession>(session).AcceptsSetupCommands)
+                return;
+
+            var pending = em.GetComponentData<PendingScenarioSpawns>(session);
             if (pending.Workers <= 0)
                 return;
 
-            var center = SystemAPI.GetComponent<CityGrid>(session).Center;
-            var commands = SystemAPI.GetBuffer<SpawnAgentCommand>(session);
+            var center = em.GetComponentData<CityGrid>(session).Center;
+            if (!em.HasBuffer<SpawnAgentCommand>(session))
+                return;
+            var commands = em.GetBuffer<SpawnAgentCommand>(session);
             var count = pending.Workers;
             for (var i = 0; i < count; i++)
             {
@@ -50,6 +65,7 @@ namespace TheyWillDescend.Simulation.Agents
                     Facing = facing,
                     Speed = 0f,
                     HasPose = 1,
+                    PlazaWalking = 1,
                     PlazaAngle = angle,
                     PlazaRadius = radius,
                     PlazaTimer = 2.5f,
@@ -58,7 +74,7 @@ namespace TheyWillDescend.Simulation.Agents
             }
 
             pending.Workers = 0;
-            SystemAPI.SetComponent(session, pending);
+            em.SetComponentData(session, pending);
         }
     }
 }

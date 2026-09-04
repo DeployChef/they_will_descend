@@ -1,4 +1,5 @@
 using TheyWillDescend.Authoring.Scenario;
+using TheyWillDescend.Content;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,11 +23,10 @@ namespace TheyWillDescend.Authoring.Editor
             if (!ScenarioAuthoringEditor.TryFootprint(catalog, preview.TypeId, out var footprint))
                 return;
 
-            var meshSize = ScenarioAuthoringEditor.MeshSize(catalog, preview.TypeId);
             Undo.RecordObject(preview, "Snap Scenario House");
             Undo.RecordObject(preview.transform, "Snap Scenario House");
-            if (!preview.SnapFromWorld(config, center, footprint, meshSize))
-                preview.ApplyPose(config, center, footprint, meshSize);
+            if (!preview.SnapFromWorld(config, center, footprint))
+                preview.ApplyPose(config, center, footprint);
 
             EditorUtility.SetDirty(preview);
             ScenarioAuthoringEditor.Capture(authoring);
@@ -46,7 +46,7 @@ namespace TheyWillDescend.Authoring.Editor
             if (!ScenarioAuthoringEditor.TryFootprint(catalog, preview.TypeId, out var footprint))
                 return;
 
-            preview.ApplyPose(config, center, footprint, ScenarioAuthoringEditor.MeshSize(catalog, preview.TypeId));
+            preview.ApplyPose(config, center, footprint);
             ScenarioAuthoringEditor.Capture(authoring);
         }
     }

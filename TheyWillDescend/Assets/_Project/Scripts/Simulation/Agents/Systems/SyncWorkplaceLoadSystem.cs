@@ -11,7 +11,7 @@ namespace TheyWillDescend.Simulation.Agents
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(AdvanceAgentCommuteSystem))]
+    [UpdateAfter(typeof(AdvanceConstructionSystem))]
     public partial struct SyncWorkplaceLoadSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -25,7 +25,7 @@ namespace TheyWillDescend.Simulation.Agents
         {
             foreach (var workplace in SystemAPI.Query<RefRW<Workplace>>()
                          .WithAll<Building>()
-                         .WithNone<Construction, Headquarters>())
+                         .WithNone<Construction>())
             {
                 workplace.ValueRW.AssignedCount = 0;
                 workplace.ValueRW.WorkingCount = 0;
@@ -35,7 +35,7 @@ namespace TheyWillDescend.Simulation.Agents
             foreach (var (building, entity) in
                      SystemAPI.Query<RefRO<Building>>()
                          .WithAll<Workplace>()
-                         .WithNone<Construction, Headquarters>()
+                         .WithNone<Construction>()
                          .WithEntityAccess())
             {
                 houses.TryAdd(building.ValueRO.Id, entity);
@@ -50,9 +50,10 @@ namespace TheyWillDescend.Simulation.Agents
                     continue;
                 var workplace = SystemAPI.GetComponentRW<Workplace>(house);
                 workplace.ValueRW.AssignedCount++;
-                if (job.Arrived != 0)
+                if (job.Arrived != 0 && !job.HasConstructionTask)
                     workplace.ValueRW.WorkingCount++;
             }
+
         }
     }
 }

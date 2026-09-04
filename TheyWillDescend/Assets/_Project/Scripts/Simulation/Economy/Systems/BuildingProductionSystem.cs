@@ -7,42 +7,47 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Economy
 {
     /// <summary>
-    /// Production tick: working buildings run their catalog recipe (consume / produce per game hour).
+    /// Production tick: working buildings run the recipe on their own stamp buffer.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(TheyWillDescend.Simulation.Agents.SyncWorkplaceLoadSystem))]
     public partial struct BuildingProductionSystem : ISystem
     {
+        EntityQuery _session;
+
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<SimControl>();
-            state.RequireForUpdate<ResourceAmount>();
-            state.RequireForUpdate<BuildingRecipeLine>();
-            state.RequireForUpdate<GameTime>();
+            _session = state.GetEntityQuery(
+                ComponentType.ReadOnly<SimControl>(),
+                ComponentType.ReadOnly<GameTime>(),
+                ComponentType.ReadWrite<ResourceAmount>(),
+                ComponentType.ReadOnly<ResourceInfo>());
+            state.RequireForUpdate(_session);
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var control = SystemAPI.GetSingleton<SimControl>();
+            var control = _session.GetSingleton<SimControl>();
             if (!control.IsRunning)
                 return;
             var dt = control.DeltaTime;
             if (dt <= 0f)
                 return;
 
-            var time = SystemAPI.GetSingleton<GameTime>();
+            var time = _session.GetSingleton<GameTime>();
             if (!time.IsWorkShift)
                 return;
             var dayDuration = time.DayDuration;
-            var stock = SystemAPI.GetSingletonBuffer<ResourceAmount>();
-            var recipes = SystemAPI.GetSingletonBuffer<BuildingRecipeLine>(true);
+            var stock = _session.GetSingletonBuffer<ResourceAmount>();
+            var info = _session.GetSingletonBuffer<ResourceInfo>(true);
 
-            foreach (var (workplace, type) in
-                     SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>>()
+            foreach (var (workplace, type, recipes) in
+                     SystemAPI.Query<RefRO<Workplace>, RefRO<BuildingType>, DynamicBuffer<BuildingRecipeLine>>()
                          .WithAll<Building>()
-                         .WithNone<Construction, Headquarters>())
+                         .WithNone<Construction>())
+
             {
                 if (workplace.ValueRO.IsPaused || workplace.ValueRO.WorkingCount <= 0)
                     continue;
@@ -50,10 +55,9 @@ namespace TheyWillDescend.Simulation.Economy
                 var load = Workplace.Load01(workplace.ValueRO.WorkingCount, slots);
                 if (load <= 0f)
                     continue;
-                var typeId = type.ValueRO.TypeId;
-                if (!BuildingRecipes.HasLines(recipes, typeId))
+                if (!BuildingRecipes.HasLines(recipes))
                     continue;
-                BuildingRecipes.Apply(recipes, stock, typeId, dt, dayDuration, load);
+                BuildingRecipes.Apply(recipes, stock, info, dt, dayDuration, load);
             }
         }
     }
