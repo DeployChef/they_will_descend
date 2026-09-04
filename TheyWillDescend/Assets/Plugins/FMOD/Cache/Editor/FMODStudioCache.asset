@@ -35,7 +35,7 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Main_theme.bank
   Name: Main_theme
   StudioPath: bank:/Main_theme
-  lastModified: 639228539098296041
+  lastModified: 639241573367229281
   FileSizes: []
   Exists: 1
 --- !u!114 &-4253044864188614951
@@ -53,7 +53,7 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639228539098351282
+  lastModified: 639241573367309420
   FileSizes: []
   Exists: 1
 --- !u!114 &-3486965941906708464
@@ -114,6 +114,48 @@ MonoBehaviour:
   - Name: 
     Value: 772
   Exists: 1
+--- !u!114 &-871835409105993522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Ambience_Town.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Town.bank
+  Name: Ambience_Town
+  StudioPath: bank:/Ambience_Town/Ambience_Town
+  lastModified: 639241573467629996
+  FileSizes: []
+  Exists: 1
+--- !u!114 &-803960073864042417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Ambience_Town/Parameter 1
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Parameter 1
+  StudioPath: 
+  Min: 0
+  Max: 100
+  Default: 0
+  ID:
+    data1: 2831926291
+    data2: 1257349732
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -130,18 +172,26 @@ MonoBehaviour:
   - {fileID: 6289055830777138674}
   - {fileID: -5205210692398712933}
   - {fileID: -4253044864188614951}
+  - {fileID: -871835409105993522}
+  - {fileID: 6316589271111536899}
   EditorEvents:
   - {fileID: 2837765788686147200}
+  - {fileID: 8126022833513311995}
+  - {fileID: 6593877492651458738}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4253044864188614951}
   StringsBanks:
   - {fileID: 6289055830777138674}
   cacheVersion: 131857
-  cacheTime: 639228539098371283
+  cacheTime: 639241573476249196
   SerializableEventsDict:
   - key: event:/main_soundtrack
     index: 0
+  - key: event:/Ambience_Town
+    index: 1
+  - key: event:/Ambience_Wind_Generation
+    index: 2
 --- !u!114 &231108389930646969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,11 +357,84 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639228539098371283
+  lastModified: 639241573367329074
   FileSizes:
   - Name: 
-    Value: 880
+    Value: 1306
   Exists: 1
+--- !u!114 &6316589271111536899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Ambience_Wind_Generator.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank
+  Name: Ambience_Wind_Generator
+  StudioPath: bank:/Ambience_Town/Ambience_Wind_Generator
+  lastModified: 639241573476249196
+  FileSizes: []
+  Exists: 1
+--- !u!114 &6593877492651458738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Ambience_Wind_Generation
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Ambience_Wind_Generation
+  Guid:
+    Data1: -212409678
+    Data2: 1085688846
+    Data3: -1834327894
+    Data4: -439807284
+  Banks:
+  - {fileID: 6316589271111536899}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 14000
+--- !u!114 &8126022833513311995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Ambience_Town
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Ambience_Town
+  Guid:
+    Data1: -891615303
+    Data2: 1235628188
+    Data3: 894630057
+    Data4: 1242513721
+  Banks:
+  - {fileID: -871835409105993522}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -803960073864042417}
+  MinDistance: 1
+  MaxDistance: 100
+  Length: 22000
 --- !u!114 &8140012149444986886
 MonoBehaviour:
   m_ObjectHideFlags: 0

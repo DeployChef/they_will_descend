@@ -11,6 +11,7 @@ namespace TheyWillDescend.Presentation.Audio
     /// <summary>
     /// FMOD host on Bootstrap. Lives with Root (camera + AudioListener).
     /// Simulation never calls this. Player pause follows <see cref="SimControl.PlayerPaused"/>.
+    /// main_soundtrack отключён флагом enableMusic (по умолчанию off).
     /// </summary>
     public sealed class GameAudio : MonoBehaviour
     {
@@ -19,11 +20,26 @@ namespace TheyWillDescend.Presentation.Audio
 
         [SerializeField] EventReference musicEvent;
 
+        [Header("Music")]
+        [Tooltip("Включить main_soundtrack. По умолчанию выключен — трек не играет.")]
+        [SerializeField] bool enableMusic = false;
+
         EventInstance _music;
         bool _lastPaused;
 
+        void Awake()
+        {
+            // Гарантия: трек не играет, даже если его запустили раньше.
+            if (!enableMusic)
+                StopSessionMusic();
+        }
+
         public void StartSessionMusic()
         {
+            // Музыка выключена флагом — ничего не запускаем.
+            if (!enableMusic)
+                return;
+
             StopSessionMusic();
             TryLoadBank("Master");
             TryLoadBank(MusicBankName);

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 786987467606419860}
   - component: {fileID: 3315829467877808865}
   - component: {fileID: 5219026554284324656}
+  - component: {fileID: 506105885544770830}
   m_Layer: 0
   m_Name: Workshop
   m_TagString: Untagged
@@ -58,6 +59,7 @@ MonoBehaviour:
   workplace: 1
   workplaceSlots: 5
   researchWorkplace: 1
+  requiresUnlock: 0
   recipe: 0
   recipeInputs: []
   recipeOutputs: []
@@ -78,6 +80,21 @@ MonoBehaviour:
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
   workingPulseHz: 1.15
+--- !u!114 &506105885544770830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4773640749899098690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aff8d90d6ce7fb547be9e5d4298063dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingAudioSource
+  buildingType: 2
+  activityWeight: 0.5
+  isWorking: 1
 --- !u!1 &5085933263608069467
 GameObject:
   m_ObjectHideFlags: 0

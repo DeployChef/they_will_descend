@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4242314019775467843}
   - component: {fileID: 84292360298370123}
   - component: {fileID: 1245298956705152926}
+  - component: {fileID: 109760359155948262}
   m_Layer: 0
   m_Name: Sawmill
   m_TagString: Untagged
@@ -57,6 +58,8 @@ MonoBehaviour:
     Amount: 15
   workplace: 1
   workplaceSlots: 10
+  researchWorkplace: 0
+  requiresUnlock: 0
   recipe: 1
   recipeInputs: []
   recipeOutputs:
@@ -79,6 +82,21 @@ MonoBehaviour:
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
   workingPulseHz: 1.15
+--- !u!114 &109760359155948262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4447309251788943178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aff8d90d6ce7fb547be9e5d4298063dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingAudioSource
+  buildingType: 1
+  activityWeight: 0.5
+  isWorking: 0
 --- !u!1 &5906566791462257087
 GameObject:
   m_ObjectHideFlags: 0

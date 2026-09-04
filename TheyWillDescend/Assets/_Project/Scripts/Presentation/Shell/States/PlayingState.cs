@@ -34,14 +34,9 @@ namespace TheyWillDescend.Shell.States
         public void Enter()
         {
             SimCommands.TryPost(SimClockCommand.InGame(true));
-            try
-            {
-                _audio?.StartSessionMusic();
-            }
-            catch (Exception e)
-            {
-                GameLog.Error($"Playing: music failed to start. {e.Message}");
-            }
+
+            // Музыка отключена (enableMusic = off в GameAudio). Инстанс гарантированно глушится.
+            _audio?.StopSessionMusic();
 
             _busy = false;
             _screen = PauseMenuScreen.Current;

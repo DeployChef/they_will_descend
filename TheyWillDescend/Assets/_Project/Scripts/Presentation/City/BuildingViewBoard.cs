@@ -4,6 +4,7 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Presentation.Audio;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -26,6 +27,7 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] HqOverlay hqOverlayPrefab;
         [SerializeField] GameObject hqVisualPrefab;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+        [SerializeField] AudioZoneManager audioZoneManager;
 
 
         Transform _root;
@@ -375,6 +377,8 @@ namespace TheyWillDescend.Presentation.City
                 GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
 
             var overlay = SpawnOverlay(building, center);
+            RegisterAudioSource(house, position);
+
             var placed = new PlacedView
             {
                 Root = house,
@@ -433,6 +437,26 @@ namespace TheyWillDescend.Presentation.City
                 ? em.GetComponentData<Building>(entity).TypeId.ToString()
                 : building.TypeId.ToString();
             return source.FindPrefab(typeId);
+        }
+
+        void RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
+        {
+            if (audioZoneManager == null)
+                return;
+
+            // Ищем аудио-источник на префабе или создаём.
+            var audioSource = buildingGo.GetComponent<BuildingAudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = buildingGo.AddComponent<BuildingAudioSource>();
+            }
+
+            // Находим ближайшую зону.
+            var zone = audioZoneManager.FindZoneNear((Vector3)worldPosition);
+            if (zone != null)
+            {
+                audioSource.LinkedZone = zone;
+            }
         }
 
         void DestroyView(int buildingId)
