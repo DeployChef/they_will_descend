@@ -69,16 +69,13 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void Update()
         {
-            if (selection == null)
-                return;
-            var id = selection.SelectedBuildingId;
-            if (id <= 0)
+            if (selection == null || !selection.IsPyramidSelected)
             {
                 Hide();
                 return;
             }
 
-            Show(id);
+            Show();
         }
 
         void Hide()
@@ -87,10 +84,9 @@ namespace TheyWillDescend.Presentation.GameHud
                 card.SetActive(false);
         }
 
-        void Show(int id)
+        void Show()
         {
-            if (id != 1
-                || !SimWorld.TryGet(out var em, out var bag)
+            if (!SimWorld.TryGet(out var em, out var bag)
                 || !TryFindHq(em, out var entity)
                 || !em.HasBuffer<PyramidFeedLine>(entity)
                 || !em.HasBuffer<ResourceInfo>(bag))
@@ -98,6 +94,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 Hide();
                 return;
             }
+
 
 
             EnsureUi();
@@ -302,12 +299,13 @@ namespace TheyWillDescend.Presentation.GameHud
                 break;
             }
 
-            SimCommands.TryPost(new SetPyramidFeedCommand
+            SimCommands.Request(new SetPyramidFeedRequest
             {
                 ResourceId = resourceId,
                 PerHour = perHour
             });
         }
+
 
   
 

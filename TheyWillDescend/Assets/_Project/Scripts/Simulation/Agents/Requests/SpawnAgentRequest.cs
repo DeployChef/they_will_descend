@@ -3,24 +3,21 @@ using Unity.Mathematics;
 
 namespace TheyWillDescend.Simulation.Agents
 {
-    /// <summary>
-    /// Player/load intent. Kind is sim identity, not a mesh.
-    /// </summary>
-    public struct SpawnAgentCommand : IBufferElementData
+    public struct SpawnAgentRequest : IComponentData
     {
+        public AgentKind Kind;
+        public float Speed;
         public float3 Position;
         public float3 Facing;
         public float3 Target;
-        public float Speed;
-        public int AgentId;
+        public byte Moving;
         public int WorkplaceBuildingId;
         public byte Arrived;
-        public byte Moving;
+        public int AgentId;
         public byte HasPose;
-        public byte PlazaWalking;
         public float PlazaTimer;
         public float PlazaAngle;
         public float PlazaRadius;
-        public AgentKind Kind;
+        public byte PlazaWalking;
     }
 }

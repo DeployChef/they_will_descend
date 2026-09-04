@@ -43,9 +43,9 @@ namespace TheyWillDescend.Authoring.Editor
             DrawGhost(config, center, catalog);
         }
 
-        void DrawPalette(TheyWillDescend.Authoring.City.BuildingCatalogAuthoring catalog)
+        void DrawPalette(BuildingCatalogAsset catalog)
         {
-            var prefabs = catalog.Catalog != null ? catalog.Catalog.Prefabs : null;
+            var prefabs = catalog != null ? catalog.Prefabs : null;
             Handles.BeginGUI();
             GUILayout.BeginArea(PaletteRect, EditorStyles.helpBox);
             EditorGUILayout.LabelField("Scenario place", EditorStyles.boldLabel);
@@ -115,7 +115,7 @@ namespace TheyWillDescend.Authoring.Editor
         void DrawGhost(
             in RadialGridConfig config,
             float3 center,
-            TheyWillDescend.Authoring.City.BuildingCatalogAuthoring catalog)
+            BuildingCatalogAsset catalog)
         {
             if (string.IsNullOrEmpty(_typeId))
                 return;

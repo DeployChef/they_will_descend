@@ -57,6 +57,8 @@ MonoBehaviour:
     Amount: 15
   workplace: 1
   workplaceSlots: 10
+  researchWorkplace: 0
+  requiresUnlock: 0
   recipe: 1
   recipeInputs: []
   recipeOutputs:
@@ -145,7 +147,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 06d0872e8945c7641afb0463fa8ac454, type: 2}
+  - {fileID: 2100000, guid: d85d5dc8b74bc0e4a9e873c1bc924662, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

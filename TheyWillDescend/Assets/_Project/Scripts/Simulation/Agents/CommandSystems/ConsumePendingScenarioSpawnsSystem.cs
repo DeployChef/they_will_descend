@@ -45,9 +45,6 @@ namespace TheyWillDescend.Simulation.Agents
                 return;
 
             var center = em.GetComponentData<CityGrid>(session).Center;
-            if (!em.HasBuffer<SpawnAgentCommand>(session))
-                return;
-            var commands = em.GetBuffer<SpawnAgentCommand>(session);
             var count = pending.Workers;
             for (var i = 0; i < count; i++)
             {
@@ -59,7 +56,9 @@ namespace TheyWillDescend.Simulation.Agents
                     center.y,
                     center.z + math.sin(angle) * radius);
                 var facing = new float3(-math.sin(angle), 0f, math.cos(angle));
-                commands.Add(new SpawnAgentCommand
+
+                var reqEntity = em.CreateEntity();
+                em.AddComponentData(reqEntity, new SpawnAgentRequest
                 {
                     Position = position,
                     Facing = facing,
@@ -72,6 +71,7 @@ namespace TheyWillDescend.Simulation.Agents
                     Kind = AgentKind.Worker
                 });
             }
+
 
             pending.Workers = 0;
             em.SetComponentData(session, pending);
