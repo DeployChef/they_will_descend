@@ -1,4 +1,5 @@
 using UnityEngine;
+using FMODUnity;
 
 namespace TheyWillDescend.Presentation.Audio
 {
@@ -21,8 +22,11 @@ namespace TheyWillDescend.Presentation.Audio
         [SerializeField] float maxDistance = 120f;
 
         [Header("FMOD")]
-        [Tooltip("FMOD event path для зон.")]
-        [SerializeField] string eventPath = "event:/audio/city/ambience_town";
+        [Tooltip("FMOD event для зон. Перетаскивается из FMOD Studio (как у StudioEventEmitter). Банки определяются автоматически.")]
+        [SerializeField] EventReference eventReference;
+
+        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан.")]
+        [SerializeField] string eventPath = "event:/Ambience_Town";
 
         [Tooltip("FMOD bus для аудио-сетки.")]
         [SerializeField] string audioBusPath = "bus:/";
@@ -30,6 +34,12 @@ namespace TheyWillDescend.Presentation.Audio
         [Header("Audio LOD")]
         [Tooltip("RTPC-параметр дистанции (audio LOD) в ивенте ambience_town.")]
         [SerializeField] string distanceRtpcName = "Distance";
+
+        [Tooltip("Дистанция смерти зоны (м): дальше — инстанс release, звук не существует, систему не нагружает. Возрождение ближе чем Death Distance - Hysteresis.")]
+        [SerializeField] float zoneDeathDistance = 100f;
+
+        [Tooltip("Гистерезис возрождения зоны (м), чтобы инстанс не дёргался на границе.")]
+        [SerializeField] float zoneDeathHysteresis = 5f;
 
         [Header("Debug")]
         [Tooltip("Логировать вход/выход зон в консоль.")]
@@ -40,9 +50,12 @@ namespace TheyWillDescend.Presentation.Audio
         public float MaxDistance => maxDistance;
         public float SectorAngle => 360f / angularSectors;
         public float ZoneDepth => maxDistance / radialZones;
+        public EventReference EventReference => eventReference;
         public string EventPath => eventPath;
         public string AudioBusPath => audioBusPath;
         public string DistanceRtpcName => distanceRtpcName;
+        public float ZoneDeathDistance => zoneDeathDistance;
+        public float ZoneDeathHysteresis => zoneDeathHysteresis;
         public bool LogZoneActivity => logZoneActivity;
     }
 }

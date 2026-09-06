@@ -441,6 +441,10 @@ namespace TheyWillDescend.Presentation.City
 
         void RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
         {
+            // Менеджер живёт в Bootstrap-сцене (грузится additive), сериализованная
+            // ссылка из Game-сцены невозможна — ищем автоматически.
+            if (audioZoneManager == null)
+                audioZoneManager = FindFirstObjectByType<AudioZoneManager>();
             if (audioZoneManager == null)
                 return;
 
@@ -456,6 +460,16 @@ namespace TheyWillDescend.Presentation.City
             if (zone != null)
             {
                 audioSource.LinkedZone = zone;
+
+                // Явная регистрация: OnEnable у BuildingAudioSource срабатывает
+                // в момент AddComponent, когда LinkedZone ещё null — там
+                // зарегистрироваться невозможно. Регистрируем здесь.
+                zone.AddAudioSource(audioSource);
+
+                // Мгновенная активация: если зона уже в поле зрения камеры,
+                // звук появляется сразу после постройки, без ожидания тика.
+                if (zone.IsVisible && !zone.IsActive)
+                    zone.SetActive(true);
             }
         }
 

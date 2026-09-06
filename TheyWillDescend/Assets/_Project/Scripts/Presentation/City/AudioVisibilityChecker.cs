@@ -65,6 +65,9 @@ namespace TheyWillDescend.Presentation.City
         /// </summary>
         public void UpdateVisibility(AudioZone[] allZones)
         {
+            // Камера может появиться позже Bootstrap (Game-сцена additive) — ищем лениво.
+            if (mainCamera == null)
+                mainCamera = Camera.main;
             if (mainCamera == null || settings == null)
                 return;
 

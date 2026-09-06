@@ -409,6 +409,7 @@ GameObject:
   m_Component:
   - component: {fileID: 874285819}
   - component: {fileID: 874285818}
+  - component: {fileID: 874285820}
   m_Layer: 0
   m_Name: AudioZoneManager
   m_TagString: Untagged
@@ -432,6 +433,7 @@ MonoBehaviour:
   visibilityChecker: {fileID: 1996159292}
   fmodBanks:
   - Ambience_Town
+  - Ambience_Wind_Generator
   showGizmos: 1
 --- !u!4 &874285819
 Transform:
@@ -449,6 +451,34 @@ Transform:
   - {fileID: 1996159291}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &874285820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874285817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3631a9f1117b56b48a23fa90313b16ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Audio.GlobalAmbienceManager
+  events:
+  - eventReference:
+      Guid:
+        Data1: -212409678
+        Data2: 1085688846
+        Data3: -1834327894
+        Data4: -439807284
+      Path: event:/Ambience_Wind_Generation
+    distanceRtpc: 
+    deathDistance: 120
+    hysteresis: 5
+    anchorPoint: {x: 0, y: 0, z: 0}
+    useCityCenter: 1
+    isDead: 0
+  mainCamera: {fileID: 1820912099}
+  logActivity: 1
 --- !u!1 &1820912095
 GameObject:
   m_ObjectHideFlags: 0

@@ -20,8 +20,8 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         [SerializeField] AudioVisibilityChecker visibilityChecker;
 
         [Header("FMOD Banks")]
-        [Tooltip("Банки с ивентом ambience_town (без расширения .bank). Master грузится всегда.")]
-        [SerializeField] string[] fmodBanks = { "AudioCity" };
+        [Tooltip("Банки с ивентом (без расширения .bank). Используется, если EventReference в настройках не задан. Master грузится всегда.")]
+        [SerializeField] string[] fmodBanks = { "Ambience_Town" };
 
         /// <summary>Плоский список всех зон (120 штук).</summary>
         private AudioZone[] _zones;
@@ -117,7 +117,12 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         private void BuildZones()
         {
             // Загружаем банки до создания инстансов зон.
-            FmodBankLoader.LoadBanks(fmodBanks);
+            // Если в настройках задан EventReference — банки определяются
+            // автоматически из ивента (принцип StudioEventEmitter).
+            if (settings != null && !settings.EventReference.IsNull)
+                FmodBankLoader.LoadBanksForEvent(settings.EventReference);
+            else
+                FmodBankLoader.LoadBanks(fmodBanks);
 
             DisposeZones();
 
@@ -140,6 +145,38 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
             }
 
             GameLog.Info($"AudioZoneManager: created {totalZones} zones (grid center: {_gridCenter}).");
+
+            // Зоны пересозданы — у уже стоящих зданий LinkedZone указывает
+            // на мёртвые объекты зон. Перелинковываем их в новые зоны.
+            RelinkExistingSources();
+        }
+
+        /// <summary>
+        /// Перелинковывает все существующие BuildingAudioSource в новые зоны
+        /// после пересоздания сетки зон.
+        /// </summary>
+        private void RelinkExistingSources()
+        {
+            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < sources.Length; i++)
+            {
+                var source = sources[i];
+                // Строгая проверка: исключаем уничтоженные/отключённые объекты и префабы,
+                // чтобы не считать их как реальные постройки и не активировать пустые зоны.
+                if (source == null || !source.gameObject.activeInHierarchy)
+                    continue;
+
+                var zone = FindZoneNear(source.transform.position);
+                if (zone == null)
+                    continue;
+
+                source.LinkedZone = zone;
+                zone.AddAudioSource(source);
+
+                // Зона уже в поле зрения — активируем сразу.
+                if (zone.IsVisible && !zone.IsActive)
+                    zone.SetActive(true);
+            }
         }
 
         /// <summary>
@@ -157,16 +194,24 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
             }
 
             // Audio LOD + 3D-позиция активных зон: каждый тик.
+            // Дистанционная смерть: дальше Zone Death Distance инстанс умирает.
             var cam = visibilityChecker != null ? visibilityChecker.Camera : Camera.main;
             if (cam != null)
             {
                 var camPos = cam.transform.position;
                 var rtpcName = settings.DistanceRtpcName;
                 var maxDist = settings.MaxDistance;
+                var deathDist = settings.ZoneDeathDistance;
+                var deathHyst = settings.ZoneDeathHysteresis;
                 for (var i = 0; i < _zones.Length; i++)
                 {
                     var zone = _zones[i];
-                    if (zone == null || !zone.IsActive)
+                    if (zone == null)
+                        continue;
+
+                    zone.UpdateDistanceDeath(camPos, deathDist, deathHyst);
+
+                    if (!zone.IsActive)
                         continue;
 
                     zone.UpdateDistanceRtpc(camPos, rtpcName, maxDist);
@@ -216,6 +261,40 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         }
 
         void OnDestroy() => DisposeZones();
+
+        /// <summary>
+        /// Hot reload: выгружает ивентовые банки, грузит заново, пересоздаёт
+        /// зоны и перелинковывает постройки — без перезапуска сцены. Правой
+        /// кнопкой по заголовку компонента в инспекторе во время Play.
+        /// Master и Master.strings не трогаем — они нужны для резолва путей.
+        /// </summary>
+        [ContextMenu("Reload FMOD Banks")]
+        private void ReloadFmodBanks()
+        {
+            GameLog.Info("AudioZoneManager: hot reload banks started.");
+
+            // Глушим все зоны до выгрузки банков (инстансы ссылаются на ивенты).
+            DisposeZones();
+
+            // Выгружаем ивентовые банки (найденные ранее для EventReference)
+            // и вручную указанные. Master/Master.strings не трогаем — они
+            // нужны для резолва путей ивентов.
+            FmodBankLoader.UnloadEventBanks();
+            FmodBankLoader.UnloadBanks(fmodBanks);
+
+            // Грузим заново: EventReference → автоопределение, иначе ручной список.
+            if (settings != null && !settings.EventReference.IsNull)
+                FmodBankLoader.LoadBanksForEvent(settings.EventReference);
+            else
+                FmodBankLoader.LoadBanks(fmodBanks);
+
+            // Пересоздаём зоны и перелинковываем постройки.
+            _needsRebuild = true;
+            BuildZones();
+            RelinkExistingSources();
+
+            GameLog.Info("AudioZoneManager: hot reload banks done.");
+        }
 
         // ===== Debug Gizmos =====
 

@@ -85,7 +85,13 @@ namespace TheyWillDescend.Presentation.Audio
 
             try
             {
-                Instance = FMODUnity.RuntimeManager.CreateInstance(_settings.EventPath);
+                // Приоритет у EventReference (drag-and-drop из FMOD Studio),
+                // строковый путь — fallback.
+                if (!_settings.EventReference.IsNull)
+                    Instance = FMODUnity.RuntimeManager.CreateInstance(_settings.EventReference);
+                else
+                    Instance = FMODUnity.RuntimeManager.CreateInstance(_settings.EventPath);
+
                 if (Instance.isValid())
                 {
                     Instance.start();
@@ -179,8 +185,8 @@ namespace TheyWillDescend.Presentation.Audio
         {
             IsVisible = visible;
 
-            // Пустая зона (нет построек) — мёртвое состояние, звук не существует.
-            if (visible && !IsActive && !IsEmpty())
+            // Зона звучит ТОЛЬКО если: (а) в поле зрения, (б) не активна, (в) есть постройки.
+            if (visible && !IsActive && !IsEmpty() && ActivityLevel > 0.01f)
             {
                 CreateInstance();
                 Update3DAttributes();
@@ -188,11 +194,40 @@ namespace TheyWillDescend.Presentation.Audio
                 if (_settings.LogZoneActivity)
                     Debug.Log($"[AudioZone] ACTIVATED: sector {Sector}, radial {Radial}, pos {WorldPosition}");
             }
-            else if ((!visible || IsEmpty()) && IsActive)
+            else if ((!visible || IsEmpty() || ActivityLevel <= 0.01f) && IsActive)
             {
                 ReleaseInstance();
                 if (_settings.LogZoneActivity)
-                    Debug.Log($"[AudioZone] DEACTIVATED: sector {Sector}, radial {Radial}{(IsEmpty() ? " (no buildings)" : "")}");
+                    Debug.Log($"[AudioZone] DEACTIVATED: sector {Sector}, radial {Radial}{(IsEmpty() || ActivityLevel <= 0.01f ? " (no buildings)" : "")}");
+            }
+        }
+
+        /// <summary>
+        /// Дистанционная смерть зоны (audio LOD-куллинг): при dist >= deathDistance
+        /// инстанс полностью освобождается — звук не существует, систему не грузит.
+        /// Возрождение при dist < deathDistance - hysteresis (если зона видима
+        /// и не пуста). Вызывается каждый тик видимости.
+        /// </summary>
+        public void UpdateDistanceDeath(Vector3 cameraPosition, float deathDistance, float hysteresis)
+        {
+            var dist = Vector3.Distance(cameraPosition, WorldPosition);
+
+            if (IsActive && dist >= deathDistance)
+            {
+                ReleaseInstance();
+                if (_settings.LogZoneActivity)
+                    Debug.Log($"[AudioZone] KILLED by distance ({dist:F0}m): sector {Sector}, radial {Radial}");
+                return;
+            }
+
+            // Возрождение с гистерезисом: зона видима, не пуста, но инстанса нет.
+            if (!IsActive && IsVisible && !IsEmpty() && dist < deathDistance - Mathf.Max(0f, hysteresis))
+            {
+                CreateInstance();
+                Update3DAttributes();
+                UpdateRTPC();
+                if (_settings.LogZoneActivity)
+                    Debug.Log($"[AudioZone] REVIVED by distance ({dist:F0}m): sector {Sector}, radial {Radial}");
             }
         }
 
