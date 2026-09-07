@@ -49,6 +49,17 @@ public class RTSCameraController : MonoBehaviour
     /// <summary>Радиус одного шага зума, вычисляется из диапазона и числа шагов.</summary>
     float StepSize => (maxRadius - minRadius) / Mathf.Max(1, zoomStepCount - 1);
 
+    // === Публичный доступ для аудио-системы (GlobalAmbienceManager) ===
+
+    /// <summary>Центр карты (кратера) — точка отсчёта дистанции для звука.</summary>
+    public Vector3 MapCenter => mapCenter;
+
+    /// <summary>Максимальный радиус перемещения камеры от центра карты. Самая дальняя точка = 1 для Distance RTPC.</summary>
+    public float MaxMapRadius => maxMapRadius;
+
+    /// <summary>Позиция рига камеры (цели орбиты). Зум не двигает риг — дистанция рига от центра не зависит от зума.</summary>
+    public Vector3 TargetPosition => cameraTarget != null ? cameraTarget.position : transform.position;
+
     private void OnValidate()
     {
         if (camera == null) camera = GetComponent<CinemachineCamera>();

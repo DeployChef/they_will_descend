@@ -112,6 +112,15 @@ namespace TheyWillDescend.Presentation.Audio
             _eventBanks.Clear();
             _eventBanks.AddRange(names);
 
+            if (names.Length == 0)
+            {
+                GameLog.Warning($"FmodBankLoader: NO banks found for event {eventReference}.");
+            }
+            else
+            {
+                GameLog.Info($"FmodBankLoader: found banks for event {eventReference}: {string.Join(", ", names)}.");
+            }
+
             for (var i = 0; i < names.Length; i++)
                 LoadBank(names[i]);
         }

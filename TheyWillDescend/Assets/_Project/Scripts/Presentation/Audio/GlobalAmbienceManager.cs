@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using FMOD.Studio;
 using FMODUnity;
 using TheyWillDescend.Infrastructure.Logging;
@@ -10,45 +9,59 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// Глобальные ивенты атмосферы (ветер и т.п.). Один инстанс на ивент,
-    /// не режется на зоны, не зависит от поля зрения камеры.
-    /// Distance-принцип: дистанция камеры до опорной точки ивента двигает
-    /// Distance-RTPC; при максимальной дистанции инстанс УМИРАЕТ (release) —
-    /// не существует и не нагружает систему. При приближении возрождается.
+    /// Глобальные ивенты атмосферы (ветер и т.п.). Один инстанс на ивент.
+    /// Жёстко закодированные пути — без EventReference, без Inspector.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GlobalAmbienceManager : MonoBehaviour
     {
-        [System.Serializable]
-        public sealed class GlobalEvent
+        // === Хардкод путей ивентов и банков ===
+        private static readonly string[] EternalEventPaths =
         {
-            [Tooltip("Ивент. Перетаскивается из FMOD Studio (FMOD → Event Browser).")]
-            public EventReference eventReference;
+            "event:/Ambience_Wind_Generation"
+        };
 
-            [Tooltip("Имя Distance-параметра в ивенте (audio LOD), 0–100. Пусто = 'Distance'.")]
-            public string distanceRtpc = "Distance";
+        // Имя банка (без .bank). FMOD-конвенция не универсальна:
+        // Ambience_Wind_Generation → Ambience_Wind_Generator (с 'r')
+        // Ambience_Town → Ambience_Town (без 'r')
+        private static readonly string[] EternalBankNames =
+        {
+            "Ambience_Wind_Generator"
+        };
 
-            [Tooltip("Дистанция смерти (м): дальше — инстанс release. 0 = смерть отключена (ивент звучит всегда). Для ветра ставь 0 — он должен звучать и при максимальном отдалении.")]
-            public float deathDistance = 0f;
+        private static readonly string[] EternalRtpcNames =
+        {
+            "Distance"
+        };
 
-            [Tooltip("Диапазон нормализации Distance-RTPC (м): dist/range × 100.")]
-            public float rtpcRange = 120f;
+        private static readonly float[] EternalDeathDistances =
+        {
+            0f // 0 = звучит всегда
+        };
 
-            [Tooltip("Гистерезис (м): возрождение ближе чем deathDistance - hysteresis, чтобы инстанс не дёргался на границе.")]
-            public float hysteresis = 5f;
+        private static readonly float[] EternalRtpcRanges =
+        {
+            100f // дистанция в метрах: 0 = центр города, 100 = параметр FMOD = 1
+        };
 
-            [Tooltip("Опорная точка ивента в мире. Если Use City Center — берётся центр города из DOTS.")]
-            public Vector3 anchorPoint = Vector3.zero;
+        private static readonly float[] EternalHysteresis =
+        {
+            5f
+        };
 
-            [Tooltip("Брать центр города из CityGrid (DOTS) вместо Anchor Point.")]
-            public bool useCityCenter = true;
-
-            [HideInInspector] public EventInstance instance;
-            [HideInInspector] public bool isDead = true;
+        private sealed class ManagedEvent
+        {
+            public string eventPath;
+            public string distanceRtpc;
+            public FMOD.Studio.PARAMETER_ID distanceRtpcId;
+            public float deathDistance;
+            public float rtpcRange;
+            public float hysteresis;
+            public EventInstance instance;
+            public bool isDead;
         }
 
-        [Header("Global Events")]
-        [SerializeField] List<GlobalEvent> events = new();
+        private ManagedEvent[] _events;
 
         [Header("Camera")]
         [SerializeField] Camera mainCamera;
@@ -56,29 +69,209 @@ namespace TheyWillDescend.Presentation.Audio
         [Header("Debug")]
         [SerializeField] bool logActivity = true;
 
+        [Header("Debug: Mouse Wheel Distance")]
+        [Tooltip("DEBUG: ручное управление Distance колесом мыши в обход камеры. По умолчанию ВЫКЛ — параметр привязан к позиции камеры.")]
+        [SerializeField] bool mouseWheelControlsDistance = false;
+
+        [Header("Distance Mapping")]
+        [Tooltip("Дистанция камеры до центра города при МАКСИМАЛЬНОМ приближении → параметр = 0.")]
+        [SerializeField] float minCameraDistance = 8f;
+        [Tooltip("Дистанция камеры до центра города при МАКСИМАЛЬНОМ отдалении → параметр = 1.")]
+        [SerializeField] float maxCameraDistance = 65f;
+        [Tooltip("Скорость сглаживания значения Distance (экспоненциальная интерполяция). Больше = быстрее реагирует, меньше = плавнее.")]
+        [SerializeField] float smoothSpeed = 4f;
+
+        /// <summary>Шаг изменения Distance за один тик скролла. Жёстко 0.1: 10 тиков от 0 до 1.</summary>
+        const float WheelStep = 0.1f;
+
+        /// <summary>Целевое значение Distance 0..1 (дискретные шаги от колеса / непрерывное от камеры).</summary>
+        float _wheelTarget;
+
+        /// <summary>Сглаженное значение Distance 0..1 — реально отправляется в FMOD.</summary>
+        float _smoothedDistance;
+
         /// <summary>Центр города (из DOTS), fallback (0,0,0).</summary>
         float3 _cityCenter;
 
         bool _paused;
 
-        public List<GlobalEvent> Events => events;
-
         void Start()
         {
-            // Банки каждого ивента находятся автоматически (принцип зон).
-            for (var i = 0; i < events.Count; i++)
+            // Persistent — не убивать при смене сцен/UI.
+            if (gameObject != null)
+                DontDestroyOnLoad(gameObject);
+
+            var count = EternalEventPaths.Length;
+            _events = new ManagedEvent[count];
+
+            for (var i = 0; i < count; i++)
             {
-                var e = events[i];
-                if (e == null || e.eventReference.IsNull)
+                _events[i] = new ManagedEvent
+                {
+                    eventPath = EternalEventPaths[i],
+                    distanceRtpc = i < EternalRtpcNames.Length ? EternalRtpcNames[i] : "Distance",
+                    deathDistance = i < EternalDeathDistances.Length ? EternalDeathDistances[i] : 0f,
+                    rtpcRange = i < EternalRtpcRanges.Length ? EternalRtpcRanges[i] : 120f,
+                    hysteresis = i < EternalHysteresis.Length ? EternalHysteresis[i] : 5f,
+                    isDead = true
+                };
+
+                if (logActivity)
+                    GameLog.Info($"GlobalAmbienceManager: registered event[{i}] path={_events[i].eventPath} deathDist={_events[i].deathDistance}.");
+            }
+
+            // Загружаем нужные банки перед созданием ивентов.
+            // RuntimeManager может не успеть загрузить банки до Start().
+            // Грузим явно по хардкод-именам.
+            for (var i = 0; i < _events.Length; i++)
+            {
+                var bankName = i < EternalBankNames.Length ? EternalBankNames[i] : null;
+                if (!string.IsNullOrEmpty(bankName))
+                    FmodBankLoader.LoadBank(bankName);
+            }
+
+            // Резолвим ID глобального параметра. Сравниваем имена с обрезкой
+            // пробелов: в FMOD-проекте параметр может называться 'Distance '
+            // (с хвостовым пробелом), и точный матч по имени не срабатывает.
+            for (var i = 0; i < _events.Length; i++)
+            {
+                var e = _events[i];
+                if (string.IsNullOrEmpty(e.distanceRtpc))
                     continue;
 
-                FmodBankLoader.LoadBanksForEvent(e.eventReference);
+                var wanted = e.distanceRtpc.Trim();
+                var listResult = RuntimeManager.StudioSystem.getParameterDescriptionList(out var descriptions);
+                if (listResult != FMOD.RESULT.OK || descriptions == null)
+                {
+                    GameLog.Warning($"GlobalAmbienceManager: getParameterDescriptionList FAILED: {listResult}.");
+                    continue;
+                }
+
+                var found = false;
+                for (var p = 0; p < descriptions.Length; p++)
+                {
+                    var actualName = ((string)descriptions[p].name).Trim();
+                    if (!string.Equals(actualName, wanted, System.StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    e.distanceRtpcId = descriptions[p].id;
+                    found = true;
+                    GameLog.Info($"GlobalAmbienceManager: resolved global param '{actualName}' (wanted '{e.distanceRtpc}') id=({descriptions[p].id.data1}, {descriptions[p].id.data2}) min={descriptions[p].minimum} max={descriptions[p].maximum}.");
+                    break;
+                }
+
+                if (!found)
+                    GameLog.Warning($"GlobalAmbienceManager: global param '{e.distanceRtpc}' NOT FOUND in banks (дамп: см. DumpGlobalParameters).");
+            }
+
+            // Ждём один кадр, чтобы банки точно прогрузились.
+            StartCoroutine(DelayedCreateEvents());
+        }
+
+        System.Collections.IEnumerator DelayedCreateEvents()
+        {
+            yield return null; // один кадр ожидания
+
+            var cam = mainCamera ?? Camera.main;
+            if (cam != null)
+            {
+                var camPos = cam.transform.position;
+                for (var i = 0; i < _events.Length; i++)
+                {
+                    var e = _events[i];
+
+                    // Только вечные ивенты (deathDistance=0)
+                    if (e.deathDistance == 0f)
+                    {
+                        if (logActivity)
+                            GameLog.Info($"GlobalAmbienceManager: creating eternal event[{i}]: {e.eventPath}.");
+                        CreateEvent(e, camPos);
+                    }
+                }
+            }
+        }
+
+        void LateUpdate()
+        {
+            // 2D-ивенты: обновление Distance RTPC.
+            // AttachInstanceToGameObject не нужен — 2D-ивент звучит у слушателя автоматически.
+            if (mainCamera == null)
+                mainCamera = Camera.main;
+            if (mainCamera == null)
+                return;
+
+            for (var i = 0; i < _events.Length; i++)
+            {
+                var e = _events[i];
+                if (e == null || e.isDead || !e.instance.isValid())
+                    continue;
+
+                // Distance RTPC: либо колесо мыши (debug), либо реальная позиция
+                // камеры. Параметр в FMOD: 0..1.
+                // Направление: максимальное ПРИБЛИЖЕНИЕ камеры к центру = 0 (тише),
+                // максимальное ОТДАЛЕНИЕ = 1 (громче). Значение сглаживается
+                // экспоненциально — без ступенек.
+                if (e.deathDistance == 0f && !string.IsNullOrEmpty(e.distanceRtpc))
+                {
+                    float target;
+
+                    if (mouseWheelControlsDistance)
+                    {
+                        // Debug-режим: цель задаётся колесом мыши (шаг 0.1).
+                        UpdateWheelDistance();
+                        target = _wheelTarget;
+                        if (logActivity && Time.frameCount % 60 == 0)
+                            GameLog.Info($"GlobalAmbienceManager: RTPC {e.distanceRtpc} target={target:F1} (mouse wheel, global).");
+                    }
+                    else
+                    {
+                        target = ComputeCameraDistanceNormalized(e);
+                        if (logActivity && Time.frameCount % 60 == 0)
+                            GameLog.Info($"GlobalAmbienceManager: RTPC {e.distanceRtpc} target={target:F3} (camera vs city center, global).");
+                    }
+
+                    // Направление прямое: приближение к центру = 0, отдаление = 1.
+                    // (Ранее был флаг invertDistance — убран, направление зафиксировано.)
+
+                    // Плавная интерполяция к цели (экспоненциальное сглаживание,
+                    // независимо от FPS). Без ступенек между шагами колеса.
+                    var t = 1f - Mathf.Exp(-smoothSpeed * Time.deltaTime);
+                    _smoothedDistance = Mathf.Lerp(_smoothedDistance, target, t);
+                    if (Mathf.Abs(_smoothedDistance - target) < 0.0005f)
+                        _smoothedDistance = target;
+
+                    var normalized = _smoothedDistance;
+
+                    // Ставим глобальный параметр ПО ID (надёжнее имени) с
+                    // ignoreseekspeed=true — обходим Seek Speed.
+                    var result = RuntimeManager.StudioSystem.setParameterByID(e.distanceRtpcId, normalized, true);
+                    if (result != FMOD.RESULT.OK)
+                    {
+                        if (logActivity && Time.frameCount % 60 == 0)
+                            GameLog.Warning($"GlobalAmbienceManager: setParameterByID('{e.distanceRtpc}') FAILED: {result}.");
+                    }
+
+                    // Читаем обратно по ID — доказательство, что FMOD получил значение.
+                    if (logActivity && Time.frameCount % 60 == 0)
+                    {
+                        var readResult = RuntimeManager.StudioSystem.getParameterByID(e.distanceRtpcId, out var readBack);
+                        GameLog.Info($"GlobalAmbienceManager: FMOD readback '{e.distanceRtpc}'={readBack:F3} (sent {normalized:F3}, read result={readResult}).");
+
+                        // Если значение не применилось — дампим ВСЕ глобальные
+                        // параметры, чтобы увидеть, что реально есть в банках.
+                        if (Mathf.Abs(readBack - normalized) > 0.001f && !_dumpedParams)
+                        {
+                            _dumpedParams = true;
+                            DumpGlobalParameters();
+                        }
+                    }
+                }
             }
         }
 
         void Update()
         {
-            if (events == null || events.Count == 0)
+            if (_events == null || _events.Length == 0)
                 return;
 
             // Камера может появиться позже Bootstrap — ищем лениво.
@@ -88,25 +281,26 @@ namespace TheyWillDescend.Presentation.Audio
                 return;
 
             TryUpdateCityCenter();
-
             var camPos = mainCamera.transform.position;
 
-            for (var i = 0; i < events.Count; i++)
+            for (var i = 0; i < _events.Length; i++)
             {
-                var e = events[i];
-                if (e == null || e.eventReference.IsNull)
+                var e = _events[i];
+                if (e == null)
                     continue;
 
-                var anchor = e.useCityCenter ? (Vector3)_cityCenter : e.anchorPoint;
+                var anchor = Vector3.zero; // eternal events use world center
                 var dist = Vector3.Distance(camPos, anchor);
                 var deathEnabled = e.deathDistance > 0f;
 
                 if (e.isDead)
                 {
-                    // Возрождение: с гистерезисом, чтобы не дёргалось на границе.
-                    // Смерть отключена (deathDistance = 0) — создаём сразу.
                     if (!deathEnabled || dist < e.deathDistance - Mathf.Max(0f, e.hysteresis))
+                    {
+                        if (logActivity)
+                            GameLog.Info($"GlobalAmbienceManager: try create [{i}] (dist={dist:F1}, deathDist={e.deathDistance}).");
                         CreateEvent(e, camPos);
+                    }
                 }
                 else
                 {
@@ -116,54 +310,83 @@ namespace TheyWillDescend.Presentation.Audio
                         continue;
                     }
 
-                    // Audio LOD: 3D-позиция следует за камерой (звук «вокруг»),
-                    // затухание управляется Distance-RTPC.
-                    Set3DAtCamera(e, camPos);
-
-                    var rtpc = string.IsNullOrEmpty(e.distanceRtpc) ? "Distance" : e.distanceRtpc;
-                    var range = e.rtpcRange > 0f ? e.rtpcRange : e.deathDistance;
-                    if (!string.IsNullOrEmpty(rtpc) && range > 0f)
+                    // Для eternal events (deathDistance=0) RTPC обновляется в LateUpdate.
+                    if (e.deathDistance > 0f)
                     {
-                        var normalized = dist / range * 100f;
-                        e.instance.setParameterByName(rtpc, Mathf.Clamp(normalized, 0f, 100f));
+                        var rtpc = string.IsNullOrEmpty(e.distanceRtpc) ? "Distance" : e.distanceRtpc;
+                        var range = e.rtpcRange > 0f ? e.rtpcRange : e.deathDistance;
+                        if (!string.IsNullOrEmpty(rtpc) && range > 0f)
+                        {
+                            var normalized = dist / range * 100f;
+                            var clamped = Mathf.Clamp(normalized, 0f, 100f);
+                            e.instance.setParameterByName(rtpc, clamped);
+                            if (logActivity && Time.frameCount % 60 == 0)
+                                GameLog.Info($"GlobalAmbienceManager: RTPC [{i}] {rtpc}={clamped:F1} (dist={dist:F1}).");
+                        }
+                    }
+
+                    if (logActivity && Time.frameCount % 120 == 0)
+                    {
+                        FMOD.Studio.PLAYBACK_STATE playState = FMOD.Studio.PLAYBACK_STATE.STOPPED;
+                        e.instance.getPlaybackState(out playState);
+
+                        // Читаем параметр обратно: глобальный и с инстанса.
+                        var globalVal = -1f;
+                        var instVal = -1f;
+                        RuntimeManager.StudioSystem.getParameterByName(e.distanceRtpc, out globalVal);
+                        e.instance.getParameterByName(e.distanceRtpc, out instVal);
+
+                        GameLog.Info($"GlobalAmbienceManager: instance [{i}] state={playState}, Distance global={globalVal:F3}, instance={instVal:F3}.");
                     }
                 }
             }
         }
 
-        /// <summary>
-        /// Создаёт и запускает инстанс глобального ивента.
-        /// </summary>
-        void CreateEvent(GlobalEvent e, Vector3 camPos)
+        void CreateEvent(ManagedEvent e, Vector3 camPos)
         {
             try
             {
-                e.instance = RuntimeManager.CreateInstance(e.eventReference);
+                if (e.instance.isValid())
+                {
+                    e.instance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+                    e.instance.release();
+                }
+
+                e.instance = RuntimeManager.CreateInstance(e.eventPath);
                 if (!e.instance.isValid())
                 {
                     if (logActivity)
-                        GameLog.Warning("GlobalAmbienceManager: event description not found for a global event.");
+                        GameLog.Warning($"GlobalAmbienceManager: instance not valid for {e.eventPath}.");
                     return;
                 }
 
-                Set3DAtCamera(e, camPos);
-                e.instance.start();
+                var preState = FMOD.Studio.PLAYBACK_STATE.STOPPED;
+                e.instance.getPlaybackState(out preState);
+                if (logActivity)
+                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] pre-start state={preState}.");
+
+                var startResult = e.instance.start();
+                if (logActivity)
+                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] start()={startResult}.");
+
+                var postState = FMOD.Studio.PLAYBACK_STATE.STOPPED;
+                e.instance.getPlaybackState(out postState);
+                if (logActivity)
+                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] after start state={postState}.");
+
                 e.isDead = false;
 
                 if (logActivity)
-                    GameLog.Info("GlobalAmbienceManager: global event ACTIVATED.");
+                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] ACTIVATED.");
             }
             catch (System.Exception ex)
             {
                 if (logActivity)
-                    GameLog.Warning($"GlobalAmbienceManager: failed to create instance: {ex.Message}");
+                    GameLog.Warning($"GlobalAmbienceManager: failed to create {e.eventPath}: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Полностью освобождает инстанс — звук перестаёт существовать.
-        /// </summary>
-        void KillEvent(GlobalEvent e)
+        void KillEvent(ManagedEvent e)
         {
             if (!e.instance.isValid())
             {
@@ -177,30 +400,106 @@ namespace TheyWillDescend.Presentation.Audio
             e.isDead = true;
 
             if (logActivity)
-                GameLog.Info("GlobalAmbienceManager: global event KILLED (max distance) — instance released.");
+                GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] KILLED.");
         }
 
         /// <summary>
-        /// 3D-атрибуты инстанса: позиция = камера (звук звучит «вокруг»).
+        /// Debug: обновляет _wheelTarget от колеса мыши (дискретные шаги 0.1).
+        /// Скролл вверх = отдаление = цель растёт. Вниз = приближение = падает.
+        /// Реальное значение сглаживается в LateUpdate (_smoothedDistance).
+        /// ВАЖНО (доки Input System, Background Behavior): в редакторе мышь
+        /// отключается при потере фокуса Game View — скролл читается только
+        /// когда фокус на Game View.
         /// </summary>
-        static void Set3DAtCamera(GlobalEvent e, Vector3 camPos)
+        /// <summary>
+        /// Нормализованная дистанция камеры до центра карты: 0..1.
+        /// 0 = камера максимально ПРИБЛИЖЕНА к центру, 1 = максимально ОТДАЛЕНА.
+        /// Считается по РЕАЛЬНОЙ позиции камеры (Camera.main): зум тоже влияет —
+        /// колесо подлетает камерой к центру → параметр к 0, отъезд → к 1.
+        /// Камера не двигается → параметр не двигается.
+        /// Диапазон: ближе MinRadius (зум-ин) камера не подлетит,
+        /// дальше MaxMapRadius + MaxRadius (граница карты + максимальный отъезд) не отъедет.
+        /// </summary>
+        float ComputeCameraDistanceNormalized(ManagedEvent e)
         {
-            if (!e.instance.isValid())
+            if (_cameraController == null)
+                _cameraController = FindFirstObjectByType<RTSCameraController>();
+
+            var camPos = mainCamera.transform.position;
+
+            if (_cameraController != null)
+            {
+                var dist = Vector3.Distance(camPos, _cameraController.MapCenter);
+                var minDist = _cameraController.MinRadius;
+                var maxDist = _cameraController.MaxMapRadius + _cameraController.MaxRadius;
+                return Mathf.Clamp01((dist - minDist) / Mathf.Max(0.01f, maxDist - minDist));
+            }
+
+            // Fallback: центр CityGrid, диапазон rtpcRange.
+            var cityCenter = new Vector3(_cityCenter.x, _cityCenter.y, _cityCenter.z);
+            var fallbackDist = Vector3.Distance(camPos, cityCenter);
+            return Mathf.Clamp01(fallbackDist / Mathf.Max(1f, e.rtpcRange));
+        }
+
+        void UpdateWheelDistance()
+        {
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse == null)
+            {
+                if (!_warnedNoMouse && logActivity)
+                {
+                    _warnedNoMouse = true;
+                    GameLog.Warning("GlobalAmbienceManager: Mouse.current is NULL — Input System не видит мышь. Проверь Active Input Handling.");
+                }
+                return;
+            }
+
+            var scroll = mouse.scroll.ReadValue().y;
+            if (Mathf.Abs(scroll) < 0.001f)
                 return;
 
-            var attributes = new FMOD.ATTRIBUTES_3D
-            {
-                position = new FMOD.VECTOR { x = camPos.x, y = camPos.y, z = camPos.z },
-                velocity = new FMOD.VECTOR { x = 0f, y = 0f, z = 0f },
-                forward = new FMOD.VECTOR { x = 0f, y = 0f, z = 1f },
-                up = new FMOD.VECTOR { x = 0f, y = 1f, z = 0f }
-            };
-            e.instance.set3DAttributes(attributes);
+            // Направление: скролл вверх (scroll > 0) → камера отдаляется → цель растёт.
+            var direction = Mathf.Sign(scroll);
+            _wheelTarget = Mathf.Clamp01(_wheelTarget + direction * WheelStep);
+
+            if (logActivity)
+                GameLog.Info($"GlobalAmbienceManager: wheel scroll={scroll:F1}, target={_wheelTarget:F1}.");
         }
 
+        bool _warnedNoMouse;
+        bool _dumpedParams;
+
         /// <summary>
-        /// Центр города из DOTS (как в AudioZoneManager), fallback (0,0,0).
+        /// Диагностика: дамп всех глобальных параметров из FMOD (имя, диапазон,
+        /// тип, текущее значение). Показывает, что реально загружено из банков.
         /// </summary>
+        void DumpGlobalParameters()
+        {
+            var countResult = RuntimeManager.StudioSystem.getParameterDescriptionCount(out var count);
+            if (countResult != FMOD.RESULT.OK)
+            {
+                GameLog.Warning($"GlobalAmbienceManager: getParameterDescriptionCount FAILED: {countResult}.");
+                return;
+            }
+
+            GameLog.Info($"GlobalAmbienceManager: FMOD has {count} global parameter(s):");
+
+            var listResult = RuntimeManager.StudioSystem.getParameterDescriptionList(out var descriptions);
+            if (listResult != FMOD.RESULT.OK || descriptions == null)
+            {
+                GameLog.Warning($"GlobalAmbienceManager: getParameterDescriptionList FAILED: {listResult}.");
+                return;
+            }
+
+            for (var i = 0; i < descriptions.Length; i++)
+            {
+                var d = descriptions[i];
+                var name = (string)d.name; // StringWrapper → строка
+                RuntimeManager.StudioSystem.getParameterByID(d.id, out var current);
+                GameLog.Info($"GlobalAmbienceManager:   [{i}] '{name}' min={d.minimum} max={d.maximum} type={d.type} current={current:F3}");
+            }
+        }
+
         void TryUpdateCityCenter()
         {
             if (SimWorld.TryGet(out var em, out var bag) && em.HasComponent<CityGrid>(bag))
@@ -211,15 +510,12 @@ namespace TheyWillDescend.Presentation.Audio
             }
         }
 
-        /// <summary>
-        /// Пауза всех живых глобальных ивентов (подключить к паузе игры).
-        /// </summary>
         public void SetPaused(bool paused)
         {
             _paused = paused;
-            for (var i = 0; i < events.Count; i++)
+            for (var i = 0; i < _events.Length; i++)
             {
-                var e = events[i];
+                var e = _events[i];
                 if (e == null || e.isDead || !e.instance.isValid())
                     continue;
                 e.instance.setPaused(paused);
@@ -227,15 +523,5 @@ namespace TheyWillDescend.Presentation.Audio
         }
 
         public bool IsPaused => _paused;
-
-        void OnDisable()
-        {
-            // Компонент выключается — все инстансы умирают, ничего не звучит.
-            for (var i = 0; i < events.Count; i++)
-            {
-                if (events[i] != null)
-                    KillEvent(events[i]);
-            }
-        }
     }
 }
