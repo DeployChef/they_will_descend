@@ -22,6 +22,7 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] float lineWidth = 0.05f;
         [SerializeField] Color underlayColor = new(0.15f, 0.55f, 1f, 1f);
         [SerializeField] bool drawSceneGizmos = true;
+        [SerializeField] Material gridMaskMaterial;
 
         MeshFilter _meshFilter;
         MeshRenderer _meshRenderer;
@@ -47,6 +48,19 @@ namespace TheyWillDescend.Presentation.City
             ApplyPlayMeshVisibility();
             if (active && Application.isPlaying)
                 RebuildUnderlayMesh(force: false);
+        }
+
+        public void SetMaskBounds(Vector3 center, float widthMeters, float depthMeters, float marginCells)
+        {
+            if (_runtimeMaterial == null)
+                return;
+
+            if (!_runtimeMaterial.HasProperty("_GhostCenter"))
+                return;
+
+            _runtimeMaterial.SetVector("_GhostCenter", new Vector4(center.x, 0, center.z, 0));
+            _runtimeMaterial.SetVector("_GhostSize", new Vector4(widthMeters * 0.5f, 0, depthMeters * 0.5f, 0));
+            _runtimeMaterial.SetVector("_MarginCells", new Vector4(marginCells, 0, marginCells, 0));
         }
 
         void OnEnable()
@@ -179,7 +193,17 @@ namespace TheyWillDescend.Presentation.City
             if (_meshRenderer == null)
                 _meshRenderer = gameObject.AddComponent<MeshRenderer>();
             if (_runtimeMaterial == null)
-                _runtimeMaterial = CreateLineMaterial(underlayColor);
+            {
+                if (gridMaskMaterial != null)
+                {
+                    _runtimeMaterial = new Material(gridMaskMaterial);
+                    _runtimeMaterial.name = "RadialUnderlay_Runtime";
+                }
+                else
+                {
+                    _runtimeMaterial = CreateLineMaterial(underlayColor);
+                }
+            }
 
             _meshRenderer.sharedMaterial = _runtimeMaterial;
             _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -319,7 +343,9 @@ namespace TheyWillDescend.Presentation.City
                 hideFlags = HideFlags.HideAndDontSave
             };
             ApplyColor(mat, color);
-            mat.renderQueue = (int)RenderQueue.Transparent + 50;
+          //  mat.renderQueue = (int)RenderQueue.Transparent + 50;
+            mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.SetFloat("_Mode", 3);
             return mat;
         }
 
