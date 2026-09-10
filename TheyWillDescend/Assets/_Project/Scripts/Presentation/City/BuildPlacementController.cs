@@ -417,7 +417,30 @@ namespace TheyWillDescend.Presentation.City
             if (_ghostZoneMaterial != null)
                 return;
             _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
-            _ghostZoneMaterial.renderQueue = (int)RenderQueue.Transparent - 1;
+            MakeSurfaceTransparent(_ghostZoneMaterial);
+        }
+
+        /// <summary>
+        /// URP Unlit is opaque by default: alpha in _BaseColor is ignored until the
+        /// blend state is switched to transparent manually (same as the material inspector does).
+        /// </summary>
+        static void MakeSurfaceTransparent(Material mat)
+        {
+            if (mat == null || !mat.HasProperty("_Surface"))
+                return;
+
+            mat.SetFloat("_Surface", 1f); // Transparent
+            mat.SetFloat("_Blend", 0f);   // Alpha
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_SrcBlendAlpha", 1f);
+            mat.SetFloat("_DstBlendAlpha", 0f);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_Cutoff", 0f);
+            mat.SetFloat("_QueueOffset", 0f);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.renderQueue = (int)RenderQueue.Transparent;
         }
 
         static void ApplyColor(Material mat, Color color)

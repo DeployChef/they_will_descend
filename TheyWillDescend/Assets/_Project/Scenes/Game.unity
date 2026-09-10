@@ -8385,7 +8385,7 @@ MonoBehaviour:
     InnerBandClusterCount: 66
   yOffset: 0.1
   lineWidth: 0.08
-  underlayColor: {r: 1, g: 1, b: 1, a: 0.05490196}
+  underlayColor: {r: 1, g: 1, b: 1, a: 0.12156863}
   drawSceneGizmos: 1
   gridMaskMaterial: {fileID: 2100000, guid: 4a37163a810240f45b3b5e0f994824e7, type: 2}
 --- !u!4 &1180480265
@@ -8428,7 +8428,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1224795909}
+  - {fileID: 1936666240}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -8990,54 +8990,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1224795909
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: RadialUnderlay_Runtime
-  m_Shader: {fileID: -6465566751694194690, guid: 766751e88ba066d4b984987aa0f5a35b, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _PreviewRadius: 20
-    - _QueueControl: 0
-    - _QueueOffset: 0
-    m_Colors:
-    - _GhostCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostPosition: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostSize: {r: 0, g: 0, b: 0, a: 0}
-    - _GridColor: {r: 0, g: 0.95637757, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1228914182
 GameObject:
   m_ObjectHideFlags: 0
@@ -12763,8 +12715,8 @@ MonoBehaviour:
   catalog: {fileID: 11400000, guid: 8ccaa307f2365bf4b9254e0d00573910, type: 2}
   overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
   ghostBuildingMaterial: {fileID: 2100000, guid: d517e1829cd2d5b4d805c394c1289615, type: 2}
-  zoneValidColor: {r: 0, g: 0.98021173, b: 1, a: 0.5058824}
-  zoneInvalidColor: {r: 0.95, g: 0.2, b: 0.15, a: 0.5}
+  zoneValidColor: {r: 0, g: 0.98021173, b: 1, a: 0.12156863}
+  zoneInvalidColor: {r: 0.95, g: 0.2, b: 0.15, a: 0.12156863}
   gridMaskMarginCells: 2
 --- !u!4 &1884302426
 Transform:
@@ -13303,6 +13255,62 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!21 &1936666240
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RadialUnderlay_Runtime
+  m_Shader: {fileID: -6465566751694194690, guid: 766751e88ba066d4b984987aa0f5a35b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CellSize: 1.35
+    - _MarginX: 0
+    - _MarginZ: 0
+    - _PreviewRadius: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Radial_Multiplier: 0
+    - _Tangential_Multiplier: 0
+    - _ghostalpha: 0.1
+    m_Colors:
+    - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostSize: {r: 0, g: 0, b: 0, a: 0}
+    - _GridColor: {r: 0, g: 0.95637757, b: 1, a: 1}
+    - _MarginCells: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1001 &1940356790
 PrefabInstance:
   m_ObjectHideFlags: 0

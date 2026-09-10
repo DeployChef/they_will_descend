@@ -38,14 +38,22 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _PreviewRadius: 20
+    - _CellSize: 1.35
+    - _MarginX: 0
+    - _MarginZ: 0
+    - _PreviewRadius: 0
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Radial_Multiplier: 0
+    - _Tangential_Multiplier: 0
+    - _ghostalpha: 0.1
     m_Colors:
+    - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
     - _GhostCenter: {r: 0, g: 0, b: 0, a: 0}
     - _GhostPosition: {r: 0, g: 0, b: 0, a: 0}
     - _GhostSize: {r: 0, g: 0, b: 0, a: 0}
     - _GridColor: {r: 0, g: 0.95637757, b: 1, a: 1}
+    - _MarginCells: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &6371757121773125456
