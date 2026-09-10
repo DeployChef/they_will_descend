@@ -24,8 +24,10 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
-        [SerializeField] Color zoneValidColor = new(0.15f, 0.75f, 1f, 0.45f);
-        [SerializeField] Color zoneInvalidColor = new(0.95f, 0.2f, 0.15f, 0.5f);
+        [SerializeField] Material ghostBuildingMaterial;
+        [SerializeField] Color zoneValidColor;
+        [SerializeField] Color zoneInvalidColor;
+        [SerializeField] float gridMaskMarginCells = 2f;
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
 
@@ -205,6 +207,7 @@ namespace TheyWillDescend.Presentation.City
             EnsureGhost();
             SetGhostVisible(true);
             SetGhostZoneColor(_canPlace ? zoneValidColor : zoneInvalidColor);
+            ApplyGhostBuildingColor();
 
             RadialSectorMeshBuilder.RebuildClusterZoneMesh(
                 _ghostZoneMesh, center, config, _clusters);
@@ -215,19 +218,37 @@ namespace TheyWillDescend.Presentation.City
             if (_ghostBuilding == null)
                 return;
 
+            var pos = Vector3.zero;
+            var rot = Quaternion.identity;
+
             if (_angularSnapped)
             {
                 RadialFootprintMath.FootprintMarkerPose(
                     center, config, _anchorCluster, _anchorRadial, _footprint,
-                    out var pos, out var rot);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
+                    out var outPos, out var outRot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)outPos, (Quaternion)outRot);
+                pos = (Vector3)outPos;
+                rot = (Quaternion)outRot;
             }
             else
             {
                 RadialFootprintMath.FootprintMarkerPoseFromTurns(
                     center, config, _anchorTurns0, _anchorRadial, _footprint,
-                    out var pos, out var rot);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
+                    out var outPos, out var outRot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)outPos, (Quaternion)outRot);
+                pos = (Vector3)outPos;
+                rot = (Quaternion)outRot;
+            }
+
+            AdjustBuildingYOffset(_ghostBuilding, center.y + 0.02f);
+
+            if (gridGuide != null)
+            {
+                gridGuide.SetMaskBounds(
+                    pos,
+                    _footprint.WidthClusters * config.RadialStep,
+                    _footprint.DepthRadialRings * config.RadialStep,
+                    gridMaskMarginCells);
             }
         }
 
@@ -288,12 +309,56 @@ namespace TheyWillDescend.Presentation.City
             instance.name = "GhostHouse";
             StripColliders(instance);
             HideWidget(instance);
+            ReplaceMaterialsToGhostShader(instance, ghostBuildingMaterial);
             _ghostBuilding = instance.transform;
+        }
+
+        static void ReplaceMaterialsToGhostShader(GameObject ghost, Material ghostMaterialTemplate)
+        {
+            if (ghostMaterialTemplate == null)
+                return;
+
+            var renderers = ghost.GetComponentsInChildren<MeshRenderer>();
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (!renderer.enabled)
+                    continue;
+
+                var origMat = renderer.sharedMaterial;
+                if (origMat == null)
+                    continue;
+
+                var ghostMat = new Material(ghostMaterialTemplate);
+                ghostMat.name = origMat.name + "_Ghost";
+                ghostMat.SetTexture("_MainTex", origMat.mainTexture);
+                renderer.sharedMaterial = ghostMat;
+            }
         }
 
         static void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot)
         {
             t.SetPositionAndRotation(pos, rot);
+        }
+
+        static void AdjustBuildingYOffset(Transform building, float groundY)
+        {
+            var renderers = building.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+                return;
+
+            var min = float.MaxValue;
+            var max = float.MinValue;
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var b = renderers[i].bounds;
+                if (b.min.y < min) min = b.min.y;
+                if (b.max.y > max) max = b.max.y;
+            }
+
+            var offset = groundY - min;
+            if (Mathf.Abs(offset) > 0.001f)
+                building.Translate(0f, offset, 0f, Space.World);
         }
 
         static void HideWidget(GameObject go)
@@ -322,6 +387,26 @@ namespace TheyWillDescend.Presentation.City
             ApplyColor(_ghostZoneMaterial, color);
         }
 
+        void ApplyGhostBuildingColor()
+        {
+            if (_ghostBuilding == null)
+                return;
+
+            var renderers = _ghostBuilding.GetComponentsInChildren<MeshRenderer>();
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (!renderer.enabled)
+                    continue;
+
+                var mat = renderer.sharedMaterial;
+                if (mat == null || !mat.HasProperty("_CanBuild"))
+                    continue;
+
+                mat.SetFloat("_CanBuild", _canPlace ? 1f : 0f);
+            }
+        }
+
         GameObject ResolveGhostPrefab(string typeId)
         {
             return catalog != null ? catalog.FindPrefab(typeId) : null;
@@ -332,7 +417,30 @@ namespace TheyWillDescend.Presentation.City
             if (_ghostZoneMaterial != null)
                 return;
             _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
-            _ghostZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
+            MakeSurfaceTransparent(_ghostZoneMaterial);
+        }
+
+        /// <summary>
+        /// URP Unlit is opaque by default: alpha in _BaseColor is ignored until the
+        /// blend state is switched to transparent manually (same as the material inspector does).
+        /// </summary>
+        static void MakeSurfaceTransparent(Material mat)
+        {
+            if (mat == null || !mat.HasProperty("_Surface"))
+                return;
+
+            mat.SetFloat("_Surface", 1f); // Transparent
+            mat.SetFloat("_Blend", 0f);   // Alpha
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_SrcBlendAlpha", 1f);
+            mat.SetFloat("_DstBlendAlpha", 0f);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_Cutoff", 0f);
+            mat.SetFloat("_QueueOffset", 0f);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.renderQueue = (int)RenderQueue.Transparent;
         }
 
         static void ApplyColor(Material mat, Color color)
