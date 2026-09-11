@@ -43,26 +43,18 @@ Material:
     m_Ints: []
     m_Floats:
     - _CanBuild: 1
-    - _CellSize: 1.35
-    - _GhostEmission: 1
+    - _GhostEmission: 10
     - _GhostStrength: 1
-    - _MarginX: 0
-    - _MarginZ: 0
-    - _PreviewRadius: 0
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Radial_Multiplier: 0
-    - _Tangential_Multiplier: 0
-    - _ghostalpha: 0.1
+    - _ghostalpha: 1
     m_Colors:
+    - _BandPolar: {r: 2.3, g: 10.4, b: 0, a: 0.86}
     - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostPosition: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostSize: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostFeather: {r: 0.47, g: 0.19, b: 0.2, a: 0.08}
     - _GhostTintGreen: {r: 0, g: 0.95686275, b: 1, a: 1}
     - _GhostTintRed: {r: 1, g: 0, b: 0.04892743, a: 1}
-    - _GridColor: {r: 0, g: 0.95637757, b: 1, a: 1}
-    - _MarginCells: {r: 0, g: 0, b: 0, a: 0}
+    - _HolePolar: {r: 5, g: 7.7, b: 0, a: 0.29}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &6371757121773125456

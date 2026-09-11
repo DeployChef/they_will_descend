@@ -25,9 +25,16 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] Material ghostBuildingMaterial;
+        [Tooltip("Optional. Assigned in the inspector and copied at runtime; zone color is still driven by the two colors below. Falls back to a runtime URP Unlit material when empty.")]
+        [SerializeField] Material ghostZoneMaterial;
         [SerializeField] Color zoneValidColor;
         [SerializeField] Color zoneInvalidColor;
         [SerializeField] float gridMaskMarginCells = 2f;
+        [Tooltip("Clusters of open grid revealed to each side of the footprint (Frostpunk-like band).")]
+        [SerializeField] int gridMaskSideCells = 6;
+
+        const float MaskFeatherRatio = 0.35f;
+        const float HoleFeatherRatio = 0.15f;
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
 
@@ -48,6 +55,7 @@ namespace TheyWillDescend.Presentation.City
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
+        Material _ghostZoneMaterialSource;
         BuildingOverlay _ghostOverlay;
 
         public BuildingCatalogAsset Catalog => catalog;
@@ -218,17 +226,12 @@ namespace TheyWillDescend.Presentation.City
             if (_ghostBuilding == null)
                 return;
 
-            var pos = Vector3.zero;
-            var rot = Quaternion.identity;
-
             if (_angularSnapped)
             {
                 RadialFootprintMath.FootprintMarkerPose(
                     center, config, _anchorCluster, _anchorRadial, _footprint,
                     out var outPos, out var outRot);
                 ApplyBuildingPose(_ghostBuilding, (Vector3)outPos, (Quaternion)outRot);
-                pos = (Vector3)outPos;
-                rot = (Quaternion)outRot;
             }
             else
             {
@@ -236,20 +239,51 @@ namespace TheyWillDescend.Presentation.City
                     center, config, _anchorTurns0, _anchorRadial, _footprint,
                     out var outPos, out var outRot);
                 ApplyBuildingPose(_ghostBuilding, (Vector3)outPos, (Quaternion)outRot);
-                pos = (Vector3)outPos;
-                rot = (Quaternion)outRot;
             }
 
             AdjustBuildingYOffset(_ghostBuilding, center.y + 0.02f);
 
             if (gridGuide != null)
-            {
-                gridGuide.SetMaskBounds(
-                    pos,
-                    _footprint.WidthClusters * config.RadialStep,
-                    _footprint.DepthRadialRings * config.RadialStep,
-                    gridMaskMarginCells);
-            }
+                UpdateGridMask(center, config);
+        }
+
+        /// <summary>
+        /// Open band = ring sector wider than the footprint; hole = exact footprint sector.
+        /// Vectors: (rInner, rOuter, thetaCenter, halfAngle).
+        /// </summary>
+        void UpdateGridMask(float3 center, RadialGridConfig config)
+        {
+            var n = config.GetClusterCount(_anchorRadial);
+            if (n <= 0)
+                return;
+
+            var turns0 = _angularSnapped ? _anchorCluster / (float)n : _anchorTurns0;
+            turns0 -= Mathf.Floor(turns0);
+            var width = _footprint.WidthClusters;
+            var thetaCenter = (turns0 + width * 0.5f / n) * (2f * Mathf.PI);
+
+            var radialMargin = gridMaskMarginCells * config.RadialStep;
+            var rInner = config.RingLineRadius(_anchorRadial);
+            var rOuter = config.RingLineRadius(_anchorRadial + _footprint.DepthRadialRings);
+            var band = new Vector4(
+                Mathf.Max(0f, rInner - radialMargin),
+                rOuter + radialMargin,
+                thetaCenter,
+                (width * 0.5f + gridMaskSideCells) * (2f * Mathf.PI) / n);
+            var hole = new Vector4(
+                rInner,
+                rOuter,
+                thetaCenter,
+                width * 0.5f * (2f * Mathf.PI) / n);
+
+            var clusterWidth = config.ClusterWorldWidth(_anchorRadial);
+            var feather = new Vector4(
+                MaskFeatherRatio * config.RadialStep,
+                MaskFeatherRatio * clusterWidth,
+                HoleFeatherRatio * config.RadialStep,
+                HoleFeatherRatio * clusterWidth);
+
+            gridGuide.SetGhostSector(center, band, hole, feather);
         }
 
         void EnsureGhost()
@@ -414,10 +448,37 @@ namespace TheyWillDescend.Presentation.City
 
         void EnsureMaterials()
         {
-            if (_ghostZoneMaterial != null)
+            if (_ghostZoneMaterial != null && _ghostZoneMaterialSource == ghostZoneMaterial)
                 return;
-            _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
-            MakeSurfaceTransparent(_ghostZoneMaterial);
+            RebuildGhostZoneMaterial();
+        }
+
+        /// <summary>
+        /// Copies the inspector material so runtime color writes never touch the shared asset.
+        /// Falls back to a generated URP Unlit material when nothing is assigned.
+        /// </summary>
+        void RebuildGhostZoneMaterial()
+        {
+            DestroyMat(_ghostZoneMaterial);
+            _ghostZoneMaterialSource = ghostZoneMaterial;
+
+            if (ghostZoneMaterial != null)
+            {
+                _ghostZoneMaterial = new Material(ghostZoneMaterial)
+                {
+                    name = ghostZoneMaterial.name + "_GhostZone",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+            else
+            {
+                _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
+                MakeSurfaceTransparent(_ghostZoneMaterial);
+            }
+
+            ApplyColor(_ghostZoneMaterial, zoneValidColor);
+            if (_ghostZoneRenderer != null)
+                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
         }
 
         /// <summary>

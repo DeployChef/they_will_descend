@@ -22,6 +22,8 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] float lineWidth = 0.05f;
         [SerializeField] Color underlayColor = new(0.15f, 0.55f, 1f, 1f);
         [SerializeField] bool drawSceneGizmos = true;
+        [Tooltip("Draws the last ghost sector pushed by the placement controller (Scene view).")]
+        [SerializeField] bool debugGhostSectorGizmos = true;
         [SerializeField] Material gridMaskMaterial;
 
         MeshFilter _meshFilter;
@@ -30,6 +32,10 @@ namespace TheyWillDescend.Presentation.City
         Material _runtimeMaterial;
         int _builtHash;
         bool _buildModeActive;
+        bool _warnedMissingMaskProps;
+        bool _hasDebugSector;
+        Vector4 _debugBand;
+        Vector4 _debugHole;
 
         public RadialGridConfig Config
         {
@@ -50,17 +56,36 @@ namespace TheyWillDescend.Presentation.City
                 RebuildUnderlayMesh(force: false);
         }
 
-        public void SetMaskBounds(Vector3 center, float widthMeters, float depthMeters, float marginCells)
+        /// <summary>
+        /// Polar ghost window: band = open ring sector, hole = exact footprint sector.
+        /// Each vector is (rInner, rOuter, thetaCenter, halfAngle), radians/meters.
+        /// </summary>
+        public void SetGhostSector(Vector3 cityCenter, Vector4 bandPolar, Vector4 holePolar, Vector4 feather)
         {
             if (_runtimeMaterial == null)
                 return;
 
-            if (!_runtimeMaterial.HasProperty("_GhostCenter"))
+            if (!_runtimeMaterial.HasProperty("_BandPolar"))
+            {
+                if (!_warnedMissingMaskProps)
+                {
+                    _warnedMissingMaskProps = true;
+                    Debug.LogWarning(
+                        $"{name}: material '{_runtimeMaterial.name}' has no _BandPolar. " +
+                        "Assign the GridPreview shader graph material (gridMaskMaterial) and reimport it.",
+                        this);
+                }
                 return;
+            }
 
-            _runtimeMaterial.SetVector("_GhostCenter", new Vector4(center.x, 0, center.z, 0));
-            _runtimeMaterial.SetVector("_GhostSize", new Vector4(widthMeters * 0.5f, 0, depthMeters * 0.5f, 0));
-            _runtimeMaterial.SetVector("_MarginCells", new Vector4(marginCells, 0, marginCells, 0));
+            _runtimeMaterial.SetVector("_CityCenter", new Vector4(cityCenter.x, cityCenter.y, cityCenter.z, 0f));
+            _runtimeMaterial.SetVector("_BandPolar", bandPolar);
+            _runtimeMaterial.SetVector("_HolePolar", holePolar);
+            _runtimeMaterial.SetVector("_GhostFeather", feather);
+
+            _hasDebugSector = true;
+            _debugBand = bandPolar;
+            _debugHole = holePolar;
         }
 
         void OnEnable()
@@ -156,7 +181,41 @@ namespace TheyWillDescend.Presentation.City
                     Gizmos.DrawLine(origin + dir * r0, origin + dir * r1);
                 }
             }
+
+            if (debugGhostSectorGizmos && _hasDebugSector)
+            {
+                DrawSectorGizmos(origin, _debugBand, Color.green);
+                DrawSectorGizmos(origin, _debugHole, Color.red);
+            }
         }
+
+ 
+        static void DrawSectorGizmos(Vector3 origin, Vector4 polar, Color color)
+        {
+            Gizmos.color = color;
+            var steps = 24;
+            for (var side = -1; side <= 1; side += 2)
+            {
+                var theta = polar.z + side * polar.w;
+                var dir = new Vector3(Mathf.Sin(theta), 0f, Mathf.Cos(theta));
+                Gizmos.DrawLine(origin + dir * polar.x, origin + dir * polar.y);
+            }
+
+            for (var ring = 0; ring < 2; ring++)
+            {
+                var radius = ring == 0 ? polar.x : polar.y;
+                var prev = PolarPoint(origin, radius, polar.z - polar.w);
+                for (var i = 1; i <= steps; i++)
+                {
+                    var next = PolarPoint(origin, radius, polar.z - polar.w + 2f * polar.w * i / steps);
+                    Gizmos.DrawLine(prev, next);
+                    prev = next;
+                }
+            }
+        }
+
+        static Vector3 PolarPoint(Vector3 origin, float radius, float theta)
+            => origin + new Vector3(Mathf.Sin(theta) * radius, 0f, Mathf.Cos(theta) * radius);
 
         void ApplyPlayMeshVisibility()
         {
