@@ -32,6 +32,8 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] float gridMaskMarginCells = 2f;
         [Tooltip("Clusters of open grid revealed to each side of the footprint (Frostpunk-like band).")]
         [SerializeField] int gridMaskSideCells = 6;
+        [Tooltip("Extra safety pad on top of the ghost model bounds (in grid cells). Raise only if a sliver of grid still peeks out.")]
+        [SerializeField] float gridMaskHolePadCells = 0.15f;
 
         const float MaskFeatherRatio = 0.35f;
         const float HoleFeatherRatio = 0.15f;
@@ -51,6 +53,7 @@ namespace TheyWillDescend.Presentation.City
 
         Transform _ghostRoot;
         Transform _ghostBuilding;
+        Renderer[] _ghostRenderers;
         MeshFilter _ghostZoneFilter;
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
@@ -248,7 +251,8 @@ namespace TheyWillDescend.Presentation.City
         }
 
         /// <summary>
-        /// Open band = ring sector wider than the footprint; hole = exact footprint sector.
+        /// Open band = ring sector wider than the footprint; hole covers the footprint
+        /// plus a padding that swallows the model overhang beyond its grid footprint.
         /// Vectors: (rInner, rOuter, thetaCenter, halfAngle).
         /// </summary>
         void UpdateGridMask(float3 center, RadialGridConfig config)
@@ -270,11 +274,35 @@ namespace TheyWillDescend.Presentation.City
                 rOuter + radialMargin,
                 thetaCenter,
                 (width * 0.5f + gridMaskSideCells) * (2f * Mathf.PI) / n);
+
+            // The model is bigger than its grid footprint (legs, eaves, base slab).
+            // Cut by the actual renderer bounds so no lit grid survives underneath,
+            // and clamp to the band so the open window never collapses.
             var hole = new Vector4(
                 rInner,
                 rOuter,
                 thetaCenter,
                 width * 0.5f * (2f * Mathf.PI) / n);
+
+            var padCells = Mathf.Max(0f, gridMaskHolePadCells);
+            if (TryGetGhostModelPolar(center, thetaCenter, out var modelRMin, out var modelRMax, out var modelHalf))
+            {
+                var padRadial = padCells * config.RadialStep;
+                hole.x = Mathf.Min(hole.x, modelRMin - padRadial);
+                hole.y = Mathf.Max(hole.y, modelRMax + padRadial);
+                hole.w = Mathf.Max(hole.w, modelHalf + padCells * (2f * Mathf.PI) / n);
+            }
+            else
+            {
+                var padRadial = padCells * config.RadialStep;
+                hole.x -= padRadial;
+                hole.y += padRadial;
+                hole.w += padCells * (2f * Mathf.PI) / n;
+            }
+
+            hole.x = Mathf.Clamp(hole.x, 0f, band.x);
+            hole.y = Mathf.Clamp(hole.y, hole.x + 1e-3f, band.y);
+            hole.w = Mathf.Min(hole.w, band.w);
 
             var clusterWidth = config.ClusterWorldWidth(_anchorRadial);
             var feather = new Vector4(
@@ -284,6 +312,79 @@ namespace TheyWillDescend.Presentation.City
                 HoleFeatherRatio * clusterWidth);
 
             gridGuide.SetGhostSector(center, band, hole, feather);
+        }
+
+        /// <summary>
+        /// Polar extent of the ghost model itself (oriented mesh bounds, not the
+        /// axis-aligned world box), relative to <paramref name="thetaCenter"/>.
+        /// </summary>
+        bool TryGetGhostModelPolar(
+            float3 center, float thetaCenter,
+            out float rMin, out float rMax, out float halfAngle)
+        {
+            rMin = float.MaxValue;
+            rMax = 0f;
+            halfAngle = 0f;
+            if (_ghostRenderers == null)
+                return false;
+
+            var found = false;
+            for (var i = 0; i < _ghostRenderers.Length; i++)
+            {
+                var renderer = _ghostRenderers[i];
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                    continue;
+
+                var filter = renderer.GetComponent<MeshFilter>();
+                var mesh = filter != null ? filter.sharedMesh : null;
+                if (mesh != null)
+                {
+                    var local = mesh.bounds;
+                    var toWorld = renderer.localToWorldMatrix;
+                    for (var iy = 0; iy < 2; iy++)
+                    for (var iz = 0; iz < 3; iz++)
+                    for (var ix = 0; ix < 3; ix++)
+                    {
+                        var point = toWorld.MultiplyPoint(new Vector3(
+                            Mathf.Lerp(local.min.x, local.max.x, ix * 0.5f),
+                            iy == 0 ? local.min.y : local.max.y,
+                            Mathf.Lerp(local.min.z, local.max.z, iz * 0.5f)));
+                        AccumulatePolar(center, thetaCenter, point, ref rMin, ref rMax, ref halfAngle);
+                        found = true;
+                    }
+                    continue;
+                }
+
+                var world = renderer.bounds;
+                for (var iz = 0; iz < 3; iz++)
+                for (var ix = 0; ix < 3; ix++)
+                {
+                    var point = new Vector3(
+                        Mathf.Lerp(world.min.x, world.max.x, ix * 0.5f),
+                        0f,
+                        Mathf.Lerp(world.min.z, world.max.z, iz * 0.5f));
+                    AccumulatePolar(center, thetaCenter, point, ref rMin, ref rMax, ref halfAngle);
+                    found = true;
+                }
+            }
+
+            return found && rMax > rMin;
+        }
+
+        static void AccumulatePolar(
+            float3 center, float thetaCenter, Vector3 point,
+            ref float rMin, ref float rMax, ref float halfAngle)
+        {
+            var dx = point.x - center.x;
+            var dz = point.z - center.z;
+            var radius = Mathf.Sqrt(dx * dx + dz * dz);
+            if (radius < rMin) rMin = radius;
+            if (radius > rMax) rMax = radius;
+
+            var delta = Mathf.Atan2(dx, dz) - thetaCenter;
+            delta -= Mathf.Round(delta / (2f * Mathf.PI)) * 2f * Mathf.PI;
+            var abs = Mathf.Abs(delta);
+            if (abs > halfAngle) halfAngle = abs;
         }
 
         void EnsureGhost()
@@ -335,6 +436,7 @@ namespace TheyWillDescend.Presentation.City
                 Destroy(_ghostBuilding.gameObject);
                 _ghostBuilding = null;
             }
+            _ghostRenderers = null;
 
             if (_ghostPrefab == null)
                 return;
@@ -345,6 +447,7 @@ namespace TheyWillDescend.Presentation.City
             HideWidget(instance);
             ReplaceMaterialsToGhostShader(instance, ghostBuildingMaterial);
             _ghostBuilding = instance.transform;
+            _ghostRenderers = instance.GetComponentsInChildren<Renderer>(false);
         }
 
         static void ReplaceMaterialsToGhostShader(GameObject ghost, Material ghostMaterialTemplate)

@@ -707,63 +707,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 105356630}
   m_CullTransparentMesh: 1
---- !u!21 &119921180
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: RadialUnderlay_Runtime
-  m_Shader: {fileID: -6465566751694194690, guid: 766751e88ba066d4b984987aa0f5a35b, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _Texture2DAsset_a9d9b559dd2548d4aa43a3b7d4ab50f8_Out_0_Texture2D:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _CanBuild: 1
-    - _GhostEmission: 10
-    - _GhostStrength: 1
-    - _QueueControl: 0
-    - _QueueOffset: 0
-    - _ghostalpha: 1
-    m_Colors:
-    - _BandPolar: {r: 2.3, g: 10.4, b: 0, a: 0.86}
-    - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostFeather: {r: 0.47, g: 0.19, b: 0.2, a: 0.08}
-    - _GhostTintGreen: {r: 0, g: 0.95686275, b: 1, a: 1}
-    - _GhostTintRed: {r: 1, g: 0, b: 0.04892743, a: 1}
-    - _HolePolar: {r: 5, g: 7.7, b: 0, a: 0.29}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &122360537
 GameObject:
   m_ObjectHideFlags: 0
@@ -8486,7 +8429,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 119921180}
+  - {fileID: 1744598869}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11712,6 +11655,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0ac4c3bd31048541883ce45c3c059f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.GameHud.ResearchNodeView
+--- !u!21 &1744598869
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RadialUnderlay_Runtime
+  m_Shader: {fileID: -6465566751694194690, guid: 766751e88ba066d4b984987aa0f5a35b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Texture2DAsset_a9d9b559dd2548d4aa43a3b7d4ab50f8_Out_0_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CanBuild: 1
+    - _GhostEmission: 10
+    - _GhostStrength: 1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _ghostalpha: 1
+    m_Colors:
+    - _BandPolar: {r: 2.3, g: 10.4, b: 0, a: 0.86}
+    - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostFeather: {r: 0.47, g: 0.19, b: 0.2, a: 0.08}
+    - _GhostTintGreen: {r: 0, g: 0.95686275, b: 1, a: 1}
+    - _GhostTintRed: {r: 1, g: 0, b: 0.04892743, a: 1}
+    - _HolePolar: {r: 5, g: 7.7, b: 0, a: 0.29}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1766916400
 GameObject:
   m_ObjectHideFlags: 0
@@ -12778,6 +12778,7 @@ MonoBehaviour:
   zoneInvalidColor: {r: 0.95, g: 0.2, b: 0.15, a: 1}
   gridMaskMarginCells: 0.05
   gridMaskSideCells: 6
+  gridMaskHolePadCells: 0.5
 --- !u!4 &1884302426
 Transform:
   m_ObjectHideFlags: 0
