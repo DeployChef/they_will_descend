@@ -93,7 +93,14 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Центр города (из DOTS), fallback (0,0,0).</summary>
         float3 _cityCenter;
 
-        bool _paused;
+        [Header("Ambience Bus")]
+        [Tooltip("Studio-шина для всех амбиент-инстансов. Шина должна существовать в проекте FMOD Studio (Buses) и попасть в собранные банки.")]
+        [SerializeField] string ambienceBusPath = "bus:/Ambience";
+
+        // Studio-шина амбиента: все инстансы перематываются в её ChannelGroup,
+        // mute/unmute — один вызов _ambienceBus.setMute(...).
+        FMOD.Studio.Bus _ambienceBus;
+        bool _muted;
 
         void Start()
         {
@@ -129,6 +136,9 @@ namespace TheyWillDescend.Presentation.Audio
                 if (!string.IsNullOrEmpty(bankName))
                     FmodBankLoader.LoadBank(bankName);
             }
+
+            // Резолвим шину амбиента после загрузки банков (шины живут в банках).
+            ResolveAmbienceBus();
 
             // Резолвим ID глобального параметра. Сравниваем имена с обрезкой
             // пробелов: в FMOD-проекте параметр может называться 'Distance '
@@ -225,7 +235,7 @@ namespace TheyWillDescend.Presentation.Audio
                     }
                     else
                     {
-                        target = ComputeCameraDistanceNormalized(e);
+                        target = ComputeCameraDistanceNormalized();
                         if (logActivity && Time.frameCount % 60 == 0)
                             GameLog.Info($"GlobalAmbienceManager: RTPC {e.distanceRtpc} target={target:F3} (camera vs city center, global).");
                     }
@@ -374,6 +384,14 @@ namespace TheyWillDescend.Presentation.Audio
                 if (logActivity)
                     GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] after start state={postState}.");
 
+                // Маршрутизируем инстанс в шину амбиента (после start():
+                // channel group инстанса гарантированно живёт только с ним).
+                RouteInstanceToBus(e.instance, e.eventPath);
+
+                // Шина может быть уже заглушена (mute задан до создания ивента) —
+                // это работает автоматически: mute свойство шины, новые дочерние
+                // группы наследуют её состояние. Ничего дополнительно делать не нужно.
+
                 e.isDead = false;
 
                 if (logActivity)
@@ -412,33 +430,18 @@ namespace TheyWillDescend.Presentation.Audio
         /// когда фокус на Game View.
         /// </summary>
         /// <summary>
-        /// Нормализованная дистанция камеры до центра карты: 0..1.
-        /// 0 = камера максимально ПРИБЛИЖЕНА к центру, 1 = максимально ОТДАЛЕНА.
-        /// Считается по РЕАЛЬНОЙ позиции камеры (Camera.main): зум тоже влияет —
-        /// колесо подлетает камерой к центру → параметр к 0, отъезд → к 1.
-        /// Камера не двигается → параметр не двигается.
-        /// Диапазон: ближе MinRadius (зум-ин) камера не подлетит,
-        /// дальше MaxMapRadius + MaxRadius (граница карты + максимальный отъезд) не отъедет.
+        /// Нормализованная дистанция камеры до центра города: 0..1.
+        /// Никаких ссылок на контроллер камеры — просто позиция Camera.main:
+        /// дистанция = minCameraDistance (макс. приближение) → 0,
+        /// дистанция = maxCameraDistance (макс. отдаление) → 1.
+        /// Центр города — CityGrid.Center (обновляется в Update), fallback (0,0,0).
         /// </summary>
-        float ComputeCameraDistanceNormalized(ManagedEvent e)
+        float ComputeCameraDistanceNormalized()
         {
-            if (_cameraController == null)
-                _cameraController = FindFirstObjectByType<RTSCameraController>();
-
             var camPos = mainCamera.transform.position;
-
-            if (_cameraController != null)
-            {
-                var dist = Vector3.Distance(camPos, _cameraController.MapCenter);
-                var minDist = _cameraController.MinRadius;
-                var maxDist = _cameraController.MaxMapRadius + _cameraController.MaxRadius;
-                return Mathf.Clamp01((dist - minDist) / Mathf.Max(0.01f, maxDist - minDist));
-            }
-
-            // Fallback: центр CityGrid, диапазон rtpcRange.
-            var cityCenter = new Vector3(_cityCenter.x, _cityCenter.y, _cityCenter.z);
-            var fallbackDist = Vector3.Distance(camPos, cityCenter);
-            return Mathf.Clamp01(fallbackDist / Mathf.Max(1f, e.rtpcRange));
+            var center = new Vector3(_cityCenter.x, _cityCenter.y, _cityCenter.z);
+            var dist = Vector3.Distance(camPos, center);
+            return Mathf.Clamp01((dist - minCameraDistance) / Mathf.Max(0.01f, maxCameraDistance - minCameraDistance));
         }
 
         void UpdateWheelDistance()
@@ -510,18 +513,102 @@ namespace TheyWillDescend.Presentation.Audio
             }
         }
 
-        public void SetPaused(bool paused)
+        /// <summary>
+        /// Находит Studio-шину амбиента по пути (например "bus:/Ambience").
+        /// Шина должна быть создана в проекте FMOD Studio и собранна в банки —
+        /// в этой версии обёртки нет createBus/getMasterBus, создать шину
+        /// из кода нельзя.
+        /// </summary>
+        void ResolveAmbienceBus()
         {
-            _paused = paused;
-            for (var i = 0; i < _events.Length; i++)
+            if (string.IsNullOrEmpty(ambienceBusPath))
             {
-                var e = _events[i];
-                if (e == null || e.isDead || !e.instance.isValid())
-                    continue;
-                e.instance.setPaused(paused);
+                GameLog.Warning("GlobalAmbienceManager: ambienceBusPath пуст — шина не будет использована.");
+                return;
+            }
+
+            var result = RuntimeManager.StudioSystem.getBus(ambienceBusPath, out _ambienceBus);
+            if (result != FMOD.RESULT.OK || !_ambienceBus.hasHandle())
+            {
+                _ambienceBus = default;
+                GameLog.Warning($"GlobalAmbienceManager: bus '{ambienceBusPath}' NOT FOUND ({result}). Создай шину в FMOD Studio (Buses) и пересобери банки. Ambience зазвучит напрямую в мастер-шину.");
+                return;
+            }
+
+            if (_muted)
+                _ambienceBus.setMute(true);
+
+            if (logActivity)
+                GameLog.Info($"GlobalAmbienceManager: ambience bus resolved: '{ambienceBusPath}' (muted={_muted}).");
+        }
+
+        /// <summary>
+        /// Перематывает channel group инстанса под channel group шины амбиента.
+        /// В этой версии FMOD-обёртки у EventInstance нет setBusChannelGroup и
+        /// setParentGroup, поэтому используется core-API: Bus.getChannelGroup +
+        /// ChannelGroup.addGroup (добавление группы в группу = реparentинг).
+        /// ChannelGroup шины по умолчанию залочен Studio — на время операции
+        /// разлочиваем, потом залочиваем обратно.
+        /// </summary>
+        void RouteInstanceToBus(FMOD.Studio.EventInstance instance, string eventPath)
+        {
+            if (!_ambienceBus.hasHandle())
+                return;
+
+            _ambienceBus.unlockChannelGroup();
+
+            var busGroupResult = _ambienceBus.getChannelGroup(out var busGroup);
+            var instGroupResult = instance.getChannelGroup(out var instGroup);
+
+            FMOD.RESULT reparentResult = FMOD.RESULT.ERR_INVALID_HANDLE;
+            if (busGroupResult == FMOD.RESULT.OK && instGroupResult == FMOD.RESULT.OK)
+                reparentResult = busGroup.addGroup(instGroup, true);
+
+            _ambienceBus.lockChannelGroup();
+
+            if (logActivity)
+            {
+                if (reparentResult == FMOD.RESULT.OK)
+                    GameLog.Info($"GlobalAmbienceManager: [{eventPath}] routed to bus '{ambienceBusPath}'.");
+                else
+                    GameLog.Warning($"GlobalAmbienceManager: [{eventPath}] route to bus FAILED: busGroup={busGroupResult}, instGroup={instGroupResult}, addGroup={reparentResult}.");
             }
         }
 
-        public bool IsPaused => _paused;
+        /// <summary>
+        /// Заглушить/снять заглушку всего амбиента одним вызовом по шине.
+        /// Инстансы при этом продолжают играть и двигаться по таймлайну —
+        /// глушится только их суммарный сигнал на шине.
+        /// </summary>
+        public void SetMuted(bool muted)
+        {
+            _muted = muted;
+
+            if (!_ambienceBus.hasHandle())
+            {
+                // Фолбэк: шины нет — глушим каждый инстанс напрямую через volume.
+                for (var i = 0; i < _events.Length; i++)
+                {
+                    var e = _events[i];
+                    if (e == null || e.isDead || !e.instance.isValid())
+                        continue;
+                    e.instance.setVolume(muted ? 0f : 1f);
+                }
+
+                if (logActivity)
+                    GameLog.Warning($"GlobalAmbienceManager: bus недоступна — применён volume-fallback на инстансы (muted={muted}).");
+                return;
+            }
+
+            _ambienceBus.setMute(muted);
+
+            if (logActivity)
+            {
+                _ambienceBus.getMute(out var confirm);
+                GameLog.Info($"GlobalAmbienceManager: bus '{ambienceBusPath}' setMute({muted}) → подтверждение getMute={confirm}.");
+            }
+        }
+
+        public bool IsMuted => _muted;
     }
 }

@@ -5,8 +5,10 @@ using TheyWillDescend.Presentation.Audio;
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Проверка видимости аудио-зон. Определяет, какие зоны находятся
-    /// в конусе обзора камеры + в радиусе видимости.
+    /// Проверка видимости аудио-зон. Зона слышна, если попала в ГОРИЗОНТАЛЬНЫЙ
+    /// конус обзора камеры — без дистанционного ограничения (дальние зоны на
+    ///равном удалении от ближних, пока в кадре). Исключение: на самом дальнем
+    /// шаге зума камеры все зоны глушатся — локальные инстансы не играют.
     /// </summary>
     public sealed class AudioVisibilityChecker : MonoBehaviour
     {
@@ -22,11 +24,14 @@ namespace TheyWillDescend.Presentation.City
         /// <summary>Направление камеры на последнем тике.</summary>
         private Vector3 _lastCameraForward;
 
-        /// <summary>Половина ГОРИзонтального угла обзора в радианах.</summary>
+        /// <summary>Половина ГОРИЗОНТАЛЬНОГО угла обзора в радианах.</summary>
         private float _halfHorizontalFOVRadians;
 
-        /// <summary>Квадрат максимальной дистанции.</summary>
-        private float _maxDistanceSquared;
+        /// <summary>Контроллер RTS-камеры (ленивый поиск): факт максимального отдаления.</summary>
+        private RTSCameraController _rtsController;
+
+        /// <summary>Попытались ли найти контроллер камеры.</summary>
+        private bool _lookedForController;
 
         /// <summary>Список видимых зон.</summary>
         private readonly List<AudioZone> _visibleZones = new();
@@ -45,7 +50,6 @@ namespace TheyWillDescend.Presentation.City
             if (mainCamera != null)
             {
                 _halfHorizontalFOVRadians = HalfHorizontalFov(mainCamera);
-                _maxDistanceSquared = settings.MaxDistance * settings.MaxDistance;
             }
         }
 
@@ -80,7 +84,27 @@ namespace TheyWillDescend.Presentation.City
                 _lastCameraForward = cameraForward;
 
                 _halfHorizontalFOVRadians = HalfHorizontalFov(mainCamera);
-                _maxDistanceSquared = settings.MaxDistance * settings.MaxDistance;
+            }
+
+            _visibleZones.Clear();
+            _hiddenZones.Clear();
+
+            // Ленивый поиск контроллера камеры (он в additive-сцене может появиться позже).
+            if (_rtsController == null && !_lookedForController)
+            {
+                _lookedForController = true;
+                _rtsController = FindFirstObjectByType<RTSCameraController>();
+            }
+
+            // Самый дальний шаг зума — локальные инстансы зон не играют вообще.
+            if (_rtsController != null && _rtsController.IsFullyZoomedOut)
+            {
+                for (var i = 0; i < allZones.Length; i++)
+                {
+                    if (allZones[i] != null)
+                        _hiddenZones.Add(allZones[i]);
+                }
+                return;
             }
 
             // Выравниваем forward по горизонтали: камера смотрит вниз,
@@ -89,26 +113,15 @@ namespace TheyWillDescend.Presentation.City
             flatForward.y = 0f;
             flatForward.Normalize();
 
-            _visibleZones.Clear();
-            _hiddenZones.Clear();
-
             for (var i = 0; i < allZones.Length; i++)
             {
                 var zone = allZones[i];
                 if (zone == null)
                     continue;
 
+                // Только угол: дистанция НЕ ограничивает слышимость —
+                // дальние зоны в кадре звучат так же, как ближние.
                 var toZone = zone.WorldPosition - cameraPos;
-                var distSquared = toZone.sqrMagnitude;
-
-                // Проверяем дистанцию.
-                if (distSquared > _maxDistanceSquared)
-                {
-                    _hiddenZones.Add(zone);
-                    continue;
-                }
-
-                // Проверяем угол (всё в горизонтальной плоскости).
                 toZone.y = 0f;
                 toZone.Normalize();
                 var dot = Vector3.Dot(flatForward, toZone);

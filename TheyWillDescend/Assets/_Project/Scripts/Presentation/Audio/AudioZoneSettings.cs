@@ -4,22 +4,26 @@ using FMODUnity;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// Настройки аудио-зон. 12 угловых секторов × 10 дистанционных зон = 120 зон.
-    /// Каждая зона = конус 30° × дистанционное кольцо ~12м (0-120м).
+    /// Настройки аудио-зон. Геометрия 1 в 1 с основной сеткой города: тот же
+    /// внутренний радиус (InnerRadius) и тот же внешний (InnerRadius + RingCount*RadialStep).
+    /// 10 угловых секторов × 5 радиальных полос = 50 ячеек, растянуты равномерно.
     /// </summary>
     [CreateAssetMenu(menuName = "TheyWillDescend/Audio/Audio Zone Settings")]
     public sealed class AudioZoneSettings : ScriptableObject
     {
         [Header("Zone Count")]
         [Tooltip("Угловых секторов (360 / сектор = размер конуса в градусах).")]
-        [SerializeField] int angularSectors = 12;
+        [SerializeField] int angularSectors = 10;
 
-        [Tooltip("Дистанционных зон (0-120м делится на это кол-во).")]
-        [SerializeField] int radialZones = 10;
+        [Tooltip("Радиальных полос. Кольца основной сетки делятся между ними ровно.")]
+        [SerializeField] int radialBands = 5;
 
-        [Header("Visibility")]
-        [Tooltip("Максимальная дистанция (м).")]
-        [SerializeField] float maxDistance = 120f;
+        [Header("Grid Extent (1 в 1 с основной сеткой)")]
+        [Tooltip("Внутренний радиус = InnerRadius основной сетки. В рантайме берётся из CityGrid, это fallback.")]
+        [SerializeField] float gridInnerRadius = 5f;
+
+        [Tooltip("Внешний радиус = InnerRadius + RingCount * RadialStep основной сетки. В рантайме берётся из CityGrid, это fallback.")]
+        [SerializeField] float gridOuterRadius = 59f;
 
         [Header("FMOD")]
         [Tooltip("FMOD event для зон. Перетаскивается из FMOD Studio (как у StudioEventEmitter). Банки определяются автоматически.")]
@@ -45,11 +49,36 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("Логировать вход/выход зон в консоль.")]
         [SerializeField] bool logZoneActivity = true;
 
-        public int AngularSectors => angularSectors;
-        public int RadialZones => radialZones;
-        public float MaxDistance => maxDistance;
-        public float SectorAngle => 360f / angularSectors;
-        public float ZoneDepth => maxDistance / radialZones;
+        public int AngularSectors => angularSectors > 0 ? angularSectors : 1;
+        public int RadialBands => radialBands > 0 ? radialBands : 1;
+
+        /// <summary>Всего ячеек аудио-сетки (секторы × полосы).</summary>
+        public int TotalZones => AngularSectors * RadialBands;
+
+        public float SectorAngle => 360f / AngularSectors;
+
+        /// <summary>Внутренний радиус аудио-сетки = внутренний радиус основной сетки.</summary>
+        public float InnerRadius => gridInnerRadius;
+
+        /// <summary>Внешний радиус аудио-сетки = внешний радиус основной сетки.</summary>
+        public float OuterRadius => gridOuterRadius;
+
+        /// <summary>Толщина одной радиальной полосы.</summary>
+        public float ZoneDepth
+        {
+            get
+            {
+                var span = gridOuterRadius - gridInnerRadius;
+                return span > 0f ? span / RadialBands : 1f;
+            }
+        }
+
+        /// <summary>
+        /// Дистанция для нормализации Distance RTPC (audio LOD).
+        /// Слышимость зон больше НЕ ограничивает — конус камеры решает.
+        /// </summary>
+        public float MaxDistance => OuterRadius;
+
         public EventReference EventReference => eventReference;
         public string EventPath => eventPath;
         public string AudioBusPath => audioBusPath;
@@ -57,5 +86,20 @@ namespace TheyWillDescend.Presentation.Audio
         public float ZoneDeathDistance => zoneDeathDistance;
         public float ZoneDeathHysteresis => zoneDeathHysteresis;
         public bool LogZoneActivity => logZoneActivity;
+
+        /// <summary>
+        /// Применяет геометрию основной сетки. Возвращает true, если она изменилась
+        /// (значит зоны нужно перестроить).
+        /// </summary>
+        public bool SetGridExtent(float innerRadius, float outerRadius)
+        {
+            if (Mathf.Abs(innerRadius - gridInnerRadius) < 0.001f
+                && Mathf.Abs(outerRadius - gridOuterRadius) < 0.001f)
+                return false;
+
+            gridInnerRadius = innerRadius;
+            gridOuterRadius = outerRadius;
+            return true;
+        }
     }
 }

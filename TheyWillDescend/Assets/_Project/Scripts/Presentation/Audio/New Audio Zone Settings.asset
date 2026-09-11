@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9fab0b62acd714408fe4cfafcd4de7a, type: 3}
   m_Name: New Audio Zone Settings
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Audio.AudioZoneSettings
-  angularSectors: 12
-  radialZones: 10
-  maxDistance: 120
+  angularSectors: 10
+  radialBands: 5
+  gridInnerRadius: 5
+  gridOuterRadius: 59
   eventReference:
     Guid:
       Data1: -891615303

@@ -7,15 +7,15 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// Одна аудио-зона: конус 30° × дистанционное кольцо ~12м.
-    /// Одна FMOD Instance на зону, не на каждую ячейку сетки.
+    /// Одна аудио-зона: угловой сектор × радиальная полоса, лежит 1 в 1 поверх
+    /// основной сетки города. Одна FMOD Instance на зону, не на каждую ячейку сетки.
     /// </summary>
     public sealed class AudioZone
     {
-        /// <summary>Индекс углового сектора (0-11).</summary>
+        /// <summary>Индекс углового сектора.</summary>
         public int Sector { get; }
 
-        /// <summary>Индекс дистанционной зоны (0-9).</summary>
+        /// <summary>Индекс радиальной полосы.</summary>
         public int Radial { get; }
 
         /// <summary>Средняя мировая позиция зоны (центр конуса).</summary>
@@ -58,13 +58,15 @@ namespace TheyWillDescend.Presentation.Audio
         }
 
         /// <summary>
-        /// Устанавливает позицию зоны (центр конуса — середина сектора, середина кольца).
+        /// Устанавливает позицию зоны (центр конуса — середина сектора, середина
+        /// радиальной полосы). Радиус считается от внутреннего радиуса основной
+        /// сетки, чтобы зоны лежали 1 в 1 поверх неё.
         /// </summary>
-        public void SetWorldPosition(float3 gridCenter, float distanceFromCenter)
+        public void SetWorldPosition(float3 gridCenter)
         {
             // Угол середины сектора (не края!).
             var sectorAngle = _settings.SectorAngle * (Sector + 0.5f) * Mathf.Deg2Rad;
-            var radius = distanceFromCenter;
+            var radius = _settings.InnerRadius + (Radial + 0.5f) * _settings.ZoneDepth;
 
             WorldPosition = new Vector3(
                 Mathf.Sin(sectorAngle),
@@ -321,8 +323,8 @@ namespace TheyWillDescend.Presentation.Audio
         public void OnDrawGizmos(Vector3 center, AudioZoneSettings settings)
         {
             var sectorAngle = settings.SectorAngle * Mathf.Deg2Rad;
-            var innerRadius = Radial * settings.ZoneDepth;
-            var outerRadius = (Radial + 1) * settings.ZoneDepth;
+            var innerRadius = settings.InnerRadius + Radial * settings.ZoneDepth;
+            var outerRadius = settings.InnerRadius + (Radial + 1) * settings.ZoneDepth;
             var angleStart = Sector * sectorAngle;
             var angleEnd = angleStart + sectorAngle;
 

@@ -9,8 +9,9 @@ using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Главный менеджер аудио-зон. 120 зон вместо 14 592 ячеек.
-    /// 12 угловых секторов × 10 дистанционных зон = 120 зон.
+    /// Главный менеджер аудио-зон. Геометрия берётся из основной сетки города
+    /// 1 в 1 (тот же внутренний и внешний радиус), ячейки растянуты равномерно:
+    /// 10 угловых секторов × 5 радиальных полос = 50 зон.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AudioZoneManager : MonoBehaviour
@@ -23,7 +24,7 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         [Tooltip("Банки с ивентом (без расширения .bank). Используется, если EventReference в настройках не задан. Master грузится всегда.")]
         [SerializeField] string[] fmodBanks = { "Ambience_Town" };
 
-        /// <summary>Плоский список всех зон (120 штук).</summary>
+        /// <summary>Плоский список всех зон (10 секторов × 5 полос = 50).</summary>
         private AudioZone[] _zones;
 
         /// <summary>Центр сетки (из DOTS).</summary>
@@ -74,6 +75,17 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
                 {
                     gridReady = true;
                     _fallbackTimer = 0f;
+
+                    // Геометрия аудио-сетки = геометрия основной сетки 1 в 1.
+                    var config = grid.Config;
+                    var inner = config.InnerRadius;
+                    var outer = config.InnerRadius + config.RingCount * config.RadialStep;
+                    if (settings.SetGridExtent(inner, outer))
+                    {
+                        GameLog.Info($"AudioZoneManager: grid extent {inner:F2}..{outer:F2} m (rings={config.RingCount}, step={config.RadialStep}).");
+                        _needsRebuild = true;
+                    }
+
                     var newCenter = grid.Center;
                     if (_needsRebuild || !math.all(newCenter == _gridCenter))
                     {
@@ -112,7 +124,8 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         }
 
         /// <summary>
-        /// Создаёт 120 аудио-зон: 12 угловых × 10 дистанционных.
+        /// Создаёт зоны: угловые секторы × радиальные полосы, равномерно поверх
+        /// основной сетки (её внутренний и внешний радиус).
         /// </summary>
         private void BuildZones()
         {
@@ -126,25 +139,23 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
 
             DisposeZones();
 
-            var totalZones = settings.AngularSectors * settings.RadialZones;
+            var totalZones = settings.TotalZones;
             _zones = new AudioZone[totalZones];
 
             for (var sector = 0; sector < settings.AngularSectors; sector++)
             {
-                for (var radial = 0; radial < settings.RadialZones; radial++)
+                for (var band = 0; band < settings.RadialBands; band++)
                 {
-                    var index = sector * settings.RadialZones + radial;
-                    var zone = new AudioZone(sector, radial, settings);
-
-                    // Средняя дистанция для этого дистанционного кольца
-                    var distanceFromCenter = (radial + 0.5f) * settings.ZoneDepth;
-                    zone.SetWorldPosition(_gridCenter, distanceFromCenter);
-
+                    var index = sector * settings.RadialBands + band;
+                    var zone = new AudioZone(sector, band, settings);
+                    zone.SetWorldPosition(_gridCenter);
                     _zones[index] = zone;
                 }
             }
 
-            GameLog.Info($"AudioZoneManager: created {totalZones} zones (grid center: {_gridCenter}).");
+            GameLog.Info($"AudioZoneManager: created {totalZones} zones ({settings.AngularSectors}x{settings.RadialBands}, "
+                + $"radius {settings.InnerRadius:F2}..{settings.OuterRadius:F2} m, band {settings.ZoneDepth:F2} m, "
+                + $"sector {settings.SectorAngle:F1}°, center {_gridCenter}).");
 
             // Зоны пересозданы — у уже стоящих зданий LinkedZone указывает
             // на мёртвые объекты зон. Перелинковываем их в новые зоны.
@@ -221,28 +232,32 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         }
 
         /// <summary>
-        /// Находит зону по позиции в мире (близжайшая).
+        /// Находит зону, содержащую мировую позицию. Считается по той же
+        /// полярной геометрии, что и основная сетка (центр, внутренний радиус,
+        /// равные секторы и полосы) — попадание точное, без поиска ближайшего центра.
+        /// Позиция внутри plaza (ближе InnerRadius) или за внешним радиусом
+        /// кладётся в крайнюю полосу.
         /// </summary>
         public AudioZone FindZoneNear(Vector3 worldPos)
         {
             if (_zones == null || _zones.Length == 0)
                 return null;
 
-            var bestZone = _zones[0];
-            var bestDist = float.MaxValue;
+            var delta = worldPos - (Vector3)_gridCenter;
+            var radius = Mathf.Sqrt(delta.x * delta.x + delta.z * delta.z);
 
-            for (var i = 0; i < _zones.Length; i++)
-            {
-                var zone = _zones[i];
-                var dist = (zone.WorldPosition - worldPos).sqrMagnitude;
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    bestZone = zone;
-                }
-            }
+            var angle = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
+            if (angle < 0f)
+                angle += 360f;
 
-            return bestZone;
+            var sector = Mathf.Clamp((int)(angle / settings.SectorAngle), 0, settings.AngularSectors - 1);
+
+            var band = 0;
+            if (radius > settings.InnerRadius)
+                band = Mathf.Clamp((int)((radius - settings.InnerRadius) / settings.ZoneDepth), 0, settings.RadialBands - 1);
+
+            var index = sector * settings.RadialBands + band;
+            return _zones[index] != null ? _zones[index] : _zones[0];
         }
 
         /// <summary>
