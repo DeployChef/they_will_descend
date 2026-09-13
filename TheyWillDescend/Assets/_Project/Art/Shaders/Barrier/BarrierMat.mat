@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PyramidEmission
-  m_Shader: {fileID: -6465566751694194690, guid: d61a9030aba5e724591e0fe4c6c613f0, type: 3}
+  m_Name: BarrierMat
+  m_Shader: {fileID: -6465566751694194690, guid: 1092a633f7658ba4c9c8d39478222091, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,8 +24,12 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _EmissionTex:
+    - _MainTex:
         m_Texture: {fileID: 2800000, guid: b04ffbb0817de6e4595a9a93258f03ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
+        m_Texture: {fileID: 2800000, guid: 2fa8047a40d9e634bb2a40c616307a3c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -42,16 +46,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Fill: 1
-    - _ObjectHeight: 1.5
-    - _OffsetPoint: -1.5
+    - _DepthPower: 1
+    - _EmissionValue: 2.91
+    - _FresnelPower: 2
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Texture_opacity: -20.09
     m_Colors:
-    - _EmissionColor: {r: 0, g: 16.063717, b: 23.968622, a: 1}
+    - _DepthColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &359725533629302657
+--- !u!114 &8430905919439044389
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
