@@ -67,7 +67,7 @@ namespace TheyWillDescend.Presentation.Audio
         [SerializeField] Camera mainCamera;
 
         [Header("Debug")]
-        [SerializeField] bool logActivity = true;
+        [SerializeField] bool logActivity = false;
 
         [Header("Debug: Mouse Wheel Distance")]
         [Tooltip("DEBUG: ручное управление Distance колесом мыши в обход камеры. По умолчанию ВЫКЛ — параметр привязан к позиции камеры.")]
@@ -166,7 +166,8 @@ namespace TheyWillDescend.Presentation.Audio
 
                     e.distanceRtpcId = descriptions[p].id;
                     found = true;
-                    GameLog.Info($"GlobalAmbienceManager: resolved global param '{actualName}' (wanted '{e.distanceRtpc}') id=({descriptions[p].id.data1}, {descriptions[p].id.data2}) min={descriptions[p].minimum} max={descriptions[p].maximum}.");
+                    if (logActivity)
+                        GameLog.Info($"GlobalAmbienceManager: resolved global param '{actualName}' (wanted '{e.distanceRtpc}') id=({descriptions[p].id.data1}, {descriptions[p].id.data2}) min={descriptions[p].minimum} max={descriptions[p].maximum}.");
                     break;
                 }
 
@@ -478,6 +479,9 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         void DumpGlobalParameters()
         {
+            if (!logActivity)
+                return;
+
             var countResult = RuntimeManager.StudioSystem.getParameterDescriptionCount(out var count);
             if (countResult != FMOD.RESULT.OK)
             {

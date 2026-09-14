@@ -47,7 +47,7 @@ namespace TheyWillDescend.Presentation.Audio
 
         [Header("Debug")]
         [Tooltip("Логировать вход/выход зон в консоль.")]
-        [SerializeField] bool logZoneActivity = true;
+        [SerializeField] bool logZoneActivity = false;
 
         public int AngularSectors => angularSectors > 0 ? angularSectors : 1;
         public int RadialBands => radialBands > 0 ? radialBands : 1;

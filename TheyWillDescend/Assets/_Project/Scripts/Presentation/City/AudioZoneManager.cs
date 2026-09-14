@@ -82,7 +82,8 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
                     var outer = config.InnerRadius + config.RingCount * config.RadialStep;
                     if (settings.SetGridExtent(inner, outer))
                     {
-                        GameLog.Info($"AudioZoneManager: grid extent {inner:F2}..{outer:F2} m (rings={config.RingCount}, step={config.RadialStep}).");
+                        if (settings.LogZoneActivity)
+                            GameLog.Info($"AudioZoneManager: grid extent {inner:F2}..{outer:F2} m (rings={config.RingCount}, step={config.RadialStep}).");
                         _needsRebuild = true;
                     }
 
@@ -153,9 +154,12 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
                 }
             }
 
-            GameLog.Info($"AudioZoneManager: created {totalZones} zones ({settings.AngularSectors}x{settings.RadialBands}, "
-                + $"radius {settings.InnerRadius:F2}..{settings.OuterRadius:F2} m, band {settings.ZoneDepth:F2} m, "
-                + $"sector {settings.SectorAngle:F1}°, center {_gridCenter}).");
+            if (settings.LogZoneActivity)
+            {
+                GameLog.Info($"AudioZoneManager: created {totalZones} zones ({settings.AngularSectors}x{settings.RadialBands}, "
+                    + $"radius {settings.InnerRadius:F2}..{settings.OuterRadius:F2} m, band {settings.ZoneDepth:F2} m, "
+                    + $"sector {settings.SectorAngle:F1}°, center {_gridCenter}).");
+            }
 
             // Зоны пересозданы — у уже стоящих зданий LinkedZone указывает
             // на мёртвые объекты зон. Перелинковываем их в новые зоны.
