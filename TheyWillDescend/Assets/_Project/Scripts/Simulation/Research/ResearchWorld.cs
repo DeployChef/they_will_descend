@@ -23,9 +23,8 @@ namespace TheyWillDescend.Simulation.Research
 
         public static bool CommandsDrained(EntityManager em)
         {
-            if (!TryGetBoard(em, out var board) || !em.HasBuffer<SetActiveResearchCommand>(board))
-                return true;
-            return em.GetBuffer<SetActiveResearchCommand>(board).Length == 0;
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<SetActiveResearchRequest>());
+            return query.IsEmptyIgnoreFilter;
         }
 
         public static void DestroyAll(EntityManager em)
@@ -47,8 +46,8 @@ namespace TheyWillDescend.Simulation.Research
             var board = em.CreateEntity();
             em.AddComponentData(board, ResearchControl.Initial);
             em.AddComponentData(board, new ResearchCapacity());
-            em.AddBuffer<SetActiveResearchCommand>(board);
             em.AddBuffer<UnlockedBuilding>(board);
+
 #if UNITY_EDITOR
             em.SetName(board, "ResearchBoard");
 #endif

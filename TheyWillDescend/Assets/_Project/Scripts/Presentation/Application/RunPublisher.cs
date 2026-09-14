@@ -117,9 +117,8 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<SimClockCommand>(session).Clear();
             em.GetBuffer<DespawnAllAgentsCommand>(session).Clear();
             em.GetBuffer<DespawnAllBuildingsCommand>(session).Clear();
-            em.GetBuffer<SpawnAgentCommand>(session).Clear();
-            em.GetBuffer<TheyWillDescend.Simulation.Gods.SetPyramidFeedCommand>(session).Clear();
         }
+
 
 
 

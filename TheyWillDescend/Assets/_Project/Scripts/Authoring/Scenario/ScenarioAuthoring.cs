@@ -1,25 +1,45 @@
-using TheyWillDescend.Authoring.City;
 using TheyWillDescend.Content;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
-using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace TheyWillDescend.Authoring.Scenario
 {
     /// <summary>
-    /// SubScene hook for a <see cref="ScenarioDefinition"/>. Must not sit on the
-    /// SimControl GameObject — BakingOnlyEntity would strip the session singleton.
+    /// Visual editor for a <see cref="ScenarioDefinition"/>.
+    /// Renders the radial grid in Scene View, previews starting houses,
+    /// and synchronizes changes with the ScenarioDefinition ScriptableObject.
+    /// Does not bake to SubScene; simulation reads ScenarioDefinition at runtime.
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     public sealed class ScenarioAuthoring : MonoBehaviour
     {
         public const string PreviewRootName = "_ScenarioPreview";
 
         [SerializeField] ScenarioDefinition definition;
+        [SerializeField] BuildingCatalogAsset catalog;
+        [SerializeField] RadialGridConfig gridConfig = RadialGridConfig.Default;
+        [SerializeField] Transform centerTransform;
 
-        public ScenarioDefinition Definition => definition;
+        public ScenarioDefinition Definition
+        {
+            get => definition;
+            set => definition = value;
+        }
+
+        public BuildingCatalogAsset Catalog
+        {
+            get => catalog;
+            set => catalog = value;
+        }
+
+        public RadialGridConfig GridConfig
+        {
+            get => gridConfig.IsValid ? gridConfig : RadialGridConfig.Default;
+            set => gridConfig = value;
+        }
 
         public Transform PreviewRoot
         {
@@ -34,21 +54,48 @@ namespace TheyWillDescend.Authoring.Scenario
             }
         }
 
+        void Awake()
+        {
+            if (Application.isPlaying)
+            {
+                var root = transform.Find(PreviewRootName);
+                if (root != null)
+                    root.gameObject.SetActive(false);
+            }
+        }
+
         public bool TryGetPlacement(
             out RadialGridConfig config,
             out float3 center,
-            out BuildingCatalogAuthoring catalog)
+            out BuildingCatalogAsset outCatalog)
         {
-            config = default;
+            config = GridConfig;
             center = float3.zero;
-            catalog = FindFirstObjectByType<BuildingCatalogAuthoring>();
-            var grid = FindFirstObjectByType<CityGridAuthoring>();
-            if (catalog == null || grid == null)
-                return false;
-            config = grid.Config;
-            var hq = FindFirstObjectByType<HeadquarterAuthoring>();
-            center = hq != null ? (float3)hq.transform.position : float3.zero;
-            return config.IsValid;
+            if (centerTransform != null)
+                center = (float3)centerTransform.position;
+            else
+            {
+                var hq = GameObject.Find("Headquarters");
+                if (hq != null)
+                    center = (float3)hq.transform.position;
+            }
+
+            outCatalog = catalog;
+#if UNITY_EDITOR
+            if (outCatalog == null)
+            {
+                outCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingCatalogAsset>(
+                    "Assets/_Project/Content/Buildings/DefaultBuildingCatalog.asset");
+                if (catalog == null && outCatalog != null)
+                    catalog = outCatalog;
+            }
+            if (definition == null)
+            {
+                definition = UnityEditor.AssetDatabase.LoadAssetAtPath<ScenarioDefinition>(
+                    "Assets/_Project/Content/Scenarios/DefaultScenario.asset");
+            }
+#endif
+            return config.IsValid && outCatalog != null;
         }
 
         void OnDrawGizmosSelected()
@@ -83,58 +130,6 @@ namespace TheyWillDescend.Authoring.Scenario
                 var next = RadialGridMath.PolarToWorld(center, i / (float)segments, radius);
                 Gizmos.DrawLine(prev, next);
                 prev = next;
-            }
-        }
-
-        class ScenarioBaker : Baker<ScenarioAuthoring>
-        {
-            public override void Bake(ScenarioAuthoring authoring)
-            {
-                var entity = GetEntity(TransformUsageFlags.None);
-                var buildings = AddBuffer<ScenarioBuildingSpec>(entity);
-                var stock = AddBuffer<ScenarioResourceSpec>(entity);
-                var so = authoring.definition;
-                if (so == null)
-                    return;
-                DependsOn(so);
-                var workers = so.StartingWorkers;
-                if (workers > 0)
-                    AddComponent(entity, new ScenarioPopulation { StartingWorkers = workers });
-                var buildingRecords = so.Buildings;
-                for (var i = 0; i < buildingRecords.Count; i++)
-                {
-                    var record = buildingRecords[i];
-                    var typeId = ContentId.EncodeOrEmpty(record.TypeId);
-                    if (typeId.IsEmpty)
-                    {
-                        Debug.LogError($"Scenario '{so.name}' building {i} has an empty typeId.");
-                        continue;
-                    }
-
-                    buildings.Add(new ScenarioBuildingSpec
-                    {
-                        TypeId = typeId,
-                        Cluster = record.Cluster,
-                        Radial = record.Radial
-                    });
-                }
-
-                var resourceRecords = so.StartingStock;
-                if (resourceRecords != null)
-                {
-                    for (var i = 0; i < resourceRecords.Count; i++)
-                    {
-                        var record = resourceRecords[i];
-                        if (record.Resource == null)
-                            continue;
-                        DependsOn(record.Resource);
-                        stock.Add(new ScenarioResourceSpec
-                        {
-                            ResourceId = ContentId.EncodeOrEmpty(record.Resource.ResourceId),
-                            Amount = record.Amount < 0f ? 0f : record.Amount
-                        });
-                    }
-                }
             }
         }
     }

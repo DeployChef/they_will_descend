@@ -29,14 +29,14 @@ namespace TheyWillDescend.Authoring.Editor
             if (!authoring.TryGetPlacement(out var config, out _, out var catalog))
             {
                 EditorGUILayout.HelpBox(
-                    "Need CityGridAuthoring, BuildingCatalogAuthoring, and HeadquarterAuthoring in this SubScene.",
+                    "Assign BuildingCatalogAsset or ensure DefaultBuildingCatalog exists.",
                     MessageType.Warning);
                 return;
             }
 
             var footprints = CollectFootprints(catalog, authoring.Definition.Buildings);
             if (footprints != null && ScenarioLayout.HasOverlap(config, authoring.Definition.Buildings, footprints))
-                EditorGUILayout.HelpBox("Some houses overlap on the grid. Bake will reject the extras.", MessageType.Error);
+                EditorGUILayout.HelpBox("Some houses overlap on the grid. They will conflict at game start.", MessageType.Error);
 
             EditorGUILayout.Space();
             EditorGUI.BeginChangeCheck();
@@ -59,7 +59,7 @@ namespace TheyWillDescend.Authoring.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Add building", EditorStyles.boldLabel);
-            var prefabs = catalog.Catalog != null ? catalog.Catalog.Prefabs : null;
+            var prefabs = catalog != null ? catalog.Prefabs : null;
             if (prefabs == null || prefabs.Count == 0)
             {
                 EditorGUILayout.HelpBox(
@@ -98,7 +98,6 @@ namespace TheyWillDescend.Authoring.Editor
                 return;
 
             Undo.RegisterFullObjectHierarchyUndo(authoring.gameObject, "Apply Scenario");
-            EnsureBakingOnly(authoring.gameObject);
 
             var root = authoring.PreviewRoot;
             for (var i = root.childCount - 1; i >= 0; i--)
@@ -185,7 +184,7 @@ namespace TheyWillDescend.Authoring.Editor
 
         static void SpawnPreview(
             ScenarioAuthoring authoring,
-            BuildingCatalogAuthoring catalog,
+            BuildingCatalogAsset catalog,
             in RadialGridConfig config,
             float3 center,
             ScenarioBuildingRecord record)
@@ -204,9 +203,7 @@ namespace TheyWillDescend.Authoring.Editor
                     go, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             go.name = $"{BuildingView.NameOf(prefab)}_c{record.Cluster}_r{record.Radial}";
             Undo.RegisterCreatedObjectUndo(go, "Spawn Scenario Preview");
-            EnsureBakingOnly(authoring.gameObject);
             StripRuntimeAuthoring(go);
-            EnsureBakingOnlyHierarchy(go);
 
             var preview = go.GetComponent<ScenarioBuildingPreview>();
             if (preview == null)
@@ -225,20 +222,7 @@ namespace TheyWillDescend.Authoring.Editor
                 Undo.DestroyObjectImmediate(stamps[i]);
         }
 
-        static void EnsureBakingOnly(GameObject go)
-        {
-            if (go.GetComponent<ScenarioBakingOnlyAuthoring>() == null)
-                Undo.AddComponent<ScenarioBakingOnlyAuthoring>(go);
-        }
-
-        static void EnsureBakingOnlyHierarchy(GameObject root)
-        {
-            var transforms = root.GetComponentsInChildren<Transform>(true);
-            for (var i = 0; i < transforms.Length; i++)
-                EnsureBakingOnly(transforms[i].gameObject);
-        }
-
-        internal static bool TryFootprint(BuildingCatalogAuthoring catalog, string typeId, out BuildingFootprint footprint)
+        internal static bool TryFootprint(BuildingCatalogAsset catalog, string typeId, out BuildingFootprint footprint)
         {
             if (catalog != null && catalog.TryGet(typeId, out var prefab))
                 return BuildingStampRead.TryFootprint(prefab, out footprint);
@@ -248,7 +232,7 @@ namespace TheyWillDescend.Authoring.Editor
         }
 
         static List<BuildingFootprint> CollectFootprints(
-            BuildingCatalogAuthoring catalog,
+            BuildingCatalogAsset catalog,
             IReadOnlyList<ScenarioBuildingRecord> records)
         {
             var footprints = new List<BuildingFootprint>(records.Count);

@@ -161,9 +161,10 @@ namespace TheyWillDescend.Presentation.GameHud
             var id = ContentId.EncodeOrEmpty(_selectedId);
             if (id.IsEmpty)
                 return;
-            if (!SimCommands.TryPost(new SetActiveResearchCommand { TechId = id }))
+            if (!SimCommands.Request(new SetActiveResearchRequest { TechId = id }))
                 GameLog.Warning("Research: command buffer missing — run catalog was not populated.");
         }
+
 
         void HideAllNodes()
         {

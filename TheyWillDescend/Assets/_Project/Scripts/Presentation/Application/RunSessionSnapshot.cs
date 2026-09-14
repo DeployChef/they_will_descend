@@ -514,18 +514,19 @@ namespace TheyWillDescend.App
                 var row = snapshot.pyramidFeed[i];
                 if (string.IsNullOrWhiteSpace(row.resourceId))
                     continue;
-                SimCommands.TryPost(new SetPyramidFeedCommand
+                SimCommands.Request(new SetPyramidFeedRequest
                 {
                     ResourceId = ContentId.EncodeOrEmpty(row.resourceId),
                     PerHour = row.perHour
                 });
             }
 
+
         }
 
         static void EnqueueAgent(AgentSnapshot record)
         {
-            SimCommands.TryPost(new SpawnAgentCommand
+            SimCommands.Request(new SpawnAgentRequest
             {
                 Position = new float3(record.posX, record.posY, record.posZ),
                 Facing = new float3(record.fwdX, record.fwdY, record.fwdZ),
@@ -543,6 +544,7 @@ namespace TheyWillDescend.App
                 Kind = (AgentKind)record.agentType
             });
         }
+
 
 
         static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)

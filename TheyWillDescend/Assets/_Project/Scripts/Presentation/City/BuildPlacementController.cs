@@ -24,8 +24,19 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] RadialGridGuide gridGuide;
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
-        [SerializeField] Color zoneValidColor = new(0.15f, 0.75f, 1f, 0.45f);
-        [SerializeField] Color zoneInvalidColor = new(0.95f, 0.2f, 0.15f, 0.5f);
+        [SerializeField] Material ghostBuildingMaterial;
+        [Tooltip("Optional. Assigned in the inspector and copied at runtime; zone color is still driven by the two colors below. Falls back to a runtime URP Unlit material when empty.")]
+        [SerializeField] Material ghostZoneMaterial;
+        [SerializeField] Color zoneValidColor;
+        [SerializeField] Color zoneInvalidColor;
+        [SerializeField] float gridMaskMarginCells = 2f;
+        [Tooltip("Clusters of open grid revealed to each side of the footprint (Frostpunk-like band).")]
+        [SerializeField] int gridMaskSideCells = 6;
+        [Tooltip("Extra safety pad on top of the ghost model bounds (in grid cells). Raise only if a sliver of grid still peeks out.")]
+        [SerializeField] float gridMaskHolePadCells = 0.15f;
+
+        const float MaskFeatherRatio = 0.35f;
+        const float HoleFeatherRatio = 0.15f;
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
 
@@ -42,10 +53,12 @@ namespace TheyWillDescend.Presentation.City
 
         Transform _ghostRoot;
         Transform _ghostBuilding;
+        Renderer[] _ghostRenderers;
         MeshFilter _ghostZoneFilter;
         MeshRenderer _ghostZoneRenderer;
         Mesh _ghostZoneMesh;
         Material _ghostZoneMaterial;
+        Material _ghostZoneMaterialSource;
         BuildingOverlay _ghostOverlay;
 
         public BuildingCatalogAsset Catalog => catalog;
@@ -205,6 +218,7 @@ namespace TheyWillDescend.Presentation.City
             EnsureGhost();
             SetGhostVisible(true);
             SetGhostZoneColor(_canPlace ? zoneValidColor : zoneInvalidColor);
+            ApplyGhostBuildingColor();
 
             RadialSectorMeshBuilder.RebuildClusterZoneMesh(
                 _ghostZoneMesh, center, config, _clusters);
@@ -219,16 +233,158 @@ namespace TheyWillDescend.Presentation.City
             {
                 RadialFootprintMath.FootprintMarkerPose(
                     center, config, _anchorCluster, _anchorRadial, _footprint,
-                    out var pos, out var rot);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
+                    out var outPos, out var outRot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)outPos, (Quaternion)outRot);
             }
             else
             {
                 RadialFootprintMath.FootprintMarkerPoseFromTurns(
                     center, config, _anchorTurns0, _anchorRadial, _footprint,
-                    out var pos, out var rot);
-                ApplyBuildingPose(_ghostBuilding, (Vector3)pos, (Quaternion)rot);
+                    out var outPos, out var outRot);
+                ApplyBuildingPose(_ghostBuilding, (Vector3)outPos, (Quaternion)outRot);
             }
+
+            AdjustBuildingYOffset(_ghostBuilding, center.y + 0.02f);
+
+            if (gridGuide != null)
+                UpdateGridMask(center, config);
+        }
+
+        /// <summary>
+        /// Open band = ring sector wider than the footprint; hole covers the footprint
+        /// plus a padding that swallows the model overhang beyond its grid footprint.
+        /// Vectors: (rInner, rOuter, thetaCenter, halfAngle).
+        /// </summary>
+        void UpdateGridMask(float3 center, RadialGridConfig config)
+        {
+            var n = config.GetClusterCount(_anchorRadial);
+            if (n <= 0)
+                return;
+
+            var turns0 = _angularSnapped ? _anchorCluster / (float)n : _anchorTurns0;
+            turns0 -= Mathf.Floor(turns0);
+            var width = _footprint.WidthClusters;
+            var thetaCenter = (turns0 + width * 0.5f / n) * (2f * Mathf.PI);
+
+            var radialMargin = gridMaskMarginCells * config.RadialStep;
+            var rInner = config.RingLineRadius(_anchorRadial);
+            var rOuter = config.RingLineRadius(_anchorRadial + _footprint.DepthRadialRings);
+            var band = new Vector4(
+                Mathf.Max(0f, rInner - radialMargin),
+                rOuter + radialMargin,
+                thetaCenter,
+                (width * 0.5f + gridMaskSideCells) * (2f * Mathf.PI) / n);
+
+            // The model is bigger than its grid footprint (legs, eaves, base slab).
+            // Cut by the actual renderer bounds so no lit grid survives underneath,
+            // and clamp to the band so the open window never collapses.
+            var hole = new Vector4(
+                rInner,
+                rOuter,
+                thetaCenter,
+                width * 0.5f * (2f * Mathf.PI) / n);
+
+            var padCells = Mathf.Max(0f, gridMaskHolePadCells);
+            if (TryGetGhostModelPolar(center, thetaCenter, out var modelRMin, out var modelRMax, out var modelHalf))
+            {
+                var padRadial = padCells * config.RadialStep;
+                hole.x = Mathf.Min(hole.x, modelRMin - padRadial);
+                hole.y = Mathf.Max(hole.y, modelRMax + padRadial);
+                hole.w = Mathf.Max(hole.w, modelHalf + padCells * (2f * Mathf.PI) / n);
+            }
+            else
+            {
+                var padRadial = padCells * config.RadialStep;
+                hole.x -= padRadial;
+                hole.y += padRadial;
+                hole.w += padCells * (2f * Mathf.PI) / n;
+            }
+
+            hole.x = Mathf.Clamp(hole.x, 0f, band.x);
+            hole.y = Mathf.Clamp(hole.y, hole.x + 1e-3f, band.y);
+            hole.w = Mathf.Min(hole.w, band.w);
+
+            var clusterWidth = config.ClusterWorldWidth(_anchorRadial);
+            var feather = new Vector4(
+                MaskFeatherRatio * config.RadialStep,
+                MaskFeatherRatio * clusterWidth,
+                HoleFeatherRatio * config.RadialStep,
+                HoleFeatherRatio * clusterWidth);
+
+            gridGuide.SetGhostSector(center, band, hole, feather);
+        }
+
+        /// <summary>
+        /// Polar extent of the ghost model itself (oriented mesh bounds, not the
+        /// axis-aligned world box), relative to <paramref name="thetaCenter"/>.
+        /// </summary>
+        bool TryGetGhostModelPolar(
+            float3 center, float thetaCenter,
+            out float rMin, out float rMax, out float halfAngle)
+        {
+            rMin = float.MaxValue;
+            rMax = 0f;
+            halfAngle = 0f;
+            if (_ghostRenderers == null)
+                return false;
+
+            var found = false;
+            for (var i = 0; i < _ghostRenderers.Length; i++)
+            {
+                var renderer = _ghostRenderers[i];
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                    continue;
+
+                var filter = renderer.GetComponent<MeshFilter>();
+                var mesh = filter != null ? filter.sharedMesh : null;
+                if (mesh != null)
+                {
+                    var local = mesh.bounds;
+                    var toWorld = renderer.localToWorldMatrix;
+                    for (var iy = 0; iy < 2; iy++)
+                    for (var iz = 0; iz < 3; iz++)
+                    for (var ix = 0; ix < 3; ix++)
+                    {
+                        var point = toWorld.MultiplyPoint(new Vector3(
+                            Mathf.Lerp(local.min.x, local.max.x, ix * 0.5f),
+                            iy == 0 ? local.min.y : local.max.y,
+                            Mathf.Lerp(local.min.z, local.max.z, iz * 0.5f)));
+                        AccumulatePolar(center, thetaCenter, point, ref rMin, ref rMax, ref halfAngle);
+                        found = true;
+                    }
+                    continue;
+                }
+
+                var world = renderer.bounds;
+                for (var iz = 0; iz < 3; iz++)
+                for (var ix = 0; ix < 3; ix++)
+                {
+                    var point = new Vector3(
+                        Mathf.Lerp(world.min.x, world.max.x, ix * 0.5f),
+                        0f,
+                        Mathf.Lerp(world.min.z, world.max.z, iz * 0.5f));
+                    AccumulatePolar(center, thetaCenter, point, ref rMin, ref rMax, ref halfAngle);
+                    found = true;
+                }
+            }
+
+            return found && rMax > rMin;
+        }
+
+        static void AccumulatePolar(
+            float3 center, float thetaCenter, Vector3 point,
+            ref float rMin, ref float rMax, ref float halfAngle)
+        {
+            var dx = point.x - center.x;
+            var dz = point.z - center.z;
+            var radius = Mathf.Sqrt(dx * dx + dz * dz);
+            if (radius < rMin) rMin = radius;
+            if (radius > rMax) rMax = radius;
+
+            var delta = Mathf.Atan2(dx, dz) - thetaCenter;
+            delta -= Mathf.Round(delta / (2f * Mathf.PI)) * 2f * Mathf.PI;
+            var abs = Mathf.Abs(delta);
+            if (abs > halfAngle) halfAngle = abs;
         }
 
         void EnsureGhost()
@@ -280,6 +436,7 @@ namespace TheyWillDescend.Presentation.City
                 Destroy(_ghostBuilding.gameObject);
                 _ghostBuilding = null;
             }
+            _ghostRenderers = null;
 
             if (_ghostPrefab == null)
                 return;
@@ -288,12 +445,57 @@ namespace TheyWillDescend.Presentation.City
             instance.name = "GhostHouse";
             StripColliders(instance);
             HideWidget(instance);
+            ReplaceMaterialsToGhostShader(instance, ghostBuildingMaterial);
             _ghostBuilding = instance.transform;
+            _ghostRenderers = instance.GetComponentsInChildren<Renderer>(false);
+        }
+
+        static void ReplaceMaterialsToGhostShader(GameObject ghost, Material ghostMaterialTemplate)
+        {
+            if (ghostMaterialTemplate == null)
+                return;
+
+            var renderers = ghost.GetComponentsInChildren<MeshRenderer>();
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (!renderer.enabled)
+                    continue;
+
+                var origMat = renderer.sharedMaterial;
+                if (origMat == null)
+                    continue;
+
+                var ghostMat = new Material(ghostMaterialTemplate);
+                ghostMat.name = origMat.name + "_Ghost";
+                ghostMat.SetTexture("_MainTex", origMat.mainTexture);
+                renderer.sharedMaterial = ghostMat;
+            }
         }
 
         static void ApplyBuildingPose(Transform t, Vector3 pos, Quaternion rot)
         {
             t.SetPositionAndRotation(pos, rot);
+        }
+
+        static void AdjustBuildingYOffset(Transform building, float groundY)
+        {
+            var renderers = building.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+                return;
+
+            var min = float.MaxValue;
+            var max = float.MinValue;
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var b = renderers[i].bounds;
+                if (b.min.y < min) min = b.min.y;
+                if (b.max.y > max) max = b.max.y;
+            }
+
+            var offset = groundY - min;
+            if (Mathf.Abs(offset) > 0.001f)
+                building.Translate(0f, offset, 0f, Space.World);
         }
 
         static void HideWidget(GameObject go)
@@ -322,6 +524,26 @@ namespace TheyWillDescend.Presentation.City
             ApplyColor(_ghostZoneMaterial, color);
         }
 
+        void ApplyGhostBuildingColor()
+        {
+            if (_ghostBuilding == null)
+                return;
+
+            var renderers = _ghostBuilding.GetComponentsInChildren<MeshRenderer>();
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (!renderer.enabled)
+                    continue;
+
+                var mat = renderer.sharedMaterial;
+                if (mat == null || !mat.HasProperty("_CanBuild"))
+                    continue;
+
+                mat.SetFloat("_CanBuild", _canPlace ? 1f : 0f);
+            }
+        }
+
         GameObject ResolveGhostPrefab(string typeId)
         {
             return catalog != null ? catalog.FindPrefab(typeId) : null;
@@ -329,10 +551,60 @@ namespace TheyWillDescend.Presentation.City
 
         void EnsureMaterials()
         {
-            if (_ghostZoneMaterial != null)
+            if (_ghostZoneMaterial != null && _ghostZoneMaterialSource == ghostZoneMaterial)
                 return;
-            _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
-            _ghostZoneMaterial.renderQueue = (int)RenderQueue.Transparent + 60;
+            RebuildGhostZoneMaterial();
+        }
+
+        /// <summary>
+        /// Copies the inspector material so runtime color writes never touch the shared asset.
+        /// Falls back to a generated URP Unlit material when nothing is assigned.
+        /// </summary>
+        void RebuildGhostZoneMaterial()
+        {
+            DestroyMat(_ghostZoneMaterial);
+            _ghostZoneMaterialSource = ghostZoneMaterial;
+
+            if (ghostZoneMaterial != null)
+            {
+                _ghostZoneMaterial = new Material(ghostZoneMaterial)
+                {
+                    name = ghostZoneMaterial.name + "_GhostZone",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+            else
+            {
+                _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
+                MakeSurfaceTransparent(_ghostZoneMaterial);
+            }
+
+            ApplyColor(_ghostZoneMaterial, zoneValidColor);
+            if (_ghostZoneRenderer != null)
+                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
+        }
+
+        /// <summary>
+        /// URP Unlit is opaque by default: alpha in _BaseColor is ignored until the
+        /// blend state is switched to transparent manually (same as the material inspector does).
+        /// </summary>
+        static void MakeSurfaceTransparent(Material mat)
+        {
+            if (mat == null || !mat.HasProperty("_Surface"))
+                return;
+
+            mat.SetFloat("_Surface", 1f); // Transparent
+            mat.SetFloat("_Blend", 0f);   // Alpha
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_SrcBlendAlpha", 1f);
+            mat.SetFloat("_DstBlendAlpha", 0f);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_Cutoff", 0f);
+            mat.SetFloat("_QueueOffset", 0f);
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.renderQueue = (int)RenderQueue.Transparent;
         }
 
         static void ApplyColor(Material mat, Color color)

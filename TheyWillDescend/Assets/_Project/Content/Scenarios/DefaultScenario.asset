@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3acf798da9a28ef47acfa48328656aee, type: 3}
   m_Name: DefaultScenario
   m_EditorClassIdentifier: TheyWillDescend.Content::TheyWillDescend.Content.ScenarioDefinition
-  buildings: []
+  buildings:
+  - TypeId: kitchen
+    Cluster: 100
+    Radial: 7
   startingStock:
   - Resource: {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
     Amount: 1000

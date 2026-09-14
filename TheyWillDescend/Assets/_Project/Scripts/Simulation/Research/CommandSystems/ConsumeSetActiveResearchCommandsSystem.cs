@@ -18,25 +18,27 @@ namespace TheyWillDescend.Simulation.Research
             _workshops = state.GetEntityQuery(ResearchRules.FinishedWorkshopQuery);
         }
 
-        public void OnUpdate(ref SystemState state) => Run(state.EntityManager, _workshops);
-
-        public static void Run(EntityManager em, EntityQuery workshops)
+        public void OnUpdate(ref SystemState state)
         {
+            var em = state.EntityManager;
             if (!SimSessionAccess.TryGet(em, out var session)
-                || !ResearchWorld.TryGetBoard(em, out var board)
-                || !em.HasBuffer<SetActiveResearchCommand>(board))
+                || !ResearchWorld.TryGetBoard(em, out var board))
                 return;
 
-            var commands = em.GetBuffer<SetActiveResearchCommand>(board);
-            if (commands.Length == 0)
+            var query = SystemAPI.QueryBuilder().WithAll<SetActiveResearchRequest>().Build();
+            if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var hasWorkshop = !workshops.IsEmptyIgnoreFilter;
-            var copy = commands.ToNativeArray(Allocator.Temp);
-            commands.Clear();
-            for (var i = 0; i < copy.Length; i++)
-                ResearchRules.TryStart(em, session, copy[i].TechId, hasWorkshop);
-            copy.Dispose();
+            var hasWorkshop = !_workshops.IsEmptyIgnoreFilter;
+            using var requestEntities = query.ToEntityArray(Allocator.Temp);
+            using var requests = query.ToComponentDataArray<SetActiveResearchRequest>(Allocator.Temp);
+
+            for (var i = 0; i < requests.Length; i++)
+            {
+                ResearchRules.TryStart(em, session, requests[i].TechId, hasWorkshop);
+                em.DestroyEntity(requestEntities[i]);
+            }
         }
     }
 }
+

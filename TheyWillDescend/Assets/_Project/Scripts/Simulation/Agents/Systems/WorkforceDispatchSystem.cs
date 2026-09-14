@@ -13,6 +13,7 @@ namespace TheyWillDescend.Simulation.Agents
     /// and releases workers when a building is paused, dismantled, or has its DesiredWorkers reduced.
     /// Self-heals when agents die or spawn without requiring transactional commands or rollbacks.
     /// </summary>
+    [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(AdvanceAgentCommuteSystem))]
     public partial struct WorkforceDispatchSystem : ISystem
@@ -23,7 +24,9 @@ namespace TheyWillDescend.Simulation.Agents
             state.RequireForUpdate<Workplace>();
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
+
         {
             var assignedCounts = new NativeHashMap<int, int>(32, Allocator.Temp);
             var idleAgents = new NativeList<Entity>(64, Allocator.Temp);
