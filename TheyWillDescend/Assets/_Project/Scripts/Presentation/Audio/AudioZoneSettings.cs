@@ -4,6 +4,28 @@ using FMODUnity;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
+    /// Как плотность зоны превращается в слышимость случайных городских звуков.
+    /// </summary>
+    public enum SfxRandomIntensityMode
+    {
+        /// <summary>
+        /// Плавный режим: интенсивность = кривая от плотности зоны, summed по всем
+        /// активным зонам. District с 3 постройками звучит тихе и реже, чем dense
+        /// district с 30; несколько слабых зон складываются в нормальную громкость.
+        /// </summary>
+        Linear = 0,
+
+        /// <summary>
+        /// Ступенчатый режим: интенсивность округляется до 0, 1/3, 2/3 или 1
+        /// (пустырь / тихо / плотно / город). Внутри ступени громкость и частота
+        /// одинаковые — ступень видна и слышна как явный порог.
+        /// </summary>
+        Stepped = 1,
+    }
+
+    /// <summary>
+
+
     /// Настройки аудио-зон. Геометрия 1 в 1 с основной сеткой города: тот же
     /// внутренний радиус (InnerRadius) и тот же внешний (InnerRadius + RingCount*RadialStep).
     /// 10 угловых секторов × 5 радиальных полос = 50 ячеек, растянуты равномерно.
@@ -45,9 +67,42 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("Гистерезис возрождения зоны (м), чтобы инстанс не дёргался на границе.")]
         [SerializeField] float zoneDeathHysteresis = 5f;
 
+        [Header("Random Town SFX (живчик города)")]
+        [Tooltip("Одноразовый ивент городских случайностей. Лежит в том же банке, что и основной амбиент. Перетаскивается из FMOD Studio.")]
+        [SerializeField] EventReference sfxRandomEventReference;
+
+        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан.")]
+        [SerializeField] string sfxRandomEventPath = "event:/Ambience_Town_SFX_Random";
+
+        [Tooltip("Вероятность выстрела зоны в тик планировщика (независимый бросок на каждую активную зону).")]
+        [Range(0f, 1f)]
+        [SerializeField] float sfxRandomChance = 0.25f;
+
+        [Tooltip("Интервал тика планировщика (сек). Как часто зоны тянут жребий.")]
+        [SerializeField] float sfxRandomTickInterval = 2.5f;
+
+        [Tooltip("Кулдаун зоны после выстрела (сек). Не даёт одной и той же зоне стрелять подряд.")]
+        [SerializeField] float sfxRandomZoneCooldown = 15f;
+
+        [Tooltip("Разброс кулдауна (0–1). Реализует зоны друг относительно друга, чтобы не было залпа в один момент.")]
+        [Range(0f, 1f)]
+        [SerializeField] float sfxRandomCooldownJitter = 0.5f;
+
+        [Tooltip("Сколько таких звуков может играть одновременно во всём мире.")]
+        [SerializeField] int sfxRandomMaxConcurrent = 4;
+
+        [Tooltip("Радиус разброса точки звука вокруг постройки (м).")]
+        [SerializeField] float sfxRandomJitterRadius = 1.5f;
+
+        [Tooltip("Запас к потолку жизни инстанса сверх длины ивента (сек). На длительность НЕ влияет — звук доигрывает сам, это только страховка от утечки.")]
+        [SerializeField] float sfxRandomLifetimeMargin = 2f;
+
         [Header("Debug")]
         [Tooltip("Логировать вход/выход зон в консоль.")]
         [SerializeField] bool logZoneActivity = false;
+
+        [Tooltip("Логировать выстрелы случайных городских звуков.")]
+        [SerializeField] bool logSfxRandom = false;
 
         public int AngularSectors => angularSectors > 0 ? angularSectors : 1;
         public int RadialBands => radialBands > 0 ? radialBands : 1;
@@ -86,6 +141,33 @@ namespace TheyWillDescend.Presentation.Audio
         public float ZoneDeathDistance => zoneDeathDistance;
         public float ZoneDeathHysteresis => zoneDeathHysteresis;
         public bool LogZoneActivity => logZoneActivity;
+        public bool LogSfxRandom => logSfxRandom;
+
+        public EventReference SfxRandomEventReference => sfxRandomEventReference;
+        public string SfxRandomEventPath => sfxRandomEventPath;
+        public float SfxRandomChance => sfxRandomChance;
+        public float SfxRandomTickInterval => sfxRandomTickInterval > 0f ? sfxRandomTickInterval : 1f;
+        public float SfxRandomZoneCooldown => sfxRandomZoneCooldown;
+        public float SfxRandomCooldownJitter => Mathf.Clamp01(sfxRandomCooldownJitter);
+        public int SfxRandomMaxConcurrent => sfxRandomMaxConcurrent > 0 ? sfxRandomMaxConcurrent : 1;
+        public float SfxRandomJitterRadius => sfxRandomJitterRadius;
+        public float SfxRandomLifetimeMargin => Mathf.Max(0f, sfxRandomLifetimeMargin);
+
+
+
+        /// <summary>
+        /// Кривая по умолчанию: линейная зависимость плотности от интенсивности.
+        /// </summary>
+        static AnimationCurve LinearIntensityCurve()
+        {
+            return new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
+        }
+
+        void OnValidate()
+        {
+            if (sfxRandomIntensityCurve == null || sfxRandomIntensityCurve.length == 0)
+                sfxRandomIntensityCurve = LinearIntensityCurve();
+        }
 
         /// <summary>
         /// Применяет геометрию основной сетки. Возвращает true, если она изменилась

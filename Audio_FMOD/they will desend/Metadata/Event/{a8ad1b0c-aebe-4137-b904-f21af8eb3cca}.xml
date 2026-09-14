@@ -57,7 +57,7 @@
 			<destination>{b6d4ff4f-3d75-4a61-8a62-c2e205506122}</destination>
 		</relationship>
 		<relationship name="output">
-			<destination>{c82f6295-5ab8-436b-a8e1-11837ed78744}</destination>
+			<destination>{e8e1016a-0c44-45c8-9d38-94a842fc1f15}</destination>
 		</relationship>
 	</object>
 	<object class="EventAutomatableProperties" id="{7a41cc7f-4913-49f9-af14-6fdaeac6de82}">
@@ -72,6 +72,9 @@
 		</property>
 		<property name="maximumDistance">
 			<value>60</value>
+		</property>
+		<property name="triggerCooldown">
+			<value>5000</value>
 		</property>
 	</object>
 	<object class="MarkerTrack" id="{61420061-51fd-44da-9b27-1522a148130d}" />

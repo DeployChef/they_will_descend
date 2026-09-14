@@ -292,6 +292,10 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         {
             GameLog.Info("AudioZoneManager: hot reload banks started.");
 
+            // Случайные городские звуки лежат в том же банке — их инстансы
+            // тоже сошлются на выгружаемые ивенты. Глушим их до выгрузки.
+            FindFirstObjectByType<ZoneAmbienceSfxScheduler>()?.SilenceAll();
+
             // Глушим все зоны до выгрузки банков (инстансы ссылаются на ивенты).
             DisposeZones();
 

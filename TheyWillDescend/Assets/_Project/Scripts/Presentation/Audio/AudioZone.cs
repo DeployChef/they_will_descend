@@ -44,6 +44,12 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Список активных источников звука в этой зоне.</summary>
         private readonly List<BuildingAudioSource> _audioSources = new();
 
+        /// <summary>Центр основной сетки (нужен для случайных точек внутри зоны).</summary>
+        private float3 _gridCenter;
+
+        /// <summary>Буфер позиций построек для случайного выбора точки звука.</summary>
+        private readonly List<Vector3> _positionCandidates = new();
+
         public AudioZone(int sector, int radial, AudioZoneSettings settings)
         {
             Sector = sector;
@@ -64,6 +70,8 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         public void SetWorldPosition(float3 gridCenter)
         {
+            _gridCenter = gridCenter;
+
             // Угол середины сектора (не края!).
             var sectorAngle = _settings.SectorAngle * (Sector + 0.5f) * Mathf.Deg2Rad;
             var radius = _settings.InnerRadius + (Radial + 0.5f) * _settings.ZoneDepth;
@@ -148,6 +156,45 @@ namespace TheyWillDescend.Presentation.Audio
             };
 
             Instance.set3DAttributes(attributes);
+        }
+
+        /// <summary>
+        /// Случайная мировая точка для одноразового городского звука внутри зоны:
+        /// у случайной живой постройки с небольшим разбросом, а если живых построек
+        /// нет — случайная точка самого конуса зоны (сектор × полоса).
+        /// </summary>
+        public Vector3 GetRandomSoundPosition(float jitterRadius)
+        {
+            _positionCandidates.Clear();
+            for (var i = 0; i < _audioSources.Count; i++)
+            {
+                var src = _audioSources[i];
+                if (src == null || !src.enabled || !src.gameObject.activeInHierarchy)
+                    continue;
+
+                _positionCandidates.Add(src.transform.position);
+            }
+
+            if (_positionCandidates.Count > 0)
+            {
+                var buildingPos = _positionCandidates[UnityEngine.Random.Range(0, _positionCandidates.Count)];
+                return buildingPos + RandomOffsetXZ(jitterRadius);
+            }
+
+            var angle = (Sector + UnityEngine.Random.value) * _settings.SectorAngle * Mathf.Deg2Rad;
+            var radius = _settings.InnerRadius + (Radial + UnityEngine.Random.value) * _settings.ZoneDepth;
+            return (Vector3)_gridCenter + new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)) * radius;
+        }
+
+        /// <summary>Случайное горизонтальное смещение внутри круга заданного радиуса.</summary>
+        static Vector3 RandomOffsetXZ(float radius)
+        {
+            if (radius <= 0f)
+                return Vector3.zero;
+
+            var angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+            var r = radius * Mathf.Sqrt(UnityEngine.Random.value);
+            return new Vector3(Mathf.Cos(angle) * r, 0f, Mathf.Sin(angle) * r);
         }
 
         /// <summary>
