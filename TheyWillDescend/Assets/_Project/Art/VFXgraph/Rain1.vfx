@@ -267,22 +267,6 @@ MonoBehaviour:
     max: 10
     enumValues: []
     descendantCount: 0
-  - name: BurstLifetime
-    path: BurstLifetime
-    tooltip: 
-    space: -1
-    spaceable: 0
-    sheetType: m_Float
-    realType: Single
-    defaultValue:
-      m_Type:
-        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 3
-    min: 1
-    max: 3
-    enumValues: []
-    descendantCount: 0
   - name: BurstSize
     path: BurstSize
     tooltip: 
@@ -313,6 +297,22 @@ MonoBehaviour:
       m_SerializableObject: '{"colorKeys":[{"color":{"r":1.0,"g":1.0,"b":1.0,"a":1.0},"time":0.0},{"color":{"r":1.0,"g":1.0,"b":1.0,"a":1.0},"time":1.0}],"alphaKeys":[{"alpha":0.0,"time":0.0},{"alpha":1.0,"time":0.10000763088464737},{"alpha":0.800000011920929,"time":0.800000011920929},{"alpha":0.0,"time":1.0}],"gradientMode":0}'
     min: -Infinity
     max: Infinity
+    enumValues: []
+    descendantCount: 0
+  - name: BurstLifetime
+    path: BurstLifetime
+    tooltip: 
+    space: -1
+    spaceable: 0
+    sheetType: m_Float
+    realType: Single
+    defaultValue:
+      m_Type:
+        m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+      m_SerializableObject: 3
+    min: 1
+    max: 3
     enumValues: []
     descendantCount: 0
   m_ImportDependencies: []
@@ -4306,7 +4306,7 @@ MonoBehaviour:
   - {fileID: 8926484042661614945}
   m_ExposedName: RainGradient
   m_Exposed: 1
-  m_Order: 7
+  m_Order: 6
   m_Category: MainRain
   m_Min:
     m_Type:
@@ -6411,7 +6411,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615032}
   m_ExposedName: BurstRate
   m_Exposed: 1
-  m_Order: 0
+  m_Order: 7
   m_Category: RainBurst
   m_Min:
     m_Type:
@@ -6627,7 +6627,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615041}
   m_ExposedName: BurstSize
   m_Exposed: 1
-  m_Order: 2
+  m_Order: 8
   m_Category: RainBurst
   m_Min:
     m_Type:
@@ -6780,7 +6780,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615045}
   m_ExposedName: BurstGradient
   m_Exposed: 1
-  m_Order: 3
+  m_Order: 9
   m_Category: RainBurst
   m_Min:
     m_Type:
@@ -8005,7 +8005,7 @@ MonoBehaviour:
   - {fileID: 8926484042661615251}
   m_ExposedName: BurstLifetime
   m_Exposed: 1
-  m_Order: 1
+  m_Order: 10
   m_Category: RainBurst
   m_Min:
     m_Type:
