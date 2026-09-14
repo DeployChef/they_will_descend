@@ -1,0 +1,308 @@
+Playback::frame, 0
+Playback::version, 2, 131857
+#
+# FMOD v2.03.11 command capture
+#   System::setSoftwareChannels(numsoftwarechannels: 64)
+#   System::setDSPBufferSize(bufferlength: 512, numbuffers: 4)
+#   System::setSoftwareFormat(samplerate: 48000, speakermode: 6, numrawspeakers: 6)
+#   System::setAdvancedSettings(settings: {maxMPEGCodecs: 0, maxADPCMCodecs: 0, maxXMACodecs: 0, maxVorbisCodecs: 0, maxAT9Codecs: 0, maxFADPCMCodecs: 0, maxOpusCodecs: 0
+#       ASIONumChannels: 0, vol0virtualvol: -1, defaultDecodeBufferSize: 400, geometryMaxFadeTime: 0,
+#       distanceFilterCenterFreq: 1500, reverb3Dinstance: 0, DSPBufferPoolSize: 8, resamplerMethod: 2, randomSeed: 0})
+#   Studio::System::setAdvancedSettings(settings: {commandqueuesize: 32768, handleinitialsize: 65536, studioupdateperiod: 20, idlesampledatapoolsize: 262144})
+#   Studio::System::initialize(maxchannels: 1024, studioflags: 0x00000024, flags: 0x00520000)
+#
+Playback::frame, 0
+# Printing initial instance state
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, true
+System::setParameterByName, Distance , 0.335, false
+# Finished printing initial instance state
+Playback::frame, 512
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 1024
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 1024
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 0
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Manager::directLoadBankMemory
+Playback::frame, 2560
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 1024
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 1024
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 1024
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 512
+System::setNumListeners, 1
+System::setListenerAttributes, 0, {{0,0,0},{0,0,0},{0,0,1},{0,1,0}}, {0,0,0}, false
+System::setListenerWeight, 0, 1
+Playback::frame, 48640
+Playback::frame, 48640
+Playback::frame, 48128
+Playback::frame, 49152
+Playback::frame, 48640
+Playback::frame, 49664
+Playback::frame, 49664
+Playback::frame, 49152
+Playback::frame, 48128
+Playback::frame, 48640
+Playback::frame, 49664
+Playback::frame, 26624
+Manager::directLoadBankMemory
+Playback::frame, 49664
+Playback::frame, 48128
+Playback::frame, 49664
+Playback::frame, 49152
+Playback::frame, 49664
+Playback::frame, 50176
+Playback::frame, 49152
+Playback::frame, 39424
+System::setParameterByID, {4060496566,2468639608}, 0.34, false
+Playback::frame, 9728
+System::setParameterByID, {4060496566,2468639608}, 0.35, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.4, false
+Playback::frame, 11264
+System::setParameterByID, {4060496566,2468639608}, 0.43, false
+Playback::frame, 9216
+System::setParameterByID, {4060496566,2468639608}, 0.485, false
+Playback::frame, 16384
+System::setParameterByID, {4060496566,2468639608}, 0.505, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.535, false
+Playback::frame, 2560
+System::setParameterByID, {4060496566,2468639608}, 0.545, false
+System::setParameterByID, {4060496566,2468639608}, 0.535, false
+Playback::frame, 36352
+System::setParameterByID, {4060496566,2468639608}, 0.54, false
+Playback::frame, 8704
+System::setParameterByID, {4060496566,2468639608}, 0.55, false
+Playback::frame, 23040
+System::setParameterByID, {4060496566,2468639608}, 0.555, false
+Playback::frame, 46592
+System::setParameterByID, {4060496566,2468639608}, 0.575, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.605, false
+Playback::frame, 512
+System::setParameterByID, {4060496566,2468639608}, 0.615, false
+Playback::frame, 17408
+System::setParameterByID, {4060496566,2468639608}, 0.63, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.65, false
+Playback::frame, 9216
+System::setParameterByID, {4060496566,2468639608}, 0.655, false
+Playback::frame, 5632
+System::setParameterByID, {4060496566,2468639608}, 0.675, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 0.685, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.695, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.7, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.705, false
+Playback::frame, 1024
+System::setParameterByID, {4060496566,2468639608}, 0.735, false
+Playback::frame, 6656
+System::setParameterByID, {4060496566,2468639608}, 0.755, false
+Playback::frame, 2048
+System::setParameterByID, {4060496566,2468639608}, 0.765, false
+Playback::frame, 11776
+System::setParameterByID, {4060496566,2468639608}, 0.785, false
+Playback::frame, 11264
+System::setParameterByID, {4060496566,2468639608}, 0.93, false
+Playback::frame, 6656
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 9216
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 2560
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 5632
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 2560
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 2048
+System::setParameterByID, {4060496566,2468639608}, 1, false
+Playback::frame, 50176
+Playback::frame, 50688
+Playback::frame, 48128
+Playback::frame, 49152
+Playback::frame, 48640
+Playback::frame, 50688
+Playback::frame, 50688
+Playback::frame, 49664
+Playback::frame, 48640
+Playback::frame, 50688
+Playback::frame, 49664
+Playback::frame, 48128
+Playback::frame, 48640
+Playback::frame, 49152
+Playback::frame, 50688
+Playback::frame, 49664
+Playback::frame, 50688
+Playback::frame, 49664
+Playback::frame, 48128
+Playback::frame, 50176
+Playback::frame, 49152
+Playback::frame, 49152
+Playback::frame, 51200
+Playback::frame, 50176
+Playback::frame, 49664
+Playback::frame, 49664
+Playback::frame, 36352
+Manager::directLoadBankMemory
+Playback::frame, 50688
+Playback::frame, 48128
+Playback::frame, 49152
+Playback::frame, 48640
+Playback::frame, 13824
+Manager::directLoadBankMemory
+Playback::frame, 51200
+Playback::frame, 48128
+Playback::frame, 49152
+Playback::frame, 17408
+Manager::directLoadBankMemory
+Playback::frame, 48640
+Playback::frame, 51712
+Playback::frame, 49152
+Playback::frame, 52224
+Playback::frame, 51200
+Playback::frame, 50176
+Playback::frame, 51200
+Playback::frame, 50176
+Playback::frame, 50176
+Playback::frame, 50176
+Playback::frame, 49664
+Playback::frame, 50688
+Playback::frame, 48640
+Playback::frame, 48128
+Playback::frame, 52224
+Playback::frame, 51712
+Playback::frame, 49664
+Playback::frame, 51712
+Playback::frame, 49664
+Playback::frame, 51712
+Playback::frame, 50688
+Playback::frame, 49152
+Playback::frame, 49664
+Playback::frame, 50176
+Playback::frame, 51712
+Playback::frame, 49152
+Playback::frame, 50688
+Playback::frame, 51712
+Playback::frame, 49152
+Playback::frame, 49152
+Playback::frame, 48640
+Playback::frame, 50688
+Playback::frame, 52736
+Playback::frame, 50688
+Playback::frame, 51712
+Playback::frame, 51712
+Playback::frame, 50688
+Playback::frame, 31232
+Manager::directLoadBankMemory
+Playback::frame, 53248
+Playback::frame, 20480
+Manager::directLoadBankMemory
+Playback::frame, 47616
+Manager::directLoadBankMemory
+Playback::frame, 16384
+Manager::directLoadBankMemory
+Playback::frame, 48128
+Playback::frame, 50176
+Playback::frame, 42496
+Manager::directLoadBankMemory
+Playback::frame, 5120
+Manager::directLoadBankMemory
+Playback::frame, 11264
+Manager::directLoadBankMemory
+Playback::frame, 50176
+Playback::frame, 49664
+Playback::frame, 0
+Manager::directLoadBankMemory
+Playback::frame, 17408
+Manager::directLoadBankMemory
+Playback::frame, 49664
+Playback::frame, 37888
+Manager::directLoadBankMemory
+Playback::frame, 32768
+Manager::directLoadBankMemory
+Playback::frame, 48128
+Playback::frame, 50176
+Playback::frame, 49152
+Playback::frame, 49664
+Playback::frame, 6144
+Manager::directLoadBankMemory
+Playback::frame, 23040
+Manager::directLoadBankMemory
+Playback::frame, 6144
+Manager::directLoadBankMemory
+Playback::frame, 52224
+Playback::frame, 0
+Manager::directLoadBankMemory
+Playback::frame, 51712
+Playback::frame, 52736
+Playback::frame, 52224
+Playback::frame, 53248
+Playback::frame, 52224
+Playback::frame, 52736
+Playback::frame, 49152
+Playback::frame, 52736
+Playback::frame, 48640
+Playback::frame, 48128
+Playback::frame, 50176
+Playback::frame, 53248
+Playback::frame, 48640
+Playback::frame, 49664
+Playback::frame, 51200
+Playback::frame, 50176
+Playback::frame, 50688
+Playback::frame, 49664
+Playback::frame, 51200
+Playback::frame, 52224
+Playback::frame, 51200
+Playback::frame, 52224
+Playback::frame, 51200
+Playback::frame, 51200
+Playback::frame, 53248
+Playback::frame, 53760
+Playback::frame, 51200
+Playback::frame, 50176
+Playback::frame, 51712
+Playback::frame, 51200
+Playback::frame, 48128
+Playback::frame, 54272
+Playback::frame, 48640
+Playback::frame, 49664
+Playback::frame, 53760
+Playback::frame, 53760
+Playback::frame, 50176
+Playback::frame, 53760
+Playback::frame, 48128
+Playback::frame, 48128
+Playback::frame, 53760
+Playback::frame, 48640
+Playback::frame, 53760
+Playback::frame, 51712
+Playback::frame, 51200
+Playback::frame, 48640
+Playback::frame, 49664
