@@ -49,6 +49,12 @@ public class RTSCameraController : MonoBehaviour
     /// <summary>Радиус одного шага зума, вычисляется из диапазона и числа шагов.</summary>
     float StepSize => (maxRadius - minRadius) / Mathf.Max(1, zoomStepCount - 1);
 
+    /// <summary>
+    /// Камера на САМОМ дальнем шаге зума. Аудио-система глушит все локальные
+    /// инстансы зон в этом состоянии (остаётся только глобальный амбиент).
+    /// </summary>
+    public bool IsFullyZoomedOut => zoomStepCount >= 2 && targetStep >= zoomStepCount - 1;
+
     private void OnValidate()
     {
         if (camera == null) camera = GetComponent<CinemachineCamera>();

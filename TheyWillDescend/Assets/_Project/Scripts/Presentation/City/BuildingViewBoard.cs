@@ -4,6 +4,7 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Presentation.Audio;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -24,6 +25,7 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+        [SerializeField] AudioZoneManager audioZoneManager;
 
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
@@ -214,6 +216,8 @@ namespace TheyWillDescend.Presentation.City
                 GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
 
             var overlay = SpawnOverlay(building, center);
+            RegisterAudioSource(house, position);
+
             var placed = new PlacedView
             {
                 Root = house,
@@ -272,6 +276,40 @@ namespace TheyWillDescend.Presentation.City
                 ? em.GetComponentData<Building>(entity).TypeId.ToString()
                 : building.TypeId.ToString();
             return source.FindPrefab(typeId);
+        }
+
+        void RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
+        {
+            // Менеджер живёт в Bootstrap-сцене (грузится additive), сериализованная
+            // ссылка из Game-сцены невозможна — ищем автоматически.
+            if (audioZoneManager == null)
+                audioZoneManager = FindFirstObjectByType<AudioZoneManager>();
+            if (audioZoneManager == null)
+                return;
+
+            // Ищем аудио-источник на префабе или создаём.
+            var audioSource = buildingGo.GetComponent<BuildingAudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = buildingGo.AddComponent<BuildingAudioSource>();
+            }
+
+            // Находим ближайшую зону.
+            var zone = audioZoneManager.FindZoneNear((Vector3)worldPosition);
+            if (zone != null)
+            {
+                audioSource.LinkedZone = zone;
+
+                // Явная регистрация: OnEnable у BuildingAudioSource срабатывает
+                // в момент AddComponent, когда LinkedZone ещё null — там
+                // зарегистрироваться невозможно. Регистрируем здесь.
+                zone.AddAudioSource(audioSource);
+
+                // Мгновенная активация: если зона уже в поле зрения камеры,
+                // звук появляется сразу после постройки, без ожидания тика.
+                if (zone.IsVisible && !zone.IsActive)
+                    zone.SetActive(true);
+            }
         }
 
         void DestroyView(int buildingId)

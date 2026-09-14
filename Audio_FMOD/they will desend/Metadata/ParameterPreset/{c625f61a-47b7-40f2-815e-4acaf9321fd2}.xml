@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{c625f61a-47b7-40f2-815e-4acaf9321fd2}">
+		<property name="name">
+			<value>Wheel_Scroll</value>
+		</property>
+		<relationship name="folder">
+			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{b8c80d56-7ba5-47ea-a0db-e7eb800820a9}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{b8c80d56-7ba5-47ea-a0db-e7eb800820a9}">
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

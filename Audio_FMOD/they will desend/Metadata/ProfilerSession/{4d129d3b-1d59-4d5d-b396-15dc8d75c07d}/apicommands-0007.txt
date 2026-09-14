@@ -1,0 +1,2425 @@
+Playback::frame, 0
+Playback::version, 2, 131857
+#
+# FMOD v2.03.11 command capture
+#   System::setSoftwareChannels(numsoftwarechannels: 256)
+#   System::setDSPBufferSize(bufferlength: 512, numbuffers: 4)
+#   System::setSoftwareFormat(samplerate: 48000, speakermode: 3, numrawspeakers: 2)
+#   System::setAdvancedSettings(settings: {maxMPEGCodecs: 0, maxADPCMCodecs: 0, maxXMACodecs: 0, maxVorbisCodecs: 256, maxAT9Codecs: 0, maxFADPCMCodecs: 0, maxOpusCodecs: 0
+#       ASIONumChannels: 0, vol0virtualvol: 0, defaultDecodeBufferSize: 400, geometryMaxFadeTime: 0,
+#       distanceFilterCenterFreq: 1500, reverb3Dinstance: 0, DSPBufferPoolSize: 8, resamplerMethod: 2, randomSeed: 2464088689})
+#   Studio::System::setAdvancedSettings(settings: {commandqueuesize: 32768, handleinitialsize: 65536, studioupdateperiod: 20, idlesampledatapoolsize: 262144})
+#   Studio::System::initialize(maxchannels: 1024, studioflags: 0x00000009, flags: 0x00030000)
+#
+Playback::frame, 0
+# Printing initial instance state
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank, 0, 2097280
+Playback::loadBankFinished, {9cf21517-c38e-0d72-375b-1a90fa83821d}, 2097280, 0
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Master.bank, 0, 2097536
+Playback::loadBankFinished, {04ef35c3-b2f5-4130-b112-906e0b708485}, 2097536, 0
+Bank::getBusListItem, 2097536, 0, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Town.bank, 0, 2097792
+Playback::loadBankFinished, {123b7101-03ea-4710-bd91-251c04365545}, 2097792, 0
+Bank::getEventListItem, 2097792, 0, {cadb07b9-309c-49a6-a9f8-523539410f4a}, 2098816
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank, 0, 2098048
+Playback::loadBankFinished, {cf19d234-3d96-481d-9fdb-3d44bba28e03}, 2098048, 0
+Bank::getEventListItem, 2098048, 0, {102f6c50-f56b-4adc-8005-2fadacdf7abb}, 2099072
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Main_theme.bank, 0, 2098304
+Playback::loadBankFinished, {aa22e29b-ec28-428e-a101-d1d54faf3fb6}, 2098304, 0
+Bank::getEventListItem, 2098304, 0, {d68cf6f6-e70f-478f-8b13-d298efd17852}, 2099328
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {-23.2338,10.5505,-3.47582}, true
+System::setParameterByName, Distance , 0.311451, false
+EventDescription::createInstance, 2098816, 2102912
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::setTimelinePosition, 2102912, 752
+EventInstance::start, 2102912
+EventDescription::createInstance, 2099072, 2100864
+EventInstance::setTimelinePosition, 2100864, 6021
+EventInstance::start, 2100864
+# Finished printing initial instance state
+Playback::frame, 15360
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 10240
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 17408
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.2338,10.5505,-3.47582},{0,0,0},{0.929351,-0.34202,0.139033},{0.338256,0.939693,0.0506038}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.878,10.5505,-5.33713},{0,0,0},{0.915121,-0.34202,0.213486},{0.333077,0.939693,0.0777023}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.8541,10.5505,-5.43859},{0,0,0},{0.914165,-0.34202,0.217544},{0.332729,0.939693,0.0791794}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.8528,10.5505,-5.44414},{0,0,0},{0.914112,-0.34202,0.217766},{0.332709,0.939693,0.0792602}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-21.525,10.5505,-9.41078},{0,0,0},{0.861001,-0.34202,0.376431},{0.313379,0.939693,0.13701}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-20.5473,10.5505,-11.3884},{0,0,0},{0.821894,-0.34202,0.455536},{0.299145,0.939693,0.165802}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-18.1161,10.5505,-14.9564},{0,0,0},{0.724646,-0.34202,0.598256},{0.26375,0.939693,0.217747}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-18.1076,10.5505,-14.9667},{0,0,0},{0.724304,-0.34202,0.59867},{0.263625,0.939693,0.217898}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-13.3316,10.5505,-19.3431},{0,0,0},{0.533264,-0.34202,0.773726},{0.194092,0.939693,0.281613}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-10.4048,10.5505,-21.0625},{0,0,0},{0.416192,-0.34202,0.8425},{0.151482,0.939693,0.306645}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-2.22537,10.5505,-23.3867},{0,0,0},{0.089015,-0.34202,0.935467},{0.0323988,0.939693,0.340482}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2102912, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{9.79089,10.5505,-21.3548},{0,0,0},{-0.391636,-0.34202,0.854192},{-0.142544,0.939693,0.3109}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{20.9799,10.5505,-10.5704},{0,0,0},{-0.839195,-0.34202,0.422817},{-0.305442,0.939693,0.153893}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::stop, 2102912, 0
+EventInstance::release, 2102912
+System::setListenerAttributes, 0, {{22.9865,10.5505,4.84888},{0,0,0},{-0.919458,-0.34202,-0.193955},{-0.334655,0.939693,-0.0705939}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{22.9774,10.5505,4.89161},{0,0,0},{-0.919096,-0.34202,-0.195664},{-0.334524,0.939693,-0.071216}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{20.1326,10.5505,12.1064},{0,0,0},{-0.805306,-0.34202,-0.484257},{-0.293107,0.939693,-0.176255}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{16.9032,10.5505,16.3147},{0,0,0},{-0.676129,-0.34202,-0.652588},{-0.246091,0.939693,-0.237523}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{4.35249,10.5505,23.0856},{0,0,0},{-0.1741,-0.34202,-0.923424},{-0.0633671,0.939693,-0.336099}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.42215,10.5505,23.4492},{0,0,0},{-0.0568861,-0.34202,-0.937969},{-0.0207048,0.939693,-0.341393}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33307,10.5505,23.4545},{0,0,0},{-0.0533228,-0.34202,-0.938179},{-0.0194079,0.939693,-0.341469}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 11264
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 2048
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 11264
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventDescription::createInstance, 2098816, 2103424
+EventInstance::set3DAttributes, 2103424, {{1e+17,1e+17,1e+17},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::start, 2103424
+EventInstance::set3DAttributes, 2103424, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::set3DAttributes, 2103424, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.432492, true
+System::setListenerAttributes, 0, {{1.75643,51.4287,30.9273},{0,0,0},{-0.0301103,-0.847349,-0.530183},{-0.0480455,0.531037,-0.845986}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.6172, true
+EventInstance::stop, 2103424, 0
+EventInstance::release, 2103424
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 16384
+System::setParameterByID, {4060496566,2468639608}, 0.780472, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.942133, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.957191, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 2048
+System::setParameterByID, {4060496566,2468639608}, 0.972532, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.978322, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.985558, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 0.991454, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.996846, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.997526, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.99831, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.998987, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.999398, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 13312
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{2.12629,66.9519,37.4397},{0,0,0},{-0.0283505,-0.866025,-0.499196},{-0.0491045,0.5,-0.864632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{1.79246,53.7124,31.5617},{0,0,0},{-0.0295738,-0.853205,-0.520737},{-0.0483775,0.521576,-0.851833}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.981981, true
+EventDescription::createInstance, 2098816, 2103936
+EventInstance::set3DAttributes, 2103936, {{1e+17,1e+17,1e+17},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::start, 2103936
+EventInstance::set3DAttributes, 2103936, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::set3DAttributes, 2103936, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.828973, true
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 0.740639, true
+EventInstance::set3DAttributes, 2103936, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.66124, true
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 2048
+System::setParameterByID, {4060496566,2468639608}, 0.643911, true
+EventInstance::set3DAttributes, 2103936, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.638363, true
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.631632, true
+EventInstance::set3DAttributes, 2103936, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.625602, true
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.621996, true
+EventInstance::set3DAttributes, 2103936, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{1.66684,31.5283,29.3498},{0,0,0},{-0.0400042,-0.70868,-0.704395},{-0.0401828,0.70553,-0.70754}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.619683, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.506174, true
+EventInstance::stop, 2103936, 0
+EventInstance::release, 2103936
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 10240
+System::setParameterByID, {4060496566,2468639608}, 0.427328, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.36402, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.340157, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.330351, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.326469, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.322111, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.318184, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.315692, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 10240
+System::setParameterByID, {4060496566,2468639608}, 0.314078, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 2048
+System::setParameterByID, {4060496566,2468639608}, 0.312551, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.312331, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.312102, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.33204,10.5505,23.4545},{0,0,0},{-0.0532815,-0.34202,-0.938181},{-0.0193929,0.939693,-0.34147}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-0.391417,10.5505,23.4891},{0,0,0},{0.0156567,-0.34202,-0.939562},{0.00569857,0.939693,-0.341973}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-10.3441,10.5505,21.0924},{0,0,0},{0.413765,-0.34202,-0.843695},{0.150598,0.939693,-0.30708}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventDescription::createInstance, 2098816, 2104448
+EventInstance::set3DAttributes, 2104448, {{1e+17,1e+17,1e+17},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::start, 2104448
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2365,10.5505,3.45728},{0,0,0},{0.929461,-0.34202,-0.138291},{0.338296,0.939693,-0.0503339}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7118,10.5505,-6.00522},{0,0,0},{0.908472,-0.34202,0.240209},{0.330657,0.939693,0.0874288}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01635},{0,0,0},{0.908354,-0.34202,0.240654},{0.330614,0.939693,0.0875909}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 13312
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 8192
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-22.7089,10.5505,-6.01637},{0,0,0},{0.908354,-0.34202,0.240655},{0.330614,0.939693,0.0875911}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104448, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-23.2965,10.5505,3.02649},{0,0,0},{0.931862,-0.34202,-0.12106},{0.33917,0.939693,-0.0440622}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-3.4126,10.5505,23.2431},{0,0,0},{0.136504,-0.34202,-0.929725},{0.0496835,0.939693,-0.338392}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::stop, 2104448, 0
+EventInstance::release, 2104448
+System::setListenerAttributes, 0, {{16.3659,10.5505,16.8537},{0,0,0},{-0.654635,-0.34202,-0.674148},{-0.238268,0.939693,-0.24537}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{22.6157,10.5505,-6.35742},{0,0,0},{-0.90463,-0.34202,0.254297},{-0.329258,0.939693,0.0925565}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventDescription::createInstance, 2098816, 2104960
+EventInstance::set3DAttributes, 2104960, {{1e+17,1e+17,1e+17},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::start, 2104960
+EventInstance::set3DAttributes, 2104960, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::set3DAttributes, 2104960, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{7.91448,10.5505,-22.119},{0,0,0},{-0.316579,-0.34202,0.88476},{-0.115225,0.939693,0.322026}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 11264
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-1.41977,10.5505,-23.4494},{0,0,0},{0.0567907,-0.34202,0.937975},{0.0206701,0.939693,0.341395}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104960, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-21.2682,10.5505,-9.97752},{0,0,0},{0.850729,-0.34202,0.399101},{0.30964,0.939693,0.145261}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-21.2832,10.5505,-9.9455},{0,0,0},{0.851329,-0.34202,0.39782},{0.309859,0.939693,0.144795}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104960, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-21.2833,10.5505,-9.94536},{0,0,0},{0.851332,-0.34202,0.397814},{0.30986,0.939693,0.144793}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-21.2833,10.5505,-9.94535},{0,0,0},{0.851332,-0.34202,0.397814},{0.30986,0.939693,0.144793}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104960, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-21.2833,10.5505,-9.94535},{0,0,0},{0.851332,-0.34202,0.397814},{0.30986,0.939693,0.144793}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-23.3727,10.5505,-2.36717},{0,0,0},{0.93491,-0.34202,0.0946869},{0.340279,0.939693,0.0344632}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::set3DAttributes, 2104960, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-18.9106,10.5505,13.9383},{0,0,0},{0.756426,-0.34202,-0.557533},{0.275316,0.939693,-0.202925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.51328,10.5505,23.4435},{0,0,0},{-0.0605311,-0.34202,-0.937741},{-0.0220315,0.939693,-0.34131}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::stop, 2104960, 0
+EventInstance::release, 2104960
+System::setListenerAttributes, 0, {{21.278,10.5505,9.9567},{0,0,0},{-0.85112,-0.34202,-0.398268},{-0.309782,0.939693,-0.144958}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 11264
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{13.6742,10.5505,-19.1025},{0,0,0},{-0.546967,-0.34202,0.7641},{-0.19908,0.939693,0.27811}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventDescription::createInstance, 2098816, 2105472
+EventInstance::set3DAttributes, 2105472, {{1e+17,1e+17,1e+17},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::start, 2105472
+EventInstance::set3DAttributes, 2105472, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+EventInstance::set3DAttributes, 2105472, {{25.8885,0,18.8091},{0,0,0},{0,0,1},{0,1,0}}
+System::setListenerAttributes, 0, {{-15.7006,10.5505,17.4751},{0,0,0},{0.628024,-0.34202,-0.699005},{0.228582,0.939693,-0.254417}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{-4.06441,10.5505,23.1381},{0,0,0},{0.162576,-0.34202,-0.925522},{0.0591729,0.939693,-0.336863}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+EventInstance::stop, 2105472, 0
+EventInstance::release, 2105472
+System::setListenerAttributes, 0, {{0.993908,10.5505,23.4713},{0,0,0},{-0.0397563,-0.34202,-0.938852},{-0.0144701,0.939693,-0.341714}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.00142,10.5505,23.471},{0,0,0},{-0.0400567,-0.34202,-0.938839},{-0.0145794,0.939693,-0.341709}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.00145,10.5505,23.471},{0,0,0},{-0.040058,-0.34202,-0.938839},{-0.0145799,0.939693,-0.341709}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.00145,10.5505,23.471},{0,0,0},{-0.040058,-0.34202,-0.938839},{-0.0145799,0.939693,-0.341709}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 4096
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.00145,10.5505,23.471},{0,0,0},{-0.040058,-0.34202,-0.938839},{-0.0145799,0.939693,-0.341709}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{1.00145,10.5505,23.471},{0,0,0},{-0.040058,-0.34202,-0.938839},{-0.0145799,0.939693,-0.341709}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{3.99934,10.5505,23.1494},{0,0,0},{-0.159974,-0.34202,-0.925976},{-0.0582256,0.939693,-0.337028}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{10.1444,10.5505,21.1892},{0,0,0},{-0.405775,-0.34202,-0.847567},{-0.14769,0.939693,-0.308489}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{15.6572,10.5505,17.514},{0,0,0},{-0.626289,-0.34202,-0.70056},{-0.227951,0.939693,-0.254983}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{17.7332,10.5505,15.4085},{0,0,0},{-0.709328,-0.34202,-0.616341},{-0.258174,0.939693,-0.22433}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{18.9892,10.5505,13.8311},{0,0,0},{-0.759567,-0.34202,-0.553246},{-0.27646,0.939693,-0.201365}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7435,10.5505,8.89442},{0,0,0},{-0.869738,-0.34202,-0.355777},{-0.316559,0.939693,-0.129492}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7502,10.5505,8.87782},{0,0,0},{-0.87001,-0.34202,-0.355113},{-0.316658,0.939693,-0.129251}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 5120
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 7168
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 12288
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 9216
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 3072
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 6144
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
+Playback::frame, 9216
+System::setParameterByID, {4060496566,2468639608}, 0.311451, true
+System::setListenerAttributes, 0, {{21.7503,10.5505,8.87777},{0,0,0},{-0.870011,-0.34202,-0.35511},{-0.316658,0.939693,-0.12925}}, {0,0,0}, false
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098560
+Bus::setMute, 2098560, false
