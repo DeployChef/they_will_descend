@@ -4,28 +4,6 @@ using FMODUnity;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// Как плотность зоны превращается в слышимость случайных городских звуков.
-    /// </summary>
-    public enum SfxRandomIntensityMode
-    {
-        /// <summary>
-        /// Плавный режим: интенсивность = кривая от плотности зоны, summed по всем
-        /// активным зонам. District с 3 постройками звучит тихе и реже, чем dense
-        /// district с 30; несколько слабых зон складываются в нормальную громкость.
-        /// </summary>
-        Linear = 0,
-
-        /// <summary>
-        /// Ступенчатый режим: интенсивность округляется до 0, 1/3, 2/3 или 1
-        /// (пустырь / тихо / плотно / город). Внутри ступени громкость и частота
-        /// одинаковые — ступень видна и слышна как явный порог.
-        /// </summary>
-        Stepped = 1,
-    }
-
-    /// <summary>
-
-
     /// Настройки аудио-зон. Геометрия 1 в 1 с основной сеткой города: тот же
     /// внутренний радиус (InnerRadius) и тот же внешний (InnerRadius + RingCount*RadialStep).
     /// 10 угловых секторов × 5 радиальных полос = 50 ячеек, растянуты равномерно.
@@ -152,22 +130,6 @@ namespace TheyWillDescend.Presentation.Audio
         public int SfxRandomMaxConcurrent => sfxRandomMaxConcurrent > 0 ? sfxRandomMaxConcurrent : 1;
         public float SfxRandomJitterRadius => sfxRandomJitterRadius;
         public float SfxRandomLifetimeMargin => Mathf.Max(0f, sfxRandomLifetimeMargin);
-
-
-
-        /// <summary>
-        /// Кривая по умолчанию: линейная зависимость плотности от интенсивности.
-        /// </summary>
-        static AnimationCurve LinearIntensityCurve()
-        {
-            return new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 1f));
-        }
-
-        void OnValidate()
-        {
-            if (sfxRandomIntensityCurve == null || sfxRandomIntensityCurve.length == 0)
-                sfxRandomIntensityCurve = LinearIntensityCurve();
-        }
 
         /// <summary>
         /// Применяет геометрию основной сетки. Возвращает true, если она изменилась
