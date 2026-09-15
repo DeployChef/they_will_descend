@@ -3,6 +3,17 @@ using UnityEngine;
 namespace TheyWillDescend.Simulation.Content
 {
     /// <summary>
+    /// UI grouping for the resource bar.
+    /// Material = left panel, Provision = right panel, Special = center (energy reservoir).
+    /// </summary>
+    public enum ResourceCategory : byte
+    {
+        Material = 0,
+        Provision = 1,
+        Special = 2
+    }
+
+    /// <summary>
     /// Design-time resource type. Not the run ledger.
     /// </summary>
     [CreateAssetMenu(
@@ -20,11 +31,15 @@ namespace TheyWillDescend.Simulation.Content
         [SerializeField]
         [Tooltip("Slider feed on the pyramid. Off for energy and later crystals.")]
         bool canFeed = true;
+        [SerializeField]
+        [Tooltip("UI panel grouping: Material (left), Provision (right), Special (center).")]
+        ResourceCategory category = ResourceCategory.Material;
 
         public string ResourceId => ContentId.Normalize(resourceId, name);
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
         public float EnergyValue => energyValue < 0f ? 0f : energyValue;
         public float StockCap => stockCap < 0f ? 0f : stockCap;
         public bool CanFeed => canFeed;
+        public ResourceCategory Category => category;
     }
 }

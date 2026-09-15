@@ -339,7 +339,8 @@ namespace TheyWillDescend.Shell
                     DisplayName = definition.DisplayName,
                     EnergyValue = definition.EnergyValue,
                     StockCap = cap,
-                    CanFeed = definition.CanFeed ? (byte)1 : (byte)0
+                    CanFeed = definition.CanFeed ? (byte)1 : (byte)0,
+                    Category = (byte)definition.Category
                 });
             }
         }

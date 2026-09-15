@@ -23,5 +23,6 @@ namespace TheyWillDescend.Simulation.Economy
         public float EnergyValue;
         public float StockCap;
         public byte CanFeed;
+        public byte Category;
     }
 }
