@@ -20,10 +20,10 @@ namespace TheyWillDescend.Presentation.Audio
 
         [Header("Grid Extent (1 в 1 с основной сеткой)")]
         [Tooltip("Внутренний радиус = InnerRadius основной сетки. В рантайме берётся из CityGrid, это fallback.")]
-        [SerializeField] float gridInnerRadius = 5f;
+        [SerializeField] float gridInnerRadius = 9f;
 
         [Tooltip("Внешний радиус = InnerRadius + RingCount * RadialStep основной сетки. В рантайме берётся из CityGrid, это fallback.")]
-        [SerializeField] float gridOuterRadius = 59f;
+        [SerializeField] float gridOuterRadius = 49.5f;
 
         [Header("FMOD")]
         [Tooltip("FMOD event для зон. Перетаскивается из FMOD Studio (как у StudioEventEmitter). Банки определяются автоматически.")]

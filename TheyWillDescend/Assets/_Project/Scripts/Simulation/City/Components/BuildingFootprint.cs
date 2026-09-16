@@ -13,6 +13,12 @@ namespace TheyWillDescend.Simulation.City
         public int DepthRadialRings;
 
         /// <summary>FP calibration: 11 such houses fit on rings 0–1.</summary>
+        public static BuildingFootprint House3x2 => new()
+        {
+            WidthClusters = 3,
+            DepthRadialRings = 2
+        };
+
         public static BuildingFootprint House6x2 => new()
         {
             WidthClusters = 6,

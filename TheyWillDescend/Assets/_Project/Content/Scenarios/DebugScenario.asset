@@ -14,17 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: TheyWillDescend.Content::TheyWillDescend.Content.ScenarioDefinition
   buildings:
   - TypeId: kitchen
-    Cluster: 39
+    Cluster: 0
+    Radial: 0
+  - TypeId: workshop
+    Cluster: 12
     Radial: 0
   - TypeId: sawmill
-    Cluster: 37
-    Radial: 5
-  - TypeId: sawmill
-    Cluster: 118
+    Cluster: 0
     Radial: 6
-  - TypeId: workshop
-    Cluster: 46
-    Radial: 3
+  - TypeId: sawmill
+    Cluster: 31
+    Radial: 6
   startingStock:
   - Resource: {fileID: 11400000, guid: e1a2b3c4d5f6478890a1b2c3d4e5f607, type: 2}
     Amount: 80

@@ -112,7 +112,7 @@ namespace TheyWillDescend.Authoring.Scenario
             var n = config.GetClusterCount(0);
             var inner = config.InnerRadius;
             var outer = config.RingLineRadius(maxRing);
-            for (var i = 0; i < n; i += 6)
+            for (var i = 0; i < n; i += 3)
             {
                 var turns = i / (float)n;
                 Gizmos.DrawLine(

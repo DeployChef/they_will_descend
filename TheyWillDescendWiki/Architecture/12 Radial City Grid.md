@@ -20,8 +20,8 @@
 | Дорогу можно вести почти куда угодно | Дороги позже — свободнее зданий |
 | Кольца уходят за камеру | `RingCount` большой; не «ровно 10 навсегда» |
 | Высота кольца небольшая | `RadialStep` относительно низкий |
-| На 1–2 кольце влезает **11 домов шириной 6** | `InnerBandClusterCount = 66` (= 11 × 6) |
-| «Шесть» = ширина по дуге | Footprint `6×2` = 6 кластеров × 2 кольца |
+| На 1–2 кольце влезает **11 домов шириной 3** | `InnerBandClusterCount = 33` (= 11 × 3) |
+| «Три» = ширина по дуге | Footprint `3×2` = 3 кластера × 2 кольца |
 | Дальше от центра секций больше | `GetClusterCount(ring)` растёт с радиусом |
 | Дома не раздуваются по ширине | Эталон: `TargetClusterWorldWidth` с кольца 0 |
 | Кольца 1–2 с одной нарезкой | Пары колец (0–1, 2–3, …) делят `clusterCount` |
@@ -91,15 +91,16 @@ C) Один AngularDivisions на все кольца → дома растут 
 
 ```text
 RadialGridConfig
-  InnerRadius, RadialStep, RingCount
-  InnerBandClusterCount = 66
+  InnerRadius = 9 (за пирамидой ~7.9 м XZ)
+  RadialStep = 2.025, RingCount = 20
+  InnerBandClusterCount = 33
 
-TargetClusterWorldWidth = 2π * RingMid(0) / 66
+TargetClusterWorldWidth = 2π * RingMid(0) / 33
 
 GetClusterCount(ring):
-  rings 0–1 → 66
+  rings 0–1 → 33
   дальше → round(2π * RingMid(bandStart) / TargetWidth)
-  (band = ring/2*2)
+  (band = ring/2*2, кратно 3)
 ```
 
 Place:

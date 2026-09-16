@@ -5,7 +5,8 @@ namespace TheyWillDescend.Simulation.City
     /// <summary>
     /// FP-like polar underlay: NO micro fine grid.
     /// Cluster count per ring is chosen so cluster world width ≈ const
-    /// (calibrated on rings 0–1: 66 clusters = 11 houses × width 6).
+    /// (calibrated on rings 0–1: 33 clusters = 11 houses × width 3).
+    /// InnerRadius sits outside the pyramid mesh (~7.9 m XZ) so ring 0 is a walkway.
     /// </summary>
     [Serializable]
     public struct RadialGridConfig
@@ -17,15 +18,15 @@ namespace TheyWillDescend.Simulation.City
 
         public int RingCount;
 
-        /// <summary>Clusters on rings 0–1 (11 × house width 6).</summary>
+        /// <summary>Clusters on rings 0–1 (11 × house width 3).</summary>
         public int InnerBandClusterCount;
 
         public static RadialGridConfig Default => new()
         {
-            InnerRadius = 5f,
-            RadialStep = 1.35f,
-            RingCount = 40,
-            InnerBandClusterCount = 66
+            InnerRadius = 9f,
+            RadialStep = 2.025f,
+            RingCount = 20,
+            InnerBandClusterCount = 33
         };
 
         public bool IsValid =>
@@ -71,9 +72,10 @@ namespace TheyWillDescend.Simulation.City
             var count = (int)Math.Round(2d * Math.PI * r / TargetClusterWorldWidth);
             if (count < InnerBandClusterCount)
                 count = InnerBandClusterCount;
-            // Prefer even packing for width-6 houses when close.
-            if (count % 2 != 0)
-                count++;
+            // Prefer packing that tiles width-3 houses.
+            var rem = count % 3;
+            if (rem != 0)
+                count += 3 - rem;
             return count;
         }
 

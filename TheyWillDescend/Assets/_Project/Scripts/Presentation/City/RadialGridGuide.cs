@@ -162,10 +162,11 @@ namespace TheyWillDescend.Presentation.City
             var origin = GetDrawOrigin();
             Gizmos.color = underlayColor;
 
-            for (var ring = 1; ring <= config.RingCount; ring++)
+            for (var ring = 0; ring <= config.RingCount; ring++)
             {
                 var radius = config.RingLineRadius(ring);
-                var segments = Mathf.Max(48, config.GetClusterCount(Mathf.Min(ring - 1, config.RingCount - 1)));
+                var cellRing = Mathf.Clamp(ring - 1, 0, config.RingCount - 1);
+                var segments = Mathf.Max(48, config.GetClusterCount(cellRing));
                 DrawGizmoCircle(origin, radius, segments);
             }
 
@@ -298,10 +299,11 @@ namespace TheyWillDescend.Presentation.City
             var verts = new List<Vector3>(8192);
             var tris = new List<int>(16384);
 
-            for (var ring = 1; ring <= config.RingCount; ring++)
+            for (var ring = 0; ring <= config.RingCount; ring++)
             {
                 var radius = config.RingLineRadius(ring);
-                var segments = Mathf.Max(48, config.GetClusterCount(Mathf.Min(ring - 1, config.RingCount - 1)));
+                var cellRing = Mathf.Clamp(ring - 1, 0, config.RingCount - 1);
+                var segments = Mathf.Max(48, config.GetClusterCount(cellRing));
                 AppendCircleRibbon(verts, tris, radius, segments, halfW);
             }
 
