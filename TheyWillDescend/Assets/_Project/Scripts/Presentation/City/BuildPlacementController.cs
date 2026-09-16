@@ -6,6 +6,7 @@ using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -164,7 +165,7 @@ namespace TheyWillDescend.Presentation.City
 
             var probeOk = RadialFootprintMath.TryExpandClusters(
                 config, snappedCluster, ring, _footprint, _clusters);
-            var probeFree = probeOk && !OverlapsOccupied(_clusters);
+            var probeFree = probeOk && !OverlapsOccupied(_clusters) && !OverlapsRoads(config, _clusters);
             var affordable = CanAfford(_typeId);
 
             if (probeFree && affordable)
@@ -584,6 +585,32 @@ namespace TheyWillDescend.Presentation.City
             }
 
             return false;
+        }
+
+        static bool OverlapsRoads(in RadialGridConfig config, List<(int cluster, int radial)> clusters)
+        {
+            if (clusters == null || clusters.Count == 0)
+                return false;
+            if (!SimWorld.TryGet(out var em, out var bag) || !em.HasBuffer<RoadSegment>(bag))
+                return false;
+            var roads = em.GetBuffer<RoadSegment>(bag);
+            if (roads.Length == 0)
+                return false;
+
+            var footprint = new NativeArray<OccupiedCell>(clusters.Count, Allocator.Temp);
+            for (var i = 0; i < clusters.Count; i++)
+            {
+                footprint[i] = new OccupiedCell
+                {
+                    Cluster = clusters[i].cluster,
+                    Radial = clusters[i].radial,
+                    BuildingId = 1
+                };
+            }
+
+            var blocked = RoadMath.FootprintBlockedByRoads(config, roads.AsNativeArray(), footprint);
+            footprint.Dispose();
+            return blocked;
         }
 
         static bool CanAfford(string typeId)

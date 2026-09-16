@@ -92,6 +92,12 @@ namespace TheyWillDescend.Shell
                 NextBuildingId = 1
             });
             EnsureBuffer<OccupiedCell>(em, session);
+            EnsureComponent(em, session, new RoadNetwork
+            {
+                SectionLength = RoadMath.SectionLength(cfg),
+                NextSegmentId = 1
+            });
+            EnsureBuffer<RoadSegment>(em, session);
 
             // Rules, Clock & PyramidConfig
             if (rules != null)
@@ -235,7 +241,8 @@ namespace TheyWillDescend.Shell
                     ConstructionCrewSlots = stamp.ConstructionCrewSlots,
                     WorkplaceSlots = stamp.WorkplaceSlots,
                     ResearchWorkplace = stamp.IsResearchWorkplace ? (byte)1 : (byte)0,
-                    RequiresUnlock = stamp.RequiresUnlock ? (byte)1 : (byte)0
+                    RequiresUnlock = stamp.RequiresUnlock ? (byte)1 : (byte)0,
+                    StrokePaint = stamp.StrokePaint ? (byte)1 : (byte)0
                 };
                 basePrototypes.Add(basePrototype);
                 prototypes.Add(basePrototype.ToResolved());

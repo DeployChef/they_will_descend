@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Research;
 using TheyWillDescend.Simulation.Session;
@@ -26,16 +27,21 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField, FormerlySerializedAs("selectCube3x6Button")] Button catalogButtonTemplate;
         [SerializeField, FormerlySerializedAs("selectCube2x2Button")] Button unusedLegacyCatalogButton;
         [SerializeField] BuildPlacementController placement;
+        [SerializeField] RoadPaintController roadPaint;
 
         readonly List<Button> _spawnedButtons = new(8);
 
         bool _catalogOpen;
         bool _placedBound;
+        bool _roadBound;
         Transform _buttonRoot;
 
         public static BuildWidget Current { get; private set; }
 
-        public bool IsBusy => _catalogOpen || (placement != null && placement.IsPlacing);
+        public bool IsBusy =>
+            _catalogOpen
+            || (placement != null && placement.IsPlacing)
+            || (roadPaint != null && roadPaint.IsPainting);
 
         void Awake()
         {
@@ -44,6 +50,7 @@ namespace TheyWillDescend.Presentation.GameHud
             HideLegacyButtons();
             SetCatalogVisible(false);
             BindPlacement();
+            BindRoadPaint();
         }
 
         void OnDestroy()
@@ -57,6 +64,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 Close(resumeSim: true);
 
             UnbindPlacement();
+            UnbindRoadPaint();
         }
 
         public bool TryHandleEscape()
@@ -85,20 +93,71 @@ namespace TheyWillDescend.Presentation.GameHud
         void BeginPlace(string typeId)
         {
             EnsurePlacement();
-            if (placement == null)
-                return;
-
+            BindRoadPaint();
             _catalogOpen = false;
             SetCatalogVisible(false);
+
+            if (IsStroke(typeId))
+            {
+                if (roadPaint == null)
+                {
+                    GameLog.Error("BuildWidget: RoadPaintController is not assigned.");
+                    Close(resumeSim: true);
+                    return;
+                }
+
+                placement?.CancelPlacing();
+                roadPaint.BeginPainting();
+                if (!roadPaint.IsPainting)
+                    Close(resumeSim: true);
+                return;
+            }
+
+            if (placement == null)
+                return;
+            roadPaint?.CancelPainting();
             placement.BeginPlacing(typeId);
             if (!placement.IsPlacing)
                 Close(resumeSim: true);
+        }
+
+        void BeginEraseRoads()
+        {
+            EnsurePlacement();
+            BindRoadPaint();
+            _catalogOpen = false;
+            SetCatalogVisible(false);
+            if (roadPaint == null)
+            {
+                GameLog.Error("BuildWidget: RoadPaintController is not assigned.");
+                Close(resumeSim: true);
+                return;
+            }
+
+            placement?.CancelPlacing();
+            roadPaint.BeginErasing();
+            if (!roadPaint.IsPainting)
+                Close(resumeSim: true);
+        }
+
+        void SpawnEraseButton()
+        {
+            if (_buttonRoot == null || catalogButtonTemplate == null)
+                return;
+            var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
+            go.name = "Catalog_EraseRoad";
+            go.SetActive(true);
+            var button = go.GetComponent<Button>();
+            SetButtonLabel(button, "Удалить дорогу");
+            HudButtons.Bind(button, BeginEraseRoads);
+            _spawnedButtons.Add(button);
         }
 
         void OpenCatalog()
         {
             EnsurePlacement();
             placement?.CancelPlacing();
+            roadPaint?.CancelPainting();
             RebuildCatalogButtons();
 
             _catalogOpen = true;
@@ -112,6 +171,7 @@ namespace TheyWillDescend.Presentation.GameHud
             _catalogOpen = false;
             SetCatalogVisible(false);
             placement?.CancelPlacing();
+            roadPaint?.CancelPainting();
 
             if (resumeSim)
                 SimCommands.TryPost(SimClockCommand.BuildLocked(false));
@@ -156,6 +216,8 @@ namespace TheyWillDescend.Presentation.GameHud
                     ? em.GetBuffer<BuildingCatalogCost>(bag)
                     : default;
                 var cost = FormatBuildingCost(costs, prototype.TypeId, names);
+                if (prototype.StrokePaint != 0 && !string.IsNullOrEmpty(cost))
+                    cost += " / секция";
                 var prefab = viewCatalog != null ? viewCatalog.FindPrefab(typeId) : null;
                 var title = BuildingView.NameOf(prefab);
                 if (string.IsNullOrEmpty(title))
@@ -167,6 +229,8 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (count == 0)
                 GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
+
+            SpawnEraseButton();
         }
 
         void EnsureButtonRoot()
@@ -248,12 +312,40 @@ namespace TheyWillDescend.Presentation.GameHud
             _placedBound = true;
         }
 
+        void BindRoadPaint()
+        {
+            if (_roadBound || roadPaint == null)
+                return;
+            roadPaint.Finished += OnPlacementFinished;
+            _roadBound = true;
+        }
+
         void UnbindPlacement()
         {
             if (!_placedBound || placement == null)
                 return;
             placement.Finished -= OnPlacementFinished;
             _placedBound = false;
+        }
+
+        void UnbindRoadPaint()
+        {
+            if (!_roadBound || roadPaint == null)
+                return;
+            roadPaint.Finished -= OnPlacementFinished;
+            _roadBound = false;
+        }
+
+        static bool IsStroke(string typeId)
+        {
+            if (typeId == RoadNetwork.TypeId)
+                return true;
+            if (!ContentId.TryEncode(typeId, out var key)
+                || !SimWorld.TryGet(out var em, out var bag)
+                || !em.HasBuffer<BuildingPrototype>(bag))
+                return false;
+            return BuildingCatalog.TryResolve(em.GetBuffer<BuildingPrototype>(bag), key, out var spec)
+                && spec.StrokePaint != 0;
         }
 
         void OnPlacementFinished()

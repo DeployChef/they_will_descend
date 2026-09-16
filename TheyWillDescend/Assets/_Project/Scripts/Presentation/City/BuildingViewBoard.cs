@@ -115,6 +115,8 @@ namespace TheyWillDescend.Presentation.City
             {
                 var building = buildings[i];
                 var entity = entities[i];
+                if (em.HasComponent<RoadSpan>(entity))
+                    continue;
                 var position = PositionOf(em, entity);
                 _seen.Add(building.Id);
                 if (!_views.TryGetValue(building.Id, out var placed) || placed?.Root == null)

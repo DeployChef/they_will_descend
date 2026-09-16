@@ -38,6 +38,9 @@ namespace TheyWillDescend.Content
         [SerializeField]
         [Tooltip("Hidden from the build catalog until a completed tech unlocks this typeId.")]
         bool requiresUnlock;
+        [SerializeField]
+        [Tooltip("Paint as polar stroke (roads). Not PlaceBuilding.")]
+        bool strokePaint;
 
         [Header("Recipe")]
         [SerializeField] bool recipe;
@@ -63,6 +66,8 @@ namespace TheyWillDescend.Content
         public bool IsResearchWorkplace => researchWorkplace && HasWorkplace;
 
         public bool RequiresUnlock => requiresUnlock;
+
+        public bool StrokePaint => strokePaint;
 
         public bool HasRecipe => recipe && (HasAnyRate(recipeInputs) || HasAnyRate(recipeOutputs));
 

@@ -36,6 +36,14 @@ namespace TheyWillDescend.Simulation.City
 
             SimEntityDestroy.DestroyQuery(em, buildings);
             em.GetBuffer<OccupiedCell>(session).Clear();
+            if (em.HasBuffer<RoadSegment>(session))
+                em.GetBuffer<RoadSegment>(session).Clear();
+            if (em.HasComponent<RoadNetwork>(session))
+            {
+                var roads = em.GetComponentData<RoadNetwork>(session);
+                roads.NextSegmentId = 1;
+                em.SetComponentData(session, roads);
+            }
             var grid = em.GetComponentData<CityGrid>(session);
             grid.NextBuildingId = 1;
             em.SetComponentData(session, grid);

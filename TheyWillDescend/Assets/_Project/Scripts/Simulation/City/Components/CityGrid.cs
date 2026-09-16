@@ -15,5 +15,6 @@ namespace TheyWillDescend.Simulation.City
     {
         public int Cluster;
         public int Radial;
+        public int BuildingId;
     }
 }

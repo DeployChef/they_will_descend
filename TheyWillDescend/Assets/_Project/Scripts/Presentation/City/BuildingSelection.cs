@@ -16,6 +16,7 @@ namespace TheyWillDescend.Presentation.City
     public sealed class BuildingSelection : MonoBehaviour
     {
         [SerializeField] BuildPlacementController placement;
+        [SerializeField] RoadPaintController roadPaint;
 
         EntityQuery _buildingQuery;
 
@@ -73,6 +74,8 @@ namespace TheyWillDescend.Presentation.City
                 return;
             if (placement != null && placement.IsPlacing)
                 return;
+            if (roadPaint != null && roadPaint.IsPainting)
+                return;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
             if (!TryPick(out var buildingId, out _))
@@ -90,6 +93,8 @@ namespace TheyWillDescend.Presentation.City
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return false;
             if (placement != null && placement.IsPlacing)
+                return false;
+            if (roadPaint != null && roadPaint.IsPainting)
                 return false;
 
             TryPick(out buildingId, out hitPyramid);

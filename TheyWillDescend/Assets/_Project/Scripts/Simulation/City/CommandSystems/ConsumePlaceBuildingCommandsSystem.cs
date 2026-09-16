@@ -111,6 +111,12 @@ namespace TheyWillDescend.Simulation.City
             }
 
 
+            if (spec.StrokePaint != 0)
+            {
+                Reject(em, session, command, BuildingRejectedEvent.StrokePaint);
+                return;
+            }
+
             if (spec.RequiresUnlock != 0
                 && command.Source == PlaceBuildingCommandSource.Gameplay
                 && !ResearchRules.IsBuildingUnlocked(em, spec.TypeId))
@@ -138,6 +144,14 @@ namespace TheyWillDescend.Simulation.City
                 return;
             }
 
+            if (em.HasBuffer<RoadSegment>(session)
+                && RoadMath.FootprintBlockedByRoads(grid.Config, em.GetBuffer<RoadSegment>(session).AsNativeArray(), clusters.AsArray()))
+            {
+                Reject(em, session, command, BuildingRejectedEvent.Overlap);
+                clusters.Dispose();
+                return;
+            }
+
             if (!TryPay(em, session, spec.TypeId, command))
             {
                 Reject(em, session, command, BuildingRejectedEvent.Unaffordable);
@@ -145,17 +159,21 @@ namespace TheyWillDescend.Simulation.City
                 return;
             }
 
+            var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
+            if (grid.NextBuildingId < id)
+                grid.NextBuildingId = id;
+
             for (var i = 0; i < clusters.Length; i++)
-                occupied.Add(clusters[i]);
+            {
+                var cell = clusters[i];
+                cell.BuildingId = id;
+                occupied.Add(cell);
+            }
             clusters.Dispose();
 
             RadialFootprintMath.FootprintMarkerPose(
                 grid.Center, grid.Config, command.AnchorCluster, command.AnchorRadial, footprint,
                 out var position, out var rotation);
-
-            var id = command.BuildingId > 0 ? command.BuildingId : grid.NextBuildingId + 1;
-            if (grid.NextBuildingId < id)
-                grid.NextBuildingId = id;
 
             var building = new Building
             {

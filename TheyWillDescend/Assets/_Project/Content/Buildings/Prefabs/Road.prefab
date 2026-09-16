@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5493344440789996224
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 276029922354768148}
+  - component: {fileID: 6015305075906412837}
+  - component: {fileID: 4597576408477260934}
+  m_Layer: 0
+  m_Name: Road
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &276029922354768148
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5493344440789996224}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6015305075906412837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5493344440789996224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cb799de7a466c84096dfb4003d278db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Content::TheyWillDescend.Content.BuildingStamp
+  typeId: road
+  widthClusters: 1
+  depthRadialRings: 1
+  constructionDuration: 5
+  constructionCrewSlots: 1
+  costs:
+  - Resource: {fileID: 11400000, guid: 7e4c1a9b2d8f4e6a9c1b3d5f7a9e2c40, type: 2}
+    Amount: 1
+  workplace: 0
+  workplaceSlots: 10
+  researchWorkplace: 0
+  requiresUnlock: 0
+  strokePaint: 1
+  recipe: 0
+  recipeInputs: []
+  recipeOutputs: []
+--- !u!114 &4597576408477260934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5493344440789996224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 155b6a2c8d31f994ab14551d52d7678a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.City.BuildingView
+  displayName: "\u0414\u043E\u0440\u043E\u0433\u0430"
+  idleColor: {r: 0.55, g: 0.55, b: 0.58, a: 1}
+  workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
+  constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
+  workingPulseHz: 1.15

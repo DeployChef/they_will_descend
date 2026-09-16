@@ -3,7 +3,8 @@ using Unity.Mathematics;
 namespace TheyWillDescend.Simulation.City
 {
     /// <summary>
-    /// Cluster/ring polar math. No fine micro-grid — roads later can be freer.
+    /// Cluster/ring polar math. Buildings snap to clusters; roads use the same
+    /// rings and rays but a finer angle along the arc.
     /// </summary>
     public static class RadialGridMath
     {

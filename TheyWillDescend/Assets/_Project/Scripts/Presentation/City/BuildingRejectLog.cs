@@ -36,6 +36,7 @@ namespace TheyWillDescend.Presentation.City
                 BuildingRejectedEvent.Overlap => "overlap",
                 BuildingRejectedEvent.Unaffordable => "not enough resources",
                 BuildingRejectedEvent.Locked => "locked by research",
+                BuildingRejectedEvent.StrokePaint => "use road paint",
                 _ => "rejected"
             };
         }

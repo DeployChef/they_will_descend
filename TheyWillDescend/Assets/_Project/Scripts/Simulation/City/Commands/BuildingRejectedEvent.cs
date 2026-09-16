@@ -13,6 +13,7 @@ namespace TheyWillDescend.Simulation.City
         public const byte Overlap = 3;
         public const byte Unaffordable = 4;
         public const byte Locked = 5;
+        public const byte StrokePaint = 6;
 
         public int AnchorCluster;
         public int AnchorRadial;

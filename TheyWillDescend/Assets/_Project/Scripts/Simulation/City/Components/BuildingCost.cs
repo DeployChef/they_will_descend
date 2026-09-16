@@ -106,6 +106,28 @@ namespace TheyWillDescend.Simulation.City
             return true;
         }
 
+        public static bool CanAffordScaled(
+            DynamicBuffer<BuildingCatalogCost> catalog,
+            in FixedString64Bytes typeId,
+            DynamicBuffer<ResourceAmount> stock,
+            int scale)
+        {
+            if (scale <= 0)
+                return true;
+            if (!catalog.IsCreated || typeId.IsEmpty)
+                return true;
+            for (var i = 0; i < catalog.Length; i++)
+            {
+                var row = catalog[i];
+                if (row.TypeId != typeId || row.Amount <= 0.0001f)
+                    continue;
+                if (!ResourceLedger.Has(stock, row.ResourceId, row.Amount * scale))
+                    return false;
+            }
+
+            return true;
+        }
+
         public static void Pay(
             DynamicBuffer<BuildingCatalogCost> catalog,
             in FixedString64Bytes typeId,
@@ -119,6 +141,23 @@ namespace TheyWillDescend.Simulation.City
                 if (row.TypeId != typeId || row.Amount <= 0.0001f)
                     continue;
                 ResourceLedger.Add(stock, row.ResourceId, -row.Amount);
+            }
+        }
+
+        public static void PayScaled(
+            DynamicBuffer<BuildingCatalogCost> catalog,
+            in FixedString64Bytes typeId,
+            DynamicBuffer<ResourceAmount> stock,
+            int scale)
+        {
+            if (scale <= 0 || !catalog.IsCreated || typeId.IsEmpty)
+                return;
+            for (var i = 0; i < catalog.Length; i++)
+            {
+                var row = catalog[i];
+                if (row.TypeId != typeId || row.Amount <= 0.0001f)
+                    continue;
+                ResourceLedger.Add(stock, row.ResourceId, -row.Amount * scale);
             }
         }
 

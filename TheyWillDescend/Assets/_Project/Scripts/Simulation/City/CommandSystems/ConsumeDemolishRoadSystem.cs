@@ -5,11 +5,13 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    public partial struct ConsumeDeconstructBuildingCommandsSystem : ISystem
+    [UpdateAfter(typeof(ConsumePlaceRoadStrokeSystem))]
+    public partial struct ConsumeDemolishRoadSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<SimSession>();
+            state.RequireForUpdate<RoadNetwork>();
         }
 
         public void OnUpdate(ref SystemState state)
@@ -18,18 +20,17 @@ namespace TheyWillDescend.Simulation.City
             if (!SimSessionAccess.TryGet(em, out var session))
                 return;
 
-            var query = SystemAPI.QueryBuilder().WithAll<DemolishBuildingRequest>().Build();
+            var query = SystemAPI.QueryBuilder().WithAll<DemolishRoadRequest>().Build();
             if (query.IsEmptyIgnoreFilter)
                 return;
 
             var lifecycle = em.GetComponentData<SimSession>(session);
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
-            using var requests = query.ToComponentDataArray<DemolishBuildingRequest>(Allocator.Temp);
-
+            using var requests = query.ToComponentDataArray<DemolishRoadRequest>(Allocator.Temp);
             for (var i = 0; i < requests.Length; i++)
             {
                 if (lifecycle.IsReady)
-                    BuildingDismantle.Begin(em, requests[i].BuildingId);
+                    RoadSections.BeginDismantle(em, session, requests[i].SegmentId);
                 em.DestroyEntity(requestEntities[i]);
             }
         }

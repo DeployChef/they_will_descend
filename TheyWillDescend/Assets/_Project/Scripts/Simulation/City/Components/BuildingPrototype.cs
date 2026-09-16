@@ -17,6 +17,7 @@ namespace TheyWillDescend.Simulation.City
         public int ConstructionCrewSlots;
         public byte ResearchWorkplace;
         public byte RequiresUnlock;
+        public byte StrokePaint;
 
         public BuildingFootprint Footprint => new()
         {
@@ -49,6 +50,7 @@ namespace TheyWillDescend.Simulation.City
         public int ConstructionCrewSlots;
         public byte ResearchWorkplace;
         public byte RequiresUnlock;
+        public byte StrokePaint;
 
         public BuildingPrototype ToResolved() => new()
         {
@@ -59,7 +61,8 @@ namespace TheyWillDescend.Simulation.City
             WorkplaceSlots = WorkplaceSlots,
             ConstructionCrewSlots = ConstructionCrew.ResolveSlots(ConstructionCrewSlots),
             ResearchWorkplace = ResearchWorkplace,
-            RequiresUnlock = RequiresUnlock
+            RequiresUnlock = RequiresUnlock,
+            StrokePaint = StrokePaint
         };
     }
 

@@ -34,6 +34,8 @@ namespace TheyWillDescend.Simulation.Session
                 && em.HasBuffer<PendingScenarioPlace>(session)
 
                 && em.HasBuffer<OccupiedCell>(session)
+                && em.HasComponent<RoadNetwork>(session)
+                && em.HasBuffer<RoadSegment>(session)
                 && em.HasBuffer<BaseBuildingPrototype>(session)
                 && em.HasBuffer<BaseBuildingCatalogCost>(session)
                 && em.HasBuffer<BaseBuildingCatalogRecipe>(session)

@@ -8,6 +8,76 @@ namespace TheyWillDescend.Simulation.City
 {
     public static class BuildingDismantle
     {
+        public static void Begin(EntityManager em, int buildingId)
+        {
+            if (buildingId <= 0 || !TryGetBuilding(em, buildingId, out var entity))
+                return;
+
+            if (em.HasComponent<Workplace>(entity))
+            {
+                var wp = em.GetComponentData<Workplace>(entity);
+                wp.DesiredWorkers = 0;
+                wp.Paused = 1;
+                wp.AssignedCount = 0;
+                wp.WorkingCount = 0;
+                em.SetComponentData(entity, wp);
+            }
+
+            using var agentsQuery = em.CreateEntityQuery(ComponentType.ReadWrite<AgentAssignment>());
+            using var agentEntities = agentsQuery.ToEntityArray(Allocator.Temp);
+            var assignments = agentsQuery.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
+            for (var i = 0; i < assignments.Length; i++)
+            {
+                if (assignments[i].WorkplaceBuildingId != buildingId)
+                    continue;
+                var job = assignments[i];
+                job.WorkplaceBuildingId = 0;
+                if (!job.HasConstructionTask)
+                    job.Arrived = 0;
+                em.SetComponentData(agentEntities[i], job);
+            }
+
+            assignments.Dispose();
+
+            if (em.HasComponent<Construction>(entity))
+            {
+                var site = em.GetComponentData<Construction>(entity);
+                if (site.IsDismantling)
+                    return;
+                site.Dismantling = 1;
+                em.SetComponentData(entity, site);
+                if (site.IsComplete)
+                    Complete(em, entity);
+                return;
+            }
+
+            var duration = em.HasComponent<BuildingType>(entity)
+                ? em.GetComponentData<BuildingType>(entity).ConstructionDuration
+                : 0f;
+            if (duration < 0f)
+                duration = 0f;
+            if (duration < 0.001f && em.HasComponent<RoadSpan>(entity))
+                duration = RoadMath.DefaultSectionSeconds;
+
+            var construction = new Construction
+            {
+                Elapsed = duration,
+                Duration = duration,
+                Dismantling = 1
+            };
+            if (construction.IsComplete)
+            {
+                Complete(em, entity);
+                return;
+            }
+            em.AddComponentData(entity, construction);
+#if UNITY_EDITOR
+            em.SetName(entity, em.HasComponent<RoadSpan>(entity)
+                ? $"RoadSite_{buildingId}"
+                : $"BuildingSite_{buildingId}");
+#endif
+        }
+
         public static void Complete(EntityManager em, Entity site)
         {
             if (!em.Exists(site) || !em.HasComponent<Building>(site))
@@ -19,6 +89,7 @@ namespace TheyWillDescend.Simulation.City
             {
                 Refund(em, session, building.TypeId);
                 FreeCells(em, session, building);
+                RemoveRoad(em, session, building.Id);
             }
 
             em.DestroyEntity(site);
@@ -43,6 +114,39 @@ namespace TheyWillDescend.Simulation.City
             }
 
             assignments.Dispose();
+        }
+
+        static bool TryGetBuilding(EntityManager em, int buildingId, out Entity entity)
+        {
+            entity = Entity.Null;
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            using var entities = query.ToEntityArray(Allocator.Temp);
+            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
+            for (var i = 0; i < buildings.Length; i++)
+            {
+                if (buildings[i].Id != buildingId)
+                    continue;
+                entity = entities[i];
+                buildings.Dispose();
+                return true;
+            }
+
+            buildings.Dispose();
+            return false;
+        }
+
+        static void RemoveRoad(EntityManager em, Entity session, int siteId)
+        {
+            if (siteId <= 0 || !em.HasBuffer<RoadSegment>(session))
+                return;
+            var roads = em.GetBuffer<RoadSegment>(session);
+            for (var i = roads.Length - 1; i >= 0; i--)
+            {
+                if (roads[i].SiteId != siteId)
+                    continue;
+                roads.RemoveAt(i);
+                break;
+            }
         }
 
         static void Refund(EntityManager em, Entity session, in FixedString64Bytes typeId)
