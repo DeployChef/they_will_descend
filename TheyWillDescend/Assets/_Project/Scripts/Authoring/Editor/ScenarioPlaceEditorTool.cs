@@ -39,7 +39,7 @@ namespace TheyWillDescend.Authoring.Editor
                 return;
 
             DrawPalette(catalog);
-            HandleClicks(authoring, config, center);
+            HandleClicks(authoring, config, center, catalog);
             DrawGhost(config, center, catalog);
         }
 
@@ -79,7 +79,8 @@ namespace TheyWillDescend.Authoring.Editor
         void HandleClicks(
             ScenarioAuthoring authoring,
             in RadialGridConfig config,
-            float3 center)
+            float3 center,
+            BuildingCatalogAsset catalog)
         {
             var e = Event.current;
             if (PaletteRect.Contains(e.mousePosition))
@@ -105,7 +106,10 @@ namespace TheyWillDescend.Authoring.Editor
 
             if (e.button != 0 || string.IsNullOrEmpty(_typeId))
                 return;
-            if (!RadialFootprintMath.TrySnapAnchor(center, config, world, out var cluster, out var radial))
+            if (!ScenarioAuthoringEditor.TryFootprint(catalog, _typeId, out var footprint))
+                return;
+            if (!RadialFootprintMath.TrySnapFootprintCenter(
+                    center, config, world, footprint, out var cluster, out var radial, out _))
                 return;
             if (!ScenarioAuthoringEditor.TryPlaceAt(authoring, _typeId, cluster, radial))
                 Debug.LogWarning($"Scenario place: cell ({cluster},{radial}) is occupied or invalid for {_typeId}.");
@@ -121,9 +125,10 @@ namespace TheyWillDescend.Authoring.Editor
                 return;
             if (!TryPickOnPlane(center, out var world))
                 return;
-            if (!RadialFootprintMath.TrySnapAnchor(center, config, world, out var cluster, out var radial))
-                return;
             if (!ScenarioAuthoringEditor.TryFootprint(catalog, _typeId, out var footprint))
+                return;
+            if (!RadialFootprintMath.TrySnapFootprintCenter(
+                    center, config, world, footprint, out var cluster, out var radial, out _))
                 return;
 
             RadialFootprintMath.FootprintMarkerPose(

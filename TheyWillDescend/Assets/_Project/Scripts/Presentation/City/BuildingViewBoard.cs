@@ -10,7 +10,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -24,16 +23,16 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingSelection selection;
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
-        [SerializeField] Color zoneColor = new(0.15f, 0.75f, 1f, 0.45f);
+        [SerializeField] Color idleOutlineColor = new(0.62f, 0.62f, 0.62f, 1f);
+        [SerializeField] Color hoverOutlineColor = new(0.88f, 0.88f, 0.88f, 1f);
+        [SerializeField] Color selectedOutlineColor = Color.white;
+        [SerializeField] float outlineWidth = 0.28f;
         [SerializeField] AudioZoneManager audioZoneManager;
 
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
         readonly List<int> _stale = new();
-        Material _placedZoneMaterial;
-        Material _selectedZoneMaterial;
-        Color _selectedZoneColor = new(0.95f, 0.82f, 0.2f, 0.55f);
         EntityQuery _buildingQuery;
         Camera _cam;
 
@@ -42,8 +41,8 @@ namespace TheyWillDescend.Presentation.City
         {
             public GameObject Root;
             public GameObject Overlay;
+            public BuildingOverlay Zone;
             public BuildingView View;
-            public MeshRenderer ZoneRenderer;
         }
 
         public void RebuildViews()
@@ -84,25 +83,6 @@ namespace TheyWillDescend.Presentation.City
         void OnDisable()
         {
             ClearViews();
-            if (_placedZoneMaterial == null && _selectedZoneMaterial == null)
-                return;
-            if (Application.isPlaying)
-            {
-                if (_placedZoneMaterial != null)
-                    Destroy(_placedZoneMaterial);
-                if (_selectedZoneMaterial != null)
-                    Destroy(_selectedZoneMaterial);
-            }
-            else
-            {
-                if (_placedZoneMaterial != null)
-                    DestroyImmediate(_placedZoneMaterial);
-                if (_selectedZoneMaterial != null)
-                    DestroyImmediate(_selectedZoneMaterial);
-            }
-
-            _placedZoneMaterial = null;
-            _selectedZoneMaterial = null;
         }
 
         void OnDestroy()
@@ -151,9 +131,23 @@ namespace TheyWillDescend.Presentation.City
                 else
                     placed.Root.transform.position = (Vector3)position;
 
+                var buildMode = gridGuide != null && gridGuide.IsBuildModeActive;
+                var hovered = selection != null && building.Id == selection.HoveredBuildingId;
                 var selected = selection != null && building.Id == selection.SelectedBuildingId;
-                if (placed.ZoneRenderer != null)
-                    placed.ZoneRenderer.sharedMaterial = selected ? _selectedZoneMaterial : _placedZoneMaterial;
+                if (placed.Zone != null)
+                {
+                    var show = buildMode || hovered || selected;
+                    placed.Zone.SetVisible(show);
+                    if (show)
+                    {
+                        if (selected)
+                            placed.Zone.SetTint(selectedOutlineColor);
+                        else if (hovered)
+                            placed.Zone.SetTint(hoverOutlineColor);
+                        else
+                            placed.Zone.SetTint(idleOutlineColor);
+                    }
+                }
             }
 
             if (_views.Count != _seen.Count)
@@ -207,10 +201,14 @@ namespace TheyWillDescend.Presentation.City
                 return null;
             }
 
-            EnsureMaterial();
             var house = Object.Instantiate(prefab, _root);
             house.name = $"Building_{building.Id}";
             house.transform.position = (Vector3)position;
+            var houseTag = house.GetComponent<BuildingIdTag>();
+            if (houseTag == null)
+                houseTag = house.AddComponent<BuildingIdTag>();
+            houseTag.Id = building.Id;
+            EnsurePickColliders(house);
             var view = house.GetComponent<BuildingView>();
             if (view == null)
                 GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
@@ -222,8 +220,8 @@ namespace TheyWillDescend.Presentation.City
             {
                 Root = house,
                 Overlay = overlay != null ? overlay.gameObject : null,
-                View = view,
-                ZoneRenderer = overlay != null ? overlay.ZoneRenderer : null
+                Zone = overlay,
+                View = view
             };
             _views[building.Id] = placed;
             return placed;
@@ -250,18 +248,11 @@ namespace TheyWillDescend.Presentation.City
             if (overlay.IdTag != null)
                 overlay.IdTag.Id = building.Id;
 
-            var zoneMesh = RadialSectorMeshBuilder.BuildClusterZoneMesh(center, config, clusters);
-            if (overlay.ZoneFilter != null)
-                overlay.ZoneFilter.sharedMesh = zoneMesh;
-            if (overlay.ZoneCollider != null)
-                overlay.ZoneCollider.sharedMesh = zoneMesh;
-            if (overlay.ZoneRenderer != null)
-            {
-                overlay.ZoneRenderer.sharedMaterial = _placedZoneMaterial;
-                overlay.ZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                overlay.ZoneRenderer.receiveShadows = false;
-            }
-
+            var n = config.GetClusterCount(building.AnchorRadial);
+            var turns0 = n > 0 ? building.AnchorCluster / (float)n : 0f;
+            overlay.ApplyFootprint(center, config, turns0, building.AnchorRadial, footprint, outlineWidth);
+            overlay.SetTint(idleOutlineColor);
+            overlay.SetVisible(false);
             return overlay;
         }
 
@@ -312,6 +303,23 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
+        static void EnsurePickColliders(GameObject house)
+        {
+            if (house.GetComponentInChildren<Collider>(true) != null)
+                return;
+            var filters = house.GetComponentsInChildren<MeshFilter>(true);
+            for (var i = 0; i < filters.Length; i++)
+            {
+                var filter = filters[i];
+                if (filter.sharedMesh == null)
+                    continue;
+                if (filter.GetComponentInParent<BuildingWidget>(true) != null)
+                    continue;
+                var col = filter.gameObject.AddComponent<MeshCollider>();
+                col.sharedMesh = filter.sharedMesh;
+            }
+        }
+
         void DestroyView(int buildingId)
         {
             selection?.ClearIf(buildingId);
@@ -341,34 +349,6 @@ namespace TheyWillDescend.Presentation.City
                 Object.DestroyImmediate(go);
         }
 
-
-        void EnsureMaterial()
-        {
-            if (_placedZoneMaterial == null)
-                _placedZoneMaterial = CreateZoneMaterial("FootprintZone_Placed", zoneColor);
-            if (_selectedZoneMaterial == null)
-                _selectedZoneMaterial = CreateZoneMaterial("FootprintZone_Selected", _selectedZoneColor);
-        }
-
-        static Material CreateZoneMaterial(string name, Color color)
-        {
-            var shader =
-                Shader.Find("Universal Render Pipeline/Unlit")
-                ?? Shader.Find("Unlit/Color")
-                ?? Shader.Find("Sprites/Default");
-            var mat = new Material(shader)
-            {
-                name = name,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-            if (mat.HasProperty("_Color"))
-                mat.SetColor("_Color", color);
-            mat.color = color;
-            mat.renderQueue = (int)RenderQueue.Transparent + 60;
-            return mat;
-        }
 
         void EnsureReady()
         {

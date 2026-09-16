@@ -48,6 +48,8 @@ namespace TheyWillDescend.Presentation.City
         }
 
         /// <summary>Game-view mesh underlay only while placing.</summary>
+        public bool IsBuildModeActive => _buildModeActive;
+
         public void SetBuildModeActive(bool active)
         {
             _buildModeActive = active;

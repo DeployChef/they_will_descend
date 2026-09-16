@@ -11,7 +11,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -25,10 +24,9 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingCatalogAsset catalog;
         [SerializeField] BuildingOverlay overlayPrefab;
         [SerializeField] Material ghostBuildingMaterial;
-        [Tooltip("Optional. Assigned in the inspector and copied at runtime; zone color is still driven by the two colors below. Falls back to a runtime URP Unlit material when empty.")]
-        [SerializeField] Material ghostZoneMaterial;
-        [SerializeField] Color zoneValidColor;
-        [SerializeField] Color zoneInvalidColor;
+        [SerializeField] Color zoneValidColor = Color.white;
+        [SerializeField] Color zoneInvalidColor = new(1f, 0.28f, 0.22f, 1f);
+        [SerializeField] float outlineWidth = 0.28f;
         [SerializeField] float gridMaskMarginCells = 2f;
         [Tooltip("Clusters of open grid revealed to each side of the footprint (Frostpunk-like band).")]
         [SerializeField] int gridMaskSideCells = 6;
@@ -54,11 +52,6 @@ namespace TheyWillDescend.Presentation.City
         Transform _ghostRoot;
         Transform _ghostBuilding;
         Renderer[] _ghostRenderers;
-        MeshFilter _ghostZoneFilter;
-        MeshRenderer _ghostZoneRenderer;
-        Mesh _ghostZoneMesh;
-        Material _ghostZoneMaterial;
-        Material _ghostZoneMaterialSource;
         BuildingOverlay _ghostOverlay;
 
         public BuildingCatalogAsset Catalog => catalog;
@@ -158,11 +151,16 @@ namespace TheyWillDescend.Presentation.City
 
         bool TryResolveGhost(float3 center, in RadialGridConfig config, float3 world)
         {
-            if (!RadialFootprintMath.TrySnapRing(center, config, world, out var ring, out var turns))
+            if (!RadialFootprintMath.TrySnapFootprintCenter(
+                    center, config, world, _footprint,
+                    out var snappedCluster, out var ring, out var centerTurns))
                 return false;
 
             var n = config.GetClusterCount(ring);
-            var snappedCluster = RadialGridMath.TurnsToCluster(turns, n);
+            if (n <= 0)
+                return false;
+
+            var centeredTurns0 = centerTurns - _footprint.WidthClusters * 0.5f / n;
 
             var probeOk = RadialFootprintMath.TryExpandClusters(
                 config, snappedCluster, ring, _footprint, _clusters);
@@ -182,11 +180,11 @@ namespace TheyWillDescend.Presentation.City
             _canPlace = false;
             _angularSnapped = false;
             _anchorRadial = ring;
-            _anchorTurns0 = turns;
+            _anchorTurns0 = centeredTurns0;
             _anchorCluster = snappedCluster;
 
             return RadialFootprintMath.TryExpandClustersFromTurns(
-                config, turns, ring, _footprint, _clusters);
+                config, centeredTurns0, ring, _footprint, _clusters);
         }
 
         void PlaceBuilding()
@@ -217,12 +215,19 @@ namespace TheyWillDescend.Presentation.City
         {
             EnsureGhost();
             SetGhostVisible(true);
-            SetGhostZoneColor(_canPlace ? zoneValidColor : zoneInvalidColor);
-            ApplyGhostBuildingColor();
+            var n = config.GetClusterCount(_anchorRadial);
+            var turns0 = _angularSnapped && n > 0
+                ? _anchorCluster / (float)n
+                : _anchorTurns0;
+            if (_ghostOverlay != null)
+            {
+                _ghostOverlay.ApplyFootprint(
+                    center, config, turns0, _anchorRadial, _footprint, outlineWidth);
+                _ghostOverlay.SetTint(_canPlace ? zoneValidColor : zoneInvalidColor);
+                _ghostOverlay.SetVisible(true);
+            }
 
-            RadialSectorMeshBuilder.RebuildClusterZoneMesh(
-                _ghostZoneMesh, center, config, _clusters);
-            _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
+            ApplyGhostBuildingColor();
 
             if (_ghostBuilding == null)
                 RecreateGhostBuilding();
@@ -389,7 +394,6 @@ namespace TheyWillDescend.Presentation.City
 
         void EnsureGhost()
         {
-            EnsureMaterials();
             if (_ghostRoot != null)
                 return;
             if (overlayPrefab == null)
@@ -403,26 +407,7 @@ namespace TheyWillDescend.Presentation.City
             _ghostRoot = _ghostOverlay.transform;
             if (_ghostOverlay.ZoneCollider != null)
                 _ghostOverlay.ZoneCollider.enabled = false;
-            _ghostZoneFilter = _ghostOverlay.ZoneFilter;
-            _ghostZoneRenderer = _ghostOverlay.ZoneRenderer;
-            if (_ghostZoneFilter != null)
-            {
-                if (_ghostZoneFilter.sharedMesh == null)
-                {
-                    _ghostZoneMesh = new Mesh { name = "GhostFootprintZone" };
-                    _ghostZoneFilter.sharedMesh = _ghostZoneMesh;
-                }
-                else
-                    _ghostZoneMesh = _ghostZoneFilter.sharedMesh;
-            }
-
-            if (_ghostZoneRenderer != null)
-            {
-                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
-                _ghostZoneRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                _ghostZoneRenderer.receiveShadows = false;
-            }
-
+            _ghostOverlay.SetVisible(false);
             _ghostRoot.gameObject.SetActive(false);
         }
 
@@ -518,12 +503,6 @@ namespace TheyWillDescend.Presentation.City
                 _ghostRoot.gameObject.SetActive(visible);
         }
 
-        void SetGhostZoneColor(Color color)
-        {
-            EnsureMaterials();
-            ApplyColor(_ghostZoneMaterial, color);
-        }
-
         void ApplyGhostBuildingColor()
         {
             if (_ghostBuilding == null)
@@ -547,90 +526,6 @@ namespace TheyWillDescend.Presentation.City
         GameObject ResolveGhostPrefab(string typeId)
         {
             return catalog != null ? catalog.FindPrefab(typeId) : null;
-        }
-
-        void EnsureMaterials()
-        {
-            if (_ghostZoneMaterial != null && _ghostZoneMaterialSource == ghostZoneMaterial)
-                return;
-            RebuildGhostZoneMaterial();
-        }
-
-        /// <summary>
-        /// Copies the inspector material so runtime color writes never touch the shared asset.
-        /// Falls back to a generated URP Unlit material when nothing is assigned.
-        /// </summary>
-        void RebuildGhostZoneMaterial()
-        {
-            DestroyMat(_ghostZoneMaterial);
-            _ghostZoneMaterialSource = ghostZoneMaterial;
-
-            if (ghostZoneMaterial != null)
-            {
-                _ghostZoneMaterial = new Material(ghostZoneMaterial)
-                {
-                    name = ghostZoneMaterial.name + "_GhostZone",
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-            }
-            else
-            {
-                _ghostZoneMaterial = CreateUnlitMaterial("FootprintZone_Ghost", zoneValidColor);
-                MakeSurfaceTransparent(_ghostZoneMaterial);
-            }
-
-            ApplyColor(_ghostZoneMaterial, zoneValidColor);
-            if (_ghostZoneRenderer != null)
-                _ghostZoneRenderer.sharedMaterial = _ghostZoneMaterial;
-        }
-
-        /// <summary>
-        /// URP Unlit is opaque by default: alpha in _BaseColor is ignored until the
-        /// blend state is switched to transparent manually (same as the material inspector does).
-        /// </summary>
-        static void MakeSurfaceTransparent(Material mat)
-        {
-            if (mat == null || !mat.HasProperty("_Surface"))
-                return;
-
-            mat.SetFloat("_Surface", 1f); // Transparent
-            mat.SetFloat("_Blend", 0f);   // Alpha
-            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_SrcBlendAlpha", 1f);
-            mat.SetFloat("_DstBlendAlpha", 0f);
-            mat.SetFloat("_ZWrite", 0f);
-            mat.SetFloat("_Cutoff", 0f);
-            mat.SetFloat("_QueueOffset", 0f);
-            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.renderQueue = (int)RenderQueue.Transparent;
-        }
-
-        static void ApplyColor(Material mat, Color color)
-        {
-            if (mat == null)
-                return;
-            if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-            if (mat.HasProperty("_Color"))
-                mat.SetColor("_Color", color);
-            mat.color = color;
-        }
-
-        static Material CreateUnlitMaterial(string name, Color color)
-        {
-            var shader =
-                Shader.Find("Universal Render Pipeline/Unlit")
-                ?? Shader.Find("Unlit/Color")
-                ?? Shader.Find("Sprites/Default");
-            var mat = new Material(shader)
-            {
-                name = name,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            ApplyColor(mat, color);
-            return mat;
         }
 
         static bool TryGetPointerOnBuildPlane(out Vector3 world)
@@ -709,29 +604,6 @@ namespace TheyWillDescend.Presentation.City
         {
             if (_placing)
                 CancelPlacing();
-        }
-
-        void OnDestroy()
-        {
-            if (_ghostZoneMesh != null)
-            {
-                if (Application.isPlaying)
-                    Destroy(_ghostZoneMesh);
-                else
-                    DestroyImmediate(_ghostZoneMesh);
-            }
-
-            DestroyMat(_ghostZoneMaterial);
-        }
-
-        static void DestroyMat(Material mat)
-        {
-            if (mat == null)
-                return;
-            if (Application.isPlaying)
-                Destroy(mat);
-            else
-                DestroyImmediate(mat);
         }
     }
 }

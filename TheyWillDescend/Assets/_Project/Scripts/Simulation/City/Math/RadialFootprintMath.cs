@@ -27,6 +27,60 @@ namespace TheyWillDescend.Simulation.City
         }
 
         /// <summary>
+        /// Cursor is the footprint <b>center</b>. Inverse of <see cref="FootprintMarkerPose"/>.
+        /// Plaza (inside InnerRadius) still locks to ring 0, angle stays centered.
+        /// </summary>
+        public static bool TrySnapFootprintCenter(
+            float3 center,
+            in RadialGridConfig config,
+            float3 world,
+            in BuildingFootprint footprint,
+            out int anchorCluster,
+            out int anchorRadial,
+            out float centerTurns)
+        {
+            anchorCluster = 0;
+            anchorRadial = 0;
+            centerTurns = 0f;
+            if (!config.IsValid || !footprint.IsValid)
+                return false;
+
+            var delta = world - center;
+            var radius = math.length(new float2(delta.x, delta.z));
+            centerTurns = RadialGridMath.NormalizedTurns(delta.x, delta.z);
+
+            if (radius >= config.RingLineRadius(config.RingCount))
+                return false;
+
+            var maxAnchor = config.RingCount - footprint.DepthRadialRings;
+            if (maxAnchor < 0)
+                return false;
+
+            if (radius < config.InnerRadius)
+            {
+                anchorRadial = 0;
+            }
+            else
+            {
+                var ringFloat = (radius - config.InnerRadius) / config.RadialStep;
+                var anchorFloat = ringFloat - footprint.DepthRadialRings * 0.5f;
+                anchorRadial = (int)math.floor(anchorFloat + 0.5f);
+                if (anchorRadial < 0)
+                    anchorRadial = 0;
+                if (anchorRadial > maxAnchor)
+                    anchorRadial = maxAnchor;
+            }
+
+            var n = config.GetClusterCount(anchorRadial);
+            if (n <= 0)
+                return false;
+
+            var anchorTurns0 = Fract(centerTurns - footprint.WidthClusters * 0.5f / n);
+            anchorCluster = RadialGridMath.TurnsToCluster(anchorTurns0, n);
+            return true;
+        }
+
+        /// <summary>
         /// Snap only to ring (plaza → ring 0). Angle stays continuous in <paramref name="turns"/>.
         /// </summary>
         public static bool TrySnapRing(
@@ -181,6 +235,36 @@ namespace TheyWillDescend.Simulation.City
             }
 
             return true;
+        }
+
+        public static bool ContainsWorldPoint(
+            float3 center,
+            in RadialGridConfig config,
+            float3 world,
+            int anchorCluster,
+            int anchorRadial,
+            in BuildingFootprint footprint)
+        {
+            if (!config.IsValid || !footprint.IsValid)
+                return false;
+            if (anchorRadial < 0 || anchorRadial + footprint.DepthRadialRings > config.RingCount)
+                return false;
+
+            var n = config.GetClusterCount(anchorRadial);
+            if (n <= 0 || anchorCluster < 0 || anchorCluster >= n)
+                return false;
+
+            var delta = world - center;
+            var radius = math.length(new float2(delta.x, delta.z));
+            var r0 = config.RingLineRadius(anchorRadial);
+            var r1 = config.RingLineRadius(anchorRadial + footprint.DepthRadialRings);
+            if (radius < r0 || radius > r1)
+                return false;
+
+            var turns = RadialGridMath.NormalizedTurns(delta.x, delta.z);
+            var span = footprint.WidthClusters / (float)n;
+            var dt = Fract(turns - Fract(anchorCluster / (float)n));
+            return dt <= span + 1e-4f;
         }
 
         public static void FootprintMarkerPose(

@@ -5407,6 +5407,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705070463}
   m_CullTransparentMesh: 1
+--- !u!21 &722486133
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RadialUnderlay_Runtime
+  m_Shader: {fileID: -6465566751694194690, guid: 766751e88ba066d4b984987aa0f5a35b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Texture2DAsset_a9d9b559dd2548d4aa43a3b7d4ab50f8_Out_0_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CanBuild: 1
+    - _GhostEmission: 10
+    - _GhostStrength: 1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _ghostalpha: 1
+    m_Colors:
+    - _BandPolar: {r: 2.3, g: 10.4, b: 0, a: 0.86}
+    - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _GhostFeather: {r: 0.47, g: 0.19, b: 0.2, a: 0.08}
+    - _GhostTintGreen: {r: 0, g: 0.95686275, b: 1, a: 1}
+    - _GhostTintRed: {r: 1, g: 0, b: 0.04892743, a: 1}
+    - _HolePolar: {r: 5, g: 7.7, b: 0, a: 0.29}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &731429776
 GameObject:
   m_ObjectHideFlags: 0
@@ -8457,63 +8514,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1058585521}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1048765609
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: RadialUnderlay_Runtime
-  m_Shader: {fileID: -6465566751694194690, guid: 766751e88ba066d4b984987aa0f5a35b, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _Texture2DAsset_a9d9b559dd2548d4aa43a3b7d4ab50f8_Out_0_Texture2D:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _CanBuild: 1
-    - _GhostEmission: 10
-    - _GhostStrength: 1
-    - _QueueControl: 0
-    - _QueueOffset: 0
-    - _ghostalpha: 1
-    m_Colors:
-    - _BandPolar: {r: 2.3, g: 10.4, b: 0, a: 0.86}
-    - _CityCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _GhostFeather: {r: 0.47, g: 0.19, b: 0.2, a: 0.08}
-    - _GhostTintGreen: {r: 0, g: 0.95686275, b: 1, a: 1}
-    - _GhostTintRed: {r: 1, g: 0, b: 0.04892743, a: 1}
-    - _HolePolar: {r: 5, g: 7.7, b: 0, a: 0.29}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1058585519
 GameObject:
   m_ObjectHideFlags: 0
@@ -9383,7 +9383,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1048765609}
+  - {fileID: 722486133}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14649,8 +14649,9 @@ MonoBehaviour:
   overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
   ghostBuildingMaterial: {fileID: 2100000, guid: d517e1829cd2d5b4d805c394c1289615, type: 2}
   ghostZoneMaterial: {fileID: 0}
-  zoneValidColor: {r: 0, g: 0.98021173, b: 1, a: 0}
+  zoneValidColor: {r: 1, g: 1, b: 1, a: 1}
   zoneInvalidColor: {r: 0.95, g: 0.2, b: 0.15, a: 1}
+  outlineWidth: 0.28
   gridMaskMarginCells: 0.05
   gridMaskSideCells: 6
   gridMaskHolePadCells: 0.5
@@ -14685,7 +14686,8 @@ MonoBehaviour:
   selection: {fileID: 1884302428}
   catalog: {fileID: 0}
   overlayPrefab: {fileID: 5222051145541444821, guid: f03783b9814b5cf439a1fb5321bb5261, type: 3}
-  zoneColor: {r: 0.15, g: 0.75, b: 1, a: 0.45}
+  selectedOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 0.28
   audioZoneManager: {fileID: 0}
 --- !u!114 &1884302428
 MonoBehaviour:
