@@ -51,14 +51,15 @@ namespace TheyWillDescend.Presentation.GameHud
         void ApplyLook()
         {
             var rt = GetComponent<RectTransform>();
-            if (rt != null)
+            
+            /*if (rt != null)
             {
                 rt.anchorMin = new Vector2(0.5f, 0f);
                 rt.anchorMax = new Vector2(0.5f, 0f);
                 rt.pivot = new Vector2(0.5f, 0f);
                 rt.anchoredPosition = new Vector2(0f, 14f);
                 rt.sizeDelta = new Vector2(280f, 28f);
-            }
+            }*/
 
             var bg = GetComponent<Image>();
             if (bg != null)

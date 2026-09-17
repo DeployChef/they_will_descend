@@ -44,10 +44,13 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.SetInteractable(speed3Button, !buildLocked && !pauseMenuOpen);
             HudButtons.SetInteractable(pauseButton, !buildLocked && !pauseMenuOpen);
 
-            HudButtons.Tint(speed1Button, hasControl && control.Speed == 1 && control.TimePaused == 0);
-            HudButtons.Tint(speed2Button, hasControl && control.Speed == 2 && control.TimePaused == 0);
-            HudButtons.Tint(speed3Button, hasControl && control.Speed == 3 && control.TimePaused == 0);
-            HudButtons.Tint(pauseButton, hasControl && control.TimePaused != 0);
+            // Активная скорость держится активной, пока не переключат на другую.
+            var paused = hasControl && control.TimePaused != 0;
+            HudButtons.SetActive(pauseButton, paused);
+            HudButtons.SetActive(speed1Button, hasControl && !paused && control.Speed == 1);
+            HudButtons.SetActive(speed2Button, hasControl && !paused && control.Speed == 2);
+            HudButtons.SetActive(speed3Button, hasControl && !paused && control.Speed == 3);
+
 
             if (clockLabel == null)
                 return;

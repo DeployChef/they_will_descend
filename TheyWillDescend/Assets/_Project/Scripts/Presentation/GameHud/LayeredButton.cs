@@ -38,12 +38,26 @@ namespace TheyWillDescend.Presentation.GameHud
             public Color selectedColor = Color.white;
             public float selectedScale = 1f;
 
+            [Header("Active (кнопка выбрана)")]
+            [Tooltip("Цвет активного состояния. Работает как hover: alpha=0 прячет слой, alpha=1 показывает. " +
+                     "Так на активной кнопке обычный спрайт прячется, а активный появляется.")]
+            public Color activeColor = Color.white;
+            [Tooltip("Множитель масштаба активной кнопки (1 = без изменений)")]
+            public float activeScale = 1f;
+            [Tooltip("Смещение активной кнопки в локальных единицах")]
+            public Vector2 activeOffset = Vector2.zero;
+
             internal Color NormalColor;
             internal float NormalScale;
             internal Vector2 NormalOffset;
+            internal bool AnimatesOffset;
         }
 
         [SerializeField] Layer[] layers = Array.Empty<Layer>();
+
+        [Header("Active")]
+        [SerializeField, Tooltip("Кнопка активна/выбрана (например, текущая скорость времени)")]
+        bool active;
 
         [Header("Transition")]
         [SerializeField, Min(0.01f)] float transitionSpeed = 12f;
@@ -52,10 +66,20 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button button;
         [SerializeField] UnityEvent onClick;
 
-        enum State { Normal, Hover, Pressed, Selected }
+        enum State { Normal, Hover, Pressed, Selected, Active }
 
         bool _pointerInside;
         bool _pointerDown;
+
+        /// <summary>
+        /// Кнопка активна (выбрана). Слои переходят в <see cref="State.Active"/> и держат его,
+        /// пока состояние не снимут: обычный спрайт прячется, активный появляется.
+        /// </summary>
+        public bool IsActive
+        {
+            get => active;
+            set => active = value;
+        }
 
         void Awake()
         {
@@ -69,8 +93,9 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             _pointerInside = false;
             _pointerDown = false;
-            ApplyInstant(State.Normal);
+            ApplyInstant(ResolveState());
         }
+
 
         void Update()
         {
@@ -105,11 +130,19 @@ namespace TheyWillDescend.Presentation.GameHud
 
         State ResolveState()
         {
-            if (!IsInteractable())
+            var interactable = IsInteractable();
+
+            if (_pointerDown && _pointerInside && interactable)
+                return State.Pressed;
+
+            // Выбранная кнопка держит активный спрайт, пока её не переключат:
+            // ни наведение курсора, ни временная блокировка кнопок не должны его сбрасывать.
+            if (active)
+                return State.Active;
+
+            if (!interactable)
                 return State.Normal;
 
-            if (_pointerDown && _pointerInside)
-                return State.Pressed;
             if (_pointerInside)
                 return State.Hover;
 
@@ -136,10 +169,15 @@ namespace TheyWillDescend.Presentation.GameHud
                 layer.NormalColor = layer.graphic.color;
                 layer.NormalScale = layer.graphic.rectTransform.localScale.x;
                 layer.NormalOffset = layer.graphic.rectTransform.anchoredPosition;
+                // Смещение пишем только если оно реально задано — иначе LayeredButton
+                // воюет с LayoutGroup, который расставляет такие кнопки сам.
+                layer.AnimatesOffset = layer.hoverOffset != Vector2.zero
+                    || layer.pressedOffset != Vector2.zero
+                    || layer.activeOffset != Vector2.zero;
             }
         }
 
-        static void LerpLayer(Layer layer, State target, float t)
+        void LerpLayer(Layer layer, State target, float t)
         {
             if (layer == null || layer.graphic == null)
                 return;
@@ -151,7 +189,9 @@ namespace TheyWillDescend.Presentation.GameHud
             switch (target)
             {
                 case State.Pressed:
-                    targetColor = layer.pressedColor;
+                    // Нажатие по активной кнопке не должно показывать обычный спрайт:
+                    // оставляем активный цвет, но pressedScale/pressedOffset работают.
+                    targetColor = active ? layer.activeColor * layer.pressedColor : layer.pressedColor;
                     targetScale = layer.NormalScale * layer.pressedScale;
                     targetOffset = layer.NormalOffset + layer.pressedOffset;
                     break;
@@ -165,6 +205,11 @@ namespace TheyWillDescend.Presentation.GameHud
                     targetScale = layer.NormalScale * (layer.useSelectedState ? layer.selectedScale : 1f);
                     targetOffset = layer.NormalOffset;
                     break;
+                case State.Active:
+                    targetColor = layer.activeColor;
+                    targetScale = layer.NormalScale * layer.activeScale;
+                    targetOffset = layer.NormalOffset + layer.activeOffset;
+                    break;
                 default:
                     targetColor = layer.NormalColor;
                     targetScale = layer.NormalScale;
@@ -176,7 +221,8 @@ namespace TheyWillDescend.Presentation.GameHud
             layer.graphic.color = Color.Lerp(layer.graphic.color, targetColor, t);
             var scale = Mathf.Lerp(rt.localScale.x, targetScale, t);
             rt.localScale = new Vector3(scale, scale, rt.localScale.z);
-            rt.anchoredPosition = Vector2.Lerp(rt.anchoredPosition, targetOffset, t);
+            if (layer.AnimatesOffset)
+                rt.anchoredPosition = Vector2.Lerp(rt.anchoredPosition, targetOffset, t);
         }
 
         void ApplyInstant(State target)
@@ -191,6 +237,25 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             CaptureNormalState();
             ApplyInstant(State.Normal);
+        }
+
+        /// <summary>
+        /// Копия настроек hover в active для всех слоёв: активная кнопка выглядит так же,
+        /// как при наведении (обычный спрайт спрятан, активный показан).
+        /// </summary>
+        [ContextMenu("Copy Hover To Active")]
+        public void CopyHoverToActive()
+        {
+            for (var i = 0; i < layers.Length; i++)
+            {
+                var layer = layers[i];
+                if (layer == null)
+                    continue;
+
+                layer.activeColor = layer.hoverColor;
+                layer.activeScale = layer.hoverScale;
+                layer.activeOffset = layer.hoverOffset;
+            }
         }
     }
 }
