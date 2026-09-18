@@ -67,12 +67,13 @@ Audio_FMOD/**/*.cache.meta
 *.fspro.user
 *.fmod.user
 
-# FMOD Studio build output — intermediate artifacts.
-# Banks are committed ONLY to TheyWillDescend/Assets/StreamingAssets/Desktop/
-Audio_FMOD/**/Build/
+# FMOD Studio build output IS committed.
+# FMODStudioSettings.asset has sourceBankPath = ../Audio_FMOD/they will desend/Build/Desktop
+# and HasPlatforms = 0, so Play-in-Editor and the Event Browser read banks from here.
+# Without it a fresh clone has no banks in the editor.
+#   Audio_FMOD/they will desend/Build/Desktop/*.bank
 
-# Built .bank files go from Build/Desktop/ → TheyWillDescend/Assets/StreamingAssets/Desktop/
-# They ARE committed — needed by everyone without FMOD Studio:
+# Runtime copy (Build/Desktop/ → StreamingAssets/) is also committed:
 #   TheyWillDescend/Assets/StreamingAssets/Desktop/*.bank
 #   TheyWillDescend/Assets/StreamingAssets/Desktop/*.strings.bank
 

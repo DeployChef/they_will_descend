@@ -26,4 +26,47 @@ MonoBehaviour:
   eventPath: event:/Ambience_Town
   audioBusPath: bus:/
   distanceRtpcName: Distance
+  zoneDeathDistance: 100
+  zoneDeathHysteresis: 5
+  sfxRandomIntensityMode: 0
+  sfxRandomIntensityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  sfxRandomEventReference:
+    Guid:
+      Data1: -1465050356
+      Data2: 1094168254
+      Data3: 452068537
+      Data4: -901977096
+    Path: event:/Ambience_Town_SFX_Random
+  sfxRandomEventPath: event:/Ambience_Town_SFX_Random
+  sfxRandomChance: 1
+  sfxRandomTickInterval: 2.5
+  sfxRandomZoneCooldown: 15
+  sfxRandomCooldownJitter: 0.5
+  sfxRandomMaxConcurrent: 4
+  sfxRandomJitterRadius: 1.5
+  sfxRandomLifetimeMargin: 2
   logZoneActivity: 0
+  logSfxRandom: 0

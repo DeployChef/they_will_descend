@@ -1,6 +1,232 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+<<<<<<< HEAD
 --- !u!114 &-7228195869234237464
+=======
+--- !u!114 &-9218503005073537851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/Ambience_Wind_Generation/Wheel_Scroll
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: Wheel_Scroll
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 393086998
+    data2: 3687005071
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
+--- !u!114 &-7549700669443590834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Ambience_Town
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Ambience_Town
+  Guid:
+    Data1: -891615303
+    Data2: 1235628188
+    Data3: 894630057
+    Data4: 1242513721
+  Banks:
+  - {fileID: 2905865606034403090}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 90
+  Length: 32000
+--- !u!114 &-7116047947876795747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Ambience_Wind_Generator.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank
+  Name: Ambience_Wind_Generator
+  StudioPath: bank:/Ambience_Town/Ambience_Wind_Generator
+  lastModified: 639250212997594539
+  FileSizes: []
+  Exists: 1
+--- !u!114 &-4672248619510635910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Master.strings.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank
+  Name: Master.strings
+  StudioPath: bank:/Master.strings
+  lastModified: 639251136221092880
+  FileSizes:
+  - Name: 
+    Value: 1464
+  Exists: 1
+--- !u!114 &-3734057703866502465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: 'parameter:/Distance '
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: 'Distance '
+  StudioPath: 'parameter:/Distance '
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 4060496566
+    data2: 2468639608
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &-3681063870833642706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Master.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.bank
+  Name: Master
+  StudioPath: bank:/Master
+  lastModified: 639251136221062867
+  FileSizes: []
+  Exists: 1
+--- !u!114 &-3053490168591472624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Ambience_Town_SFX_Random
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Ambience_Town_SFX_Random
+  Guid:
+    Data1: -1465050356
+    Data2: 1094168254
+    Data3: 452068537
+    Data4: -901977096
+  Banks:
+  - {fileID: 2905865606034403090}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 0.4
+  MaxDistance: 60
+  Length: 72000
+--- !u!114 &-636068890237825088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: 'parameter:/Ambience_Wind_Generation/Distance '
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
+  Name: 'Distance '
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 4060496566
+    data2: 2468639608
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d32cf7c32a3ed8347bac48ef5ed56d82, type: 3}
+  m_Name: FMODStudioCache
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EventCache
+  EditorBanks:
+  - {fileID: -4672248619510635910}
+  - {fileID: 2905865606034403090}
+  - {fileID: -7116047947876795747}
+  - {fileID: 7111117868259218071}
+  - {fileID: -3681063870833642706}
+  EditorEvents:
+  - {fileID: -3053490168591472624}
+  - {fileID: -7549700669443590834}
+  - {fileID: 5380446022195954836}
+  - {fileID: 687501493106956734}
+  EditorParameters:
+  - {fileID: -3734057703866502465}
+  MasterBanks:
+  - {fileID: -3681063870833642706}
+  StringsBanks:
+  - {fileID: -4672248619510635910}
+  cacheVersion: 131857
+  cacheTime: 639251136223509925
+  SerializableEventsDict:
+  - key: event:/Ambience_Town_SFX_Random
+    index: 0
+  - key: event:/Ambience_Town
+    index: 1
+  - key: event:/Ambience_Wind_Generation
+    index: 2
+  - key: event:/main_soundtrack
+    index: 3
+--- !u!114 &687501493106956734
+>>>>>>> sound-10
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -19,6 +245,7 @@ MonoBehaviour:
     Data3: -1731062901
     Data4: 1383649775
   Banks:
+<<<<<<< HEAD
   - {fileID: 2684102315343323327}
   IsStream: 1
   Is3D: 1
@@ -29,6 +256,17 @@ MonoBehaviour:
   MaxDistance: 9800
   Length: 236808
 --- !u!114 &-6901005173960477716
+=======
+  - {fileID: 7111117868259218071}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 9800
+  Length: 236808
+--- !u!114 &2905865606034403090
+>>>>>>> sound-10
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -38,6 +276,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+<<<<<<< HEAD
   m_Name: bank:/Master.strings.bank
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank
@@ -49,6 +288,17 @@ MonoBehaviour:
     Value: 880
   Exists: 1
 --- !u!114 &-840389444978698938
+=======
+  m_Name: bank:/Ambience_Town.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Town.bank
+  Name: Ambience_Town
+  StudioPath: bank:/Ambience_Town/Ambience_Town
+  lastModified: 639251136223509925
+  FileSizes: []
+  Exists: 1
+--- !u!114 &5380446022195954836
+>>>>>>> sound-10
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,6 +307,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
+<<<<<<< HEAD
   m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
   m_Name: parameter:/main_soundtrack/Parameter 1
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorParamRef
@@ -101,6 +352,29 @@ MonoBehaviour:
   - key: event:/main_soundtrack
     index: 0
 --- !u!114 &2684102315343323327
+=======
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Ambience_Wind_Generation
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Ambience_Wind_Generation
+  Guid:
+    Data1: 271543376
+    Data2: 1255994731
+    Data3: -1389427328
+    Data4: -1149575252
+  Banks:
+  - {fileID: -7116047947876795747}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -9218503005073537851}
+  - {fileID: -636068890237825088}
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 14000
+--- !u!114 &7111117868259218071
+>>>>>>> sound-10
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -115,6 +389,7 @@ MonoBehaviour:
   Path: ../Audio_FMOD/they will desend/Build/Desktop/Main_theme.bank
   Name: Main_theme
   StudioPath: bank:/Main_theme
+<<<<<<< HEAD
   lastModified: 639228539098296041
   FileSizes: []
   Exists: 1
@@ -134,5 +409,8 @@ MonoBehaviour:
   Name: Master
   StudioPath: bank:/Master
   lastModified: 639228539098351282
+=======
+  lastModified: 639250212864229036
+>>>>>>> sound-10
   FileSizes: []
   Exists: 1
