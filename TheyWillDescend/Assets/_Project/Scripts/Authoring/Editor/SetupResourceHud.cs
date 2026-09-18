@@ -7,20 +7,12 @@ using UnityEngine.UI;
 
 namespace TheyWillDescend.Authoring.Editor
 {
-    [InitializeOnLoad]
+    /// <summary>
+    /// One-off authoring helper. Runs ONLY from the menu item — never on editor load,
+    /// so it cannot recreate/overwrite scene HUD objects behind the user's back.
+    /// </summary>
     public static class SetupResourceHud
     {
-        static SetupResourceHud()
-        {
-            EditorApplication.delayCall += () =>
-            {
-                if (!SessionState.GetBool("SetupResourceHud_Done_v1", false))
-                {
-                    SessionState.SetBool("SetupResourceHud_Done_v1", true);
-                    BuildSceneResourceHud();
-                }
-            };
-        }
         static readonly Color PanelBg = new(0.07f, 0.08f, 0.1f, 0.78f);
         static readonly Color ChipBg = new(0.12f, 0.12f, 0.14f, 0.95f);
         static readonly Color Ink = new(0.92f, 0.9f, 0.84f, 1f);
@@ -52,11 +44,30 @@ namespace TheyWillDescend.Authoring.Editor
                 return;
             }
 
-            var resourceBarGo = GameObject.Find("ResourceBar");
+            // Look up among canvas children directly: GameObject.Find skips inactive objects
+            // and would cause a second ResourceBar to be created next to a disabled one.
+            GameObject resourceBarGo = null;
+            for (var i = 0; i < canvasGo.transform.childCount; i++)
+            {
+                if (canvasGo.transform.GetChild(i).name != "ResourceBar")
+                    continue;
+                resourceBarGo = canvasGo.transform.GetChild(i).gameObject;
+                break;
+            }
             if (resourceBarGo == null)
             {
                 resourceBarGo = new GameObject("ResourceBar", typeof(RectTransform));
                 resourceBarGo.transform.SetParent(canvasGo.transform, false);
+            }
+            else if (resourceBarGo.transform.childCount > 0)
+            {
+                // Rebuild is destructive — never do it silently.
+                var confirmed = EditorUtility.DisplayDialog(
+                    "Rebuild Resource HUD",
+                    "ResourceBar already exists. All its children will be deleted and rebuilt from scratch.",
+                    "Rebuild", "Cancel");
+                if (!confirmed)
+                    return;
             }
 
             // Ensure ResourceBar stretches over canvas so child panels can anchor freely
