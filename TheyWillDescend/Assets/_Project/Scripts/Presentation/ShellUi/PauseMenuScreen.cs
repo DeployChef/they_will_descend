@@ -29,8 +29,8 @@ namespace TheyWillDescend.Presentation.ShellUi
         UiSequencePlayer revealSequence;
         [SerializeField, Range(0f, 1f), Tooltip("Доля прохода камеры до меню, после которой начинается появление элементов.")]
         float revealAtBlendProgress = 0.9f;
-        [SerializeField, Min(0f), Tooltip("Сколько секунд ждать камеру, прежде чем показать меню принудительно.")]
-        float revealFallbackWait = 1.2f;
+        [SerializeField, Min(0f), Tooltip("Запас секунд к длительности перехода камеры на случай, если порог так и не наступил.")]
+        float revealFallbackWait = 0.25f;
 
         public static PauseMenuScreen Current { get; private set; }
 
@@ -143,8 +143,11 @@ namespace TheyWillDescend.Presentation.ShellUi
         /// <summary>Ждём, пока камера почти доедет до меню, и только тогда раскрываем элементы.</summary>
         IEnumerator RevealWhenCameraArrives()
         {
+            // Заезд камеры может быть растянут (орбита унесла позу далеко), поэтому страховочный
+            // бюджет считаем от фактической длительности перехода, а не от фиксированного числа.
+            float budget = RevealFallbackBudget();
             float waited = 0f;
-            while (waited < revealFallbackWait && CameraBlendProgress < revealAtBlendProgress)
+            while (waited < budget && CameraBlendProgress < revealAtBlendProgress)
             {
                 waited += Time.unscaledDeltaTime;
                 yield return null;
@@ -155,6 +158,18 @@ namespace TheyWillDescend.Presentation.ShellUi
                 yield break;
 
             revealSequence.PlayIn();
+        }
+
+        /// <summary>
+        /// Страховочный бюджет ожидания: фактическая длительность перехода камеры плюс запас
+        /// (или минимум из инспектора, если камера не сообщает длительность).
+        /// </summary>
+        float RevealFallbackBudget()
+        {
+            var cameraSwitch = CameraSwitch;
+            if (cameraSwitch != null && cameraSwitch.LastBlendDuration > 0f)
+                return cameraSwitch.LastBlendDuration + revealFallbackWait;
+            return revealFallbackWait;
         }
 
         void StopReveal()

@@ -23,6 +23,10 @@ namespace TheyWillDescend.Presentation.Cameras
         [SerializeField, Min(0f), Tooltip("Сколько секунд длится переход НА камеру меню.")]
         float enterTime = 0.5f;
 
+        [SerializeField, Min(0f), Tooltip("Потолок секунд на переход к камере меню. Заезд после облёта камеры " +
+                                         "растягивается пропорционально дистанции, но не дольше этого значения.")]
+        float maxEnterTime = 1.5f;
+
         [SerializeField, Min(0f), Tooltip("Сколько секунд длится переход ОБРАТНО на игровую камеру.")]
         float exitTime = 0.4f;
 
@@ -40,6 +44,15 @@ namespace TheyWillDescend.Presentation.Cameras
         public static PauseCameraSwitch Current { get; private set; }
 
         public bool IsEngaged { get; private set; }
+
+        /// <summary>Камера меню, назначенная в инспекторе.</summary>
+        public CinemachineCamera MenuCamera => menuCamera;
+
+        /// <summary>
+        /// Длительность последнего запущенного перехода в секундах.
+        /// Нужна UI, чтобы тайминги появления элементов не зависели от растянутого заезда камеры.
+        /// </summary>
+        public float LastBlendDuration { get; private set; }
 
         /// <summary>
         /// Прогресс перехода на камеру меню: 1 — камера полностью на месте меню, 0 — на игровой.
@@ -69,6 +82,7 @@ namespace TheyWillDescend.Presentation.Cameras
         PrioritySettings _menuCameraOriginalPriority;
         bool _menuCameraWasActive;
         bool _initialized;
+        float _referenceDistance;
 
         void Awake()
         {
@@ -111,7 +125,8 @@ namespace TheyWillDescend.Presentation.Cameras
 
             // Мозг читает DefaultBlend в момент создания бленда, поэтому его достаточно
             // выставить прямо перед сменой приоритета.
-            brain.DefaultBlend = new CinemachineBlendDefinition(blendStyle, enterTime);
+            LastBlendDuration = ResolveEnterDuration(brain);
+            brain.DefaultBlend = new CinemachineBlendDefinition(blendStyle, LastBlendDuration);
 
             SetOptionalBehaviours(false);
 
@@ -140,6 +155,30 @@ namespace TheyWillDescend.Presentation.Cameras
             }
 
             SetOptionalBehaviours(true);
+        }
+
+        /// <summary>
+        /// Длительность заезда на камеру меню. Замеряется дистанция от живой камеры до позы камеры меню:
+        /// после облёта она больше обычной, поэтому переход растягивается пропорционально,
+        /// но не дольше maxEnterTime. Первая замеренная дистанция считается эталонной.
+        /// </summary>
+        float ResolveEnterDuration(CinemachineBrain brain)
+        {
+            if (enterTime <= 0f || maxEnterTime <= enterTime)
+                return enterTime;
+
+            var liveCamera = brain.OutputCamera;
+            if (liveCamera == null)
+                return enterTime;
+
+            float distance = Vector3.Distance(liveCamera.transform.position, menuCamera.transform.position);
+            if (distance <= 0.0001f)
+                return enterTime;
+
+            if (_referenceDistance <= 0f)
+                _referenceDistance = distance;
+
+            return Mathf.Clamp(enterTime * distance / _referenceDistance, enterTime, maxEnterTime);
         }
 
         CinemachineBrain ResolveBrain()
