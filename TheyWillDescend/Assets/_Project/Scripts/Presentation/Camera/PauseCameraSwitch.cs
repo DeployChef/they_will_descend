@@ -41,6 +41,30 @@ namespace TheyWillDescend.Presentation.Cameras
 
         public bool IsEngaged { get; private set; }
 
+        /// <summary>
+        /// Прогресс перехода на камеру меню: 1 — камера полностью на месте меню, 0 — на игровой.
+        /// Во время перехода считается по весу текущего бленда, вне перехода — целевое состояние.
+        /// Если мозга или камеры нет, сразу возвращается целевое значение, чтобы UI не ждал вечно.
+        /// </summary>
+        public float MenuBlendProgress
+        {
+            get
+            {
+                float target = IsEngaged ? 1f : 0f;
+                if (menuCamera == null)
+                    return target;
+
+                var brain = _brain != null && _brain.isActiveAndEnabled ? _brain : null;
+                if (brain == null)
+                    return target;
+
+                if (TryGetBlendWeight(brain.ActiveBlend, menuCamera, out float weight))
+                    return weight;
+
+                return brain.IsLiveChild(menuCamera) ? 1f : 0f;
+            }
+        }
+
         CinemachineBrain _brain;
         PrioritySettings _menuCameraOriginalPriority;
         bool _menuCameraWasActive;
@@ -144,6 +168,35 @@ namespace TheyWillDescend.Presentation.Cameras
                 if (behaviour != null)
                     behaviour.enabled = enabled;
             }
+        }
+
+        /// <summary>
+        /// Вес камеры внутри текущего бленда (0 — камера A, 1 — камера B). Рекурсивно
+        /// заходит во вложенные бленды, потому что вложенный источник приходит в виде NestedBlendSource.
+        /// </summary>
+        static bool TryGetBlendWeight(CinemachineBlend blend, ICinemachineCamera cam, out float weight)
+        {
+            weight = 0f;
+            if (blend == null || !blend.IsValid || cam == null)
+                return false;
+
+            float value = Mathf.Clamp01(blend.BlendWeight);
+            if (blend.CamA == cam)
+            {
+                weight = 1f - value;
+                return true;
+            }
+
+            if (blend.CamB == cam)
+            {
+                weight = value;
+                return true;
+            }
+
+            if (blend.CamA is NestedBlendSource nestedA && TryGetBlendWeight(nestedA.Blend, cam, out weight))
+                return true;
+
+            return blend.CamB is NestedBlendSource nestedB && TryGetBlendWeight(nestedB.Blend, cam, out weight);
         }
     }
 }
