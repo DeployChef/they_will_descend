@@ -1,6 +1,7 @@
 using System;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Agents;
+using TheyWillDescend.Presentation.Cameras;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Presentation.GameHud;
 using TMPro;
@@ -21,6 +22,8 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] BuildWidget buildWidget;
         [SerializeField] BuildingViewBoard buildingViewBoard;
         [SerializeField] AgentViewBoard agentViewBoard;
+        [SerializeField, Tooltip("Камера меню паузы. Если пусто — берётся PauseCameraSwitch.Current.")]
+        PauseCameraSwitch pauseCamera;
 
         public static PauseMenuScreen Current { get; private set; }
 
@@ -31,6 +34,8 @@ namespace TheyWillDescend.Presentation.ShellUi
         public event Action ToggleRequested;
 
         public bool IsOpen => gameObject.activeSelf;
+
+        PauseCameraSwitch CameraSwitch => pauseCamera != null ? pauseCamera : PauseCameraSwitch.Current;
 
         void Awake()
         {
@@ -50,9 +55,17 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        public void Show() => gameObject.SetActive(true);
+        public void Show()
+        {
+            gameObject.SetActive(true);
+            CameraSwitch?.Engage();
+        }
 
-        public void Hide() => gameObject.SetActive(false);
+        public void Hide()
+        {
+            gameObject.SetActive(false);
+            CameraSwitch?.Release();
+        }
 
         public void RequestToggle() => ToggleRequested?.Invoke();
 
