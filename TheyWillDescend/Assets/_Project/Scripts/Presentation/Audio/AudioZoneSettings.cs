@@ -29,8 +29,8 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("FMOD event для зон. Перетаскивается из FMOD Studio (как у StudioEventEmitter). Банки определяются автоматически.")]
         [SerializeField] EventReference eventReference;
 
-        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан.")]
-        [SerializeField] string eventPath = "event:/Ambience_Town";
+        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан. Ивент лежит в папке AMBIENCE.")]
+        [SerializeField] string eventPath = "event:/AMBIENCE/Ambience_Town";
 
         [Tooltip("FMOD bus для аудио-сетки.")]
         [SerializeField] string audioBusPath = "bus:/";
@@ -49,8 +49,8 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("Одноразовый ивент городских случайностей. Лежит в том же банке, что и основной амбиент. Перетаскивается из FMOD Studio.")]
         [SerializeField] EventReference sfxRandomEventReference;
 
-        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан.")]
-        [SerializeField] string sfxRandomEventPath = "event:/Ambience_Town_SFX_Random";
+        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан. Ивент лежит в папке AMBIENCE.")]
+        [SerializeField] string sfxRandomEventPath = "event:/AMBIENCE/Ambience_Town_SFX_Random";
 
         [Tooltip("Вероятность выстрела зоны в тик планировщика (независимый бросок на каждую активную зону).")]
         [Range(0f, 1f)]

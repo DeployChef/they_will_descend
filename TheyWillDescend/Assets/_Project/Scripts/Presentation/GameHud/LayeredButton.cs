@@ -116,6 +116,8 @@ namespace TheyWillDescend.Presentation.GameHud
             _pointerDown = false;
         }
 
+
+
         public void OnPointerDown(PointerEventData eventData)
         {
             _pointerDown = true;

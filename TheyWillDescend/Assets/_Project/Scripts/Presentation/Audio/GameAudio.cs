@@ -16,7 +16,8 @@ namespace TheyWillDescend.Presentation.Audio
     public sealed class GameAudio : MonoBehaviour
     {
         public const string MusicBankName = "Main_theme";
-        public const string MusicEventPath = "event:/main_soundtrack";
+        // Ивент лежит в папке SOUNDTRACK → путь event:/SOUNDTRACK/main_soundtrack.
+        public const string MusicEventPath = "event:/SOUNDTRACK/main_soundtrack";
 
         [SerializeField] EventReference musicEvent;
 
@@ -53,7 +54,7 @@ namespace TheyWillDescend.Presentation.Audio
             catch (EventNotFoundException)
             {
                 GameLog.Error(
-                    "GameAudio: event:/main_soundtrack not in loaded banks. " +
+                    "GameAudio: event:/SOUNDTRACK/main_soundtrack not in loaded banks. " +
                     "In FMOD Studio put it on bank Main_theme, Ctrl+B, copy .bank into StreamingAssets/Desktop/.");
                 return;
             }
