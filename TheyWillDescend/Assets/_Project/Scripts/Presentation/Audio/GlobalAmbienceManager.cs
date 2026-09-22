@@ -78,8 +78,10 @@ namespace TheyWillDescend.Presentation.Audio
         [SerializeField] float minCameraDistance = 8f;
         [Tooltip("Дистанция камеры до центра города при МАКСИМАЛЬНОМ отдалении → параметр = 1.")]
         [SerializeField] float maxCameraDistance = 65f;
-        [Tooltip("Скорость сглаживания значения Distance (экспоненциальная интерполяция). Больше = быстрее реагирует, меньше = плавнее.")]
+        [Tooltip("Скорость сглаживания при УМЕНЬШЕНИИ Distance (камера вниз). Больше = быстрее реагирует, меньше = плавнее.")]
         [SerializeField] float smoothSpeed = 4f;
+        [Tooltip("Скорость сглаживания при НАРАСТАНИИ Distance (резкое поднятие камеры). Меньше = ветер нарастает плавнее. 0 = использовать Smooth Speed.")]
+        [SerializeField] float smoothSpeedRise = 1.5f;
 
         /// <summary>Шаг изменения Distance за один тик скролла. Жёстко 0.1: 10 тиков от 0 до 1.</summary>
         const float WheelStep = 0.1f;
@@ -246,7 +248,11 @@ namespace TheyWillDescend.Presentation.Audio
 
                     // Плавная интерполяция к цели (экспоненциальное сглаживание,
                     // независимо от FPS). Без ступенек между шагами колеса.
-                    var t = 1f - Mathf.Exp(-smoothSpeed * Time.deltaTime);
+                    // Асимметрия: нарастание (резкое поднятие камеры) идёт своей,
+                    // более низкой скоростью — ветер разгоняется плавно, спад — быстро.
+                    var rising = target > _smoothedDistance;
+                    var speed = rising && smoothSpeedRise > 0f ? smoothSpeedRise : smoothSpeed;
+                    var t = 1f - Mathf.Exp(-speed * Time.deltaTime);
                     _smoothedDistance = Mathf.Lerp(_smoothedDistance, target, t);
                     if (Mathf.Abs(_smoothedDistance - target) < 0.0005f)
                         _smoothedDistance = target;
@@ -431,18 +437,15 @@ namespace TheyWillDescend.Presentation.Audio
         /// когда фокус на Game View.
         /// </summary>
         /// <summary>
-        /// Нормализованная дистанция камеры до центра города: 0..1.
-        /// Никаких ссылок на контроллер камеры — просто позиция Camera.main:
-        /// дистанция = minCameraDistance (макс. приближение) → 0,
-        /// дистанция = maxCameraDistance (макс. отдаление) → 1.
-        /// Центр города — CityGrid.Center (обновляется в Update), fallback (0,0,0).
+        /// Нормализованная ВЫСОТА камеры над землёй под ней: 0..1.
+        /// Только вертикаль — пан камеры по карте (WASD) не меняет параметр.
+        /// высота = minCameraDistance (макс. приближение) → 0,
+        /// высота = maxCameraDistance (макс. отдаление) → 1.
         /// </summary>
         float ComputeCameraDistanceNormalized()
         {
-            var camPos = mainCamera.transform.position;
-            var center = new Vector3(_cityCenter.x, _cityCenter.y, _cityCenter.z);
-            var dist = Vector3.Distance(camPos, center);
-            return Mathf.Clamp01((dist - minCameraDistance) / Mathf.Max(0.01f, maxCameraDistance - minCameraDistance));
+            var height = mainCamera.transform.position.y - _cityCenter.y;
+            return Mathf.Clamp01((height - minCameraDistance) / Mathf.Max(0.01f, maxCameraDistance - minCameraDistance));
         }
 
         void UpdateWheelDistance()

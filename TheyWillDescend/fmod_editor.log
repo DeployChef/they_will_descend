@@ -1,0 +1,191 @@
+[LOG] FMOD_System_Create                       : Header version = 2.03.11. Current version = 2.03.11.
+[LOG] system_create                            : Header version = 2.03.11. Current version = 2.03.11.
+[LOG] SystemI::setOutputInternal               : Setting output to 'FMOD WASAPI Output'
+[LOG] Manager::init                            : maxchannels = 256 studioflags = 00000006 flags 00000000 extradriverdata 0000000000000000.
+[LOG] SystemI::init                            : Initialize version=20311 (158528), maxchannels=256, flags=0x00020000
+[LOG] OutputWASAPI::init                       : Mix Format (WAVEFORMATEX): wFormatTag=0xFFFE, nChannels=2, nSamplesPerSec=44100, nAvgBytesPerSec=352800, nBlockAlign=8, wBitsPerSample=32, cbSize=22.
+[LOG] OutputWASAPI::init                       : Mix Format (WAVEFORMATEXTENSIBLE): wValidBitsPerSample=32, dwChannelMask=0x00000003, SubFormat=00000003-0000-0010-8000-00AA00389B71.
+[LOG] OutputWASAPI::init                       : Output buffer size: 1880 samples, latency: 0.00ms, period: 10.00ms, DSP buffer: 512 * 4
+[LOG] SystemI::init                            : Output requires a sample rate of 44100Hz, resampling will occur.
+[LOG] Thread::initThread                       : Init FMOD stream thread. Affinity: 0x4000000000000003, Priority: 0xFFFF7FFB, Stack Size: 98304, Semaphore: No, Sleep Time: 10, Looping: Yes.
+[LOG] SystemI::DSPCodecPoolRegister            : register codec pool for pool type 0
+[LOG] Thread::initThread                       : Init FMOD mixer thread. Affinity: 0x4000000000000001, Priority: 0xFFFF7FFA, Stack Size: 81920, Semaphore: No, Sleep Time: 0, Looping: Yes.
+[LOG] AsyncManager::init                       : manager 00000245A7A62EF8 isAsync 0 updatePeriod 0.02
+[LOG] AsyncManager::init                       : done
+[LOG] PlaybackSystem::init                     : 
+[LOG] Thread::initThread                       : Init FMOD Studio sample load thread. Affinity: 0x4000000000000003, Priority: 0xFFFF7FFD, Stack Size: 98304, Semaphore: No, Sleep Time: 1, Looping: No.
+[LOG] PlaybackSystem::init                     : done
+[LOG] Thread::initThread                       : Init FMOD Studio bank load thread. Affinity: 0x4000000000000003, Priority: 0xFFFF7FFD, Stack Size: 98304, Semaphore: No, Sleep Time: 1, Looping: No.
+[LOG] Manager::init                            : done.
+[LOG] BankLoader::serializeBank                : fileversion = 146, compatVersion = 146 (oldest = 44, newest = 146)
+[LOG] BankLoader::serializeBank                : fileversion = 146, compatVersion = 146 (oldest = 44, newest = 146)
+[LOG] BankLoader::serializeBank                : fileversion = 146, compatVersion = 146 (oldest = 44, newest = 146)
+[LOG] BankLoader::serializeBank                : fileversion = 146, compatVersion = 146 (oldest = 44, newest = 146)
+[LOG] BankLoader::serializeBank                : fileversion = 146, compatVersion = 146 (oldest = 44, newest = 146)
+[LOG] PlaybackSystem::acquireMasterBus         : Setting master channel group format to 6
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C3996B8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C3996B8
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C3996B8
+[LOG] SystemI::createSound                     : filename = ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank : mode 02010082
+[LOG] SystemI::createSound                     : FMOD_NONBLOCKING specified.  Putting into queue to be opened asynchronously!
+[LOG] AsyncThread::getAsyncThread              : index = 0 / 5
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 0000024206CE1BD8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 0000024206CE1BD8
+[LOG] SystemI::createSound                     : filename = ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank : mode 02010082
+[LOG] SystemI::createSoundInternal             :     Create name='../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank', mode=0x02010082
+[LOG] SystemI::createSound                     :     FMOD_NONBLOCKING specified.  Putting into queue to be opened asynchronously!
+[LOG] SystemI::createSoundInternal             :     exinfo->cbsize             = 224
+[LOG] AsyncThread::getAsyncThread              :     index = 0 / 5
+[LOG] SystemI::createSoundInternal             :     exinfo->length             = 946240
+[LOG] AsyncThread::add                         :     add sound to async queue : soundi = 00000244AE573F58, queue head = 000002438C39ADE8, queue count = 0
+[LOG] SystemI::createSoundInternal             :     exinfo->fileoffset         = 5696
+[LOG] SystemI::createSoundInternal             :     exinfo->numsubsounds       = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlist      = 000002443FA4A5A8
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlistnum   = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->suggestedsoundtype = 5
+[LOG] SystemI::createSoundInternal             :     exinfo->initialseekpostype = 1
+[LOG] SystemI::createSoundInternal             :     Stream 0/1: name='Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2', format=5, channels=2, frequency=48000, lengthbytes=793280, lengthpcm=2854960, pcmblocksize=0, loopstart=0, loopend=0, mode=0x00000000, channelmask=0x00000000, channelorder=0, peakvolume=0.169746.
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 0000024206CE1BD8
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 00000244AE573F58
+[LOG] SystemI::createSoundInternal             :     Create name='../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank', mode=0x02010082
+[LOG] SystemI::createSoundInternal             :     exinfo->cbsize             = 224
+[LOG] SystemI::createSoundInternal             :     exinfo->length             = 946240
+[LOG] SystemI::createSoundInternal             :     exinfo->fileoffset         = 5696
+[LOG] SystemI::createSoundInternal             :     exinfo->numsubsounds       = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlist      = 000002443FA4A708
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlistnum   = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->suggestedsoundtype = 5
+[LOG] SystemI::createSoundInternal             :     exinfo->initialseekpostype = 1
+[LOG] SystemI::createSoundInternal             :     Stream 0/1: name='whitenoisetv', format=5, channels=2, frequency=44100, lengthbytes=152096, lengthpcm=651959, pcmblocksize=0, loopstart=0, loopend=651322, mode=0x00000000, channelmask=0x00000000, channelorder=0, peakvolume=0.275501.
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 00000244AE573F58
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C399528, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C399528
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C399528
+[LOG] SoundI::release                          : whitenoisetv (000002438C39A338)
+[LOG] SoundI::release                          :     whitenoisetv (0000024443EDB1F8)
+[LOG] SoundI::release                          :     whitenoisetv (000002438C399078)
+[LOG] SoundI::release                          : Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (000002438C39A658)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (0000024443EDB078)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (000002438C3996B8)
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 00000244AE5748B8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 00000244AE5748B8
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 00000244AE5748B8
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 00000244AE5748B8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 00000244AE5748B8
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 00000244AE5748B8
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 00000244AE5748B8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 00000244AE5748B8
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 00000244AE5748B8
+[LOG] SystemI::createSound                     : filename = ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank : mode 02010082
+[LOG] SystemI::createSound                     : FMOD_NONBLOCKING specified.  Putting into queue to be opened asynchronously!
+[LOG] AsyncThread::getAsyncThread              : index = 0 / 5
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C3996B8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] SystemI::createSound                     : filename = ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank : mode 02010082
+[LOG] SystemI::createSound                     : FMOD_NONBLOCKING specified.  Putting into queue to be opened asynchronously!
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C3996B8
+[LOG] AsyncThread::getAsyncThread              : index = 0 / 5
+[LOG] SystemI::createSoundInternal             :     Create name='../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank', mode=0x02010082
+[LOG] AsyncThread::add                         :     add sound to async queue : soundi = 000002438C39A338, queue head = 000002438C39ADE8, queue count = 0
+[LOG] SystemI::createSoundInternal             :     exinfo->cbsize             = 224
+[LOG] SystemI::createSoundInternal             :     exinfo->length             = 946240
+[LOG] SystemI::createSoundInternal             :     exinfo->fileoffset         = 5696
+[LOG] SystemI::createSoundInternal             :     exinfo->numsubsounds       = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlist      = 000002443FA49EC8
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlistnum   = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->suggestedsoundtype = 5
+[LOG] SystemI::createSoundInternal             :     exinfo->initialseekpostype = 1
+[LOG] SystemI::createSoundInternal             :     Stream 0/1: name='Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2', format=5, channels=2, frequency=48000, lengthbytes=793280, lengthpcm=2854960, pcmblocksize=0, loopstart=0, loopend=0, mode=0x00000000, channelmask=0x00000000, channelorder=0, peakvolume=0.169746.
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C3996B8
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C39A338
+[LOG] SystemI::createSoundInternal             :     Create name='../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank', mode=0x02010082
+[LOG] SystemI::createSoundInternal             :     exinfo->cbsize             = 224
+[LOG] SystemI::createSoundInternal             :     exinfo->length             = 946240
+[LOG] SystemI::createSoundInternal             :     exinfo->fileoffset         = 5696
+[LOG] SystemI::createSoundInternal             :     exinfo->numsubsounds       = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlist      = 000002443FA493C8
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlistnum   = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->suggestedsoundtype = 5
+[LOG] SystemI::createSoundInternal             :     exinfo->initialseekpostype = 1
+[LOG] SystemI::createSoundInternal             :     Stream 0/1: name='whitenoisetv', format=5, channels=2, frequency=44100, lengthbytes=152096, lengthpcm=651959, pcmblocksize=0, loopstart=0, loopend=651322, mode=0x00000000, channelmask=0x00000000, channelorder=0, peakvolume=0.275501.
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C39A338
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C399078, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C399078
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C399078
+[LOG] SoundI::release                          : whitenoisetv (00000244AE573F58)
+[LOG] SoundI::release                          :     whitenoisetv (000002447C9E5888)
+[LOG] SoundI::release                          :     whitenoisetv (000002438C399528)
+[LOG] SoundI::release                          : Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (0000024206CE1BD8)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (000002447C9E5588)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (00000244AE5748B8)
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C39A658, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C399078, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C399078
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C399078
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C39A658, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C39A658, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C39A658, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C39A658
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C39A658
+[LOG] SystemI::createSound                     : filename = ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank : mode 02010082
+[LOG] SystemI::createSound                     : FMOD_NONBLOCKING specified.  Putting into queue to be opened asynchronously!
+[LOG] AsyncThread::getAsyncThread              : index = 0 / 5
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 000002438C399528, queue head = 000002438C39ADE8, queue count = 0
+[LOG] SystemI::createSound                     : filename = ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank : mode 02010082
+[LOG] SystemI::createSound                     : FMOD_NONBLOCKING specified.  Putting into queue to be opened asynchronously!
+[LOG] AsyncThread::getAsyncThread              : index = 0 / 5
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 000002438C399528
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 00000244AE573F58, queue head = 000002438C39ADE8, queue count = 0
+[LOG] SystemI::createSoundInternal             :     Create name='../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank', mode=0x02010082
+[LOG] SystemI::createSoundInternal             :     exinfo->cbsize             = 224
+[LOG] SystemI::createSoundInternal             :     exinfo->length             = 946240
+[LOG] SystemI::createSoundInternal             :     exinfo->fileoffset         = 5696
+[LOG] SystemI::createSoundInternal             :     exinfo->numsubsounds       = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlist      = 000002443FA49528
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlistnum   = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->suggestedsoundtype = 5
+[LOG] SystemI::createSoundInternal             :     exinfo->initialseekpostype = 1
+[LOG] SystemI::createSoundInternal             :     Stream 0/1: name='Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2', format=5, channels=2, frequency=48000, lengthbytes=793280, lengthpcm=2854960, pcmblocksize=0, loopstart=0, loopend=0, mode=0x00000000, channelmask=0x00000000, channelorder=0, peakvolume=0.169746.
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 000002438C399528
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 00000244AE573F58
+[LOG] SystemI::createSoundInternal             :     Create name='../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank', mode=0x02010082
+[LOG] SystemI::createSoundInternal             :     exinfo->cbsize             = 224
+[LOG] SystemI::createSoundInternal             :     exinfo->length             = 946240
+[LOG] SystemI::createSoundInternal             :     exinfo->fileoffset         = 5696
+[LOG] SystemI::createSoundInternal             :     exinfo->numsubsounds       = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlist      = 000002443FA4A5A8
+[LOG] SystemI::createSoundInternal             :     exinfo->inclusionlistnum   = 1
+[LOG] SystemI::createSoundInternal             :     exinfo->suggestedsoundtype = 5
+[LOG] SystemI::createSoundInternal             :     exinfo->initialseekpostype = 1
+[LOG] SystemI::createSoundInternal             :     Stream 0/1: name='whitenoisetv', format=5, channels=2, frequency=44100, lengthbytes=152096, lengthpcm=651959, pcmblocksize=0, loopstart=0, loopend=651322, mode=0x00000000, channelmask=0x00000000, channelorder=0, peakvolume=0.275501.
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 00000244AE573F58
+[LOG] AsyncThread::add                         : add sound to async queue : soundi = 0000024206CE1BD8, queue head = 000002438C39ADE8, queue count = 0
+[LOG] AsyncThread::threadFunc                  : Starting Asynchronous operation on sound 0000024206CE1BD8
+[LOG] AsyncThread::threadFunc                  : Finished Asynchronous operation on sound 0000024206CE1BD8
+[LOG] SoundI::release                          : whitenoisetv (000002438C39A338)
+[LOG] SoundI::release                          :     whitenoisetv (00000245A75E0B78)
+[LOG] SoundI::release                          :     whitenoisetv (000002438C399078)
+[LOG] SoundI::release                          : Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (000002438C3996B8)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (00000245A75E0878)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (000002438C39A658)
+[LOG] SoundI::release                          : whitenoisetv (00000244AE573F58)
+[LOG] SoundI::release                          :     whitenoisetv (0000024444D4F1F8)
+[LOG] SoundI::release                          :     whitenoisetv (0000024206CE1BD8)
+[LOG] SoundI::release                          : Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (000002438C399528)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (0000024444D4FAF8)
+[LOG] SoundI::release                          :     Birds, Bird Of Prey, Boreal Owl, Hooting, Quiet Night, Middle of Forest, Nord Odal, Norway SND157971 2 (00000244AE5748B8)
+[LOG] Thread::callback                         : FMOD Studio update thread finished.
+[LOG] Thread::callback                         : FMOD Studio bank load thread finished.
+[LOG] Profile::disconnectAll                   : Profiler disconnecting all clients
+[LOG] Thread::callback                         : FMOD Studio sample load thread finished.
+[LOG] LiveUpdate::release                      : 
+[LOG] LiveUpdate::reset                        : Reset connection (reason Disconnected)
+[LOG] Thread::callback                         : FMOD stream thread finished.
+[LOG] Thread::callback                         : FMOD mixer thread finished.
+[LOG] Profile::disconnectAll                   : Profiler disconnecting all clients
+[LOG] SystemI::closeInternal                   : Closed.
