@@ -20,6 +20,7 @@ namespace TheyWillDescend.Presentation.Audio
         Yes = 2,
         No = 3,
         Warning = 4,
+        Click = 5,
     }
 
     /// <summary>
@@ -211,6 +212,7 @@ namespace TheyWillDescend.Presentation.Audio
         PointerEventData _pointerData;
         readonly List<RaycastResult> _raycastResults = new();
         GameObject _hoveredButton;
+        bool _wasPressed;
 
         void Update()
         {
@@ -244,12 +246,25 @@ namespace TheyWillDescend.Presentation.Audio
                 break;
             }
 
-            if (found == _hoveredButton)
-                return;
+            if (found != _hoveredButton)
+            {
+                _hoveredButton = found;
+                SetState(found != null ? UiState.Hover : UiState.None);
+            }
 
-            _hoveredButton = found;
-            SetState(found != null ? UiState.Hover : UiState.None);
+            // Клик по кнопке: CLICK (бывший Value A) на нажатие, возврат в
+            // HOVER на отпускание (курсор всё ещё на кнопке).
+            var pressed = mouse.leftButton.isPressed;
+            if (pressed != _wasPressed)
+            {
+                _wasPressed = pressed;
+                if (pressed && _hoveredButton != null)
+                    SetState(UiState.Click);
+                else if (!pressed)
+                    SetState(_hoveredButton != null ? UiState.Hover : UiState.None);
+            }
         }
+
 
         void OnDestroy()
         {
