@@ -1,5 +1,7 @@
+using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,11 +27,23 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField, Range(0f, 24f), Tooltip("Час, в который прыгаем при переключении на ночь.")]
         float nightHour = 21f;
 
+        [Header("Energy")]
+        [SerializeField, Tooltip("Кнопка '+N энергии'.")]
+        Button addEnergyButton;
+        [SerializeField, Tooltip("Кнопка '-N энергии'.")]
+        Button removeEnergyButton;
+        [SerializeField, Min(0.001f), Tooltip("Сколько энергии добавляем или снимаем одним нажатием.")]
+        float energyStep = 5f;
+
+        static readonly FixedString64Bytes EnergyId = EnergyReadout.EnergyId;
+
         void Awake()
         {
             HudButtons.Bind(toggleDayNightButton, ToggleDayNight);
             HudButtons.Bind(setDayButton, () => SetHour(dayHour));
             HudButtons.Bind(setNightButton, () => SetHour(nightHour));
+            HudButtons.Bind(addEnergyButton, AddEnergy);
+            HudButtons.Bind(removeEnergyButton, RemoveEnergy);
         }
 
         void OnDestroy()
@@ -37,6 +51,33 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.Unbind(toggleDayNightButton, ToggleDayNight);
             HudButtons.Unbind(setDayButton, () => SetHour(dayHour));
             HudButtons.Unbind(setNightButton, () => SetHour(nightHour));
+            HudButtons.Unbind(addEnergyButton, AddEnergy);
+            HudButtons.Unbind(removeEnergyButton, RemoveEnergy);
+        }
+
+        void AddEnergy() => ApplyEnergy(energyStep);
+
+        void RemoveEnergy() => ApplyEnergy(-energyStep);
+
+        /// <summary>
+        /// Двигает резервуар энергии напрямую. Значение зажимается тем же StockCap,
+        /// что использует ResourceLedger, поэтому орб и полоска не уедут за 100%.
+        /// </summary>
+        void ApplyEnergy(float delta)
+        {
+            if (!SimWorld.TryGet(out var em, out var bag)
+                || !em.HasBuffer<ResourceAmount>(bag))
+                return;
+
+            var stock = em.GetBuffer<ResourceAmount>(bag);
+
+            if (em.HasBuffer<ResourceInfo>(bag))
+            {
+                ResourceLedger.AddClamped(stock, em.GetBuffer<ResourceInfo>(bag), EnergyId, delta);
+                return;
+            }
+
+            ResourceLedger.Add(stock, EnergyId, delta);
         }
 
         void ToggleDayNight()

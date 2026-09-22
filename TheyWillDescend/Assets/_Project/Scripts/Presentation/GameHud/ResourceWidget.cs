@@ -39,7 +39,7 @@ namespace TheyWillDescend.Presentation.GameHud
         static readonly FixedString64Bytes MeatId = new("raw_meat");
         static readonly FixedString64Bytes LivestockId = new("livestock");
         static readonly FixedString64Bytes RationsId = new("rations");
-        static readonly FixedString64Bytes EnergyId = new("energy");
+
 
         // Public properties for setup / inspector validation
         public TMP_Text WoodValue { get => woodValue; set => woodValue = value; }
@@ -76,20 +76,13 @@ namespace TheyWillDescend.Presentation.GameHud
             SetLabel(rationsValue, ResourceLedger.Get(stock, RationsId));
 
             // Center: Energy
-            var energyAmount = ResourceLedger.Get(stock, EnergyId);
+            if (!EnergyReadout.TryGet(em, bag, defaultEnergyCap, out var energyAmount, out _, out var energy01))
+                return;
+
             SetLabel(energyValue, energyAmount);
 
             if (energyFill != null)
-            {
-                var cap = defaultEnergyCap;
-                if (em.HasBuffer<ResourceInfo>(bag))
-                {
-                    var infoCap = ResourceLedger.StockCap(em.GetBuffer<ResourceInfo>(bag), EnergyId);
-                    if (infoCap > 0.001f)
-                        cap = infoCap;
-                }
-                energyFill.fillAmount = Mathf.Clamp01(energyAmount / cap);
-            }
+                energyFill.fillAmount = energy01;
         }
 
         static void SetLabel(TMP_Text label, float amount)
