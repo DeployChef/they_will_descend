@@ -61,14 +61,15 @@ namespace TheyWillDescend.Presentation.City
             if (cam == null)
                 return;
 
-            var toUi = transform.position - cam.transform.position;
-            if (toUi.sqrMagnitude < 1e-8f)
-                return;
+            // Копируем ориентацию камеры, а не смотрим на её позицию.
+            // Орбита меняет yaw/pitch — табличка доворачивается.
+            // Пан не крутит камеру — табличка стоит.
+            transform.rotation = cam.transform.rotation;
 
-            transform.rotation = Quaternion.LookRotation(toUi);
-
+            var toCam = transform.position - cam.transform.position;
+            var distance = toCam.magnitude;
             var refDist = Mathf.Max(0.1f, referenceDistance);
-            transform.localScale = _authoredScale * (toUi.magnitude / refDist);
+            transform.localScale = _authoredScale * (distance / refDist);
             gameObject.SetActive(IsVisible(cam));
         }
 
