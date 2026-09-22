@@ -57,9 +57,20 @@ namespace TheyWillDescend.Presentation.Audio
         PARAMETER_ID _stateParamId;
         bool _paramResolved;
         UiState _current = UiState.None;
+        double _autoReturnAt;
+
+
+
 
         [Header("Debug")]
         [SerializeField] bool logActivity = false;
+
+        [Header("Auto Return")]
+        [Tooltip("Сколько держится состояние перед возвратом в None. НЕ про длину звука — звук доигрывает сам. Это задержка, чтобы FMOD-микшер (обновляется ~каждые 20 мс) успел увидеть значение и триггернуть инструмент. Меньше 0.05 ставить нельзя — вспышка будет пропущена.")]
+        [SerializeField] float autoReturnDelay = 0.1f;
+
+
+
 
         void Awake()
         {
@@ -175,6 +186,10 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>
         /// Переключает состояние UI-ивента. Одинаковое состояние подряд не
         /// переотправляется: FMOD триггерит инструмент только на смену значения.
+        /// Каждое состояние — вспышка: держится autoReturnDelay (0.1 c), потом
+        /// возвращается в None. Задержка нужна не для звука (он доигрывает сам),
+        /// а чтобы FMOD-микшер успел УВИДЕТЬ значение: он читает параметр
+        /// чанками ~20 мс, вспышка в один кадр (16 мс) между чанками теряется.
         /// </summary>
         public void SetState(UiState state)
         {
@@ -185,6 +200,7 @@ namespace TheyWillDescend.Presentation.Audio
                 return;
 
             _current = state;
+            _autoReturnAt = state != UiState.None ? Time.timeAsDouble + autoReturnDelay : 0.0;
 
             // ignoreseekspeed=true — параметр дискретный, значение должно
             // примениться сразу, иначе Seek Speed растянет установку.
@@ -195,6 +211,9 @@ namespace TheyWillDescend.Presentation.Audio
             if (logActivity)
                 GameLog.Info($"UiAudioManager: state → {state}.");
         }
+
+
+
 
         /// <summary>Громкость всего UI одним вызовом.</summary>
         public void SetVolume(float volume)
@@ -249,21 +268,35 @@ namespace TheyWillDescend.Presentation.Audio
             if (found != _hoveredButton)
             {
                 _hoveredButton = found;
+                // Пришли на кнопку → Hover (разовая вспышка). Ушли с кнопки /
+                // сменили кнопку → None или Hover новой: всё через SetState,
+                // авто-возврат вернёт в None сам.
                 SetState(found != null ? UiState.Hover : UiState.None);
             }
 
-            // Клик по кнопке: CLICK (бывший Value A) на нажатие, возврат в
-            // HOVER на отпускание (курсор всё ещё на кнопке).
+            // Клик по кнопке → CLICK (вспышка на кадр).
             var pressed = mouse.leftButton.isPressed;
             if (pressed != _wasPressed)
             {
                 _wasPressed = pressed;
                 if (pressed && _hoveredButton != null)
                     SetState(UiState.Click);
-                else if (!pressed)
-                    SetState(_hoveredButton != null ? UiState.Hover : UiState.None);
+            }
+
+            // Авто-возврат в None после вспышки. Задержка autoReturnDelay —
+            // окно видимости для FMOD-микшера: он читает параметр чанками ~20 мс,
+            // короче — значение теряется между чанками и звук не триггерится.
+            if (_autoReturnAt > 0.0 && Time.timeAsDouble >= _autoReturnAt)
+            {
+                _autoReturnAt = 0.0;
+                if (_current != UiState.None)
+                    SetState(UiState.None);
             }
         }
+
+
+
+
 
 
         void OnDestroy()
