@@ -1,9 +1,10 @@
 using System;
+using System.Collections;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Agents;
+using TheyWillDescend.Presentation.Cameras;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Presentation.GameHud;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +12,7 @@ namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
     /// In-game pause overlay on Game. Not an AppState — Playing stays current.
+    /// Открытие/закрытие проигрывается последовательностью элементов, синхронизированной с камерой.
     /// </summary>
     public sealed class PauseMenuScreen : MonoBehaviour
     {
@@ -21,6 +23,14 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] BuildWidget buildWidget;
         [SerializeField] BuildingViewBoard buildingViewBoard;
         [SerializeField] AgentViewBoard agentViewBoard;
+        [SerializeField, Tooltip("Камера меню паузы. Если пусто — берётся PauseCameraSwitch.Current.")]
+        PauseCameraSwitch pauseCamera;
+        [SerializeField, Tooltip("Последовательность появления элементов меню. Пусто — меню показывается целиком сразу.")]
+        UiSequencePlayer revealSequence;
+        [SerializeField, Range(0f, 1f), Tooltip("Доля прохода камеры до меню, после которой начинается появление элементов.")]
+        float revealAtBlendProgress = 0.9f;
+        [SerializeField, Min(0f), Tooltip("Запас секунд к длительности перехода камеры на случай, если порог так и не наступил.")]
+        float revealFallbackWait = 0.25f;
 
         public static PauseMenuScreen Current { get; private set; }
 
@@ -30,18 +40,23 @@ namespace TheyWillDescend.Presentation.ShellUi
         public event Action MainMenuClicked;
         public event Action ToggleRequested;
 
-        public bool IsOpen => gameObject.activeSelf;
+        /// <summary>Меню открыто логически. На время исчезновения элементов сбрасывается сразу.</summary>
+        public bool IsOpen { get; private set; }
+
+        PauseCameraSwitch CameraSwitch => pauseCamera != null ? pauseCamera : PauseCameraSwitch.Current;
+
+        float CameraBlendProgress => CameraSwitch != null ? CameraSwitch.MenuBlendProgress : 1f;
+
+        Coroutine _revealRoutine;
 
         void Awake()
         {
             Current = this;
-            if (continueButton == null)
-                BuildChrome();
             Bind(continueButton, () => ContinueClicked?.Invoke());
             Bind(saveButton, () => SaveClicked?.Invoke());
             Bind(loadButton, () => LoadClicked?.Invoke());
             Bind(mainMenuButton, () => MainMenuClicked?.Invoke());
-            Hide();
+            HideImmediate();
         }
 
         void OnDestroy()
@@ -50,9 +65,63 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        public void Show() => gameObject.SetActive(true);
+        public void Show()
+        {
+            if (IsOpen)
+                return;
 
-        public void Hide() => gameObject.SetActive(false);
+            IsOpen = true;
+            gameObject.SetActive(true);
+            CameraSwitch?.Engage();
+
+            if (revealSequence == null)
+                return;
+
+            revealSequence.HideImmediate();
+            StopReveal();
+            _revealRoutine = StartCoroutine(RevealWhenCameraArrives());
+        }
+
+        public void Hide()
+        {
+            if (!IsOpen)
+            {
+                // Меню уже закрыто: дотушиваем состояние, но не трогаем идущее исчезновение.
+                if (revealSequence == null || !revealSequence.IsPlaying)
+                {
+                    StopReveal();
+                    gameObject.SetActive(false);
+                }
+                return;
+            }
+
+            IsOpen = false;
+            StopReveal();
+            CameraSwitch?.Release();
+
+            if (revealSequence == null)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
+            revealSequence.PlayOut(() =>
+            {
+                if (!IsOpen)
+                    gameObject.SetActive(false);
+            });
+        }
+
+        /// <summary>Закрыть без анимации — для старта сцены и ухода из состояния.</summary>
+        public void HideImmediate()
+        {
+            IsOpen = false;
+            StopReveal();
+            CameraSwitch?.Release();
+            if (revealSequence != null)
+                revealSequence.HideImmediate();
+            gameObject.SetActive(false);
+        }
 
         public void RequestToggle() => ToggleRequested?.Invoke();
 
@@ -71,75 +140,50 @@ namespace TheyWillDescend.Presentation.ShellUi
                 buildingViewBoard.RebuildViews();
         }
 
+        /// <summary>Ждём, пока камера почти доедет до меню, и только тогда раскрываем элементы.</summary>
+        IEnumerator RevealWhenCameraArrives()
+        {
+            // Заезд камеры может быть растянут (орбита унесла позу далеко), поэтому страховочный
+            // бюджет считаем от фактической длительности перехода, а не от фиксированного числа.
+            float budget = RevealFallbackBudget();
+            float waited = 0f;
+            while (waited < budget && CameraBlendProgress < revealAtBlendProgress)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            _revealRoutine = null;
+            if (!IsOpen || revealSequence == null)
+                yield break;
+
+            revealSequence.PlayIn();
+        }
+
+        /// <summary>
+        /// Страховочный бюджет ожидания: фактическая длительность перехода камеры плюс запас
+        /// (или минимум из инспектора, если камера не сообщает длительность).
+        /// </summary>
+        float RevealFallbackBudget()
+        {
+            var cameraSwitch = CameraSwitch;
+            if (cameraSwitch != null && cameraSwitch.LastBlendDuration > 0f)
+                return cameraSwitch.LastBlendDuration + revealFallbackWait;
+            return revealFallbackWait;
+        }
+
+        void StopReveal()
+        {
+            if (_revealRoutine == null)
+                return;
+            StopCoroutine(_revealRoutine);
+            _revealRoutine = null;
+        }
+
         static void Bind(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button != null)
                 button.onClick.AddListener(action);
-        }
-
-        void BuildChrome()
-        {
-            var dim = GetComponent<Image>();
-            if (dim == null)
-                dim = gameObject.AddComponent<Image>();
-            dim.color = new Color(0f, 0f, 0f, 0.65f);
-            dim.raycastTarget = true;
-
-            var card = new GameObject("MenuCard", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            card.transform.SetParent(transform, false);
-            var cardRt = (RectTransform)card.transform;
-            cardRt.anchorMin = cardRt.anchorMax = new Vector2(0.5f, 0.5f);
-            cardRt.pivot = new Vector2(0.5f, 0.5f);
-            cardRt.sizeDelta = new Vector2(320f, 292f);
-            card.GetComponent<Image>().color = new Color(0.12f, 0.12f, 0.14f, 0.96f);
-
-            var layout = card.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(20, 20, 20, 20);
-            layout.spacing = 12f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-
-            continueButton = CreateButton(card.transform, "Continue");
-            saveButton = CreateButton(card.transform, "Save");
-            loadButton = CreateButton(card.transform, "Load");
-            mainMenuButton = CreateButton(card.transform, "Main Menu");
-        }
-
-        static Button CreateButton(Transform parent, string label)
-        {
-            var go = new GameObject(label + "Button", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            go.transform.SetParent(parent, false);
-            var image = go.GetComponent<Image>();
-            image.color = new Color(0.18f, 0.18f, 0.2f, 0.92f);
-            var layout = go.AddComponent<LayoutElement>();
-            layout.minHeight = 48f;
-            layout.preferredHeight = 48f;
-            var button = go.AddComponent<Button>();
-            button.targetGraphic = image;
-            var colors = button.colors;
-            colors.highlightedColor = new Color(0.85f, 0.9f, 1f, 1f);
-            colors.pressedColor = new Color(0.7f, 0.75f, 0.85f, 1f);
-            button.colors = colors;
-
-            var textGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
-            textGo.transform.SetParent(go.transform, false);
-            var textRt = (RectTransform)textGo.transform;
-            textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = Vector2.zero;
-            textRt.offsetMax = Vector2.zero;
-            var tmp = textGo.AddComponent<TextMeshProUGUI>();
-            tmp.text = label;
-            tmp.fontSize = 22f;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
-            tmp.raycastTarget = false;
-            if (TMP_Settings.defaultFontAsset != null)
-                tmp.font = TMP_Settings.defaultFontAsset;
-            return button;
         }
     }
 }
