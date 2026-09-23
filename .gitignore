@@ -82,6 +82,12 @@ AGENTS.md
 rules/
 
 
-TheyWillDescend/fmod_editor.log
-
+# FMOD Studio junk (logs, per-user state) — banks stay committed!
+Audio_FMOD/**/fmod_editor.log
+Audio_FMOD/**/.unsaved/
+Audio_FMOD/**/fmod_cache/
 *.log
+
+# NEVER ignore banks (explicitly kept):
+# Audio_FMOD/they will desend/Build/Desktop/*.bank
+# TheyWillDescend/Assets/StreamingAssets/Desktop/*.bank
