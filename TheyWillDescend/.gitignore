@@ -13,6 +13,10 @@
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
 
+# FMOD Unity editor cache — regenerated; override the meta keep-rule above
+/[Aa]ssets/Plugins/FMOD/Cache/
+/[Aa]ssets/Plugins/FMOD/Cache.meta
+
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
 

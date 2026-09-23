@@ -67,6 +67,10 @@ Audio_FMOD/**/*.cache.meta
 *.fspro.user
 *.fmod.user
 
+# FMOD Unity editor cache (event/bank refs) — rebuilt from banks in Editor.
+TheyWillDescend/Assets/Plugins/FMOD/Cache/
+TheyWillDescend/Assets/Plugins/FMOD/Cache.meta
+
 # FMOD Studio build output IS committed.
 # FMODStudioSettings.asset has sourceBankPath = ../Audio_FMOD/they will desend/Build/Desktop
 # and HasPlatforms = 0, so Play-in-Editor and the Event Browser read banks from here.
