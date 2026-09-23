@@ -4,6 +4,9 @@
 		<property name="name">
 			<value>Ambience_Town_Random</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{5cae0d76-ccf0-42c8-8eb5-fbd7dfe7b6d0}</destination>
+		</relationship>
 		<relationship name="effectChain">
 			<destination>{517c455d-1fcd-4b15-9748-442044f980e6}</destination>
 		</relationship>
@@ -13,6 +16,14 @@
 		<relationship name="output">
 			<destination>{cc182a9b-91e5-4b28-b8f7-08d0ae7c675d}</destination>
 		</relationship>
+	</object>
+	<object class="SeekModulator" id="{5cae0d76-ccf0-42c8-8eb5-fbd7dfe7b6d0}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>volume</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.61000001430511475</value>
+		</property>
 	</object>
 	<object class="MixerBusEffectChain" id="{517c455d-1fcd-4b15-9748-442044f980e6}">
 		<relationship name="effects">

@@ -4,6 +4,9 @@
 		<property name="name">
 			<value>UI</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{f1765c39-570f-41dd-8fd4-712e4d36d13b}</destination>
+		</relationship>
 		<relationship name="effectChain">
 			<destination>{1315e3c7-d1c1-46cc-8f9e-9be835e7bc62}</destination>
 		</relationship>
@@ -13,6 +16,14 @@
 		<relationship name="output">
 			<destination>{c82f6295-5ab8-436b-a8e1-11837ed78744}</destination>
 		</relationship>
+	</object>
+	<object class="SeekModulator" id="{f1765c39-570f-41dd-8fd4-712e4d36d13b}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>volume</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.62999999523162842</value>
+		</property>
 	</object>
 	<object class="MixerBusEffectChain" id="{1315e3c7-d1c1-46cc-8f9e-9be835e7bc62}">
 		<relationship name="effects">

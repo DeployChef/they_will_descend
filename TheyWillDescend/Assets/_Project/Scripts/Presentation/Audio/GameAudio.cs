@@ -19,6 +19,10 @@ namespace TheyWillDescend.Presentation.Audio
         // Ивент лежит в папке SOUNDTRACK → путь event:/SOUNDTRACK/main_soundtrack.
         public const string MusicEventPath = "event:/SOUNDTRACK/main_soundtrack";
 
+        // Снэпшоты FMOD (корень Snapshots). DEAFULT — имя в FMOD-проекте с опечаткой.
+        public const string PauseSnapshotPath = "snapshot:/ESC";
+        public const string DefaultSnapshotPath = "snapshot:/DEAFULT";
+
         [SerializeField] EventReference musicEvent;
 
         [Header("Music")]
@@ -26,6 +30,9 @@ namespace TheyWillDescend.Presentation.Audio
         [SerializeField] bool enableMusic = false;
 
         EventInstance _music;
+        // Снэпшоты паузы: Esc → ESC, повторный Esc (выход из паузы) → DEAFULT.
+        EventInstance _escSnapshot;
+        EventInstance _defaultSnapshot;
         bool _lastPaused;
 
         void Awake()
@@ -93,20 +100,74 @@ namespace TheyWillDescend.Presentation.Audio
 
         void LateUpdate()
         {
-            if (!_music.isValid())
-                return;
-
+            // Пауза по Esc (PlayerPaused) — переключение снэпшотов работает всегда,
+            // независимо от того, включена ли музыка.
             var paused = false;
             if (SimWorld.TryGet(out var em, out var bag) && em.HasComponent<SimControl>(bag))
                 paused = em.GetComponentData<SimControl>(bag).PlayerPaused != 0;
-            if (paused == _lastPaused)
+            if (paused != _lastPaused)
+            {
+                ApplyPauseSnapshots(paused);
+                _lastPaused = paused;
+            }
+
+            if (!_music.isValid())
                 return;
 
             _music.setPaused(paused);
-            _lastPaused = paused;
         }
 
-        void OnDestroy() => StopSessionMusic();
+        void ApplyPauseSnapshots(bool paused)
+        {
+            if (paused)
+            {
+                StopSnapshot(ref _defaultSnapshot);
+                StartSnapshot(PauseSnapshotPath, ref _escSnapshot);
+            }
+            else
+            {
+                StopSnapshot(ref _escSnapshot);
+                StartSnapshot(DefaultSnapshotPath, ref _defaultSnapshot);
+            }
+        }
+
+        static void StartSnapshot(string path, ref EventInstance snapshot)
+        {
+            // В обёртке FMOD 2.03 нет getSnapshot — снэпшот резолвится как ивент (snapshot:/...).
+            var result = RuntimeManager.StudioSystem.getEvent(path, out var description);
+            if (result != FMOD.RESULT.OK || !description.isValid())
+            {
+                GameLog.Warning($"GameAudio: snapshot '{path}' not found ({result}). " +
+                                "Build banks in FMOD Studio (Ctrl+B) and copy them to StreamingAssets/Desktop/.");
+                return;
+            }
+
+            result = description.createInstance(out snapshot);
+            if (result != FMOD.RESULT.OK || !snapshot.isValid())
+            {
+                GameLog.Warning($"GameAudio: failed to create snapshot '{path}' ({result}).");
+                return;
+            }
+
+            snapshot.start();
+        }
+
+        static void StopSnapshot(ref EventInstance snapshot)
+        {
+            if (!snapshot.isValid())
+                return;
+
+            snapshot.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+            snapshot.release();
+            snapshot.clearHandle();
+        }
+
+        void OnDestroy()
+        {
+            StopSessionMusic();
+            StopSnapshot(ref _escSnapshot);
+            StopSnapshot(ref _defaultSnapshot);
+        }
 
         static void TryLoadBank(string bankName)
         {
