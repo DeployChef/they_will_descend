@@ -16,9 +16,10 @@ namespace TheyWillDescend.Presentation.Audio
     public sealed class GlobalAmbienceManager : MonoBehaviour
     {
         // === Хардкод путей ивентов и банков ===
+        // Ивенты амбиентов лежат в папке AMBIENCE → путь event:/AMBIENCE/...
         private static readonly string[] EternalEventPaths =
         {
-            "event:/Ambience_Wind_Generation"
+            "event:/AMBIENCE/Ambience_Wind_Generation"
         };
 
         // Имя банка (без .bank). FMOD-конвенция не универсальна:
