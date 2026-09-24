@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 276029922354768148}
   - component: {fileID: 6015305075906412837}
   - component: {fileID: 4597576408477260934}
+  - component: {fileID: -66371761358102395}
   m_Layer: 0
   m_Name: Road
   m_TagString: Untagged
@@ -78,3 +79,26 @@ MonoBehaviour:
   workingColor: {r: 0.35, g: 0.82, b: 0.42, a: 1}
   constructionColor: {r: 0.95, g: 0.78, b: 0.28, a: 1}
   workingPulseHz: 1.15
+--- !u!114 &-66371761358102395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5493344440789996224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d25b34a1deada1b4db8e05559445bccd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Audio.BuildingConstructionAudio
+  buildEvent:
+    Guid:
+      Data1: 1522934691
+      Data2: 1121993379
+      Data3: -1117090432
+      Data4: 770902725
+    Path: event:/BUILDINGS/BUILD
+  eventPath: event:/BUILDINGS/BUILD
+  bankNames:
+  - BUILDING
+  logActivity: 0

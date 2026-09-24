@@ -27,16 +27,27 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingAudioSourceType buildingType = BuildingAudioSourceType.House;
 
         [Header("Activity")]
+        [Tooltip("Вес активности зоны (Cell_Activity). Множитель суммируется по постройкам зоны.")]
         [SerializeField] [Range(0f, 1f)] float activityWeight = 0.5f;
-
-        [Header("Audio")]
-        [SerializeField] bool isWorking = true;
 
         /// <summary>Ссылка на зону, к которой привязан этот источник.</summary>
         internal AudioZone LinkedZone { get; set; }
 
+        /// <summary>
+        /// Здание закончено (Construction снята) — учитывается зоной в амбиенсе.
+        /// Строящееся/демонтируемое здание (CountsForAmbience = false) в амбиенсе
+        /// зоны не участвует: Ambience_Town играет только после COMPLETE.
+        /// Обновляется BuildingViewBoard из ECS каждый кадр.
+        /// </summary>
+        internal bool CountsForAmbience { get; set; }
+
         public BuildingAudioSourceType BuildingType => buildingType;
-        public float ActivityWeight => isWorking ? activityWeight : 0f;
+
+        // Ранее здесь был множитель isWorking — флаг не выставлялся из кода
+        // (SetWorking никто не вызывал), и на префабе Sawmill он был выключен,
+        // из-за чего активность зоны была 0 и Ambience_Town не будился.
+        // Участие в амбиенсе полностью определяет CountsForAmbience.
+        public float ActivityWeight => activityWeight;
 
         void OnEnable()
         {
@@ -55,10 +66,5 @@ namespace TheyWillDescend.Presentation.City
             if (LinkedZone != null)
                 LinkedZone.RemoveAudioSource(this);
         }
-
-        /// <summary>
-        /// Обновляет состояние работы (для RTPC).
-        /// </summary>
-        public void SetWorking(bool working) => isWorking = working;
     }
 }

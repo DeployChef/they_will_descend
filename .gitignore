@@ -92,6 +92,15 @@ Audio_FMOD/**/.unsaved/
 Audio_FMOD/**/fmod_cache/
 *.log
 
+# FMOD Studio export packages (Profiler session / project exports).
+# Ручной экспорт для переноса сессий, весит сотни МБ — не артефакт проекта.
+*.fspackage
+Audio_FMOD/**/*.fspackage
+
+# FMOD Studio локальные записи профайлера (graphdata, apicommands, capture wav).
+# Пишутся в проект при записи сессии в Studio — machine-local, в репозиторий не идут.
+Audio_FMOD/**/Metadata/ProfilerSession/
+
 # NEVER ignore banks (explicitly kept):
 # Audio_FMOD/they will desend/Build/Desktop/*.bank
 # TheyWillDescend/Assets/StreamingAssets/Desktop/*.bank

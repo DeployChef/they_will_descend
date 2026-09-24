@@ -172,6 +172,10 @@ namespace TheyWillDescend.Presentation.Audio
                 if (src == null || !src.enabled || !src.gameObject.activeInHierarchy)
                     continue;
 
+                // Случайные городские звуки — только у законченных зданий.
+                if (!src.CountsForAmbience)
+                    continue;
+
                 _positionCandidates.Add(src.transform.position);
             }
 
@@ -269,8 +273,10 @@ namespace TheyWillDescend.Presentation.Audio
                 return;
             }
 
-            // Возрождение с гистерезисом: зона видима, не пуста, но инстанса нет.
-            if (!IsActive && IsVisible && !IsEmpty() && dist < deathDistance - Mathf.Max(0f, hysteresis))
+            // Возрождение с гистерезисом: зона видима, не пуста, есть активность
+            // (законченные здания), но инстанса нет.
+            if (!IsActive && IsVisible && !IsEmpty() && ActivityLevel > 0.01f
+                && dist < deathDistance - Mathf.Max(0f, hysteresis))
             {
                 CreateInstance();
                 Update3DAttributes();
@@ -302,6 +308,7 @@ namespace TheyWillDescend.Presentation.Audio
 
         /// <summary>
         /// Пересчитывает RTPC-параметры на основе всех источников в зоне.
+        /// Учитываются только законченные здания (CountsForAmbience).
         /// </summary>
         private void RecalculateParameters()
         {
@@ -309,6 +316,7 @@ namespace TheyWillDescend.Presentation.Audio
             float houseCount = 0f;
             float workshopCount = 0f;
             float marketCount = 0f;
+            var counted = 0;
 
             for (var i = 0; i < _audioSources.Count; i++)
             {
@@ -316,6 +324,12 @@ namespace TheyWillDescend.Presentation.Audio
                 if (src == null || !src.enabled)
                     continue;
 
+                // Строящееся/демонтируемое здание в амбиенсе зоны не участвует:
+                // Ambience_Town играет только после COMPLETE.
+                if (!src.CountsForAmbience)
+                    continue;
+
+                counted++;
                 totalActivity += src.ActivityWeight;
 
                 switch (src.BuildingType)
@@ -338,8 +352,9 @@ namespace TheyWillDescend.Presentation.Audio
             HasWorkshops = Mathf.Min(1f, workshopCount / maxSources);
             HasMarket = Mathf.Min(1f, marketCount / maxSources);
 
-            // Зона опустела (все постройки снесены) — глушим инстанс.
-            if (IsEmpty() && IsActive)
+            // В зоне нет ни одного законченного здания (все строятся или зона
+            // опустела) — амбиент глохнет.
+            if (counted == 0 && IsActive)
             {
                 ReleaseInstance();
                 return;
@@ -347,6 +362,27 @@ namespace TheyWillDescend.Presentation.Audio
 
             if (IsActive)
                 UpdateRTPC();
+        }
+
+        /// <summary>
+        /// Пересчитать параметры зоны извне (состав источников изменился —
+        /// например, здание перешло в COMPLETE или обратно в стройку).
+        /// Зона могла ожить (первое законченное здание) — будим сразу:
+        /// ApplyVisibility дёргает SetActive только на СМЕНЕ видимости,
+        /// уже видимую спящую зону он не разбудит.
+        /// </summary>
+        public void Refresh()
+        {
+            RecalculateParameters();
+
+            // Диагностика: почему зона будится или нет.
+            if (_settings.LogZoneActivity)
+                Debug.Log($"[AudioZone] REFRESH: sector {Sector}, radial {Radial}, " +
+                          $"visible={IsVisible}, active={IsActive}, empty={IsEmpty()}, " +
+                          $"activity={ActivityLevel:F2}, sources={_audioSources.Count}");
+
+            if (IsVisible && !IsActive && !IsEmpty() && ActivityLevel > 0.01f)
+                SetActive(true);
         }
 
         /// <summary>

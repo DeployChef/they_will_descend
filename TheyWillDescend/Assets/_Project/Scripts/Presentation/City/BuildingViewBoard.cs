@@ -43,6 +43,8 @@ namespace TheyWillDescend.Presentation.City
             public GameObject Overlay;
             public BuildingOverlay Zone;
             public BuildingView View;
+            public BuildingAudioSource AudioSource;
+            public BuildingConstructionAudio ConstructionAudio;
         }
 
         public void RebuildViews()
@@ -133,6 +135,24 @@ namespace TheyWillDescend.Presentation.City
                 else
                     placed.Root.transform.position = (Vector3)position;
 
+                // Строительный звук: состояние из ECS + гейтинг конусом через зону.
+                placed.ConstructionAudio?.SyncState(em, entity);
+
+                // Амбиент зоны учитывает только законченные здания (Construction снята):
+                // пока идёт стройка — CountsForAmbience = false, после COMPLETE — true.
+                if (placed.AudioSource != null)
+                {
+                    var complete = !em.HasComponent<Construction>(entity);
+                    if (placed.AudioSource.CountsForAmbience != complete)
+                    {
+                        placed.AudioSource.CountsForAmbience = complete;
+                        // Диагностика: ловим момент перехода COMPLETE и наличие зоны.
+                        GameLog.Info($"BuildingViewBoard: building {building.Id} complete={complete}, " +
+                                     $"linkedZone={(placed.AudioSource.LinkedZone != null ? $"s{placed.AudioSource.LinkedZone.Sector}/r{placed.AudioSource.LinkedZone.Radial}" : "NULL")}.");
+                        placed.AudioSource.LinkedZone?.Refresh();
+                    }
+                }
+
                 var buildMode = gridGuide != null && gridGuide.IsBuildModeActive;
                 var hovered = selection != null && building.Id == selection.HoveredBuildingId;
                 var selected = selection != null && building.Id == selection.SelectedBuildingId;
@@ -216,15 +236,25 @@ namespace TheyWillDescend.Presentation.City
                 GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
 
             var overlay = SpawnOverlay(building, center);
-            RegisterAudioSource(house, position);
+            var audioSource = RegisterAudioSource(house, position);
 
             var placed = new PlacedView
             {
                 Root = house,
                 Overlay = overlay != null ? overlay.gameObject : null,
                 Zone = overlay,
-                View = view
+                View = view,
+                AudioSource = audioSource
             };
+
+            // Строительный звук: берём компонент с префаба или добавляем
+            // (как BuildingAudioSource — на префабе настроить EventReference,
+            // auto-add работает по fallback-пути event:/BUILDINGS/BUILD).
+            var constructionAudio = house.GetComponent<BuildingConstructionAudio>();
+            if (constructionAudio == null)
+                constructionAudio = house.AddComponent<BuildingConstructionAudio>();
+            placed.ConstructionAudio = constructionAudio;
+
             _views[building.Id] = placed;
             return placed;
         }
@@ -271,14 +301,14 @@ namespace TheyWillDescend.Presentation.City
             return source.FindPrefab(typeId);
         }
 
-        void RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
+        BuildingAudioSource RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
         {
             // Менеджер живёт в Bootstrap-сцене (грузится additive), сериализованная
             // ссылка из Game-сцены невозможна — ищем автоматически.
             if (audioZoneManager == null)
                 audioZoneManager = FindFirstObjectByType<AudioZoneManager>();
             if (audioZoneManager == null)
-                return;
+                return null;
 
             // Ищем аудио-источник на префабе или создаём.
             var audioSource = buildingGo.GetComponent<BuildingAudioSource>();
@@ -303,6 +333,8 @@ namespace TheyWillDescend.Presentation.City
                 if (zone.IsVisible && !zone.IsActive)
                     zone.SetActive(true);
             }
+
+            return audioSource;
         }
 
         static void EnsurePickColliders(GameObject house)
