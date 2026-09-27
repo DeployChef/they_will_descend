@@ -27,6 +27,7 @@
 		</relationship>
 		<relationship name="markerTracks">
 			<destination>{405d8a26-453f-46c1-b69e-4825adb7869f}</destination>
+			<destination>{20e9faf5-e527-42ac-a3a9-7ce3201cc189}</destination>
 		</relationship>
 		<relationship name="groupTracks">
 			<destination>{4a3ef882-931f-4f35-aa64-4a47e8c1c3f2}</destination>
@@ -62,6 +63,7 @@
 		</property>
 	</object>
 	<object class="MarkerTrack" id="{405d8a26-453f-46c1-b69e-4825adb7869f}" />
+	<object class="MarkerTrack" id="{20e9faf5-e527-42ac-a3a9-7ce3201cc189}" />
 	<object class="GroupTrack" id="{4a3ef882-931f-4f35-aa64-4a47e8c1c3f2}">
 		<relationship name="modules">
 			<destination>{9b82a306-8247-477a-a109-4657ffc92709}</destination>
@@ -89,6 +91,7 @@
 	<object class="GroupTrack" id="{35f00a73-9a3b-4721-b2eb-a3fd58ba3d4a}">
 		<relationship name="modules">
 			<destination>{888fe4b2-b3e1-4c43-a6b3-64fc0833915f}</destination>
+			<destination>{afc20929-361d-4ffe-84c0-35e6df303ca4}</destination>
 		</relationship>
 		<relationship name="mixerGroup">
 			<destination>{0f347ca4-5997-40b2-a0c2-af0f534a1b1d}</destination>
@@ -100,9 +103,12 @@
 			<destination>{af4ad9b2-4b23-4158-a94a-9df5c556fa09}</destination>
 			<destination>{be80cf38-a92d-4777-9da0-4d8a5b00f91f}</destination>
 			<destination>{888fe4b2-b3e1-4c43-a6b3-64fc0833915f}</destination>
+			<destination>{afc20929-361d-4ffe-84c0-35e6df303ca4}</destination>
 		</relationship>
 		<relationship name="markers">
 			<destination>{82a81b85-699d-41cd-8fca-4144442ffdda}</destination>
+			<destination>{faae7e1a-957c-47ef-91e0-5c477e34faad}</destination>
+			<destination>{799e2114-62b9-4849-8d93-9c5dc6146807}</destination>
 		</relationship>
 	</object>
 	<object class="EventMixerMaster" id="{61e3c914-1736-4616-9abe-1768353b7df7}">
@@ -250,6 +256,20 @@
 			<destination>{12e2d56b-4b8c-4b00-b79f-4b9f17e74d23}</destination>
 		</relationship>
 	</object>
+	<object class="CommandSound" id="{afc20929-361d-4ffe-84c0-35e6df303ca4}">
+		<property name="start">
+			<value>18</value>
+		</property>
+		<property name="length">
+			<value>8</value>
+		</property>
+		<property name="commandType">
+			<value>1</value>
+		</property>
+		<relationship name="commandTarget">
+			<destination>{5ac623a3-42a3-42e0-808d-6abdc50af32d}</destination>
+		</relationship>
+	</object>
 	<object class="EventMixerGroup" id="{0f347ca4-5997-40b2-a0c2-af0f534a1b1d}">
 		<property name="name">
 			<value>Audio 4</value>
@@ -282,6 +302,43 @@
 		</relationship>
 		<relationship name="triggerConditions">
 			<destination>{ca9ffcd0-7418-4de3-b4cb-eb3668436166}</destination>
+		</relationship>
+	</object>
+	<object class="NamedMarker" id="{faae7e1a-957c-47ef-91e0-5c477e34faad}">
+		<property name="position">
+			<value>20</value>
+		</property>
+		<property name="name">
+			<value>STOP</value>
+		</property>
+		<relationship name="timeline">
+			<destination>{2d8f0082-32f0-4182-801b-b647a638f5d1}</destination>
+		</relationship>
+		<relationship name="markerTrack">
+			<destination>{405d8a26-453f-46c1-b69e-4825adb7869f}</destination>
+		</relationship>
+	</object>
+	<object class="TransitionRegion" id="{799e2114-62b9-4849-8d93-9c5dc6146807}">
+		<property name="position">
+			<value>0</value>
+		</property>
+		<property name="length">
+			<value>18</value>
+		</property>
+		<property name="quantizationInterval">
+			<value>2</value>
+		</property>
+		<relationship name="timeline">
+			<destination>{2d8f0082-32f0-4182-801b-b647a638f5d1}</destination>
+		</relationship>
+		<relationship name="markerTrack">
+			<destination>{20e9faf5-e527-42ac-a3a9-7ce3201cc189}</destination>
+		</relationship>
+		<relationship name="destination">
+			<destination>{faae7e1a-957c-47ef-91e0-5c477e34faad}</destination>
+		</relationship>
+		<relationship name="triggerConditions">
+			<destination>{deb78d67-f7ec-428e-9b66-b1b8a7fab7a1}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusEffectChain" id="{4a49c12a-15ae-442f-83d3-d0ae8492d4be}">
@@ -426,6 +483,17 @@
 		</property>
 		<property name="maximum">
 			<value>2</value>
+		</property>
+		<relationship name="parameter">
+			<destination>{9d23320e-a88f-4b5e-874c-1782adc99ec3}</destination>
+		</relationship>
+	</object>
+	<object class="ParameterCondition" id="{deb78d67-f7ec-428e-9b66-b1b8a7fab7a1}">
+		<property name="minimum">
+			<value>3</value>
+		</property>
+		<property name="maximum">
+			<value>3</value>
 		</property>
 		<relationship name="parameter">
 			<destination>{9d23320e-a88f-4b5e-874c-1782adc99ec3}</destination>

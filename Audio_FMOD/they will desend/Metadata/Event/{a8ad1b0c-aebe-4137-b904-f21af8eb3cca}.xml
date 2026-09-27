@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.03.00">
 	<object class="Event" id="{a8ad1b0c-aebe-4137-b904-f21af8eb3cca}">
+		<property name="color">
+			<value>Purple</value>
+		</property>
 		<property name="name">
 			<value>Ambience_Town_SFX_Random</value>
 		</property>
@@ -66,6 +69,9 @@
 		</property>
 		<property name="voiceStealing">
 			<value>1</value>
+		</property>
+		<property name="priority">
+			<value>0</value>
 		</property>
 		<property name="minimumDistance">
 			<value>0.400000006</value>

@@ -17,7 +17,10 @@
 	<object class="MixerBusEffectChain" id="{9b489d68-b910-4748-b404-f919678aeb3c}">
 		<relationship name="effects">
 			<destination>{ee5c13cc-4bc4-46e7-8637-b03a0ed50c74}</destination>
+			<destination>{f843bd3b-2bbf-4270-8ce6-9e7ca1c54ace}</destination>
 			<destination>{e7151501-84fd-41fd-b994-b9e21062478b}</destination>
+			<destination>{8cd55a59-4a01-4cfa-898b-cf5b291c47ab}</destination>
+			<destination>{fb367c39-e176-4804-b110-0e38fcffb786}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{bade61ae-00e0-4ae8-8dfa-7133983f42eb}">
@@ -26,6 +29,20 @@
 		</property>
 	</object>
 	<object class="MixerBusFader" id="{ee5c13cc-4bc4-46e7-8637-b03a0ed50c74}" />
+	<object class="CompressorEffect" id="{f843bd3b-2bbf-4270-8ce6-9e7ca1c54ace}">
+		<property name="threshold">
+			<value>-6</value>
+		</property>
+		<property name="ratio">
+			<value>1.70000005</value>
+		</property>
+		<property name="attackTime">
+			<value>0.550000012</value>
+		</property>
+		<property name="releaseTime">
+			<value>880</value>
+		</property>
+	</object>
 	<object class="SFXReverbEffect" id="{e7151501-84fd-41fd-b994-b9e21062478b}">
 		<property name="decayTime">
 			<value>2000</value>
@@ -46,4 +63,10 @@
 			<value>78</value>
 		</property>
 	</object>
+	<object class="GainEffect" id="{8cd55a59-4a01-4cfa-898b-cf5b291c47ab}">
+		<property name="gain">
+			<value>-10.5</value>
+		</property>
+	</object>
+	<object class="LoudnessMeter" id="{fb367c39-e176-4804-b110-0e38fcffb786}" />
 </objects>

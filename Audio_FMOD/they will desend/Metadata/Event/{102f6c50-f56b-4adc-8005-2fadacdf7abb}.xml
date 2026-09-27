@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.03.00">
 	<object class="Event" id="{102f6c50-f56b-4adc-8005-2fadacdf7abb}">
+		<property name="color">
+			<value>Cyan Light 2</value>
+		</property>
 		<property name="name">
 			<value>Ambience_Wind_Generation</value>
 		</property>
@@ -62,6 +65,9 @@
 		</relationship>
 	</object>
 	<object class="EventAutomatableProperties" id="{9d250696-121e-45d5-902d-d3f7c1b6d061}">
+		<property name="maxVoices">
+			<value>1</value>
+		</property>
 		<property name="priority">
 			<value>3</value>
 		</property>
