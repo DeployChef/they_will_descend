@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: fa95802f80bd745cfb5e9c89f7e22341, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -515,6 +515,7 @@ MonoBehaviour:
   minCameraDistance: 8
   maxCameraDistance: 65
   smoothSpeed: 4
+  smoothSpeedRise: 1.5
   ambienceBusPath: bus:/Ambience
 --- !u!1 &1820912095
 GameObject:
