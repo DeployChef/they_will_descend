@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{c545de00-7f13-4962-bbf2-3758e7373952}">
+		<property name="name">
+			<value>AMBIENCE_TONE_2_TRACK </value>
+		</property>
+		<relationship name="folder">
+			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{e0c5bdbc-5f35-4769-a9f5-b923c0046f9e}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{e0c5bdbc-5f35-4769-a9f5-b923c0046f9e}">
+		<property name="parameterType">
+			<value>1</value>
+		</property>
+		<property name="maximum">
+			<value>6</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+		<relationship name="modulators">
+			<destination>{e6f3f496-c1a3-49b6-8a6c-68d2b0a2eace}</destination>
+			<destination>{3f526fbf-e0a9-4839-b8f8-93921c667647}</destination>
+		</relationship>
+	</object>
+	<object class="LFOModulator" id="{e6f3f496-c1a3-49b6-8a6c-68d2b0a2eace}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>cursorPosition</value>
+		</property>
+		<property name="shape">
+			<value>5</value>
+		</property>
+		<property name="isTempoSync">
+			<value>true</value>
+		</property>
+		<property name="rate">
+			<value>0.0449999981</value>
+		</property>
+		<property name="beats">
+			<value>28</value>
+		</property>
+		<property name="depth">
+			<value>100</value>
+		</property>
+	</object>
+	<object class="SeekModulator" id="{3f526fbf-e0a9-4839-b8f8-93921c667647}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>cursorPosition</value>
+		</property>
+		<property name="speedAscending">
+			<value>1</value>
+		</property>
+	</object>
+</objects>
