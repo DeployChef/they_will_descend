@@ -74,6 +74,13 @@ namespace TheyWillDescend.Presentation.GameHud
         float _smoothed;
         float _velocity;
 
+        /// <summary>
+        /// Smoothed normalized energy (0..1) as of the last frame. Other energy indicators
+        /// (see <see cref="EnergyFillImage"/>) read it here so every UI element moves in
+        /// lockstep with the orb instead of running its own copy of the smoothing.
+        /// </summary>
+        public float CurrentEnergy01 { get; private set; }
+
         void Awake()
         {
             ResolveIds();
@@ -102,6 +109,7 @@ namespace TheyWillDescend.Presentation.GameHud
         void LateUpdate()
         {
             var value = Smooth(ResolveTarget());
+            CurrentEnergy01 = value;
             Apply(value);
         }
 

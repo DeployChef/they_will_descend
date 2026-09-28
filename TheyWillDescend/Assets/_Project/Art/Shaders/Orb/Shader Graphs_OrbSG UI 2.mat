@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_OrbSG UI
+  m_Name: Shader Graphs_OrbSG UI 2
   m_Shader: {fileID: -6465566751694194690, guid: d685bdeb61361be4997559d445dd8898, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 72831d15c561cae45a2379a4759a50b2, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -42,18 +42,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaClip: 0.5
     - _ColorMask: 15
     - _Contrast: 2
-    - _CoreContrast: 1.08
+    - _CoreContrast: 1.75
     - _CoreStrength: 0
-    - _DirectionalSpeed: 0.2
+    - _DirectionalSpeed: 0
     - _DistrortionStrength: 0
     - _Noise2Contrast: 1
-    - _NoiseContrast: 0.42
-    - _QueueControl: 0
-    - _QueueOffset: 0
-    - _Speed: 0.07
+    - _NoiseContrast: 0
+    - _Speed: 0
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
@@ -62,10 +59,8 @@ Material:
     - _UIMaskSoftnessX: 1
     - _UIMaskSoftnessY: 1
     m_Colors:
-    - White: {r: 1, g: 1, b: 1, a: 1}
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
-    - _Color: {r: 0, g: 0.4547244, b: 0.6415094, a: 1}
-    - _HDRCOLOR: {r: 0, g: 0, b: 0, a: 1}
+    - _Color: {r: 0.04135449, g: 0.1746023, b: 0.2038873, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &1674538201748481115
