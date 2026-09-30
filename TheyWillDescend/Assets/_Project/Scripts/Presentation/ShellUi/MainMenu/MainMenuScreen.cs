@@ -3,11 +3,12 @@ using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Shell;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
-    /// Start-game panel on MainMenu. Clicks choose the run and transition the app flow.
+    /// Start-game panel on MainMenu. A click asks <see cref="ShellService"/> to launch.
     /// Does not know about the splash.
     /// </summary>
     public sealed class MainMenuScreen : MonoBehaviour
@@ -15,6 +16,16 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] Button startGameButton;
         [SerializeField] Button startDebugButton;
         [SerializeField] Button loadButton;
+
+        AppContext _context;
+        ShellService _shell;
+
+        [Inject]
+        public void Construct(AppContext context, ShellService shell)
+        {
+            _context = context;
+            _shell = shell;
+        }
 
         void Awake()
         {
@@ -58,21 +69,16 @@ namespace TheyWillDescend.Presentation.ShellUi
             BeginRun(default, loadSlot: true);
         }
 
-        static void BeginRun(RunKind kind, bool loadSlot)
+        void BeginRun(RunKind kind, bool loadSlot)
         {
-            var session = GameSession.Active;
-            if (session == null || session.Flow == null)
+            if (_context == null || _shell == null)
             {
-                GameLog.Error("MainMenuScreen: app flow is not installed on GameSession.");
+                GameLog.Error("MainMenuScreen: the menu scope did not inject the shell.");
                 return;
             }
 
-            if (loadSlot)
-                session.SetLoadSlot();
-            else
-                session.SetRunKind(kind);
-
-            session.Flow.TransitionTo(AppStateId.LoadingGame);
+            _context.RequestLaunch(loadSlot ? RunLaunch.Slot : new RunLaunch(kind, false));
+            _shell.EnterGame();
         }
     }
 }

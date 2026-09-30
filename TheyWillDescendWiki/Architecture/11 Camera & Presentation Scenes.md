@@ -18,7 +18,7 @@
 | Main Camera | **да** | единственный вывод; `CinemachineBrain` + `AudioListener` |
 | AudioListener | **да** (на Main Camera) | один на игру |
 | EventSystem | **да** | UI input глобально |
-| Startup / GameAudio / GameInput / GameSession | **да** | хосты оболочки (соседи) |
+| Startup / GameAudio / GameInput | **да** | хосты оболочки (соседи). `ShellService` — синглтон корневого scope, не объект сцены. `GameSession` — в сцене Game |
 | Canvas меню | **нет** | на сцене MainMenu |
 | Directional Light | **нет** | свет мира/меню — у тех сцен |
 | Уровень / NPC | **нет** | только Game |
@@ -35,7 +35,7 @@
 
 ### Loading — переход
 
-Экран загрузки, пока `GameSession` грузит Game.
+Экран загрузки, пока `ShellService` грузит Game.
 
 ### Game — сессия
 

@@ -13,11 +13,12 @@ using TheyWillDescend.Shell;
 using TheyWillDescend.Simulation.Session;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
-    /// In-game pause overlay on Game. Not an AppState — Playing stays current.
+    /// In-game pause overlay on Game. Esc does not change scenes.
     /// Открытие/закрытие проигрывается последовательностью элементов, синхронизированной с камерой.
     /// </summary>
     public sealed class PauseMenuScreen : MonoBehaviour
@@ -44,8 +45,17 @@ namespace TheyWillDescend.Presentation.ShellUi
         public bool IsOpen { get; private set; }
 
         GameInput _input;
+        ShellService _shell;
+        GameSession _session;
         CancellationTokenSource _loadCts;
         bool _busy;
+
+        [Inject]
+        public void Construct(ShellService shell, GameSession session)
+        {
+            _shell = shell;
+            _session = session;
+        }
 
         PauseCameraSwitch CameraSwitch => pauseCamera != null ? pauseCamera : PauseCameraSwitch.Current;
 
@@ -70,7 +80,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        /// <summary>Playing turns the game map on and hands Esc to this overlay.</summary>
+        /// <summary>GameRun turns the game map on and hands Esc to this overlay.</summary>
         public void Use(GameInput input)
         {
             if (_input != null)
@@ -253,10 +263,17 @@ namespace TheyWillDescend.Presentation.ShellUi
                 return;
             if (!RunSnapshotStore.TryRead(out var snapshot))
                 return;
-
-            var session = GameSession.Active;
-            if (session == null)
+            if (_session == null)
+            {
+                GameLog.Error("PauseMenuScreen: GameSession was not injected.");
                 return;
+            }
+
+            if (_shell == null)
+            {
+                GameLog.Error("PauseMenuScreen: ShellService was not injected.");
+                return;
+            }
 
             _busy = true;
             CloseBuildIfBusy();
@@ -264,57 +281,67 @@ namespace TheyWillDescend.Presentation.ShellUi
             _input?.Disable();
             CancelLoad();
             _loadCts = new CancellationTokenSource();
-            LoadSlot(session, snapshot, _loadCts.Token).Forget();
+            LoadSlot(snapshot, _loadCts.Token).Forget();
         }
 
         void LeaveToMainMenu()
         {
             if (_busy)
                 return;
-            var session = GameSession.Active;
-            if (session == null || session.Flow == null)
+            if (_shell == null || _session == null)
+            {
+                GameLog.Error("PauseMenuScreen: the game scope did not inject the shell.");
                 return;
+            }
 
             _busy = true;
             Hide();
-            session.Flow.TransitionTo(AppStateId.ReturningToMenu);
+            Leave().Forget();
         }
 
-        async UniTaskVoid LoadSlot(GameSession session, RunSnapshot snapshot, CancellationToken cancellationToken)
+        async UniTaskVoid Leave()
+        {
+            _session.StopPlay();
+            await _shell.ShowLoading();
+            if (!await _session.Shutdown())
+            {
+                await _shell.HideLoading();
+                _busy = false;
+                return;
+            }
+
+            _shell.ReturnToMenu();
+        }
+
+        async UniTaskVoid LoadSlot(RunSnapshot snapshot, CancellationToken cancellationToken)
         {
             var ready = false;
             try
             {
-                await session.RunWithLoadingAsync(
-                    async ct =>
-                    {
-                        if (!RunSessionSnapshot.BeginApply(snapshot, session.TechCatalogs))
-                            return;
-                        if (!await session.WaitForPhaseAsync(SimSessionPhase.Ready, ct))
-                            return;
+                await _shell.ShowLoading(cancellationToken);
+                ready = await _session.Apply(snapshot, cancellationToken);
+                await _shell.HideLoading(cancellationToken);
+                if (!ready || cancellationToken.IsCancellationRequested)
+                    return;
+                if (!SimCommands.TryPost(SimClockCommand.InGame(true)))
+                {
+                    ready = false;
+                    return;
+                }
 
-                        if (!SimCommands.TryPost(SimClockCommand.InGame(true)))
-                            return;
-                        RebuildViews();
-                        ready = true;
-                    },
-                    cancellationToken);
+                RebuildViews();
             }
             catch (OperationCanceledException)
             {
+                ready = false;
             }
             finally
             {
                 _busy = false;
-                var flow = session.Flow;
-                if (ready && flow != null && flow.CurrentId == AppStateId.Playing)
+                if (ready)
                     _input?.EnableGame();
                 else if (!cancellationToken.IsCancellationRequested)
-                {
-                    GameLog.Error("Playing load failed — ECS did not reach Ready; input remains disabled.");
-                    if (flow != null && flow.CurrentId == AppStateId.Playing)
-                        flow.TransitionTo(AppStateId.ReturningToMenu);
-                }
+                    GameLog.Error("Playing load failed — ECS did not reach Ready.");
             }
         }
 

@@ -1,23 +1,26 @@
 ---
-description: Elegant App Shell — AppStateMachine, GameSession, SimControl; no fat GameDirector
+description: Elegant App Shell — ShellService, GameSession, SimControl; no fat GameDirector
 alwaysApply: true
 ---
 
 # App Shell
 
-Two machines: **Shell** (C# FSM in the Presentation assembly) and **Simulation** (ECS).
+**Shell** (Presentation) loads scenes. **Simulation** (ECS) is the run. There is no app-level state machine.
 
-**Main** is the composition root (`Startup`, `AppFlowFactory`) — entry and registration only.
+**Main** is the composition root. `Startup.Awake` builds `RootLifetimeScope` by hand (`autoRun` is off). Child scene scopes still build themselves. Simulation does not use the container.
 
 ## Elegant core (prefer this over jam GameDirector)
 
-- `AppStateMachine` + `IAppState` (Enter/Exit, **no Tick**)
-- `GameSession` (StartAsync/DisposeAsync one run)
+- `ShellService` is a root singleton, not a MonoBehaviour. It only loads and unloads scenes: `EnterGame`, `ReturnToMenu`, `ShowLoading`, `HideLoading`. It does not start the run.
+- `AppContext.RequestLaunch` stores the run kind. The Game scene's `GameSession` reads it and calls `Begin`.
+- `RootLifetimeScope` (VContainer) is the parent container on Root. Auto Run is off on that component in the scene. `Startup.Awake` calls `Build()`. Each scene has a child `LifetimeScope`. `AppContext` is a singleton on the parent.
+- `GameSession` lives in the Game scene: catalogs, `Begin` / `Apply` / `Shutdown`. It does not load scenes.
+- `GameRun` (Game scope) turns the sim clock and game input on when `Begin` reaches Ready, and off when the run leaves. A game-scene machine is not built yet.
 - Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`
-- `SceneLoader` (narrow, UniTask)
-- MainMenu: splash then buttons live on `MainMenuFlow` in that scene. App states do not show those panels.
-- Root hosts are siblings with inspector refs: Startup, GameAudio, GameInput, GameSession
-- **Composition Root in Main** wires them with `new` — VContainer optional later, never inside `ISystem`
+- `SceneLoader` (narrow, UniTask) — used by `ShellService` only
+- MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `AppContext.RequestLaunch` and `ShellService.EnterGame`. Press any key plays once per process; `AppContext` remembers that across scene loads.
+- Root hosts are siblings: Startup, RootLifetimeScope, GameAudio, GameInput, Main Camera. No scene object for the shell service.
+- VContainer stays in Presentation/Main. Never inside `ISystem`
 
 ## Do not treat as canon
 

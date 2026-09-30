@@ -1,5 +1,7 @@
+using TheyWillDescend.Shell;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.ShellUi
 {
@@ -14,12 +16,13 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         bool _menuVisible;
 
-        void Awake()
+        [Inject]
+        public void Construct(AppContext context)
         {
-            if (splash != null)
-                splash.Show();
-            if (menu != null)
-                menu.Hide();
+            if (context.IsFirstStart)
+                ShowMenu();
+            else
+                ShowSplash();
         }
 
         void Update()
@@ -27,6 +30,20 @@ namespace TheyWillDescend.Presentation.ShellUi
             if (_menuVisible || !WasProceedPressed())
                 return;
 
+            ShowMenu();
+        }
+
+        void ShowSplash()
+        {
+            _menuVisible = false;
+            if (splash != null)
+                splash.Show();
+            if (menu != null)
+                menu.Hide();
+        }
+
+        void ShowMenu()
+        {
             _menuVisible = true;
             if (splash != null)
                 splash.Hide();

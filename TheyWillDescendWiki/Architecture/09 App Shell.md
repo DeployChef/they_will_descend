@@ -19,23 +19,22 @@
 | Один `GameDirector`, который грузит сцену *и* знает opening *и* restart | ❌ Жиреет |
 | VContainer everywhere | ⚪ Опционально позже; сейчас **Composition Root** без контейнера |
 | Pause = `timeScale` | ❌ Часы в ECS: `SimControl` |
-| Нет App FSM | ❌ Нужен явный state machine |
-| Tick FSM из `Startup.Update` | ❌ Стейты Enter/Exit; `Startup` без Update |
+| Нет верхней FSM | ✅ Поток — `ShellService`: он включает сцены. Машина внутри Game — только если появится режим без смены сцены |
+| Tick из `Startup.Update` | ❌ `Startup` только собирает контейнер и открывает меню или ран |
 
 **Элегантная замена «директора»:** три узких роли вместо одного толстого.
 
 ---
 
-## 1. Закон двух машин
+## 1. Две стороны
 
-| Машина | Технология | Знает |
+| Сторона | Технология | Знает |
 | --- | --- | --- |
-| **Shell** | обычный C# + UI + сцены | FSM потока, загрузка, input, FMOD-хост |
+| **Shell** | обычный C# + UI + сцены | какие сцены загружены, input, FMOD-хост |
 | **Simulation** | ECS | дни, ресурсы, рабочие, стройка |
 
-Shell включает сессию (`SimClockCommand.InGame`). ECS не знает меню.  
-Контейнер DI **не обязателен**. Сначала инспектор-ссылки + конструкторы из `TheyWillDescend.Main`.  
-Сборки: [[01 Folder Structure]] — Shell-код в Presentation, вход в Main.
+Сим-часы включает `GameRun` в сцене Game, когда сессия дошла до Ready. ECS не знает меню.  
+Контейнер — VContainer в Main/Presentation. Сборки: [[01 Folder Structure]] — Shell-код в Presentation, вход в Main.
 
 **Нет `SimGate`.** Желаемый тик — поля на `SimControl`. UI пишет `SimClockCommand`.
 
@@ -44,30 +43,39 @@ Shell включает сессию (`SimClockCommand.InGame`). ECS не зна�
 ## 2. Элегантное ядро Shell (канон)
 
 ```text
-Root hosts (соседи, inspector refs, без GetComponent/AddComponent)
-  Main Camera, EventSystem, Startup, GameAudio, GameInput, GameSession
+Root hosts (соседи)
+  Main Camera, EventSystem, Startup, RootLifetimeScope, GameAudio, GameInput
 
-Startup
-  Awake → BootAsync (UniTask)
-  грузит MainMenu, зовёт AppFlowFactory.Create, Start(MainMenu)
-  нет Update
+RootLifetimeScope
+  родительский контейнер на Root, autoRun выключен
+  Startup.Awake вызывает Build()
+  AppContext и ShellService — синглтоны здесь; ShellService не MonoBehaviour
+  AppContext.IsFirstStart после старта рана становится true
+  дочерние scope: MainMenu, Loading, Game. Они резолвят родителя по типу, без кросс-сценной ссылки
 
-AppStateMachine
-  владеет текущим IAppState
-  только TransitionTo(stateId)
+ShellService
+  EnterGame / ReturnToMenu / ShowLoading / HideLoading / OpenMainMenu
+  только сцены. Не читает сейв, не зовёт Begin, не проверяет сессию
 
-IAppState (MainMenu, LoadingGame, Playing, ReturningToMenu)
-  Enter / Exit   — без Tick
-  сплэш и кнопки меню живут в сцене MainMenu (`MainMenuFlow`), не в стейте
+AppContext
+  RequestLaunch кладёт RunLaunch
+  IsFirstStart становится true в этот момент
 
-GameSession
-  StartAsync / DisposeAsync / LoadMainMenuAsync
-  current buttons: DefaultScenario.DefaultDifficulty vs DebugScenario.DefaultDifficulty
-  future menu: SetRunSelection(scenario, allowed difficulty)
-  load/unload контента рана; ждёт bake: SimWorld.TryGet; затем RunPublisher
+GameSession (сцена Game)
+  сама берёт Launch, когда сцена включилась, и зовёт Begin
+  каталоги и сценарий в инспекторе этой сцены
+  сцены не грузит
+  StopPlay гасит живой ран сразу, Shutdown сбрасывает ECS
+  если сброс не подтвердился — GameRun включается снова
+  когда ран готов — HideLoading; если ран не собрался и Shutdown прошёл — ReturnToMenu
+
+GameRun (scope сцены Game)
+  Arm, когда Begin дошёл до Ready: SimClockCommand.InGame(true), игровой ввод, пауза
+  Disarm, когда ран уходит
+  это не машина состояний
 
 SceneLoader (узкий)
-  LoadAdditive / Unload — без знания экономики
+  LoadAdditive / Unload — без знания экономики; вызывает только ShellService
 
 GameInput
   клон TheyWillDescend.inputactions (инспектор: только этот asset)
@@ -81,31 +89,33 @@ GameInput
 | GameDirector (джем) | Эта схема |
 | --- | --- |
 | Один класс копит обязанности | Обязанности разрезаны |
-| Restart = ad-hoc Find | `session.DisposeAsync(); session.StartAsync()` |
-| Opening зашит в Start | Стейты Cutscene / Briefing позже |
+| Restart = ad-hoc Find | `ShellService.ReturnToMenu()`, затем `Start(RunLaunch)` |
+| Opening зашит в Start | Режим без смены сцены (катсцена, брифинг) — позже, если понадобится |
 | Имя врёт («директор всего») | Имена = реальные роли |
 
 ---
 
-## 3. Frostpunk → стейты
+## 3. Поток продукта
 
 ```text
-Root → MainMenu → (позже ScenarioSelect / Cutscene / Briefing)
-  → LoadingGame (session.StartAsync: Loading + Game, unload MainMenu)
-  → Playing
-  → выход в меню: ReturningToMenu (session.DisposeAsync через Loading) → MainMenu
+Root → MainMenu
+  → кнопка зовёт AppContext.RequestLaunch и ShellService.EnterGame
+  → Loading, пока грузится Game и выгружается MainMenu
+  → GameSession.Begin, затем GameRun включает часы; сессия снимает Loading
+  → выход в меню: Pause делает StopPlay и Shutdown, затем ShellService.ReturnToMenu
 ```
 
-Пауза **часов** — не стейт приложения. Esc в Playing: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе оверлей `PauseMenuScreen` + `SimClockCommand.PlayerPaused`. FSM остаётся Playing.
+Сплэш и кнопки меню живут в сцене MainMenu (`MainMenuFlow`). Press any key играется один раз за процесс; `AppContext.IsFirstStart` это помнит.
 
-Меню паузы (Continue / Save / Load / Main Menu) — оверлей на Game, не путать с Frozen и не `PausedState`.
+Пауза **часов** — оверлей на Game, не смена сцены. Esc: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе `PauseMenuScreen` + `SimClockCommand.PlayerPaused`.
 
-| State | SimControl | Заметка |
+Меню паузы (Continue / Save / Load / Main Menu) — оверлей на Game, не путать с Frozen.
+
+| Момент | SimControl | Кто |
 | --- | --- | --- |
-| MainMenu | Off (`SessionInGame = 0`) | сплэш и кнопки в сцене меню |
-| LoadingGame | Off | грузит Game, выгружает MainMenu |
-| Playing | Running или Frozen | Frozen = PlayerPaused / BuildLocked; оверлей паузы живёт здесь |
-| ReturningToMenu | Off | Loading → выгрузка Game → MainMenu |
+| Меню, загрузка | Off (`SessionInGame = 0`) | ран ещё не вооружён |
+| Ран готов | Running или Frozen | `GameRun.Arm`; Frozen = PlayerPaused / BuildLocked |
+| Выход в меню | Off | `GameRun.Disarm` в `StopPlay`, затем `Shutdown` |
 
 ---
 
@@ -119,7 +129,7 @@ Mode = Off | Frozen | Running   (считает ConsumeSimClockCommandsSystem)
 DeltaTime = frame * Speed       (ApplySimDeltaTime; не ноль на паузе)
 ```
 
-UI / стейты: `SimCommands.TryPost(SimClockCommand.…)` — не пишут поля напрямую.
+UI / `GameRun`: `SimCommands.TryPost(SimClockCommand.…)` — не пишут поля напрямую.
 
 Системы читают `IsRunning` / `DeltaTime`. Не `timeScale`.
 
@@ -133,25 +143,20 @@ UI / стейты: `SimCommands.TryPost(SimClockCommand.…)` — не пишу�
 
 ---
 
-## 5. Composition Root (без DI-контейнера)
+## 5. Composition Root
 
 ```csharp
-// Startup: inspector refs на GameAudio, GameInput, GameSession
-// AppFlowFactory — new + Register, без Find UI
-var fsm = new AppStateMachine();
-fsm.Register(new MainMenuState());
-fsm.Register(new LoadingGameState(fsm, session, input));
-fsm.Register(new PlayingState(input, audio));
-fsm.Register(new ReturningToMenuState(fsm, session, input));
+// Startup.Awake
+rootScope.Build();
+var shell = rootScope.Container.Resolve<ShellService>();
+await shell.OpenMainMenu();
 ```
 
-Сплэш и кнопки меню ведёт `MainMenuFlow` в сцене MainMenu. Пауза в ране по-прежнему `PauseMenuScreen` на Game.
+Корневой scope регистрирует `AppContext`, `ShellService`, `GameAudio`, `GameInput`. Scope сцены Game регистрирует `GameRun`, `GameSession`, `PauseMenuScreen`. Сплэш и кнопки меню ведёт `MainMenuFlow` в сцене MainMenu. Пауза в ране — `PauseMenuScreen` на Game.
 
 Меню: **Start Game** / **Load** / **Start Debug**. Список допустимых `DifficultyProfile` и default принадлежат `ScenarioDefinition`, а не отдельным полям `GameSession`. Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Null default = prefab-default balance. Load = слот (кнопка серая, если файла нет).
 
-`skipMenuToGameTemporarily` — debug: сразу LoadingGame, MainMenu не грузится. **По умолчанию выключен.** Сейчас выключен, чтобы проверить меню.
-
-Позже VContainer *может* регистрировать те же хосты. Контейнер = замена ручного new, не новая архитектура.
+`skipMenuToGameTemporarily` — debug: сразу ран, MainMenu не грузится. **По умолчанию выключен.**
 
 ---
 
@@ -170,7 +175,7 @@ fsm.Register(new ReturningToMenuState(fsm, session, input));
 
 - Вечный Root + additive session scene
 - Audio на Root
-- Явный «вход в ран» (стейты + `GameSession.StartAsync`)
+- Явный «вход в ран» (`ShellService` + `GameSession`)
 
 ## Что не переносим
 
@@ -180,9 +185,9 @@ Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в
 
 ## 8. Порядок дальше
 
-1. Ядро есть: `Startup` + `GameSession` + `SimControl`, пауза часов и оверлей в Playing.
+1. Ядро есть: `Startup` + `ShellService` + `GameSession` + `GameRun` + `SimControl`. Пауза часов — оверлей на Game.
 2. Выбор сценария — позже.
-3. VContainer — только если Composition Root станет невыносимым.
+3. Машина внутри Game — только если появится режим без смены сцены.
 
 ---
 
@@ -192,9 +197,9 @@ Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в
 - Симуляция тикает на брифинге
 - `bool paused` на всё подряд
 - VContainer ради VContainer
-- AppFlow размазан по кнопкам без FSM
+- Кнопки сами грузят сцены, мимо `ShellService`
 - Кэшировать меню-UI на boot и выгрузить MainMenu
-- `Startup.Update` / Tick у FSM
+- `Startup.Update`
 - Грузить MainMenu только ради Find, если skip в Game
 
 ---
