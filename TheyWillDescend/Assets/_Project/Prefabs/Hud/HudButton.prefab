@@ -42,7 +42,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 240.7, y: 24}
-  m_SizeDelta: {x: 82.1365, y: 87.3413}
+  m_SizeDelta: {x: 60, y: 60}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &1702735457965731183
 CanvasRenderer:
@@ -149,6 +149,9 @@ MonoBehaviour:
     useSelectedState: 0
     selectedColor: {r: 0, g: 0, b: 0, a: 1}
     selectedScale: 0
+    activeColor: {r: 1, g: 1, b: 1, a: 1}
+    activeScale: 1
+    activeOffset: {x: 0, y: 0}
   - graphic: {fileID: 6413429968448337284}
     hoverColor: {r: 1, g: 1, b: 1, a: 0}
     hoverScale: 1
@@ -159,6 +162,9 @@ MonoBehaviour:
     useSelectedState: 0
     selectedColor: {r: 0, g: 0, b: 0, a: 1}
     selectedScale: 0
+    activeColor: {r: 1, g: 1, b: 1, a: 1}
+    activeScale: 1
+    activeOffset: {x: 0, y: 0}
   - graphic: {fileID: 3806329352499864927}
     hoverColor: {r: 1, g: 1, b: 1, a: 1}
     hoverScale: 1
@@ -169,6 +175,9 @@ MonoBehaviour:
     useSelectedState: 0
     selectedColor: {r: 0, g: 0, b: 0, a: 1}
     selectedScale: 0
+    activeColor: {r: 1, g: 1, b: 1, a: 1}
+    activeScale: 1
+    activeOffset: {x: 0, y: 0}
   - graphic: {fileID: 8358995309771836964}
     hoverColor: {r: 1, g: 1, b: 1, a: 1}
     hoverScale: 1
@@ -179,6 +188,10 @@ MonoBehaviour:
     useSelectedState: 0
     selectedColor: {r: 0, g: 0, b: 0, a: 1}
     selectedScale: 0
+    activeColor: {r: 1, g: 1, b: 1, a: 1}
+    activeScale: 1
+    activeOffset: {x: 0, y: 0}
+  active: 0
   transitionSpeed: 12
   button: {fileID: 0}
   onClick:
@@ -218,8 +231,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.5, y: 0}
-  m_SizeDelta: {x: 50, y: 50}
+  m_AnchoredPosition: {x: 2, y: 0}
+  m_SizeDelta: {x: 65, y: 65}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5551201875307900152
 CanvasRenderer:
@@ -249,7 +262,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b3460e513d57a094b90a0583f231c332, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1afc1a83553d5fe43a26b4c27d957d91, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -276,7 +289,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7168501613399073973
 RectTransform:
   m_ObjectHideFlags: 0
@@ -431,7 +444,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1305470008371667908
 CanvasRenderer:
@@ -461,7 +474,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 66a3125ff10007d4fa83fc783c6d149c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a466fd1920006ef4c9fc370c06d1e62b, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -505,8 +518,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.5999985, y: -0.57709885}
-  m_SizeDelta: {x: 77.1782, y: 75.4734}
+  m_AnchoredPosition: {x: -0.00005722046, y: 0.00005340576}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2776911806456628884
 CanvasRenderer:
@@ -536,7 +549,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: db1c9b92c2b08dd4787bf91db88342bf, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ada6be6775c4af24e96e89d759ac5e85, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -581,7 +594,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4961074856421635052
 CanvasRenderer:
@@ -611,7 +624,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4783489cf0a3b1a458e7eca5f59239d2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3d411b75a78cd46459256504f45b737b, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

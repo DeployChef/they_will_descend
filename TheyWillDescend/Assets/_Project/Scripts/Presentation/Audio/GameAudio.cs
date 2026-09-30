@@ -9,7 +9,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// FMOD host on Bootstrap. Lives with Root (camera + AudioListener).
+    /// FMOD host on Root. Lives with the Root camera and AudioListener.
     /// Simulation never calls this. Player pause follows <see cref="SimControl.PlayerPaused"/>.
     /// main_soundtrack отключён флагом enableMusic (по умолчанию off).
     /// </summary>

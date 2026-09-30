@@ -58,7 +58,7 @@
 
 - Геймплей: Frostpunk assign/build, не cards. Это AA city-survival, не джем
 - Симуляция: production ECS; DI не в `ISystem`
-- Shell: `AppStateMachine` + `GameSession` + `SimControl` (нет `SimGate`); VContainer только снаружи ECS, позже
+- Shell: `ShellService` + `GameSession` + `GameRun` + `SimControl` (нет `SimGate`, нет верхней FSM); VContainer снаружи ECS
 - Инкапсуляция: public fields на компонентах; запись — дисциплина systems/commands
 - Логи: `GameLog`, не сырой `Debug.Log` в новом коде
 

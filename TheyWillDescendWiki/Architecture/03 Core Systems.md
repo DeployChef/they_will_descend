@@ -8,8 +8,9 @@
 
 | Служба | Ответственность |
 | --- | --- |
-| **AppStateMachine** | FSM продукта: Enter/Exit, `TransitionTo`. **Нет Tick** |
-| **GameSession** | `StartAsync` / `DisposeAsync` одной попытки; ждёт bake через `SimWorld.TryGet` |
+| **ShellService** | какие сцены загружены: меню, загрузка, Game. **Нет** верхней FSM |
+| **GameSession** | `Begin` / `Apply` / `Shutdown` одной попытки; ждёт bake через `SimWorld.TryGet` |
+| **GameRun** | на Ready включает сим-часы и игровой ввод; на выходе гасит |
 | **SceneLoader** | узкая загрузка сцен (UniTask) |
 | **GameInput** | клон `.inputactions`; Menu/Proceed, Game/Pause (Esc) |
 | **GameAudio** | FMOD на Bootstrap; пауза музыки читает `SimControl.PlayerPaused` |
