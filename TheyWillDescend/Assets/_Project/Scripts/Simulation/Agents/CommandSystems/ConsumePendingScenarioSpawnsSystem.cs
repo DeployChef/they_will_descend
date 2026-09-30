@@ -44,30 +44,35 @@ namespace TheyWillDescend.Simulation.Agents
             if (pending.Workers <= 0)
                 return;
 
-            var center = em.GetComponentData<CityGrid>(session).Center;
+            var grid = em.GetComponentData<CityGrid>(session);
+            var center = grid.Center;
             var count = pending.Workers;
             for (var i = 0; i < count; i++)
             {
                 var turns = count == 1 ? 0f : i / (float)count;
                 var angle = turns * 2f * math.PI;
-                var radius = 4f + i % 4 * 0.7f;
+                var radius = PlazaRing.Lane(grid.Config, i);
                 var position = new float3(
                     center.x + math.cos(angle) * radius,
                     center.y,
                     center.z + math.sin(angle) * radius);
-                var facing = new float3(-math.sin(angle), 0f, math.cos(angle));
+                var direction = PlazaRing.PickDirection(i * 17 + 3);
+                var walking = (byte)(i % 4 == 0 ? 0 : 1);
+                var tangent = new float3(-math.sin(angle), 0f, math.cos(angle)) * direction;
+                var inward = new float3(-math.cos(angle), 0f, -math.sin(angle));
 
                 var reqEntity = em.CreateEntity();
                 em.AddComponentData(reqEntity, new SpawnAgentRequest
                 {
                     Position = position,
-                    Facing = facing,
+                    Facing = walking != 0 ? tangent : inward,
                     Speed = 0f,
                     HasPose = 1,
-                    PlazaWalking = 1,
+                    PlazaWalking = walking,
+                    PlazaDirection = direction,
                     PlazaAngle = angle,
                     PlazaRadius = radius,
-                    PlazaTimer = 2.5f,
+                    PlazaTimer = walking != 0 ? 3f + (i % 5) * 0.9f : 1.5f + (i % 3) * 0.5f,
                     Kind = AgentKind.Worker
                 });
             }

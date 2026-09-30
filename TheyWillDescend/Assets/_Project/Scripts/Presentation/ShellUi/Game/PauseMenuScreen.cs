@@ -1,10 +1,16 @@
 using System;
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using TheyWillDescend.App;
 using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.Agents;
 using TheyWillDescend.Presentation.Cameras;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Presentation.GameHud;
+using TheyWillDescend.Shell;
+using TheyWillDescend.Simulation.Session;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,14 +40,12 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         public static PauseMenuScreen Current { get; private set; }
 
-        public event Action ContinueClicked;
-        public event Action SaveClicked;
-        public event Action LoadClicked;
-        public event Action MainMenuClicked;
-        public event Action ToggleRequested;
-
         /// <summary>Меню открыто логически. На время исчезновения элементов сбрасывается сразу.</summary>
         public bool IsOpen { get; private set; }
+
+        GameInput _input;
+        CancellationTokenSource _loadCts;
+        bool _busy;
 
         PauseCameraSwitch CameraSwitch => pauseCamera != null ? pauseCamera : PauseCameraSwitch.Current;
 
@@ -52,17 +56,38 @@ namespace TheyWillDescend.Presentation.ShellUi
         void Awake()
         {
             Current = this;
-            Bind(continueButton, () => ContinueClicked?.Invoke());
-            Bind(saveButton, () => SaveClicked?.Invoke());
-            Bind(loadButton, () => LoadClicked?.Invoke());
-            Bind(mainMenuButton, () => MainMenuClicked?.Invoke());
+            Bind(continueButton, Continue);
+            Bind(saveButton, Save);
+            Bind(loadButton, Load);
+            Bind(mainMenuButton, LeaveToMainMenu);
             HideImmediate();
         }
 
         void OnDestroy()
         {
+            Release();
             if (Current == this)
                 Current = null;
+        }
+
+        /// <summary>Playing turns the game map on and hands Esc to this overlay.</summary>
+        public void Use(GameInput input)
+        {
+            if (_input != null)
+                _input.PausePressed -= OnPausePressed;
+            _input = input;
+            if (_input != null)
+                _input.PausePressed += OnPausePressed;
+        }
+
+        public void Release()
+        {
+            if (_input != null)
+                _input.PausePressed -= OnPausePressed;
+            _input = null;
+            CancelLoad();
+            _busy = false;
+            HideImmediate();
         }
 
         public void Show()
@@ -123,8 +148,6 @@ namespace TheyWillDescend.Presentation.ShellUi
             gameObject.SetActive(false);
         }
 
-        public void RequestToggle() => ToggleRequested?.Invoke();
-
         public void CloseBuildIfBusy()
         {
             buildWidget?.CloseIfBusy();
@@ -184,6 +207,124 @@ namespace TheyWillDescend.Presentation.ShellUi
         {
             if (button != null)
                 button.onClick.AddListener(action);
+        }
+
+        void OnPausePressed()
+        {
+            if (_busy)
+                return;
+            if (ResearchWidget.Current != null && ResearchWidget.Current.TryHandleEscape())
+                return;
+            if (BuildWidget.Current != null && BuildWidget.Current.TryHandleEscape())
+                return;
+
+            if (IsOpen)
+                Continue();
+            else
+                Open();
+        }
+
+        void Open()
+        {
+            if (_busy)
+                return;
+            CloseBuildIfBusy();
+            Show();
+            SimCommands.TryPost(SimClockCommand.PlayerPaused(true));
+        }
+
+        void Continue()
+        {
+            Hide();
+            SimCommands.TryPost(SimClockCommand.PlayerPaused(false));
+        }
+
+        void Save()
+        {
+            if (_busy)
+                return;
+            CloseBuildIfBusy();
+            RunSnapshotStore.Write(RunSessionSnapshot.Capture());
+        }
+
+        void Load()
+        {
+            if (_busy)
+                return;
+            if (!RunSnapshotStore.TryRead(out var snapshot))
+                return;
+
+            var session = GameSession.Active;
+            if (session == null)
+                return;
+
+            _busy = true;
+            CloseBuildIfBusy();
+            Hide();
+            _input?.Disable();
+            CancelLoad();
+            _loadCts = new CancellationTokenSource();
+            LoadSlot(session, snapshot, _loadCts.Token).Forget();
+        }
+
+        void LeaveToMainMenu()
+        {
+            if (_busy)
+                return;
+            var session = GameSession.Active;
+            if (session == null || session.Flow == null)
+                return;
+
+            _busy = true;
+            Hide();
+            session.Flow.TransitionTo(AppStateId.ReturningToMenu);
+        }
+
+        async UniTaskVoid LoadSlot(GameSession session, RunSnapshot snapshot, CancellationToken cancellationToken)
+        {
+            var ready = false;
+            try
+            {
+                await session.RunWithLoadingAsync(
+                    async ct =>
+                    {
+                        if (!RunSessionSnapshot.BeginApply(snapshot, session.TechCatalogs))
+                            return;
+                        if (!await session.WaitForPhaseAsync(SimSessionPhase.Ready, ct))
+                            return;
+
+                        if (!SimCommands.TryPost(SimClockCommand.InGame(true)))
+                            return;
+                        RebuildViews();
+                        ready = true;
+                    },
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _busy = false;
+                var flow = session.Flow;
+                if (ready && flow != null && flow.CurrentId == AppStateId.Playing)
+                    _input?.EnableGame();
+                else if (!cancellationToken.IsCancellationRequested)
+                {
+                    GameLog.Error("Playing load failed — ECS did not reach Ready; input remains disabled.");
+                    if (flow != null && flow.CurrentId == AppStateId.Playing)
+                        flow.TransitionTo(AppStateId.ReturningToMenu);
+                }
+            }
+        }
+
+        void CancelLoad()
+        {
+            if (_loadCts == null)
+                return;
+            _loadCts.Cancel();
+            _loadCts.Dispose();
+            _loadCts = null;
         }
     }
 }

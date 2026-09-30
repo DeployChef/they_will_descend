@@ -68,6 +68,7 @@ namespace TheyWillDescend.Infrastructure.Save
         public float plazaTimer;
         public float plazaAngle;
         public float plazaRadius;
+        public sbyte plazaDirection;
     }
 
     [Serializable]

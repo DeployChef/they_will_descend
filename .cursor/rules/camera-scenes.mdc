@@ -1,11 +1,11 @@
 ---
-description: One Main Camera on Bootstrap Root; VCams on Menu/Game; no duplicate listeners
+description: One Main Camera on Root; VCams on Menu/Game; no duplicate listeners
 alwaysApply: true
 ---
 
 # Camera & scenes
 
-- **Bootstrap (Root):** Startup, GameAudio, GameInput, GameSession, one Main Camera (+ AudioListener), EventSystem. No menu canvas, no gameplay light/world.
+- **Root:** Startup, GameAudio, GameInput, GameSession, one Main Camera (+ AudioListener), EventSystem. No menu canvas, no gameplay light/world.
 - **MainMenu:** splash/menu canvases + `PressAnyKeyScreen` / `MainMenuScreen`. No Main Camera.
 - **Loading:** transition while Game loads. Include in Build list.
 - **Game:** level, lights, VCams, Simulation SubScene. No second Main Camera (Cinemachine Brain on Root).

@@ -2,7 +2,7 @@
 
 ← [[02 Scenes & Lifetime]] | [[Index]]
 
-Канон презентации: **одна реальная камера на Bootstrap**, остальное — виртуальные камеры (Cinemachine) и UI на своих сценах.
+Канон презентации: **одна реальная камера на Root**, остальное — виртуальные камеры (Cinemachine) и UI на своих сценах.
 
 ## Зачем
 
@@ -11,7 +11,7 @@
 
 ## Что где лежит
 
-### Bootstrap (Root) — всегда
+### Root — всегда
 
 | Объект | Да / нет | Почему |
 | --- | --- | --- |
@@ -55,7 +55,7 @@
 
 | Где | Компонент |
 | --- | --- |
-| Bootstrap Main Camera | `CinemachineBrain` + `AudioListener` |
+| Root Main Camera | `CinemachineBrain` + `AudioListener` |
 | Game | `VCam_Gameplay` (`CinemachineCamera`) + `RTSCameraTarget`. **Без** Main Camera |
 | MainMenu | позже VCam меню при 3D-фоне |
 
@@ -88,15 +88,15 @@ Pitch от зума, не от мыши — иначе контроллер и �
 
 | Режим | Что в Hierarchy | Что происходит |
 | --- | --- | --- |
-| **Play (канон)** | Достаточно **одной** Bootstrap | `Startup` грузит MainMenu → по Start Loading+Game, выгружает MainMenu |
-| **Edit уровня** | Bootstrap + Game (additive) | Видишь мир через Brain+VCam |
-| **Edit UI** | Bootstrap + MainMenu | Правишь Canvas |
+| **Play (канон)** | Достаточно **одной** Root | `Startup` грузит MainMenu → по Start Loading+Game, выгружает MainMenu |
+| **Edit уровня** | Root + Game (additive) | Видишь мир через Brain+VCam |
+| **Edit UI** | Root + MainMenu | Правишь Canvas |
 
 `LoadSceneAsync` в Play **требует**, чтобы сцена была в **Build Profiles / Build Settings**.  
 Иначе: «couldn't be loaded… not added to build profile» — AppFlow не стартует. Это не баг архитектуры.
 
 Build list (порядок):
-1. `Bootstrap` (index 0 — стартовая)
+1. `Root` (index 0 — стартовая)
 2. `MainMenu`
 3. `Loading`
 4. `Game`
@@ -105,7 +105,7 @@ SampleScene из билда убрать.
 
 ## Итог одной фразой
 
-**Bootstrap = вечный глаз и нервная система (камера, input, startup, audio). MainMenu = экраны. Loading = переход. Game = мир и его свет/VCam.**
+**Root = вечный глаз и нервная система (камера, input, startup, audio). MainMenu = экраны. Loading = переход. Game = мир и его свет/VCam.**
 
 ---
 

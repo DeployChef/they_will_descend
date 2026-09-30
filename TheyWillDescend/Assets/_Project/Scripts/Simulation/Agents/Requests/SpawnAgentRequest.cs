@@ -19,5 +19,6 @@ namespace TheyWillDescend.Simulation.Agents
         public float PlazaAngle;
         public float PlazaRadius;
         public byte PlazaWalking;
+        public sbyte PlazaDirection;
     }
 }

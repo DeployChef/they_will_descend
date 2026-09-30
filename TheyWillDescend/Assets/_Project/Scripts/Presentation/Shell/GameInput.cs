@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// Bootstrap host for shell input. Assign TheyWillDescend.inputactions.
+    /// Root host for shell input. Assign TheyWillDescend.inputactions.
     /// Runtime clone — the project asset is not enabled in Play Mode.
     /// Maps: Menu/Proceed, Game/Pause.
     /// </summary>
@@ -55,7 +55,7 @@ namespace TheyWillDescend.Shell
             if (actions == null)
             {
                 throw new InvalidOperationException(
-                    "GameInput: assign TheyWillDescend.inputactions on Bootstrap.");
+                    "GameInput: assign TheyWillDescend.inputactions on Root.");
             }
 
             _runtime = Instantiate(actions);

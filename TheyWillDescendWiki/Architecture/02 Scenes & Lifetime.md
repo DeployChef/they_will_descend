@@ -8,7 +8,7 @@
 
 | Сцена | Живёт | Содержимое |
 | --- | --- | --- |
-| **Bootstrap** | всегда | хосты: Main Camera + AudioListener, EventSystem, `Startup`, `GameAudio`, `GameInput`, `GameSession`. Без мира, без меню-canvas, без gameplay-света |
+| **Root** | всегда | хосты: Main Camera + AudioListener, EventSystem, `Startup`, `GameAudio`, `GameInput`, `GameSession`. Без мира, без меню-canvas, без gameplay-света |
 | **MainMenu** | пока в меню | Canvas: `PressAnyKeyScreen`, `MainMenuScreen`. Опционально VCam/меню-свет. Без Main Camera |
 | **Loading** | переход в ран | экран загрузки, пока грузится Game |
 | **Game** | сессия рана | уровень, Directional Light, VCam геймплея, HUD, SubScene Simulation. **Без** второй Main Camera |
@@ -16,8 +16,8 @@
 Поток:
 
 ```text
-Bootstrap (вечный)
-  → load MainMenu (additive)     // Press Any Key → кнопки
+Root (вечный)
+  → load MainMenu (additive)     // сплэш и кнопки крутит сцена меню
   → «Начать» → Loading + Game, unload MainMenu
   → Playing (пауза часов = SimControl, не другой app-state)
   → выход в меню → unload Game, load MainMenu
@@ -25,7 +25,7 @@ Bootstrap (вечный)
 
 `skipMenuToGameTemporarily` на `Startup` — **отладочный флаг, по умолчанию выключен**. Не канон потока.
 
-Build list: Bootstrap (0), MainMenu, **Loading**, Game.
+Build list: Root (0), MainMenu, **Loading**, Game.
 
 Меню **не** содержит игровой мир. Game появляется только по Start.
 
@@ -34,7 +34,7 @@ Build list: Bootstrap (0), MainMenu, **Loading**, Game.
 Сейчас без VContainer: `Startup` + `GameSession` / `SceneLoader` (UniTask).  
 Позже Root/Game scopes — только Shell/Presentation, не ECS.
 
-Хосты Bootstrap — **соседи**, ссылки в инспекторе. Не `GetComponent` / `AddComponent` между ними.
+Хосты Root — **соседи**, ссылки в инспекторе. Не `GetComponent` / `AddComponent` между ними.
 
 ## Часы рана (не отдельный стейт)
 

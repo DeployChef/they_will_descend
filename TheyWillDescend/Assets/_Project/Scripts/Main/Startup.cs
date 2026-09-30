@@ -8,7 +8,7 @@ using UnityEngine;
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM.
+    /// Composition root. Lives on Root. Wires the app: scenes, Shell FSM.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
@@ -37,21 +37,21 @@ namespace TheyWillDescend.Main
 
             if (gameAudio == null)
             {
-                GameLog.Error("Startup: GameAudio must be assigned. Put it on its own Bootstrap object.");
+                GameLog.Error("Startup: GameAudio must be assigned. Put it on its own Root object.");
                 throw new InvalidOperationException(
                     "Startup is missing GameAudio. Assign the GameAudio object, do not AddComponent from code.");
             }
 
             if (gameInput == null)
             {
-                GameLog.Error("Startup: GameInput must be assigned. Put it on its own Bootstrap object.");
+                GameLog.Error("Startup: GameInput must be assigned. Put it on its own Root object.");
                 throw new InvalidOperationException(
                     "Startup is missing GameInput. Assign the GameInput object, do not AddComponent from code.");
             }
 
             if (gameSession == null)
             {
-                GameLog.Error("Startup: GameSession must be assigned. Put it on its own Bootstrap object.");
+                GameLog.Error("Startup: GameSession must be assigned. Put it on its own Root object.");
                 throw new InvalidOperationException(
                     "Startup is missing GameSession. Assign the GameSession object, do not AddComponent from code.");
             }
@@ -60,6 +60,7 @@ namespace TheyWillDescend.Main
                 await gameSession.LoadMainMenuAsync(ct);
 
             _fsm = AppFlowFactory.Create(gameSession, gameAudio, gameInput);
+            gameSession.AttachFlow(_fsm);
 
             if (skipMenuToGameTemporarily)
 
@@ -73,7 +74,7 @@ namespace TheyWillDescend.Main
             else
             {
                 GameLog.Info("Startup ready (Root). AppFlow started.");
-                _fsm.Start(AppStateId.PressAnyKey);
+                _fsm.Start(AppStateId.MainMenu);
             }
         }
     }

@@ -96,7 +96,10 @@ namespace TheyWillDescend.Simulation.Agents
                 Timer = command.PlazaTimer > 0f ? command.PlazaTimer : 2.5f,
                 Angle = command.PlazaAngle,
                 Radius = command.PlazaRadius,
-                Walking = command.PlazaWalking
+                Walking = command.PlazaWalking,
+                Direction = command.PlazaDirection != 0
+                    ? command.PlazaDirection
+                    : PlazaRing.PickDirection(agentId)
             });
             SimEntityPose.Apply(em, entity, transform);
 #if UNITY_EDITOR

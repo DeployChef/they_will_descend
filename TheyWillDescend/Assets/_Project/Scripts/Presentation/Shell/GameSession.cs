@@ -21,7 +21,7 @@ namespace TheyWillDescend.Shell
     }
 
     /// <summary>
-    /// Bootstrap host for one gameplay run. Scene names and bake timeout live here;
+    /// Root host for one gameplay run. Scene names and bake timeout live here;
     /// <see cref="SceneLoader"/> only load/unload.
     /// </summary>
     public sealed class GameSession : MonoBehaviour
@@ -53,7 +53,13 @@ namespace TheyWillDescend.Shell
         DifficultyProfile _selectedDifficulty;
         bool _loadSlot;
 
+        public static GameSession Active { get; private set; }
+
         public bool IsActive { get; private set; }
+
+        public AppStateMachine Flow { get; private set; }
+
+        public void AttachFlow(AppStateMachine flow) => Flow = flow;
 
         public TechCatalogAsset[] TechCatalogs => techCatalogs;
 
@@ -288,7 +294,12 @@ namespace TheyWillDescend.Shell
             return SimSessionAccess.HasLifecycleQueues(em, session);
         }
 
-        void OnDestroy() => Cancel();
+        void OnDestroy()
+        {
+            if (Active == this)
+                Active = null;
+            Cancel();
+        }
 
         public UniTask<bool> WaitForPhaseAsync(
             SimSessionPhase phase,
@@ -341,7 +352,11 @@ namespace TheyWillDescend.Shell
                 && em.GetComponentData<SimSession>(session).Phase == phase;
         }
 
-        void Awake() => EnsureDefaultAssets();
+        void Awake()
+        {
+            Active = this;
+            EnsureDefaultAssets();
+        }
 
         void EnsureDefaultAssets()
         {

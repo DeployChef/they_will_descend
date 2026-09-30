@@ -99,7 +99,8 @@ namespace TheyWillDescend.App
                     plazaWalking = plazas[i].Walking,
                     plazaTimer = plazas[i].Timer,
                     plazaAngle = plazas[i].Angle,
-                    plazaRadius = plazas[i].Radius
+                    plazaRadius = plazas[i].Radius,
+                    plazaDirection = plazas[i].Direction
                 };
             }
 
@@ -540,6 +541,7 @@ namespace TheyWillDescend.App
                 PlazaTimer = record.plazaTimer,
                 PlazaAngle = record.plazaAngle,
                 PlazaRadius = record.plazaRadius,
+                PlazaDirection = record.plazaDirection,
                 HasPose = 1,
                 Kind = (AgentKind)record.agentType
             });

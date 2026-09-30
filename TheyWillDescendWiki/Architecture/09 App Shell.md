@@ -44,21 +44,21 @@ Shell включает сессию (`SimClockCommand.InGame`). ECS не зна�
 ## 2. Элегантное ядро Shell (канон)
 
 ```text
-Bootstrap hosts (соседи, inspector refs, без GetComponent/AddComponent)
+Root hosts (соседи, inspector refs, без GetComponent/AddComponent)
   Main Camera, EventSystem, Startup, GameAudio, GameInput, GameSession
 
 Startup
   Awake → BootAsync (UniTask)
-  грузит MainMenu, зовёт AppFlowFactory.Create, Start(PressAnyKey)
+  грузит MainMenu, зовёт AppFlowFactory.Create, Start(MainMenu)
   нет Update
 
 AppStateMachine
   владеет текущим IAppState
   только TransitionTo(stateId)
 
-IAppState (PressAnyKey, MainMenu, LoadingGame, Playing)
+IAppState (MainMenu, LoadingGame, Playing, ReturningToMenu)
   Enter / Exit   — без Tick
-  меню-стейты читают PressAnyKeyScreen.Current / MainMenuScreen.Current в Enter
+  сплэш и кнопки меню живут в сцене MainMenu (`MainMenuFlow`), не в стейте
 
 GameSession
   StartAsync / DisposeAsync / LoadMainMenuAsync
@@ -90,7 +90,7 @@ GameInput
 ## 3. Frostpunk → стейты
 
 ```text
-Boot → PressAnyKey → MainMenu → (позже ScenarioSelect / Cutscene / Briefing)
+Root → MainMenu → (позже ScenarioSelect / Cutscene / Briefing)
   → LoadingGame (session.StartAsync: Loading + Game, unload MainMenu)
   → Playing
   → выход в меню: ReturningToMenu (session.DisposeAsync через Loading) → MainMenu
@@ -102,7 +102,7 @@ Boot → PressAnyKey → MainMenu → (позже ScenarioSelect / Cutscene / Br
 
 | State | SimControl | Заметка |
 | --- | --- | --- |
-| PressAnyKey / MainMenu | Off (`SessionInGame = 0`) | экраны живы, пока загружен MainMenu |
+| MainMenu | Off (`SessionInGame = 0`) | сплэш и кнопки в сцене меню |
 | LoadingGame | Off | грузит Game, выгружает MainMenu |
 | Playing | Running или Frozen | Frozen = PlayerPaused / BuildLocked; оверлей паузы живёт здесь |
 | ReturningToMenu | Off | Loading → выгрузка Game → MainMenu |
@@ -139,14 +139,13 @@ UI / стейты: `SimCommands.TryPost(SimClockCommand.…)` — не пишу�
 // Startup: inspector refs на GameAudio, GameInput, GameSession
 // AppFlowFactory — new + Register, без Find UI
 var fsm = new AppStateMachine();
-fsm.Register(new PressAnyKeyState(fsm, input));
-fsm.Register(new MainMenuState(fsm, input, session));
+fsm.Register(new MainMenuState());
 fsm.Register(new LoadingGameState(fsm, session, input));
-fsm.Register(new PlayingState(fsm, session, input, audio));
+fsm.Register(new PlayingState(input, audio));
 fsm.Register(new ReturningToMenuState(fsm, session, input));
 ```
 
-Экраны биндятся в Awake на своих панелях (`Current`): `MainMenuScreen`, `PauseMenuScreen`. Стейты читают в Enter, не кэшируют с boot.
+Сплэш и кнопки меню ведёт `MainMenuFlow` в сцене MainMenu. Пауза в ране по-прежнему `PauseMenuScreen` на Game.
 
 Меню: **Start Game** / **Load** / **Start Debug**. Список допустимых `DifficultyProfile` и default принадлежат `ScenarioDefinition`, а не отдельным полям `GameSession`. Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Null default = prefab-default balance. Load = слот (кнопка серая, если файла нет).
 
@@ -160,7 +159,7 @@ fsm.Register(new ReturningToMenuState(fsm, session, input));
 
 | Сцена | Роль |
 | --- | --- |
-| Bootstrap | хосты + Main Camera. Без меню-canvas |
+| Root | хосты + Main Camera. Без меню-canvas |
 | MainMenu | splash/menu + `PressAnyKeyScreen` / `MainMenuScreen` |
 | Loading | переход: старт рана, load слота, выход в меню |
 | Game | мир, HUD, SubScene Simulation |
