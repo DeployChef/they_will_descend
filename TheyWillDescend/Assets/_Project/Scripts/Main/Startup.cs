@@ -1,80 +1,56 @@
 using System;
 using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Composition root. Lives on Bootstrap. Wires the app: scenes, Shell FSM.
+    /// Builds the root container, then opens the menu or a run.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
         [Header("Temporary debug")]
-        [SerializeField] bool skipMenuToGameTemporarily = true;
+        [SerializeField] bool skipMenuToGameTemporarily;
 
+        [SerializeField] RootLifetimeScope rootScope;
 
-        [SerializeField] GameAudio gameAudio;
-        [SerializeField] GameInput gameInput;
-        [SerializeField] GameSession gameSession;
-
-        private AppStateMachine _fsm;
-        private bool _started;
+        bool _started;
 
         void Awake()
         {
             if (_started)
                 return;
             _started = true;
-            BootAsync().Forget();
+
+            if (rootScope == null)
+            {
+                GameLog.Error("Startup: RootLifetimeScope must be assigned.");
+                throw new InvalidOperationException(
+                    "Startup is missing RootLifetimeScope.");
+            }
+
+            rootScope.Build();
+
+            var context = rootScope.Container.Resolve<TheyWillDescend.Shell.AppContext>();
+            var shell = rootScope.Container.Resolve<ShellService>();
+            if (skipMenuToGameTemporarily)
+            {
+                GameLog.Warning("TEMPORARY: skipMenuToGame — starting a normal run (MainMenu not loaded).");
+                context.RequestLaunch(RunLaunch.Normal);
+                shell.EnterGame();
+                return;
+            }
+
+            OpenMenu(shell).Forget();
         }
 
-        async UniTaskVoid BootAsync()
+        static async UniTaskVoid OpenMenu(ShellService shell)
         {
-            var ct = this.GetCancellationTokenOnDestroy();
-
-            if (gameAudio == null)
-            {
-                GameLog.Error("Startup: GameAudio must be assigned. Put it on its own Bootstrap object.");
-                throw new InvalidOperationException(
-                    "Startup is missing GameAudio. Assign the GameAudio object, do not AddComponent from code.");
-            }
-
-            if (gameInput == null)
-            {
-                GameLog.Error("Startup: GameInput must be assigned. Put it on its own Bootstrap object.");
-                throw new InvalidOperationException(
-                    "Startup is missing GameInput. Assign the GameInput object, do not AddComponent from code.");
-            }
-
-            if (gameSession == null)
-            {
-                GameLog.Error("Startup: GameSession must be assigned. Put it on its own Bootstrap object.");
-                throw new InvalidOperationException(
-                    "Startup is missing GameSession. Assign the GameSession object, do not AddComponent from code.");
-            }
-
-            if (!skipMenuToGameTemporarily)
-                await gameSession.LoadMainMenuAsync(ct);
-
-            _fsm = AppFlowFactory.Create(gameSession, gameAudio, gameInput);
-
-            if (skipMenuToGameTemporarily)
-
-
-
-
-            {
-                GameLog.Warning("TEMPORARY: skipMenuToGame — starting at LoadingGame (MainMenu not loaded).");
-                _fsm.Start(AppStateId.LoadingGame);
-            }
-            else
-            {
-                GameLog.Info("Startup ready (Root). AppFlow started.");
-                _fsm.Start(AppStateId.PressAnyKey);
-            }
+            await shell.OpenMainMenu();
+            GameLog.Info("Startup ready (Root). Menu opened.");
         }
     }
 }

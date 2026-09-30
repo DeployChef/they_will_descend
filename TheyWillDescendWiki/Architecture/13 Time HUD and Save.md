@@ -19,11 +19,11 @@ Speed **не затирают** стройкой. Тик = функция `(Sess
 
 | Забота | Владелец | Не владелец |
 | --- | --- | --- |
-| Поток продукта (меню / сессия) | `AppStateMachine` | тулза времени |
-| Тулза времени (⏸ x1 x2 x3) | HUD → `SimClockCommand` | отдельный `IAppState` |
-| Модалка стройки | HUD → `SetBuildLocked` | новый `IAppState` |
+| Поток продукта (меню / сессия) | `ShellService` | тулза времени |
+| Тулза времени (⏸ x1 x2 x3) | HUD → `SimClockCommand` | смена сцены |
+| Модалка стройки | HUD → `SetBuildLocked` | смена сцены |
 
-Во Frostpunk пауза времени ≠ меню паузы. Esc и ⏸ открывают оверлей `PauseMenuScreen` и ставят **Player-lock на вентиле**. Стейт остаётся `Playing`. `PausedState` в коде нет.
+Во Frostpunk пауза времени ≠ меню паузы. Esc и ⏸ открывают оверлей `PauseMenuScreen` и ставят **Player-lock на вентиле**. Сцена Game остаётся загруженной. `PausedState` в коде нет.
 
 ---
 
@@ -210,11 +210,11 @@ SavePayload v22
 3. Следующий `CommandSystemGroup` сносит **только динамику рана**: `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`, затем восстанавливает clock/buildings/agents/paused/feed. Не выгружать `Game.unity`.
 4. Snapshot-place имеет source `SnapshotRestore`: он разрешён в `Preparing`; gameplay-place разрешён только в `Ready`.
 5. Lifecycle-finalizer переводит `Preparing → Ready` лишь когда все входящие очереди drained.
-6. `GameSession` ждёт `Ready` с cancellation/timeout и только потом перестраивает views, снимает Loading и возвращает input.
+6. `GameSession.Apply` ждёт `Ready`. Пауза на это время показывает сцену Loading через `ShellService` и снимает её после `Ready`. Потом `PauseMenuScreen` перестраивает views.
 
-Load **не** = `GameSession.Dispose` + полный reload сцены.
+Load **не** выгружает сцену Game и **не** зовёт `Shutdown`.
 
-Перед apply `GameSession.RunWithLoadingAsync` показывает сцену Loading (сортировка 500, поверх HUD). После подтверждённого `Ready` `PauseMenuScreen` качает `AgentViewBoard` и `BuildingViewBoard.RebuildViews()`, затем Loading снимается. Выход в главное меню — стейт `ReturningToMenu`: `BeginReset`, ожидание `Unprepared`, затем выгрузка Game. Load из главного меню — `LoadingGame` + apply слота (не `RunPublisher`).
+Перед apply пауза показывает сцену Loading. Выход в главное меню — `PauseMenuScreen` делает `Shutdown`, затем `ShellService.ReturnToMenu` (штора, выгрузка Game, загрузка MainMenu). Load из главного меню — `RequestLaunch(RunLaunch.Slot)` и `EnterGame`: новая сцена Game сама зовёт `Begin`.
 
 Новый **Start Game / Start Debug** зовёт `RunPublisher.BeginRun`: runtime-дома не в SubScene, поэтому reset входит в тот же ECS pipeline до scenario seed.
 

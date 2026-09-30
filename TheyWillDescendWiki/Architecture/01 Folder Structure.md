@@ -29,7 +29,7 @@ Simulation, Authoring, Content: `autoReferenced: false` — на них ссыл
 | `TheyWillDescend.Content` | арт-каталоги (`BuildingCatalogAsset`) | `ISystem`, экономика рана |
 | `TheyWillDescend.Authoring` | Baker’ы SubScene, editor-tools сценария | runtime UI |
 | `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, JSON-сейв, `GameLog`, FMOD-хост | `ISystem` / `SystemBase` на виджеты; писать стоки/occupy в обход команд |
-| `TheyWillDescend.Main` | `Startup`, `AppFlowFactory` — вход и регистрация | экономика, `EntityManager` |
+| `TheyWillDescend.Main` | `Startup`, корневой и сценовые scope | экономика, `EntityManager` |
 
 Домены Shell / Application / Infrastructure — **папки** в Presentation, не отдельные сборки.  
 `TheyWillDescend.App` как имя сборки не используем: внутри `TheyWillDescend.*` оно затеняет `UnityEngine.Application`.
@@ -61,10 +61,10 @@ Assets/_Project/Scripts/
     City/        placement, grid guide, BuildingViewBoard, BuildingSelection, BuildingRejectLog
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Application/ RunPublisher, RunSessionSnapshot
-    Shell/       FSM, GameSession, SceneLoader, GameInput
+    Shell/       Scenes (ShellService), Session (GameSession, GameRun), Input, App (AppContext)
     Infrastructure/ Logging, Save
     Audio/       GameAudio
-  Main/          Startup, AppFlowFactory
+  Main/          Startup, RootLifetimeScope, scene scopes
 ```
 
 Внутри фичи Simulation:
