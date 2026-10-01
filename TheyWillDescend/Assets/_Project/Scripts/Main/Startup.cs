@@ -34,23 +34,17 @@ namespace TheyWillDescend.Main
 
             rootScope.Build();
 
-            var context = rootScope.Container.Resolve<TheyWillDescend.Shell.AppContext>();
             var shell = rootScope.Container.Resolve<ShellService>();
             if (skipMenuToGameTemporarily)
             {
                 GameLog.Warning("TEMPORARY: skipMenuToGame — starting a normal run (MainMenu not loaded).");
-                context.RequestLaunch(RunLaunch.Normal);
-                shell.EnterGame();
+                shell.EnterGame(RunLaunch.Normal);
                 return;
             }
 
-            OpenMenu(shell).Forget();
-        }
-
-        static async UniTaskVoid OpenMenu(ShellService shell)
-        {
-            await shell.OpenMainMenu();
-            GameLog.Info("Startup ready (Root). Menu opened.");
+            shell.OpenMainMenu()
+                .ContinueWith(() => GameLog.Info("Startup ready (Root). Menu opened."))
+                .Forget();
         }
     }
 }

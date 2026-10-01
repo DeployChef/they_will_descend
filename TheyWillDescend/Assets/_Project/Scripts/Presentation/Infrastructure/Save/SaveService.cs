@@ -1,35 +1,27 @@
 using System.IO;
+using TheyWillDescend.App;
 using TheyWillDescend.Infrastructure.Logging;
 using UnityEngine;
 
 namespace TheyWillDescend.Infrastructure.Save
 {
     /// <summary>
-    /// One-slot JSON store. Temporary: not DOTS SerializeUtility.
+    /// One-slot JSON store on the root scope. Temporary file format, not DOTS SerializeUtility.
+    /// Capture and apply of the ECS write model stay in <see cref="RunSessionSnapshot"/>.
     /// </summary>
-    public static class RunSnapshotStore
+    public sealed class SaveService
     {
-        public static string SlotPath =>
+        public string SlotPath =>
             Path.Combine(Application.persistentDataPath, "run_slot0.json");
 
-        public static bool HasSlot => File.Exists(SlotPath);
+        public bool HasSlot => File.Exists(SlotPath);
 
-        public static void Write(RunSnapshot snapshot)
+        public void SaveCurrent()
         {
-            snapshot.version = RunSnapshot.CurrentVersion;
-            File.WriteAllText(SlotPath, JsonUtility.ToJson(snapshot, prettyPrint: true));
-            GameLog.Info($"Saved slot → {SlotPath}");
+            Write(RunSessionSnapshot.Capture());
         }
 
-        public static void DeleteSlot()
-        {
-            if (!File.Exists(SlotPath))
-                return;
-            File.Delete(SlotPath);
-            GameLog.Info($"Deleted slot → {SlotPath}");
-        }
-
-        public static bool TryRead(out RunSnapshot snapshot)
+        public bool TryRead(out RunSnapshot snapshot)
         {
             snapshot = null;
             if (!File.Exists(SlotPath))
@@ -43,7 +35,7 @@ namespace TheyWillDescend.Infrastructure.Save
             if (snapshot == null)
             {
                 GameLog.Error("Slot JSON failed to parse.");
-                DeleteSlot();
+                Delete();
                 return false;
             }
 
@@ -51,13 +43,28 @@ namespace TheyWillDescend.Infrastructure.Save
             {
                 GameLog.Warning(
                     $"Slot v{snapshot.version} != current v{RunSnapshot.CurrentVersion}; deleting {SlotPath}.");
-                DeleteSlot();
+                Delete();
                 snapshot = null;
                 return false;
             }
 
             GameLog.Info($"Loaded slot ← {SlotPath}");
             return true;
+        }
+
+        void Write(RunSnapshot snapshot)
+        {
+            snapshot.version = RunSnapshot.CurrentVersion;
+            File.WriteAllText(SlotPath, JsonUtility.ToJson(snapshot, prettyPrint: true));
+            GameLog.Info($"Saved slot → {SlotPath}");
+        }
+
+        void Delete()
+        {
+            if (!File.Exists(SlotPath))
+                return;
+            File.Delete(SlotPath);
+            GameLog.Info($"Deleted slot → {SlotPath}");
         }
     }
 }

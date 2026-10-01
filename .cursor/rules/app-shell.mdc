@@ -11,14 +11,14 @@ alwaysApply: true
 
 ## Elegant core (prefer this over jam GameDirector)
 
-- `ShellService` is a root singleton, not a MonoBehaviour. It only loads and unloads scenes: `EnterGame`, `ReturnToMenu`, `ShowLoading`, `HideLoading`. It does not start the run.
-- `AppContext.RequestLaunch` stores the run kind. The Game scene's `GameSession` reads it and calls `Begin`.
-- `RootLifetimeScope` (VContainer) is the parent container on Root. Auto Run is off on that component in the scene. `Startup.Awake` calls `Build()`. Each scene has a child `LifetimeScope`. `AppContext` is a singleton on the parent.
+- `ShellService` is a root singleton, not a MonoBehaviour. `EnterGame(RunLaunch)` loads Game and calls `GameSession.Begin`. `ReturnToMenu` shuts the run down and unloads Game before the menu is shown. `ShowLoading` / `HideLoading` only switch the curtain.
+- `AppContext` stores only `IsFirstStart`. `EnterGame` sets it, so the next menu skips the splash.
+- `RootLifetimeScope` (VContainer) is the parent container on Root. Auto Run is off on that component in the scene. `Startup.Awake` calls `Build()`. Each scene has a child `LifetimeScope`. `AppContext`, `ShellService`, and `SaveService` are singletons on the parent. The slot file is `SaveService`; UI and `GameSession` do not touch it as a static.
 - `GameSession` lives in the Game scene: catalogs, `Begin` / `Apply` / `Shutdown`. It does not load scenes.
 - `GameRun` (Game scope) turns the sim clock and game input on when `Begin` reaches Ready, and off when the run leaves. A game-scene machine is not built yet.
 - Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`
 - `SceneLoader` (narrow, UniTask) — used by `ShellService` only
-- MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `AppContext.RequestLaunch` and `ShellService.EnterGame`. Press any key plays once per process; `AppContext` remembers that across scene loads.
+- MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `ShellService.EnterGame`. Press any key plays once per process; `AppContext.IsFirstStart` remembers that across scene loads.
 - Root hosts are siblings: Startup, RootLifetimeScope, GameAudio, GameInput, Main Camera. No scene object for the shell service.
 - VContainer stays in Presentation/Main. Never inside `ISystem`
 

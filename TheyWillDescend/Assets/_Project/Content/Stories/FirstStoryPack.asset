@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a5e4e2797db2ef46adef56bffee25fb, type: 3}
+  m_Name: FirstStoryPack
+  m_EditorClassIdentifier: TheyWillDescend.Simulation::TheyWillDescend.Simulation.Stories.StoryPackAsset
+  dialogs:
+  - {fileID: 11400000, guid: 47a259b89a8ead346a9f3eded50b5a37, type: 2}
+  - {fileID: 11400000, guid: f94e258bf7de0b441bb6ca6b5038eaeb, type: 2}
+  - {fileID: 11400000, guid: 2b2c352b53f94e9468dd8b9fe791074d, type: 2}
+  - {fileID: 11400000, guid: 230b9a58592389845a295cf6fdf9a8a8, type: 2}
+  quests:
+  - {fileID: 11400000, guid: e3c9bdf8fa5935b4ab814988608f3840, type: 2}
+  triggers:
+  - {fileID: 11400000, guid: f6fe0ea1d72c0d14399628255c9418dc, type: 2}
+  - {fileID: 11400000, guid: 2af58b7aa3099f8479f25a1a02c5938e, type: 2}

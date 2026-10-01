@@ -1,5 +1,3 @@
-using System;
-
 namespace TheyWillDescend.Shell
 {
     /// <summary>
@@ -9,21 +7,5 @@ namespace TheyWillDescend.Shell
     public sealed class AppContext
     {
         public bool IsFirstStart { get; set; }
-
-        public RunLaunch Launch { get; private set; }
-
-        public bool EnteringGame { get; private set; }
-
-        public event Action LaunchRequested;
-
-        public void RequestLaunch(RunLaunch launch)
-        {
-            Launch = launch;
-            IsFirstStart = true;
-            EnteringGame = true;
-            LaunchRequested?.Invoke();
-        }
-
-        public void MarkLaunchStarted() => EnteringGame = false;
     }
 }

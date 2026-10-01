@@ -7,8 +7,8 @@ namespace TheyWillDescend.Shell
     }
 
     /// <summary>
-    /// One launch request. The menu stores it on <see cref="AppContext"/>;
-    /// <see cref="GameSession"/> reads it when the Game scene loads.
+    /// One launch request. The menu passes it to <see cref="ShellService.EnterGame"/>;
+    /// the service hands the same value to <see cref="GameSession.Begin"/>.
     /// </summary>
     public readonly struct RunLaunch
     {

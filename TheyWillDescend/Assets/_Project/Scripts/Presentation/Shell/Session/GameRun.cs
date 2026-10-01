@@ -34,7 +34,7 @@ namespace TheyWillDescend.Shell
             if (screen == null)
                 GameLog.Error("GameRun: PauseMenuScreen missing. Put it on PauseMenuPanel in Game.");
             else
-                screen.Use(_input);
+                screen.Use();
 
             _live = true;
         }
