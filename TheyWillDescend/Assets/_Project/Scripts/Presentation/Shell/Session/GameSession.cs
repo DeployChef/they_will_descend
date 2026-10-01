@@ -57,6 +57,11 @@ namespace TheyWillDescend.Shell
         public async UniTask<bool> Begin(RunLaunch launch, CancellationToken cancellationToken = default)
         {
             EnsureDefaultAssets();
+            var debug = !launch.LoadSlot && launch.Kind == RunKind.Debug;
+            var scenario = debug ? debugScenario : defaultScenario;
+            var storyPack = scenario != null ? scenario.StoryPack : null;
+            if (storyPack == null && defaultScenario != null)
+                storyPack = defaultScenario.StoryPack;
             if (SimWorld.TryGetEntityManager(out var em))
             {
                 SimulationBootstrap.InitializeRun(
@@ -64,7 +69,8 @@ namespace TheyWillDescend.Shell
                     buildingCatalog,
                     resourceCatalog,
                     simRules,
-                    timelineCatalog);
+                    timelineCatalog,
+                    storyPack);
             }
 
             if (!await WaitUntilSimulationReady(cancellationToken))
@@ -94,8 +100,6 @@ namespace TheyWillDescend.Shell
                 return true;
             }
 
-            var debug = launch.Kind == RunKind.Debug;
-            var scenario = debug ? debugScenario : defaultScenario;
             if (debug && scenario == null)
                 GameLog.Error("GameSession: DebugScenario is not assigned.");
 

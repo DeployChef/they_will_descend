@@ -6,6 +6,7 @@ using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Gods;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Stories;
 using TheyWillDescend.Simulation.Time;
 
 using Unity.Collections;
@@ -29,6 +30,7 @@ namespace TheyWillDescend.Shell
             ResourceCatalogAsset resourceCatalog,
             SimRulesAsset rules,
             TimelineCatalogAsset timelineCatalog,
+            StoryPackAsset storyPack = null,
             RadialGridConfig? gridConfig = null)
         {
 
@@ -135,6 +137,7 @@ namespace TheyWillDescend.Shell
             var defaultCap = rules != null ? rules.DefaultStockCap : 2000f;
             PopulateResourceCatalog(em, session, resourceCatalog, defaultCap);
             PopulateTimelineCatalog(em, session, timelineCatalog);
+            StoryBake.Apply(em, session, storyPack);
 
             // Headquarters
             EnsureHeadquarters(em, session);

@@ -8,7 +8,7 @@ namespace TheyWillDescend.Infrastructure.Save
         /// <summary>
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
-        public const int CurrentVersion = 25;
+        public const int CurrentVersion = 26;
 
 
         public int version = CurrentVersion;
@@ -37,6 +37,12 @@ namespace TheyWillDescend.Infrastructure.Save
         public PyramidFeedSnapshot[] pyramidFeed = Array.Empty<PyramidFeedSnapshot>();
         public string activeTechId = string.Empty;
         public ResearchLineSnapshot[] research = Array.Empty<ResearchLineSnapshot>();
+        public byte storyRunStarted;
+        public byte storySeenEraValid;
+        public int storySeenEra;
+        public StoryDialogSnapshot[] storyDialogs = Array.Empty<StoryDialogSnapshot>();
+        public StoryQuestSnapshot[] storyQuests = Array.Empty<StoryQuestSnapshot>();
+        public StoryTriggerSnapshot[] storyTriggers = Array.Empty<StoryTriggerSnapshot>();
     }
 
     [Serializable]
@@ -134,5 +140,35 @@ namespace TheyWillDescend.Infrastructure.Save
     {
         public string resourceId;
         public float perHour;
+    }
+
+    [Serializable]
+    public sealed class StoryDialogSnapshot
+    {
+        public string dialogId;
+        public int anchorAgentId;
+        public int anchorBuildingId;
+        public byte bindHeadquarters;
+        public byte opened;
+        public byte anchorReady;
+        public byte hasDeadline;
+        public float deadlineHour;
+        public int serial;
+    }
+
+    [Serializable]
+    public sealed class StoryQuestSnapshot
+    {
+        public string questId;
+        public byte hasDeadline;
+        public float deadlineHour;
+    }
+
+    [Serializable]
+    public sealed class StoryTriggerSnapshot
+    {
+        public string triggerId;
+        public byte armed;
+        public byte fired;
     }
 }
