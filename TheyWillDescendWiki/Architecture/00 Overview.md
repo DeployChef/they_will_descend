@@ -24,7 +24,7 @@
 Main (Startup — собирает корневой scope)
         ↓
 Presentation (ShellService, HUD, камера, FMOD)
-        ↓ SimCommands.TryPost
+        ↓ поле желания  или  разовый запрос
 Simulation ECS  ← истина рана
         ↑ pull / BuildingRejectedEvent
 Content (Authoring, bake, баланс)
@@ -35,7 +35,7 @@ Content (Authoring, bake, баланс)
 ## Принципы
 
 - Симуляция не знает кнопки, меню, Animator, FMOD
-- UI шлёт команды; не считает производство
+- UI пишет желание на сущность или шлёт разовый запрос; не пишет склад и не считает производство
 - Ран тикает, только если `SimControl.Mode == Running` (session in-game, не player-pause, не build-lock)
 - Баланс и типы зданий — данными
 - gmtk_2026 — сеттинг, не card-core и не write model

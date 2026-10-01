@@ -7,8 +7,9 @@
 World — единственный write model игры. Стрелки не симметричны:
 
 ```text
-Presentation  →  SimCommands.TryPost     единственная запись из gameplay UI
-Presentation  ←  query / pull            единственное чтение в вид
+Presentation  →  поле желания на уже известной Entity   штат, пауза дома, слайдер
+Presentation  →  запрос / SimCommands                   поставить, снести, спавн, оплата, часы, ритуал
+Presentation  ←  query / pull                           единственное чтение в вид
 Simulation    ✕  TimeWidget / ViewBoard / Animator
 ```
 
@@ -18,7 +19,14 @@ Simulation    ✕  TimeWidget / ViewBoard / Animator
 
 Пауза/скорость — команды на `SimControl`, не запись стоков. Готовность забега — unmanaged lifecycle `SimSession.Phase`: `Unprepared`, `Preparing`, `Ready`, `Resetting`. Это не состояние часов.
 
-Gameplay Presentation **никогда не запускает consume вручную**. Постановка дома, назначение рабочих и слайдеры пирамиды только вызывают `SimCommands.TryPost`; команды применяет следующий тик `CommandSystemGroup`.
+Gameplay Presentation **никогда не запускает consume вручную**.
+
+Два входа, оба канон:
+
+- **Желание.** Игрок уже держит `Entity` (выбор луча, штаб). Кнопка пишет поле, которое система считает входом: `Workplace.DesiredWorkers`, `Workplace.Paused`. Следующий тик `WorkforceDispatchSystem` сам добирает и отпускает людей. Команда назначения для этого не нужна: откат при смерти рабочего живёт в том же тике.
+- **Разовое действие.** Поставить, снести, заспавнить, заплатить, сменить режим часов, ритуал. Это запрос (`SimCommands` или request-сущность). `CommandSystemGroup` применяет его на следующем тике, по порядку.
+
+Итоги UI не пишет: склад, лояльность, позу, `WorkingCount`. Кнопка может прочитать мир, чтобы посереть. Ограничение (нельзя желать больше свободных людей, чем есть) остаётся в системе. Часы — запрос, потому что это режим тика, а не поле одного дома.
 
 Исключений для ручного playback нет. `RunPublisher.BeginRun`, `RunSessionSnapshot.BeginApply` и `RunPublisher.BeginReset` только атомарно ставят входящие команды и фазу. Линейный `CommandSystemGroup` исполняет их, lifecycle-finalizer подтверждает `Ready` / `Unprepared`, а `GameSession` асинхронно ждёт подтверждение с timeout/cancellation. Loading и gameplay input снимаются только после `Ready`; Game scene выгружается только после `Unprepared`.
 
