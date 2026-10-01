@@ -1,3 +1,4 @@
+using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using VContainer;
@@ -15,6 +16,7 @@ namespace TheyWillDescend.Main
         {
             builder.Register<AppContext>(Lifetime.Singleton);
             builder.Register<ShellService>(Lifetime.Singleton);
+            builder.Register<SaveService>(Lifetime.Singleton);
             builder.RegisterComponentInHierarchy<GameAudio>();
             builder.RegisterComponentInHierarchy<GameInput>();
         }

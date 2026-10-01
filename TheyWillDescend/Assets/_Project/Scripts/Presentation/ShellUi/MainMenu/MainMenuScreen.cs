@@ -17,13 +17,13 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] Button startDebugButton;
         [SerializeField] Button loadButton;
 
-        AppContext _context;
+        SaveService _save;
         ShellService _shell;
 
         [Inject]
-        public void Construct(AppContext context, ShellService shell)
+        public void Construct(SaveService save, ShellService shell)
         {
-            _context = context;
+            _save = save;
             _shell = shell;
         }
 
@@ -40,7 +40,7 @@ namespace TheyWillDescend.Presentation.ShellUi
         void OnEnable()
         {
             if (loadButton != null)
-                loadButton.interactable = RunSnapshotStore.HasSlot;
+                loadButton.interactable = _save != null && _save.HasSlot;
         }
 
         public void Show() => gameObject.SetActive(true);
@@ -57,7 +57,13 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         void LoadGame()
         {
-            if (!RunSnapshotStore.HasSlot)
+            if (_save == null)
+            {
+                GameLog.Error("MainMenuScreen: SaveService was not injected.");
+                return;
+            }
+
+            if (!_save.HasSlot)
             {
                 GameLog.Warning("Main menu: no save slot.");
                 if (loadButton != null)
@@ -71,14 +77,13 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         void BeginRun(RunKind kind, bool loadSlot)
         {
-            if (_context == null || _shell == null)
+            if (_shell == null)
             {
-                GameLog.Error("MainMenuScreen: the menu scope did not inject the shell.");
+                GameLog.Error("MainMenuScreen: ShellService was not injected.");
                 return;
             }
 
-            _context.RequestLaunch(loadSlot ? RunLaunch.Slot : new RunLaunch(kind, false));
-            _shell.EnterGame();
+            _shell.EnterGame(loadSlot ? RunLaunch.Slot : new RunLaunch(kind, false));
         }
     }
 }

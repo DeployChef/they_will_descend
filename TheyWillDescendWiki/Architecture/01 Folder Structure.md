@@ -62,7 +62,7 @@ Assets/_Project/Scripts/
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Application/ RunPublisher, RunSessionSnapshot
     Shell/       Scenes (ShellService), Session (GameSession, GameRun), Input, App (AppContext)
-    Infrastructure/ Logging, Save
+    Infrastructure/ Logging, Save (SaveService)
     Audio/       GameAudio
   Main/          Startup, RootLifetimeScope, scene scopes
 ```
