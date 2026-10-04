@@ -8,7 +8,7 @@
 			<value>click</value>
 		</property>
 		<property name="outputFormat">
-			<value>1</value>
+			<value>0</value>
 		</property>
 		<relationship name="folder">
 			<destination>{d048c9ce-42d9-4c07-9d56-cb1cffd8c04a}</destination>
@@ -95,7 +95,6 @@
 			<destination>{6495f899-4e51-46db-bba8-c2d41827dbe6}</destination>
 			<destination>{4b1f55c1-df4d-4b2e-8b69-3fd54aa521c3}</destination>
 			<destination>{c3e7a03a-dcac-421a-9c89-292c1a5806b0}</destination>
-			<destination>{d6ea0ccb-de67-4c9e-804f-c7eeb0d47201}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusEffectChain" id="{fdad2d4e-5e32-4e8e-a4f5-00369705e319}">
@@ -165,11 +164,6 @@
 			<destination>{732a653b-9ab9-4013-bd13-507a39d4fc83}</destination>
 			<destination>{e3f6e9eb-54cb-432d-b2ba-b8adb460c5a9}</destination>
 			<destination>{85809ef5-26ea-44e4-a787-035592ca38ef}</destination>
-		</relationship>
-	</object>
-	<object class="EventSound" id="{d6ea0ccb-de67-4c9e-804f-c7eeb0d47201}">
-		<relationship name="event">
-			<destination>{b9afe6c8-0209-470d-8a5c-5ec4190ae60e}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{90e9fe47-8a9d-42f8-a357-4879d6708e86}" />
