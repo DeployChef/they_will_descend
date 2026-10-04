@@ -60,6 +60,7 @@ MonoBehaviour:
   workplaceSlots: 5
   researchWorkplace: 1
   requiresUnlock: 0
+  strokePaint: 0
   recipe: 0
   recipeInputs: []
   recipeOutputs: []
@@ -193,17 +194,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 786987467606419860}
     m_Modifications:
+    - target: {fileID: 1980009272338891695, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2116568734331789862, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.57
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2116568734331789862, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.57
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2116568734331789862, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.57
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2116568734331789862, guid: a0a5e0fd07a96184ab86265493e1580a, type: 3}
       propertyPath: m_ConstrainProportionsScale
