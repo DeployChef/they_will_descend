@@ -98,6 +98,8 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             var constructing = em.HasComponent<Construction>(entity);
+            var construction = constructing ? em.GetComponentData<Construction>(entity) : default(Construction);
+            var dismantling = constructing && construction.IsDismantling;
             var slots = em.HasComponent<BuildingType>(entity)
                 ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
                 : 0;
@@ -106,15 +108,25 @@ namespace TheyWillDescend.Presentation.City
                 ? em.GetComponentData<Workplace>(entity)
                 : default;
 
+            // The red group needs both slots assigned, otherwise the bar would render invisible.
+            var dismantleGroup = dismantling
+                && _widget.DismantleRoot != null
+                && _widget.DismantleFill != null;
+
             if (_widget.ConstructionRoot != null)
-                _widget.ConstructionRoot.SetActive(constructing);
+                _widget.ConstructionRoot.SetActive(constructing && !dismantleGroup);
+            if (_widget.DismantleRoot != null)
+                _widget.DismantleRoot.SetActive(dismantleGroup);
             if (_widget.WorkerRoot != null)
                 _widget.WorkerRoot.SetActive(!constructing && slots > 0);
 
-            if (constructing && _widget.ConstructionFill != null)
+            if (constructing)
             {
-                var construction = em.GetComponentData<Construction>(entity);
-                _widget.ConstructionFill.fillAmount = construction.Normalized;
+                var fill = dismantling && _widget.DismantleFill != null
+                    ? _widget.DismantleFill
+                    : _widget.ConstructionFill;
+                if (fill != null)
+                    fill.fillAmount = construction.Normalized;
             }
 
             if (!constructing && _widget.WorkerFill != null && slots > 0)

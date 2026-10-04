@@ -19,6 +19,12 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] Image workerBackground;
         [SerializeField] Image workerFill;
 
+        [Header("Dismantle group")]
+        [Tooltip("Optional sibling of ConstructionGroup. Leave empty to reuse the construction group.")]
+        [SerializeField] GameObject dismantleRoot;
+        [Tooltip("Red fill shown while the building is being dismantled. Falls back to ConstructionFill.")]
+        [SerializeField] Image dismantleFill;
+
         [SerializeField] GameObject statusRoot;
 
         [Header("Billboard")]
@@ -26,7 +32,7 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] float referenceDistance = 40f;
         [Tooltip("Камера ниже этой высоты (Y) — все виджеты скрыты.")]
         [SerializeField] float hideBelowCameraHeight = 25f;
-
+ 
         Vector3 _authoredScale;
         bool _capturedScale;
 
@@ -40,6 +46,9 @@ namespace TheyWillDescend.Presentation.City
         public GameObject WorkerRoot => workerRoot;
         public Image WorkerBackground => workerBackground;
         public Image WorkerFill => workerFill;
+
+        public GameObject DismantleRoot => dismantleRoot;
+        public Image DismantleFill => dismantleFill;
 
         public GameObject StatusRoot => statusRoot;
 

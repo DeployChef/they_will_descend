@@ -328,63 +328,38 @@ namespace TheyWillDescend.Presentation.GameHud
 
         /// <summary>
         /// Tuned for the OrbSG UI properties: Y of the first key is what the material shows at an
-        /// empty reservoir, Y of the second key at a full one. Properties that read the same at
-        /// both ends stay disabled so the material asset keeps ownership of them.
+        /// empty reservoir, Y of the second key at a full one. The full-energy row is the authored
+        /// charged look — DirectionalSpeed 0.2, Speed 0.1, NoiseContrast 2, Noise2Contrast 10,
+        /// CoreContrast 0.9, CoreStrength 0.4, Contrast 5. The empty end keeps the value the orb
+        /// shows today, so only the charged state moved. Properties that read the same at both ends
+        /// stay disabled so the material asset keeps ownership of them.
         /// </summary>
         static PropertyBinding[] CreateDefaultBindings()
         {
             return new[]
             {
-                new PropertyBinding
-                {
-                    property = "_DirectionalSpeed",
-                    curve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 0.2f)),
-                    enabled = true
-                },
-                new PropertyBinding
-                {
-                    property = "_NoiseContrast",
-                    curve = new AnimationCurve(new Keyframe(0f, 0.37f), new Keyframe(1f, 2f)),
-                    enabled = true
-                },
-                new PropertyBinding
-                {
-                    property = "_Noise2Contrast",
-                    curve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 10f)),
-                    enabled = true
-                },
-                new PropertyBinding
-                {
-                    property = "_CoreContrast",
-                    curve = new AnimationCurve(new Keyframe(0f, 1.44f), new Keyframe(1f, 2.02f)),
-                    enabled = true
-                },
-                // Identical at both ends, kept from the material asset:
-                // DistrortionStrength 0, Speed 0.07, CoreStrength 0, Contrast 2.
-                new PropertyBinding
-                {
-                    property = "_DistrortionStrength",
-                    curve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 0f)),
-                    enabled = false
-                },
-                new PropertyBinding
-                {
-                    property = "_Speed",
-                    curve = new AnimationCurve(new Keyframe(0f, 0.07f), new Keyframe(1f, 0.07f)),
-                    enabled = false
-                },
-                new PropertyBinding
-                {
-                    property = "_CoreStrength",
-                    curve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 0f)),
-                    enabled = false
-                },
-                new PropertyBinding
-                {
-                    property = "_Contrast",
-                    curve = new AnimationCurve(new Keyframe(0f, 2f), new Keyframe(1f, 2f)),
-                    enabled = false
-                }
+                // Swirl slows down, noise scroll picks up slightly.
+                Bind("_DirectionalSpeed", 0.5f, 0.2f),
+                Bind("_Speed", 0.07f, 0.1f),
+                // The shell sharpens into the charged pattern.
+                Bind("_NoiseContrast", 1.2f, 2f),
+                Bind("_Noise2Contrast", 1f, 10f),
+                // Core fades in and softens as the shell gets busy.
+                Bind("_CoreContrast", 5f, 0.9f),
+                Bind("_CoreStrength", 0f, 0.4f),
+                Bind("_Contrast", 2f, 5f),
+                // Identical at both ends, kept from the material asset: DistrortionStrength 0.
+                Bind("_DistrortionStrength", 0f, 0f, enabled: false)
+            };
+        }
+
+        static PropertyBinding Bind(string property, float atEmpty, float atFull, bool enabled = true)
+        {
+            return new PropertyBinding
+            {
+                property = property,
+                curve = new AnimationCurve(new Keyframe(0f, atEmpty), new Keyframe(1f, atFull)),
+                enabled = enabled
             };
         }
     }
