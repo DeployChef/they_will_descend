@@ -5,7 +5,7 @@
 			<value>ADAPTIVE_GENERATIVE MUSIC</value>
 		</property>
 		<property name="outputFormat">
-			<value>1</value>
+			<value>5</value>
 		</property>
 		<relationship name="folder">
 			<destination>{66a8b700-3415-4743-91f3-e0efd1135566}</destination>
@@ -49,7 +49,6 @@
 		</relationship>
 		<relationship name="parameters">
 			<destination>{cd36394a-933d-49a5-8673-b4e513df3b7e}</destination>
-			<destination>{6fab32b8-b997-4403-88d0-284b61cb6c79}</destination>
 			<destination>{c2d4801d-e4bd-4b3f-ba9b-0a851d3355ea}</destination>
 		</relationship>
 		<relationship name="banks">
@@ -173,7 +172,6 @@
 	</object>
 	<object class="GroupTrack" id="{3892abe4-3ae3-4fae-9d7d-1f270badba26}">
 		<relationship name="automationTracks">
-			<destination>{c3b60739-e06f-4cd7-8cdb-3380c72599d8}</destination>
 			<destination>{cd0f57b7-b523-4c60-b4b8-674a5feffee1}</destination>
 		</relationship>
 		<relationship name="modules">
@@ -287,11 +285,6 @@
 			<destination>{f0e05e45-e608-4049-adaa-7b443842d574}</destination>
 		</relationship>
 	</object>
-	<object class="ParameterProxy" id="{6fab32b8-b997-4403-88d0-284b61cb6c79}">
-		<relationship name="preset">
-			<destination>{afb011e0-eacf-417f-a5d1-f3ee14682080}</destination>
-		</relationship>
-	</object>
 	<object class="ParameterProxy" id="{c2d4801d-e4bd-4b3f-ba9b-0a851d3355ea}">
 		<relationship name="preset">
 			<destination>{7bfe0ba4-301b-46af-876c-abbbdb43bdd1}</destination>
@@ -371,6 +364,9 @@
 		</property>
 		<property name="length">
 			<value>11.95971786305582</value>
+		</property>
+		<property name="volume">
+			<value>-15</value>
 		</property>
 		<property name="polyphony">
 			<value>2</value>
@@ -681,7 +677,7 @@
 			<value>1</value>
 		</property>
 		<property name="minimumTimeBetweenSounds">
-			<value>180000</value>
+			<value>140000</value>
 		</property>
 		<property name="maximumTimeBetweenSounds">
 			<value>300000</value>
@@ -794,11 +790,6 @@
 		</relationship>
 		<relationship name="output">
 			<destination>{ac130bdf-b4ba-42fa-8385-5b96b4c406fb}</destination>
-		</relationship>
-	</object>
-	<object class="AutomationTrack" id="{c3b60739-e06f-4cd7-8cdb-3380c72599d8}">
-		<relationship name="automator">
-			<destination>{4b04cb6f-85ec-40b0-b7bc-b017a253b8eb}</destination>
 		</relationship>
 	</object>
 	<object class="AutomationTrack" id="{cd0f57b7-b523-4c60-b4b8-674a5feffee1}">
@@ -1562,11 +1553,13 @@
 	<object class="MixerBusEffectChain" id="{dd751f14-0d93-4ac1-8cbc-879f2248cf42}">
 		<relationship name="effects">
 			<destination>{e49cbe81-0728-4145-aeca-89e93b80bb0f}</destination>
+			<destination>{f7230f2c-8593-4c53-8dde-80837484f49c}</destination>
+			<destination>{75449646-a6c2-4142-9527-57fc43f683ee}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{9ec02486-aaa7-4ff8-849a-8152fa6e78a9}">
 		<property name="overridingOutputFormat">
-			<value>1</value>
+			<value>5</value>
 		</property>
 	</object>
 	<object class="SingleSound" id="{b875883b-7994-4615-b334-4aa90ded441f}">
@@ -2331,6 +2324,23 @@
 		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{e49cbe81-0728-4145-aeca-89e93b80bb0f}" />
+	<object class="PannerEffect" id="{f7230f2c-8593-4c53-8dde-80837484f49c}">
+		<property name="surroundPanExtent">
+			<value>180</value>
+		</property>
+		<relationship name="modulators">
+			<destination>{ab85f8e2-ae33-4d40-9278-183a38ee9c9b}</destination>
+			<destination>{565ccf75-9af4-4ece-994d-0c41c7865abc}</destination>
+		</relationship>
+	</object>
+	<object class="DelayEffect" id="{75449646-a6c2-4142-9527-57fc43f683ee}">
+		<property name="delay">
+			<value>720</value>
+		</property>
+		<property name="feedback">
+			<value>20.5</value>
+		</property>
+	</object>
 	<object class="AutomationCurve" id="{40aff232-1cf7-474c-bcd6-9d8cee198031}">
 		<relationship name="parameter">
 			<destination>{f0e05e45-e608-4049-adaa-7b443842d574}</destination>
@@ -3104,6 +3114,22 @@
 		</property>
 		<property name="value">
 			<value>-80</value>
+		</property>
+	</object>
+	<object class="RandomizerModulator" id="{ab85f8e2-ae33-4d40-9278-183a38ee9c9b}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>surroundPanDirection</value>
+		</property>
+		<property name="amount">
+			<value>100</value>
+		</property>
+	</object>
+	<object class="RandomizerModulator" id="{565ccf75-9af4-4ece-994d-0c41c7865abc}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>surroundPanExtent</value>
+		</property>
+		<property name="amount">
+			<value>100</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{14c2abae-5ae3-40fd-b08c-e038060e3f5e}">

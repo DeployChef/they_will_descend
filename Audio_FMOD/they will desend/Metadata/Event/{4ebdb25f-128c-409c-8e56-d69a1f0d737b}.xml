@@ -119,6 +119,9 @@
 	</object>
 	<object class="MixerBusPanner" id="{33ceda43-9eed-4a40-b362-32330e53f933}" />
 	<object class="EventSound" id="{ee343a5d-f7e5-4d02-bb03-eb2f894b7afc}">
+		<property name="triggerConditionMode">
+			<value>1</value>
+		</property>
 		<relationship name="event">
 			<destination>{53431ff2-5f28-4217-95fe-0b282a09673b}</destination>
 		</relationship>

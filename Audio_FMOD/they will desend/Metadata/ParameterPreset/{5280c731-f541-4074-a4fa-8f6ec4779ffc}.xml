@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{5280c731-f541-4074-a4fa-8f6ec4779ffc}">
+		<property name="name">
+			<value>IF_CULTURE_SECTORE</value>
+		</property>
+		<relationship name="folder">
+			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{6bcf5be1-a9f7-4577-bec4-7d3e22fdee99}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{6bcf5be1-a9f7-4577-bec4-7d3e22fdee99}">
+		<property name="parameterType">
+			<value>1</value>
+		</property>
+		<property name="maximum">
+			<value>6</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>
