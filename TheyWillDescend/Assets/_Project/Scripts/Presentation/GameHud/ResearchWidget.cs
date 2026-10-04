@@ -39,6 +39,11 @@ namespace TheyWillDescend.Presentation.GameHud
         static readonly Color Available = new(0.2f, 0.32f, 0.42f, 0.95f);
         static readonly Color Active = new(0.62f, 0.48f, 0.18f, 0.98f);
         static readonly Color Done = new(0.22f, 0.42f, 0.28f, 0.98f);
+        static readonly Color StatusOk = new(0.55f, 0.85f, 0.55f, 1f);
+        static readonly Color StatusBusy = new(0.95f, 0.8f, 0.35f, 1f);
+        static readonly Color StatusBlocked = new(0.92f, 0.45f, 0.4f, 1f);
+
+
 
         public static ResearchWidget Current { get; private set; }
 
@@ -314,6 +319,8 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.SetLabel(studyButton, completed ? "Изучено" : researching ? "Изучается" : "Изучить");
             if (status != null)
             {
+                // canStart is exactly the "Можно изучать." branch, so green means completed or ready to start.
+                var ready = completed || canStart;
                 if (completed)
                     status.text = "Изучено.";
                 else if (researching)
@@ -326,9 +333,16 @@ namespace TheyWillDescend.Presentation.GameHud
                     status.text = "Не хватает ресурсов.";
                 else
                     status.text = "Можно изучать.";
+                if (ready)
+                    status.color = StatusOk;
+                else if (researching)
+                    status.color = StatusBusy;
+                else
+                    status.color = StatusBlocked;
             }
         }
 
+    
         static bool TryReadBoard(
             out EntityManager em,
             out Entity session,

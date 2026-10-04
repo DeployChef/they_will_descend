@@ -18,6 +18,7 @@ namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
     /// Build catalog from the building prototype buffer.
+    /// Buttons are instantiated into <c>catalogEntriesRoot</c>; it is created at runtime when not assigned.
     /// Esc closes this overlay before Playing toggles player pause.
     /// </summary>
     public sealed class BuildWidget : MonoBehaviour
@@ -28,12 +29,14 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField, FormerlySerializedAs("selectCube2x2Button")] Button unusedLegacyCatalogButton;
         [SerializeField] BuildPlacementController placement;
         [SerializeField] RoadPaintController roadPaint;
+        [SerializeField] RectTransform catalogEntriesRoot;
 
         readonly List<Button> _spawnedButtons = new(8);
 
         bool _catalogOpen;
         bool _placedBound;
         bool _roadBound;
+        bool _runtimeRootWarned;
         Transform _buttonRoot;
 
         public static BuildWidget Current { get; private set; }
@@ -235,8 +238,24 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void EnsureButtonRoot()
         {
-            if (_buttonRoot != null || buildCatalogPanel == null || catalogButtonTemplate == null)
+            if (_buttonRoot != null)
                 return;
+
+            if (catalogEntriesRoot != null)
+            {
+                _buttonRoot = catalogEntriesRoot;
+                return;
+            }
+
+            if (buildCatalogPanel == null || catalogButtonTemplate == null)
+                return;
+
+            if (!_runtimeRootWarned)
+            {
+                _runtimeRootWarned = true;
+                GameLog.Warning(
+                    "BuildWidget: catalogEntriesRoot is not assigned, creating CatalogEntries at runtime.");
+            }
 
             var root = new GameObject("CatalogEntries", typeof(RectTransform));
             root.transform.SetParent(buildCatalogPanel.transform, false);
@@ -357,6 +376,16 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (buildCatalogPanel != null)
                 buildCatalogPanel.SetActive(visible);
+            SetEntriesVisible(visible);
+        }
+
+        // Entries may be disabled on the scene so the root is toggled together with the panel.
+        void SetEntriesVisible(bool visible)
+        {
+            if (catalogEntriesRoot != null)
+                catalogEntriesRoot.gameObject.SetActive(visible);
+            if (_buttonRoot != null && _buttonRoot != catalogEntriesRoot)
+                _buttonRoot.gameObject.SetActive(visible);
         }
 
         static string FormatBuildingCost(
