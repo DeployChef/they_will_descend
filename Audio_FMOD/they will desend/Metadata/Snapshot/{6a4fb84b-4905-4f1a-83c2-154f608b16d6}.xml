@@ -32,6 +32,7 @@
 			<destination>{806443d7-b684-477c-b050-951fe9ab594c}</destination>
 			<destination>{1c06b5cc-4f68-4af0-9cfa-ae211b64f9c0}</destination>
 			<destination>{4a4152ae-b5db-40e3-b921-d1976ea1c58c}</destination>
+			<destination>{4ed9e28e-eb01-4170-acde-04f31813c54d}</destination>
 		</relationship>
 		<relationship name="snapshotTracks">
 			<destination>{4a100863-12fd-404c-ac05-92ca42103131}</destination>
@@ -67,6 +68,9 @@
 		<property name="value">
 			<value>-80</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{5e63f86a-afc2-42dd-b5d8-a1e9921cf458}</destination>
+		</relationship>
 		<relationship name="automatableObject">
 			<destination>{a990959e-82fc-4e01-ab56-5951133144af}</destination>
 		</relationship>
@@ -89,6 +93,9 @@
 		<property name="value">
 			<value>-80</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{cb77ac8b-a37e-4bb3-b054-a54dcacb0c39}</destination>
+		</relationship>
 		<relationship name="automatableObject">
 			<destination>{c1c9fa3b-1b4c-468d-beae-c51f93de21fe}</destination>
 		</relationship>
@@ -100,6 +107,9 @@
 		<property name="value">
 			<value>-80</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{2565c84e-6b07-450e-8f49-b515d88d8ff3}</destination>
+		</relationship>
 		<relationship name="automatableObject">
 			<destination>{607becd4-e8ad-4fa9-a486-3baf1ef852a0}</destination>
 		</relationship>
@@ -111,6 +121,9 @@
 		<property name="value">
 			<value>-80</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{a45c425c-9013-4a13-b9dd-746cb0e8a8c7}</destination>
+		</relationship>
 		<relationship name="automatableObject">
 			<destination>{cc182a9b-91e5-4b28-b8f7-08d0ae7c675d}</destination>
 		</relationship>
@@ -122,6 +135,9 @@
 		<property name="value">
 			<value>-80</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{796912d4-8632-4bec-9e47-13300d1c2b28}</destination>
+		</relationship>
 		<relationship name="automatableObject">
 			<destination>{e8e1016a-0c44-45c8-9d38-94a842fc1f15}</destination>
 		</relationship>
@@ -131,7 +147,7 @@
 			<value>volume</value>
 		</property>
 		<property name="value">
-			<value>-80</value>
+			<value>0.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0b349b2d-daa6-4e98-9eb9-4bc1bfd35819}</destination>
@@ -144,8 +160,22 @@
 		<property name="value">
 			<value>0</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{be67e94d-e322-4e76-8f12-b70dc7b14b66}</destination>
+		</relationship>
 		<relationship name="automatableObject">
 			<destination>{c311acd4-a2b2-4a29-8c24-bce558d6064a}</destination>
+		</relationship>
+	</object>
+	<object class="SnapshotProperty" id="{4ed9e28e-eb01-4170-acde-04f31813c54d}">
+		<property name="propertyName">
+			<value>level</value>
+		</property>
+		<property name="value">
+			<value>0</value>
+		</property>
+		<relationship name="automatableObject">
+			<destination>{628777d5-4e9c-4007-a967-3472a92514f8}</destination>
 		</relationship>
 	</object>
 	<object class="SnapshotTrack" id="{4a100863-12fd-404c-ac05-92ca42103131}">
@@ -192,5 +222,53 @@
 		<relationship name="mixerStrip">
 			<destination>{c311acd4-a2b2-4a29-8c24-bce558d6064a}</destination>
 		</relationship>
+	</object>
+	<object class="SeekModulator" id="{5e63f86a-afc2-42dd-b5d8-a1e9921cf458}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>value</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.10999999940395355</value>
+		</property>
+	</object>
+	<object class="SeekModulator" id="{cb77ac8b-a37e-4bb3-b054-a54dcacb0c39}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>value</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.099999994039535522</value>
+		</property>
+	</object>
+	<object class="SeekModulator" id="{2565c84e-6b07-450e-8f49-b515d88d8ff3}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>value</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.099999994039535522</value>
+		</property>
+	</object>
+	<object class="SeekModulator" id="{a45c425c-9013-4a13-b9dd-746cb0e8a8c7}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>value</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.10999999940395355</value>
+		</property>
+	</object>
+	<object class="SeekModulator" id="{796912d4-8632-4bec-9e47-13300d1c2b28}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>value</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.099999994039535522</value>
+		</property>
+	</object>
+	<object class="SeekModulator" id="{be67e94d-e322-4e76-8f12-b70dc7b14b66}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>value</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.099999994039535522</value>
+		</property>
 	</object>
 </objects>
