@@ -4,6 +4,9 @@
 		<property name="name">
 			<value>Atmos</value>
 		</property>
+		<relationship name="modulators">
+			<destination>{5cd557dc-6d03-4f31-97eb-09b4afc957bf}</destination>
+		</relationship>
 		<relationship name="effectChain">
 			<destination>{4d246c1b-08e7-4b7c-b42a-7421a709ec47}</destination>
 		</relationship>
@@ -13,6 +16,14 @@
 		<relationship name="output">
 			<destination>{c82f6295-5ab8-436b-a8e1-11837ed78744}</destination>
 		</relationship>
+	</object>
+	<object class="SeekModulator" id="{5cd557dc-6d03-4f31-97eb-09b4afc957bf}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>volume</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.57999998331069946</value>
+		</property>
 	</object>
 	<object class="MixerBusEffectChain" id="{4d246c1b-08e7-4b7c-b42a-7421a709ec47}">
 		<relationship name="effects">

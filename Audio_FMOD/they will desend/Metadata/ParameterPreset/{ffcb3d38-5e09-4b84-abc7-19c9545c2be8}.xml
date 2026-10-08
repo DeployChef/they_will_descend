@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{ffcb3d38-5e09-4b84-abc7-19c9545c2be8}">
+		<property name="name">
+			<value>IF_ENERGY_SECTORE</value>
+		</property>
+		<relationship name="folder">
+			<destination>{aa5588bb-59cd-4712-9ed8-d41e1bbfb2b7}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{492b0bd0-108f-4b0b-a8b5-eea7634b250c}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{492b0bd0-108f-4b0b-a8b5-eea7634b250c}">
+		<property name="parameterType">
+			<value>1</value>
+		</property>
+		<property name="maximum">
+			<value>2</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

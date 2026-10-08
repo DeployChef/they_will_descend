@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{25137b9f-bd30-4af1-ada7-2d28d6dd3228}">
+		<property name="name">
+			<value>CULTURE_DESTINY</value>
+		</property>
+		<relationship name="folder">
+			<destination>{aa5588bb-59cd-4712-9ed8-d41e1bbfb2b7}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{5ad9fb02-39f8-41f3-81e3-454a8670918e}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{5ad9fb02-39f8-41f3-81e3-454a8670918e}">
+		<property name="parameterType">
+			<value>1</value>
+		</property>
+		<property name="maximum">
+			<value>6</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

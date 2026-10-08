@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 84292360298370123}
   - component: {fileID: 1245298956705152926}
   - component: {fileID: 109760359155948262}
+  - component: {fileID: -2672205278238420317}
   m_Layer: 0
   m_Name: Sawmill
   m_TagString: Untagged
@@ -60,6 +61,7 @@ MonoBehaviour:
   workplaceSlots: 10
   researchWorkplace: 0
   requiresUnlock: 0
+  strokePaint: 0
   recipe: 1
   recipeInputs: []
   recipeOutputs:
@@ -97,6 +99,29 @@ MonoBehaviour:
   buildingType: 1
   activityWeight: 0.5
   isWorking: 0
+--- !u!114 &-2672205278238420317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4447309251788943178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d25b34a1deada1b4db8e05559445bccd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Audio.BuildingConstructionAudio
+  buildEvent:
+    Guid:
+      Data1: 1522934691
+      Data2: 1121993379
+      Data3: -1117090432
+      Data4: 770902725
+    Path: event:/BUILDINGS/BUILD
+  eventPath: event:/BUILDINGS/BUILD
+  bankNames:
+  - BUILDING
+  logActivity: 0
 --- !u!1 &5906566791462257087
 GameObject:
   m_ObjectHideFlags: 0

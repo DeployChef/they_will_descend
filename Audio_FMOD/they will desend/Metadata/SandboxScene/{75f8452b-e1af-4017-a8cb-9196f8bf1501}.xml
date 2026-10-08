@@ -15,6 +15,7 @@
 		</relationship>
 		<relationship name="listeners">
 			<destination>{cff0ed90-5a3c-4524-b1c4-a193fa83757d}</destination>
+			<destination>{24fe7b7c-2252-4d2f-b881-bc309e10a6c1}</destination>
 		</relationship>
 		<relationship name="emitters">
 			<destination>{f38d7f09-e530-4a5e-ab07-791c35fc25fc}</destination>
@@ -43,6 +44,14 @@
 		</property>
 		<property name="rotationY">
 			<value>0.300135791</value>
+		</property>
+	</object>
+	<object class="SandboxListener" id="{24fe7b7c-2252-4d2f-b881-bc309e10a6c1}">
+		<property name="positionX">
+			<value>0.100000001</value>
+		</property>
+		<property name="positionZ">
+			<value>0.0250000004</value>
 		</property>
 	</object>
 	<object class="SandboxEmitter" id="{f38d7f09-e530-4a5e-ab07-791c35fc25fc}">

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{d6e30bd3-ef2a-401d-bb95-1ab9ff680f77}">
+		<property name="name">
+			<value>ENERGY</value>
+		</property>
+		<relationship name="folder">
+			<destination>{60030e8b-bde1-4304-84e8-37270df7baaa}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{7bfe0ba4-301b-46af-876c-abbbdb43bdd1}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{7bfe0ba4-301b-46af-876c-abbbdb43bdd1}">
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+	</object>
+</objects>

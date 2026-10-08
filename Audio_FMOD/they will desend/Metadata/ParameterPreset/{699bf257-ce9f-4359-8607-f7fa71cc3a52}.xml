@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{699bf257-ce9f-4359-8607-f7fa71cc3a52}">
+		<property name="name">
+			<value>FACTORY_DESTINY</value>
+		</property>
+		<relationship name="folder">
+			<destination>{aa5588bb-59cd-4712-9ed8-d41e1bbfb2b7}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{1ac5c895-4c59-4902-8aa0-8dc524084b37}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{1ac5c895-4c59-4902-8aa0-8dc524084b37}">
+		<property name="parameterType">
+			<value>1</value>
+		</property>
+		<property name="maximum">
+			<value>6</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

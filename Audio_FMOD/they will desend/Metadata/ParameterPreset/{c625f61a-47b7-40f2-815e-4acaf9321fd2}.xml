@@ -5,7 +5,7 @@
 			<value>Wheel_Scroll</value>
 		</property>
 		<relationship name="folder">
-			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+			<destination>{c46cedc7-1c5e-4bd3-bed1-35e2e63d45ef}</destination>
 		</relationship>
 		<relationship name="parameter">
 			<destination>{b8c80d56-7ba5-47ea-a0db-e7eb800820a9}</destination>
@@ -14,6 +14,17 @@
 	<object class="GameParameter" id="{b8c80d56-7ba5-47ea-a0db-e7eb800820a9}">
 		<property name="initialValue">
 			<value>0</value>
+		</property>
+		<relationship name="modulators">
+			<destination>{687ec296-9aeb-4149-b96a-ad9dcfae9878}</destination>
+		</relationship>
+	</object>
+	<object class="SeekModulator" id="{687ec296-9aeb-4149-b96a-ad9dcfae9878}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>cursorPosition</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.70999997854232788</value>
 		</property>
 	</object>
 </objects>
