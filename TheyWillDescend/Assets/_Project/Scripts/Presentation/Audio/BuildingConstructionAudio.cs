@@ -16,9 +16,9 @@ namespace TheyWillDescend.Presentation.Audio
     ///   рабочие на площадке (Elapsed &gt; 0)          → BUILD (держится до конца стройки);
     ///   Construction снята (стройка закончена)       → COMPLETE (ваншот), потом NONE;
     ///   демонтаж                                     → тишина.
-    /// Гейтится конусом камеры через зону постройки (BuildingAudioSource.LinkedZone):
-    /// зона невидима — звука не существует (мёртвое состояние); BUILD возобновляется
-    /// при возврате зоны в конус. Ваншоты PLACEMENT/COMPLETE в невидимой зоне не доигрываются.
+    /// Гейтится конусом камеры через ячейку постройки (BuildingAudioSource.LinkedCell):
+    /// ячейка невидима — звука не существует (мёртвое состояние); BUILD возобновляется
+    /// при возврате ячейки в конус. Ваншоты PLACEMENT/COMPLETE в невидимой ячейке не доигрываются.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BuildingConstructionAudio : MonoBehaviour
@@ -144,12 +144,12 @@ namespace TheyWillDescend.Presentation.Audio
                 : BuildState.Placement;
         }
 
-        /// <summary>Зона постройки видима (конус камеры). Нет зоны — не гейтим.</summary>
+        /// <summary>Ячейка постройки видима (конус камеры). Нет ячейки — не гейтим.</summary>
         bool IsZoneVisible()
         {
             _audioSource ??= GetComponent<BuildingAudioSource>();
-            var zone = _audioSource != null ? _audioSource.LinkedZone : null;
-            return zone == null || zone.IsVisible;
+            var cell = _audioSource != null ? _audioSource.LinkedCell : null;
+            return cell == null || cell.IsVisible;
         }
 
         void PlayState(BuildState state)

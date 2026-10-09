@@ -1,17 +1,15 @@
 using System.Collections.Generic;
-using Unity.Mathematics;
-using Unity.Entities;
-using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Session;
-using TheyWillDescend.Infrastructure.Logging;
 using UnityEngine;
+using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
-using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.City
+
+namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Главный менеджер аудио-зон. Геометрия берётся из основной сетки города
-    /// 1 в 1 (тот же внутренний и внешний радиус), ячейки растянуты равномерно:
-    /// 5 угловых секторов × 2 радиальные полосы = 10 зон.
+    /// Реестр аудио-ячеек. Ячейка — динамический кластер построек: первая постройка
+    /// рождает ячейку, следующие притягиваются к ближайшей неполной ячейке в радиусе
+    /// привязки (по центроиду или по любой её постройке), на лимите открывается
+    /// новая. Пустая ячейка перестаёт существовать вместе с инстансом.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AudioZoneManager : MonoBehaviour
@@ -24,24 +22,23 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         [Tooltip("Банки с ивентом (без расширения .bank). Используется, если EventReference в настройках не задан. Master грузится всегда.")]
         [SerializeField] string[] fmodBanks = { "Ambience_Town" };
 
-        /// <summary>Плоский список всех зон (10 секторов × 4 полосы = 40).</summary>
-        private AudioZone[] _zones;
+        /// <summary>Живые ячейки. Порядок не фиксирован — идентификатор у каждой свой.</summary>
+        private readonly List<AudioCell> _cells = new();
 
-        /// <summary>Центр сетки (из DOTS).</summary>
-        private float3 _gridCenter;
-
-        /// <summary>Нужно ли пересоздать сетку.</summary>
-        private bool _needsRebuild;
+        /// <summary>Следующий сквозной id ячейки (для логов и подписей).</summary>
+        private int _nextCellId;
 
         /// <summary>Счётчик кадров между тиками видимости.</summary>
         private int _frameCounter;
 
-        /// <summary>Таймер fallback-построения зон, если DOTS-сетка не готова.</summary>
-        private float _fallbackTimer;
+        /// <summary>Банки загружены (один раз; hot reload пересоздаёт ячейки сам).</summary>
+        private bool _banksLoaded;
 
         public AudioZoneSettings Settings => settings;
         public AudioVisibilityChecker VisibilityChecker => visibilityChecker;
-        public AudioZone[] Zones => _zones;
+
+        /// <summary>Живые ячейки (только для чтения).</summary>
+        public IReadOnlyList<AudioCell> Cells => _cells;
 
         void Awake()
         {
@@ -56,234 +53,234 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
             }
         }
 
-        void OnEnable()
-        {
-            _needsRebuild = true;
-        }
-
         void Update()
         {
             if (!enabled || settings == null)
                 return;
 
-            // Пытаемся получить данные из DOTS.
-            var gridReady = false;
-            if (SimWorld.TryGet(out var em, out var bag) && em.HasComponent<CityGrid>(bag))
-            {
-                var grid = em.GetComponentData<CityGrid>(bag);
-                if (grid.Ready != 0 && grid.Config.IsValid)
-                {
-                    gridReady = true;
-                    _fallbackTimer = 0f;
-
-                    // Геометрия аудио-сетки = геометрия основной сетки 1 в 1.
-                    var config = grid.Config;
-                    var inner = config.InnerRadius;
-                    var outer = config.InnerRadius + config.RingCount * config.RadialStep;
-                    if (settings.SetGridExtent(inner, outer))
-                    {
-                        if (settings.LogZoneActivity)
-                            GameLog.Info($"AudioZoneManager: grid extent {inner:F2}..{outer:F2} m (rings={config.RingCount}, step={config.RadialStep}).");
-                        _needsRebuild = true;
-                    }
-
-                    var newCenter = grid.Center;
-                    if (_needsRebuild || !math.all(newCenter == _gridCenter))
-                    {
-                        _gridCenter = newCenter;
-                        _needsRebuild = true;
-                    }
-                }
-            }
-
-            // Fallback: если DOTS-сетка не готова 3 секунды — строим зоны
-            // с центром (0,0,0), чтобы гизмо и дебаг были видны сразу.
-            if (!gridReady && _zones == null)
-            {
-                _fallbackTimer += Time.deltaTime;
-                if (_fallbackTimer >= 3f)
-                {
-                    GameLog.Warning("AudioZoneManager: CityGrid not ready after 3s, building zones with center (0,0,0).");
-                    _gridCenter = float3.zero;
-                    _needsRebuild = true;
-                }
-            }
-
-            if (_needsRebuild)
-            {
-                BuildZones();
-                _needsRebuild = false;
-            }
+            EnsureBanksLoaded();
 
             // Тик видимости каждые 2 кадра.
             _frameCounter++;
-            if (_frameCounter >= 2 && _zones != null && _zones.Length > 0)
-            {
-                _frameCounter = 0;
-                UpdateVisibilityBatch();
-            }
+            if (_frameCounter < 2)
+                return;
+
+            _frameCounter = 0;
+            PruneEmptyCells();
+            UpdateVisibilityBatch();
         }
 
         /// <summary>
-        /// Создаёт зоны: угловые секторы × радиальные полосы, равномерно поверх
-        /// основной сетки (её внутренний и внешний радиус).
+        /// Грузит банки до первого создания инстансов. Если задан EventReference —
+        /// банки определяются автоматически из ивента (принцип StudioEventEmitter).
         /// </summary>
-        private void BuildZones()
+        private void EnsureBanksLoaded()
         {
-            // Загружаем банки до создания инстансов зон.
-            // Если в настройках задан EventReference — банки определяются
-            // автоматически из ивента (принцип StudioEventEmitter).
-            if (settings != null && !settings.EventReference.IsNull)
+            if (_banksLoaded)
+                return;
+
+            _banksLoaded = true;
+
+            if (!settings.EventReference.IsNull)
                 FmodBankLoader.LoadBanksForEvent(settings.EventReference);
             else
                 FmodBankLoader.LoadBanks(fmodBanks);
+        }
 
-            DisposeZones();
+        // ===== Привязка построек =====
 
-            var totalZones = settings.TotalZones;
-            _zones = new AudioZone[totalZones];
+        /// <summary>
+        /// Привязать постройку: к ближайшей неполной ячейке в радиусе привязки,
+        /// иначе — новая ячейка с этой постройкой. Возвращает ячейку привязки.
+        /// </summary>
+        public AudioCell AttachSource(BuildingAudioSource source)
+        {
+            if (settings == null || source == null)
+                return null;
 
-            for (var sector = 0; sector < settings.AngularSectors; sector++)
+            EnsureBanksLoaded();
+
+            var pos = source.transform.position;
+            var radius = settings.AttachRadius;
+
+            AudioCell best = null;
+            var bestDist = float.MaxValue;
+
+            for (var i = 0; i < _cells.Count; i++)
             {
-                for (var band = 0; band < settings.RadialBands; band++)
+                var cell = _cells[i];
+                if (cell == null || cell.IsDisposed || cell.IsFull)
+                    continue;
+
+                var d = cell.DistanceTo(pos);
+                if (d <= radius && d < bestDist)
                 {
-                    var index = sector * settings.RadialBands + band;
-                    var zone = new AudioZone(sector, band, settings);
-                    zone.SetWorldPosition(_gridCenter);
-                    _zones[index] = zone;
+                    bestDist = d;
+                    best = cell;
                 }
             }
 
-            if (settings.LogZoneActivity)
+            var isNew = best == null;
+            if (isNew)
             {
-                GameLog.Info($"AudioZoneManager: created {totalZones} zones ({settings.AngularSectors}x{settings.RadialBands}, "
-                    + $"radius {settings.InnerRadius:F2}..{settings.OuterRadius:F2} m, band {settings.ZoneDepth:F2} m, "
-                    + $"sector {settings.SectorAngle:F1}°, center {_gridCenter}).");
+                best = new AudioCell(_nextCellId++, settings);
+                _cells.Add(best);
             }
 
-            // Зоны пересозданы — у уже стоящих зданий LinkedZone указывает
-            // на мёртвые объекты зон. Перелинковываем их в новые зоны.
-            RelinkExistingSources();
+            source.Manager = this;
+            source.LinkedCell = best;
+            best.AddSource(source);
+
+            // Мгновенная активация: ячейка уже в поле зрения — звук появляется
+            // сразу после постройки, без ожидания тика видимости.
+            if (best.IsVisible && !best.IsActive)
+                best.SetActive(true);
+
+            if (settings.LogZoneActivity)
+            {
+                GameLog.Info(isNew
+                    ? $"AudioZoneManager: NEW cell {best.Id} at {pos} (no cell within {radius:F1} m)."
+                    : $"AudioZoneManager: building -> cell {best.Id} ({best.Count}/{best.Capacity}), dist {bestDist:F1} m.");
+            }
+
+            return best;
         }
 
         /// <summary>
-        /// Перелинковывает все существующие BuildingAudioSource в новые зоны
-        /// после пересоздания сетки зон.
+        /// Отвязать постройку. Опустевшая ячейка уничтожается — её инстанс
+        /// освобождается, звук перестаёт существовать.
         /// </summary>
-        private void RelinkExistingSources()
+        public void DetachSource(BuildingAudioSource source)
         {
-            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var cell = source != null ? source.LinkedCell : null;
+            if (cell == null)
+                return;
+
+            cell.RemoveSource(source);
+
+            if (!cell.IsEmpty)
+                return;
+
+            source.LinkedCell = null;
+            _cells.Remove(cell);
+            cell.Dispose();
+
+            if (settings != null && settings.LogZoneActivity)
+                GameLog.Info($"AudioZoneManager: cell {cell.Id} emptied and destroyed ({_cells.Count} cells left).");
+        }
+
+        /// <summary>
+        /// Страховка: удаляет ячейки, которые опустели в обход DetachSource
+        /// (уничтоженный объект, смена сцены).
+        /// </summary>
+        private void PruneEmptyCells()
+        {
+            for (var i = _cells.Count - 1; i >= 0; i--)
+            {
+                var cell = _cells[i];
+                if (cell == null)
+                {
+                    _cells.RemoveAt(i);
+                    continue;
+                }
+
+                if (!cell.IsEmpty)
+                    continue;
+
+                cell.Dispose();
+                _cells.RemoveAt(i);
+
+                if (settings.LogZoneActivity)
+                    GameLog.Info($"AudioZoneManager: pruned empty cell {cell.Id}.");
+            }
+        }
+
+
+        /// <summary>
+        /// Сбрасывает реестр ячеек: инстансы освобождаются, постройки остаются
+        /// жить. Используется hot reload'ом банков.
+        /// </summary>
+        private void ClearCells()
+        {
+            for (var i = 0; i < _cells.Count; i++)
+                _cells[i]?.Dispose();
+
+            _cells.Clear();
+            _nextCellId = 0;
+        }
+
+        /// <summary>
+        /// Перелинковывает все активные BuildingAudioSource заново — после hot
+        /// reload ячеек. Неактивные сами придут через OnEnable.
+        /// </summary>
+        private void RelinkAllSources()
+        {
+            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < sources.Length; i++)
             {
                 var source = sources[i];
-                // Строгая проверка: исключаем уничтоженные/отключённые объекты и префабы,
-                // чтобы не считать их как реальные постройки и не активировать пустые зоны.
+                // Строгая проверка: исключаем уничтоженные объекты и префабы,
+                // чтобы не считать их реальными постройками.
                 if (source == null || !source.gameObject.activeInHierarchy)
                     continue;
 
-                var zone = FindZoneNear(source.transform.position);
-                if (zone == null)
-                    continue;
-
-                source.LinkedZone = zone;
-                zone.AddAudioSource(source);
-
-                // Зона уже в поле зрения — активируем сразу.
-                if (zone.IsVisible && !zone.IsActive)
-                    zone.SetActive(true);
+                AttachSource(source);
             }
+
+            if (settings != null && settings.LogZoneActivity)
+                GameLog.Info($"AudioZoneManager: relinked {sources.Length} buildings into {_cells.Count} cells "
+                    + $"(capacity {settings.CellCapacity}, attach radius {settings.AttachRadius:F1} m).");
         }
 
+
         /// <summary>
-        /// Обновляет видимость зон батчами + Distance RTPC (audio LOD) активных зон.
+        /// Обновляет видимость ячеек + Distance RTPC (audio LOD) и 3D-позицию
+        /// активных ячеек.
         /// </summary>
         private void UpdateVisibilityBatch()
         {
-            if (_zones == null || _zones.Length == 0)
+            if (_cells.Count == 0)
                 return;
 
             if (visibilityChecker != null)
             {
-                visibilityChecker.UpdateVisibility(_zones);
+                visibilityChecker.UpdateVisibility(_cells);
                 visibilityChecker.ApplyVisibility();
             }
 
-            // Audio LOD + 3D-позиция активных зон: каждый тик.
+            // Audio LOD + 3D-позиция активных ячеек: каждый тик.
             // Дистанционная смерть: дальше Zone Death Distance инстанс умирает.
             var cam = visibilityChecker != null ? visibilityChecker.Camera : Camera.main;
-            if (cam != null)
+            if (cam == null)
+                return;
+
+            var camPos = cam.transform.position;
+            var rtpcName = settings.DistanceRtpcName;
+            var rtpcRange = settings.DistanceRtpcRange;
+            var deathDist = settings.ZoneDeathDistance;
+            var deathHyst = settings.ZoneDeathHysteresis;
+
+            for (var i = 0; i < _cells.Count; i++)
             {
-                var camPos = cam.transform.position;
-                var rtpcName = settings.DistanceRtpcName;
-                var maxDist = settings.MaxDistance;
-                var deathDist = settings.ZoneDeathDistance;
-                var deathHyst = settings.ZoneDeathHysteresis;
-                for (var i = 0; i < _zones.Length; i++)
-                {
-                    var zone = _zones[i];
-                    if (zone == null)
-                        continue;
+                var cell = _cells[i];
+                if (cell == null)
+                    continue;
 
-                    zone.UpdateDistanceDeath(camPos, deathDist, deathHyst);
+                cell.UpdateDistanceDeath(camPos, deathDist, deathHyst);
 
-                    if (!zone.IsActive)
-                        continue;
+                if (!cell.IsActive)
+                    continue;
 
-                    zone.UpdateDistanceRtpc(camPos, rtpcName, maxDist);
-                    zone.Update3DAttributes();
-                }
+                cell.UpdateDistanceRtpc(camPos, rtpcName, rtpcRange);
+                cell.Update3DAttributes();
             }
         }
 
-        /// <summary>
-        /// Находит зону, содержащую мировую позицию. Считается по той же
-        /// полярной геометрии, что и основная сетка (центр, внутренний радиус,
-        /// равные секторы и полосы) — попадание точное, без поиска ближайшего центра.
-        /// Позиция внутри plaza (ближе InnerRadius) или за внешним радиусом
-        /// кладётся в крайнюю полосу.
-        /// </summary>
-        public AudioZone FindZoneNear(Vector3 worldPos)
-        {
-            if (_zones == null || _zones.Length == 0)
-                return null;
-
-            var delta = worldPos - (Vector3)_gridCenter;
-            var radius = Mathf.Sqrt(delta.x * delta.x + delta.z * delta.z);
-
-            var angle = Mathf.Atan2(delta.x, delta.z) * Mathf.Rad2Deg;
-            if (angle < 0f)
-                angle += 360f;
-
-            var sector = Mathf.Clamp((int)(angle / settings.SectorAngle), 0, settings.AngularSectors - 1);
-
-            var band = 0;
-            if (radius > settings.InnerRadius)
-                band = Mathf.Clamp((int)((radius - settings.InnerRadius) / settings.ZoneDepth), 0, settings.RadialBands - 1);
-
-            var index = sector * settings.RadialBands + band;
-            return _zones[index] != null ? _zones[index] : _zones[0];
-        }
+        void OnDestroy() => ClearCells();
 
         /// <summary>
-        /// Освобождает все ресурсы.
-        /// </summary>
-        private void DisposeZones()
-        {
-            if (_zones != null)
-            {
-                for (var i = 0; i < _zones.Length; i++)
-                {
-                    _zones[i]?.Dispose();
-                }
-                _zones = null;
-            }
-        }
-
-        void OnDestroy() => DisposeZones();
-
-        /// <summary>
-        /// Hot reload: выгружает ивентовые банки, грузит заново, пересоздаёт
-        /// зоны и перелинковывает постройки — без перезапуска сцены. Правой
+        /// Hot reload: выгружает ивентовые банки, грузит заново, пересобирает
+        /// ячейки и перелинковывает постройки — без перезапуска сцены. Правой
         /// кнопкой по заголовку компонента в инспекторе во время Play.
         /// Master и Master.strings не трогаем — они нужны для резолва путей.
         /// </summary>
@@ -296,8 +293,8 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
             // тоже сошлются на выгружаемые ивенты. Глушим их до выгрузки.
             FindFirstObjectByType<ZoneAmbienceSfxScheduler>()?.SilenceAll();
 
-            // Глушим все зоны до выгрузки банков (инстансы ссылаются на ивенты).
-            DisposeZones();
+            // Глушим все ячейки до выгрузки банков (инстансы ссылаются на ивенты).
+            ClearCells();
 
             // Выгружаем ивентовые банки (найденные ранее для EventReference)
             // и вручную указанные. Master/Master.strings не трогаем — они
@@ -306,34 +303,29 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
             FmodBankLoader.UnloadBanks(fmodBanks);
 
             // Грузим заново: EventReference → автоопределение, иначе ручной список.
-            if (settings != null && !settings.EventReference.IsNull)
-                FmodBankLoader.LoadBanksForEvent(settings.EventReference);
-            else
-                FmodBankLoader.LoadBanks(fmodBanks);
+            _banksLoaded = false;
+            EnsureBanksLoaded();
 
-            // Пересоздаём зоны и перелинковываем постройки.
-            _needsRebuild = true;
-            BuildZones();
-            RelinkExistingSources();
+            // Пересобираем ячейки из стоящих построек.
+            RelinkAllSources();
 
             GameLog.Info("AudioZoneManager: hot reload banks done.");
         }
 
         // ===== Debug Gizmos =====
 
-        /// <summary>Показывать гизмо зон (рисуются всегда, не только при выделении).</summary>
+        /// <summary>Показывать гизмо ячеек (рисуются всегда, не только при выделении).</summary>
         [Header("Debug")]
         [SerializeField] bool showGizmos = true;
 
         void OnDrawGizmos()
         {
-            if (!showGizmos || _zones == null || settings == null)
+            if (!showGizmos || settings == null)
                 return;
 
-            for (var i = 0; i < _zones.Length; i++)
+            for (var i = 0; i < _cells.Count; i++)
             {
-                if (_zones[i] != null)
-                    _zones[i].OnDrawGizmos(_gridCenter, settings);
+                _cells[i]?.OnDrawGizmos(settings);
             }
         }
     }

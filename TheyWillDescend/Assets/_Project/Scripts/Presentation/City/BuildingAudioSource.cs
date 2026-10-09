@@ -18,7 +18,9 @@ namespace TheyWillDescend.Presentation.City
 
     /// <summary>
     /// Компонент на постройку. Сообщает AudioZoneManager о своём типе и активности.
-    /// Автоматически регистрируется/отписывается при старте/удалении.
+    /// Привязывается к ячейке через AudioZoneManager.AttachSource (его вызывает
+    /// BuildingViewBoard при создании постройки), отвязывается сама при выключении
+    /// или удалении объекта.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BuildingAudioSource : MonoBehaviour
@@ -27,16 +29,19 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildingAudioSourceType buildingType = BuildingAudioSourceType.House;
 
         [Header("Activity")]
-        [Tooltip("Вес активности зоны (Cell_Activity). Множитель суммируется по постройкам зоны.")]
+        [Tooltip("Вес активности ячейки (Cell_Activity). Множитель суммируется по постройкам ячейки.")]
         [SerializeField] [Range(0f, 1f)] float activityWeight = 0.5f;
 
-        /// <summary>Ссылка на зону, к которой привязан этот источник.</summary>
-        internal AudioZone LinkedZone { get; set; }
+        /// <summary>Ячейка, к которой привязан этот источник.</summary>
+        internal AudioCell LinkedCell { get; set; }
+
+        /// <summary>Менеджер ячеек, который привязал этот источник.</summary>
+        internal AudioZoneManager Manager { get; set; }
 
         /// <summary>
-        /// Здание закончено (Construction снята) — учитывается зоной в амбиенсе.
+        /// Здание закончено (Construction снята) — учитывается ячейкой в амбиенсе.
         /// Строящееся/демонтируемое здание (CountsForAmbience = false) в амбиенсе
-        /// зоны не участвует: Ambience_Town играет только после COMPLETE.
+        /// ячейки не участвует: Ambience_Town играет только после COMPLETE.
         /// Обновляется BuildingViewBoard из ECS каждый кадр.
         /// </summary>
         internal bool CountsForAmbience { get; set; }
@@ -45,26 +50,30 @@ namespace TheyWillDescend.Presentation.City
 
         // Ранее здесь был множитель isWorking — флаг не выставлялся из кода
         // (SetWorking никто не вызывал), и на префабе Sawmill он был выключен,
-        // из-за чего активность зоны была 0 и Ambience_Town не будился.
+        // из-за чего активность ячейки была 0 и Ambience_Town не будился.
         // Участие в амбиенсе полностью определяет CountsForAmbience.
         public float ActivityWeight => activityWeight;
 
         void OnEnable()
         {
-            if (LinkedZone != null)
-                LinkedZone.AddAudioSource(this);
+            // Ячейка жива — возвращаемся в неё. Если она опустела и была
+            // уничтожена, пока объект стоял выключенным, просим новую.
+            if (LinkedCell != null && !LinkedCell.IsDisposed)
+                LinkedCell.AddSource(this);
+            else if (Manager != null)
+                Manager.AttachSource(this);
         }
 
         void OnDisable()
         {
-            if (LinkedZone != null)
-                LinkedZone.RemoveAudioSource(this);
+            if (Manager != null)
+                Manager.DetachSource(this);
         }
 
         void OnDestroy()
         {
-            if (LinkedZone != null)
-                LinkedZone.RemoveAudioSource(this);
+            if (Manager != null)
+                Manager.DetachSource(this);
         }
     }
 }
