@@ -11,17 +11,19 @@ namespace TheyWillDescend.Presentation.Audio
     /// Планировщик случайных городских звуков («живчик города»), чтобы амбиент
     /// не был статичной подложкой.
     ///
-    /// Носитель — активная аудио-зона: зона слышна только когда она в конусе
-    /// камеры и в ней есть постройки, поэтому планировщик стреляет ТОЛЬКО по
-    /// зонам с IsActive == true. Полный зум камеры глушит все зоны — кандидаты
-    /// исчезают сами, отдельной проверки не нужно.
+    /// Носитель — активная аудио-ячейка: ячейка слышна только когда она в конусе
+    /// камеры и в ней есть готовые постройки, поэтому планировщик стреляет ТОЛЬКО
+    /// по ячейкам с IsActive == true. Полный зум камеры глушит все ячейки —
+    /// кандидаты исчезают сами, отдельной проверки не нужно.
     ///
-    /// Вероятность — независимый бросок на каждую активную зону в тик
-    /// планировщика (не квота). После выстрела зона уходит в персональный
-    /// кулдаун с разбросом, чтобы зоны не стреляли синхронно залпом.
+    /// Вероятность — независимый бросок на каждую активную ячейку в тик
+    /// планировщика (не квота). После выстрела ячейка уходит в персональный
+    /// кулдаун с разбросом, чтобы ячейки не стреляли синхронно залпом. Кулдаун
+    /// живёт внутри ячейки (AudioCell.CooldownUntil) — при пересборке ячеек
+    /// индексы плывут, а кулдаун остаётся привязан к своей ячейке.
     ///
     /// Ивент одноразовый (fire-and-forget): инстанс запускается в случайной
-    /// точке зоны и ДОИГРЫВАЕТ САМ — планировщик его не глушит. Освобождение
+    /// точке ячейки и ДОИГРЫВАЕТ САМ — планировщик его не глушит. Освобождение
     /// только когда FMOD сообщил PLAYBACK_STATE.STOPPED. Параллельность
     /// ограничена потолком Max Concurrent — сколько таких звуков звучит одновременно.
     ///
@@ -46,19 +48,16 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         const float MinLifetimeMargin = 30f;
 
-        [Tooltip("Менеджер зон. Если пусто — находится автоматически.")]
+        [Tooltip("Менеджер ячеек. Если пусто — находится автоматически.")]
         [SerializeField] AudioZoneManager zoneManager;
 
         /// <summary>Живые выстрелы: инстанс + потолок жизни (страховка от утечки).</summary>
         struct LiveShot
         {
             public EventInstance Instance;
-            public int ZoneIndex;
+            public int CellId;
             public float ForceReleaseTime;
         }
-
-        /// <summary>Кулдаун каждой зоны (мировое время, до которого зона не тянет жребий).</summary>
-        private float[] _zoneCooldownUntil;
 
         /// <summary>Время следующего тика планировщика.</summary>
         private float _nextTickTime;
@@ -82,43 +81,52 @@ namespace TheyWillDescend.Presentation.Audio
             if (settings == null)
                 return;
 
-            var zones = zoneManager.Zones;
-            if (zones == null || zones.Length == 0)
+            var cells = zoneManager.Cells;
+            if (cells == null || cells.Count == 0)
                 return;
 
-            SyncCooldowns(zones, settings);
             ReleaseFinishedShots(settings);
 
             if (Time.unscaledTime < _nextTickTime)
                 return;
 
             _nextTickTime = Time.unscaledTime + settings.SfxRandomTickInterval;
-            RollZones(zones, settings);
+            RollCells(cells, settings);
         }
 
         /// <summary>
-        /// Жребий по зонам: только активные, у которых истёк кулдаун,
-        /// независимый бросок вероятности.
+        /// Жребий по ячейкам: только активные, у которых истёк кулдаун,
+        /// независимый бросок вероятности. Новая ячейка (CooldownUntil = 0)
+        /// получает случайный стартовый срок — чтобы не было залпа в первый тик.
         /// </summary>
-        private void RollZones(AudioZone[] zones, AudioZoneSettings settings)
+        private void RollCells(IReadOnlyList<AudioCell> cells, AudioZoneSettings settings)
         {
             var chance = settings.SfxRandomChance;
             if (chance <= 0f || _live.Count >= settings.SfxRandomMaxConcurrent)
                 return;
 
-            for (var i = 0; i < zones.Length; i++)
+            var spread = Mathf.Max(0.1f, settings.SfxRandomZoneCooldown);
+
+            for (var i = 0; i < cells.Count; i++)
             {
-                var zone = zones[i];
-                if (zone == null || !zone.IsActive)
+                var cell = cells[i];
+                if (cell == null || !cell.IsActive)
                     continue;
 
-                if (Time.unscaledTime < _zoneCooldownUntil[i])
+                // Ячейка ещё не тянула жребий — разводим старт по времени.
+                if (cell.CooldownUntil <= 0f)
+                {
+                    cell.CooldownUntil = Time.unscaledTime + UnityEngine.Random.Range(0f, spread);
+                    continue;
+                }
+
+                if (Time.unscaledTime < cell.CooldownUntil)
                     continue;
 
                 if (UnityEngine.Random.value > chance)
                     continue;
 
-                TryFire(zone, settings, i);
+                TryFire(cell, settings);
 
                 if (_live.Count >= settings.SfxRandomMaxConcurrent)
                     break;
@@ -126,11 +134,11 @@ namespace TheyWillDescend.Presentation.Audio
         }
 
         /// <summary>
-        /// Запускает одноразовый звук в случайной точке зоны.
+        /// Запускает одноразовый звук в случайной точке ячейки.
         /// </summary>
-        private bool TryFire(AudioZone zone, AudioZoneSettings settings, int zoneIndex)
+        private bool TryFire(AudioCell cell, AudioZoneSettings settings)
         {
-            var position = zone.GetRandomSoundPosition(settings.SfxRandomJitterRadius);
+            var position = cell.GetRandomSoundPosition(settings.SfxRandomJitterRadius);
 
             EventInstance instance;
             try
@@ -166,16 +174,16 @@ namespace TheyWillDescend.Presentation.Audio
             // сообщит STOPPED. ForceReleaseTime — только страховка от утечки.
             var lifetime = ShotSeconds(instance, settings, out var lengthKnown);
 
-            _zoneCooldownUntil[zoneIndex] = Time.unscaledTime + CooldownSeconds(settings);
+            cell.CooldownUntil = Time.unscaledTime + CooldownSeconds(settings);
             _live.Add(new LiveShot
             {
                 Instance = instance,
-                ZoneIndex = zoneIndex,
+                CellId = cell.Id,
                 ForceReleaseTime = Time.unscaledTime + lifetime,
             });
 
             if (settings.LogSfxRandom)
-                GameLog.Info($"[SfxRandom] zone {zone.Sector}x{zone.Radial} at {position} "
+                GameLog.Info($"[SfxRandom] cell {cell.Id} ({cell.Count} buildings) at {position} "
                     + $"(live {_live.Count}/{settings.SfxRandomMaxConcurrent}, "
                     + $"lifetime {lifetime:F1}s{(lengthKnown ? " from FMOD" : " fallback")})");
 
@@ -208,16 +216,18 @@ namespace TheyWillDescend.Presentation.Audio
                 // Доиграл сам или сработала страховка. Если инстанс ещё играл —
                 // страховка сработала раньше конца, это видно в логах.
                 if (!stopped && settings.LogSfxRandom)
-                    Debug.LogWarning($"[SfxRandom] force-release zone {shot.ZoneIndex} while state={state} "
+                    Debug.LogWarning($"[SfxRandom] force-release cell {shot.CellId} while state={state} "
                         + $"(ивент короче ожидаемого? проверь длину в FMOD)");
 
+                if (!stopped)
+                    shot.Instance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
                 shot.Instance.release();
                 _live.RemoveAt(i);
             }
         }
 
         /// <summary>
-        /// Кулдаун зоны с разбросом (чтобы зоны не стреляли синхронно).
+        /// Кулдаун ячейки с разбросом (чтобы ячейки не стреляли синхронно).
         /// </summary>
         private static float CooldownSeconds(AudioZoneSettings settings)
         {
@@ -250,22 +260,6 @@ namespace TheyWillDescend.Presentation.Audio
         }
 
         /// <summary>
-        /// Синхронизирует массив кулдаунов с числом зон. При пересборке зон
-        /// (сдвиг центра сетки) зоны новые — жребий раздается случайным стартовым
-        /// отложенным сроком, чтобы не было залпа в первый же тик.
-        /// </summary>
-        private void SyncCooldowns(AudioZone[] zones, AudioZoneSettings settings)
-        {
-            if (_zoneCooldownUntil != null && _zoneCooldownUntil.Length == zones.Length)
-                return;
-
-            _zoneCooldownUntil = new float[zones.Length];
-            var spread = Mathf.Max(0.1f, settings.SfxRandomZoneCooldown);
-            for (var i = 0; i < _zoneCooldownUntil.Length; i++)
-                _zoneCooldownUntil[i] = Time.unscaledTime + UnityEngine.Random.Range(0f, spread);
-        }
-
-        /// <summary>
         /// Глушит все живые звуки. Вызывается при hot reload банков: инстансы
         /// ссылаются на ивенты, которые сейчас выгрузятся.
         /// </summary>
@@ -283,8 +277,17 @@ namespace TheyWillDescend.Presentation.Audio
 
             _live.Clear();
 
-            if (_zoneCooldownUntil != null)
-                System.Array.Clear(_zoneCooldownUntil, 0, _zoneCooldownUntil.Length);
+            // Кулдаун живёт внутри ячейки. Обнуляем у живых, чтобы после
+            // перезагрузки банков жребий не встал на мёртвый срок.
+            var cells = zoneManager != null ? zoneManager.Cells : null;
+            if (cells == null)
+                return;
+
+            for (var i = 0; i < cells.Count; i++)
+            {
+                if (cells[i] != null)
+                    cells[i].CooldownUntil = 0f;
+            }
         }
 
         void OnDestroy() => SilenceAll();

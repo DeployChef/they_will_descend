@@ -159,7 +159,11 @@
 			<destination>{78c030ee-02ad-4fb8-bb01-55557970ff86}</destination>
 		</relationship>
 	</object>
-	<object class="MixerBusPanner" id="{71248246-b733-4f3f-9e58-97e75bdca87e}" />
+	<object class="MixerBusPanner" id="{71248246-b733-4f3f-9e58-97e75bdca87e}">
+		<property name="overridingOutputFormat">
+			<value>1</value>
+		</property>
+	</object>
 	<object class="MixerBusFader" id="{c48176bd-59e2-455c-b368-f2882ba7f7ba}" />
 	<object class="MixerBusEffectChain" id="{3e62f214-677b-4865-be80-a02a36ef6781}">
 		<relationship name="effects">

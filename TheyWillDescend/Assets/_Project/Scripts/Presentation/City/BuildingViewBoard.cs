@@ -138,7 +138,7 @@ namespace TheyWillDescend.Presentation.City
                 // Строительный звук: состояние из ECS + гейтинг конусом через зону.
                 placed.ConstructionAudio?.SyncState(em, entity);
 
-                // Амбиент зоны учитывает только законченные здания (Construction снята):
+                // Амбиент ячейки учитывает только законченные здания (Construction снята):
                 // пока идёт стройка — CountsForAmbience = false, после COMPLETE — true.
                 if (placed.AudioSource != null)
                 {
@@ -146,10 +146,11 @@ namespace TheyWillDescend.Presentation.City
                     if (placed.AudioSource.CountsForAmbience != complete)
                     {
                         placed.AudioSource.CountsForAmbience = complete;
-                        // Диагностика: ловим момент перехода COMPLETE и наличие зоны.
+                        // Диагностика: ловим момент перехода COMPLETE и наличие ячейки.
+                        var cell = placed.AudioSource.LinkedCell;
                         GameLog.Info($"BuildingViewBoard: building {building.Id} complete={complete}, " +
-                                     $"linkedZone={(placed.AudioSource.LinkedZone != null ? $"s{placed.AudioSource.LinkedZone.Sector}/r{placed.AudioSource.LinkedZone.Radial}" : "NULL")}.");
-                        placed.AudioSource.LinkedZone?.Refresh();
+                                     $"cell={(cell != null ? $"C{cell.Id} {cell.Count}/{cell.Capacity} (completed {cell.CompletedCount})" : "NULL")}.");
+                        cell?.Refresh();
                     }
                 }
 
@@ -317,22 +318,10 @@ namespace TheyWillDescend.Presentation.City
                 audioSource = buildingGo.AddComponent<BuildingAudioSource>();
             }
 
-            // Находим ближайшую зону.
-            var zone = audioZoneManager.FindZoneNear((Vector3)worldPosition);
-            if (zone != null)
-            {
-                audioSource.LinkedZone = zone;
-
-                // Явная регистрация: OnEnable у BuildingAudioSource срабатывает
-                // в момент AddComponent, когда LinkedZone ещё null — там
-                // зарегистрироваться невозможно. Регистрируем здесь.
-                zone.AddAudioSource(audioSource);
-
-                // Мгновенная активация: если зона уже в поле зрения камеры,
-                // звук появляется сразу после постройки, без ожидания тика.
-                if (zone.IsVisible && !zone.IsActive)
-                    zone.SetActive(true);
-            }
+            // Привязка к ячейке: ближайшая неполная в радиусе привязки, иначе новая.
+            // Менеджер сам заводит источник, будит ячейку в поле зрения и ведёт
+            // реестр — здесь только заводим компонент.
+            audioZoneManager.AttachSource(audioSource);
 
             return audioSource;
         }

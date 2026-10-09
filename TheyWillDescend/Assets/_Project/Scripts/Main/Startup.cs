@@ -34,17 +34,34 @@ namespace TheyWillDescend.Main
 
             rootScope.Build();
 
+            var context = rootScope.Container.Resolve<TheyWillDescend.Shell.AppContext>();
             var shell = rootScope.Container.Resolve<ShellService>();
             if (skipMenuToGameTemporarily)
             {
                 GameLog.Warning("TEMPORARY: skipMenuToGame — starting a normal run (MainMenu not loaded).");
-                shell.EnterGame(RunLaunch.Normal);
+                context.RequestLaunch(RunLaunch.Normal);
+                shell.EnterGame();
                 return;
             }
 
-            shell.OpenMainMenu()
-                .ContinueWith(() => GameLog.Info("Startup ready (Root). Menu opened."))
-                .Forget();
+            OpenMenu(shell).Forget();
+        }
+
+        static async UniTaskVoid OpenMenu(ShellService shell)
+        {
+            // Сцена, оставленная открытой в редакторе, приходит в Play уже загруженной.
+            // Её никто не загружал, поэтому путь, который гасит занавес (старт рана), до неё
+            // не дойдёт — Loading висел бы до конца сессии.
+            if (shell.IsLoadingVisible || shell.IsGameSceneLoaded)
+            {
+                GameLog.Warning(
+                    "Startup: Loading/Game are already loaded — extra scenes are open in the " +
+                    "editor. Keep only Root in the Hierarchy.");
+            }
+
+            await shell.CloseLeftoverScenes();
+            await shell.OpenMainMenu();
+            GameLog.Info("Startup ready (Root). Menu opened.");
         }
     }
 }
