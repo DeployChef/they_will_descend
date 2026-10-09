@@ -11,7 +11,7 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
     /// <summary>
     /// Главный менеджер аудио-зон. Геометрия берётся из основной сетки города
     /// 1 в 1 (тот же внутренний и внешний радиус), ячейки растянуты равномерно:
-    /// 10 угловых секторов × 5 радиальных полос = 50 зон.
+    /// 5 угловых секторов × 2 радиальные полосы = 10 зон.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AudioZoneManager : MonoBehaviour
@@ -24,7 +24,7 @@ using TheyWillDescend.Presentation.City;namespace TheyWillDescend.Presentation.C
         [Tooltip("Банки с ивентом (без расширения .bank). Используется, если EventReference в настройках не задан. Master грузится всегда.")]
         [SerializeField] string[] fmodBanks = { "Ambience_Town" };
 
-        /// <summary>Плоский список всех зон (10 секторов × 5 полос = 50).</summary>
+        /// <summary>Плоский список всех зон (10 секторов × 4 полосы = 40).</summary>
         private AudioZone[] _zones;
 
         /// <summary>Центр сетки (из DOTS).</summary>

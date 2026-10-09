@@ -30,13 +30,14 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Видима ли зона (в конусе камеры).</summary>
         public bool IsVisible { get; set; }
 
-        /// <summary>Суммарная активность построек (0–1).</summary>
+        /// <summary>Суммарная активность построек (0–1). Внутренний метрик активации зоны, в FMOD не идёт.</summary>
         public float ActivityLevel { get; private set; }
 
-        /// <summary>Флаги типов построек (0–1).</summary>
-        public float HasHouses { get; private set; }
-        public float HasWorkshops { get; private set; }
-        public float HasMarket { get; private set; }
+        /// <summary>Есть ли в зоне готовый жилой дом (RTPC IF_VILLAGE_SECTORE: 0 — нет, 1 — есть).</summary>
+        public float VillageFlag { get; private set; }
+
+        /// <summary>Плотность жилой застройки (RTPC VILLAGE_DESTINY: 0–5, сумма весов готовых домов).</summary>
+        public float VillageDensity { get; private set; }
 
         /// <summary>Настройки аудио-зон.</summary>
         private readonly AudioZoneSettings _settings;
@@ -56,9 +57,8 @@ namespace TheyWillDescend.Presentation.Audio
             Radial = radial;
             _settings = settings;
             ActivityLevel = 0f;
-            HasHouses = 0f;
-            HasWorkshops = 0f;
-            HasMarket = 0f;
+            VillageFlag = 0f;
+            VillageDensity = 0f;
             IsVisible = false;
             IsActive = false;
         }
@@ -203,16 +203,17 @@ namespace TheyWillDescend.Presentation.Audio
 
         /// <summary>
         /// Обновляет RTPC-параметры на основе содержимого зоны.
+        /// IF_VILLAGE_SECTORE — флаг жилой застройки, VILLAGE_DESTINY — её плотность.
+        /// Параметры должны быть добавлены на ивент Ambience_Town в FMOD Studio,
+        /// иначе FMOD молча проигнорирует установку.
         /// </summary>
         public void UpdateRTPC()
         {
             if (!Instance.isValid())
                 return;
 
-            Instance.setParameterByName("Cell_Activity", ActivityLevel);
-            Instance.setParameterByName("Has_Houses", HasHouses);
-            Instance.setParameterByName("Has_Workshops", HasWorkshops);
-            Instance.setParameterByName("Has_Market", HasMarket);
+            Instance.setParameterByName("IF_VILLAGE_SECTORE", VillageFlag);
+            Instance.setParameterByName("VILLAGE_DESTINY", VillageDensity);
         }
 
         /// <summary>
@@ -313,9 +314,8 @@ namespace TheyWillDescend.Presentation.Audio
         private void RecalculateParameters()
         {
             float totalActivity = 0f;
-            float houseCount = 0f;
-            float workshopCount = 0f;
-            float marketCount = 0f;
+            float houseWeight = 0f;
+            var houseCount = 0;
             var counted = 0;
 
             for (var i = 0; i < _audioSources.Count; i++)
@@ -325,32 +325,29 @@ namespace TheyWillDescend.Presentation.Audio
                     continue;
 
                 // Строящееся/демонтируемое здание в амбиенсе зоны не участвует:
-                // Ambience_Town играет только после COMPLETE.
+                // параметры дёргаются только после COMPLETE.
                 if (!src.CountsForAmbience)
                     continue;
 
                 counted++;
                 totalActivity += src.ActivityWeight;
 
-                switch (src.BuildingType)
+                if (src.BuildingType == BuildingAudioSourceType.House)
                 {
-                    case BuildingAudioSourceType.House:
-                        houseCount++;
-                        break;
-                    case BuildingAudioSourceType.Workshop:
-                        workshopCount++;
-                        break;
-                    case BuildingAudioSourceType.Market:
-                        marketCount++;
-                        break;
+                    houseCount++;
+                    houseWeight += src.ActivityWeight;
                 }
             }
 
             var maxSources = 5f;
             ActivityLevel = Mathf.Min(1f, totalActivity / maxSources);
-            HasHouses = Mathf.Min(1f, houseCount / maxSources);
-            HasWorkshops = Mathf.Min(1f, workshopCount / maxSources);
-            HasMarket = Mathf.Min(1f, marketCount / maxSources);
+
+            // Флаг жилой застройки: есть хоть один готовый жилой дом — 1.
+            VillageFlag = houseCount > 0 ? 1f : 0f;
+
+            // Плотность: сумма весов готовых жилых домов, потолок 5 (диапазон
+            // дискретного параметра VILLAGE_DESTINY в FMOD).
+            VillageDensity = Mathf.Clamp(houseWeight, 0f, 5f);
 
             // В зоне нет ни одного законченного здания (все строятся или зона
             // опустела) — амбиент глохнет.
@@ -464,6 +461,46 @@ namespace TheyWillDescend.Presentation.Audio
             Gizmos.color = IsVisible ? Color.cyan : Color.red;
             Gizmos.DrawSphere(markerPos, 0.3f);
             Gizmos.DrawLine(markerPos, markerPos + Vector3.up * 1.5f);
+
+#if UNITY_EDITOR
+            if (settings.ShowZoneLabels)
+                DrawLabel();
+#endif
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Текстовая подпись зоны в Scene View: что играет, с какой громкостью,
+        /// с какими параметрами. LOD-слой (HQ/MQ/LQ) считается по дистанции до
+        /// камеры — так же, как его считает FMOD автоматическим параметром
+        /// Distance (нормализация 0–1 над maximumDistance=100 ивента).
+        /// </summary>
+        void DrawLabel()
+        {
+            var state = IsActive ? "PLAYING" : (IsVisible ? "VISIBLE" : "DEAD");
+
+            // Громкость читаем обратно из инстанса: (user, final).
+            var volume = "-";
+            if (Instance.isValid())
+            {
+                Instance.getVolume(out var userVolume, out var finalVolume);
+                volume = $"{userVolume:F2}/{finalVolume:F2}";
+            }
+
+            var text = $"S{Sector} R{Radial} [{state}]  src:{_audioSources.Count}\n" +
+                       $"IF_VILLAGE_SECTORE={VillageFlag:0}  VILLAGE_DESTINY={VillageDensity:F1}\n" +
+                       $"act={ActivityLevel:F2}  vol={volume}";
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                var dist = Vector3.Distance(cam.transform.position, WorldPosition);
+                var lodLayer = dist < 33f ? "HQ" : dist < 67f ? "MQ" : "LQ";
+                text += $"\ndist={dist:F0}m  LOD={lodLayer}";
+            }
+
+            UnityEditor.Handles.Label(WorldPosition + Vector3.up * 2.5f, text);
+        }
+#endif
     }
 }

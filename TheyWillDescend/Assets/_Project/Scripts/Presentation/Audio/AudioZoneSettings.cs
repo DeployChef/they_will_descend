@@ -6,7 +6,10 @@ namespace TheyWillDescend.Presentation.Audio
     /// <summary>
     /// Настройки аудио-зон. Геометрия 1 в 1 с основной сеткой города: тот же
     /// внутренний радиус (InnerRadius) и тот же внешний (InnerRadius + RingCount*RadialStep).
-    /// 10 угловых секторов × 5 радиальных полос = 50 ячеек, растянуты равномерно.
+    /// 5 угловых секторов × 2 радиальные полосы = 10 ячеек, растянуты равномерно.
+    /// Протяжённость сетки остаётся прежней — меняется только число ячеек,
+    /// каждая становится крупнее.
+    /// Полоса = ровно 10 колец основной сетки (20 / 2), сектор = 72°.
     /// </summary>
     [CreateAssetMenu(menuName = "TheyWillDescend/Audio/Audio Zone Settings")]
     public sealed class AudioZoneSettings : ScriptableObject
@@ -16,7 +19,7 @@ namespace TheyWillDescend.Presentation.Audio
         [SerializeField] int angularSectors = 10;
 
         [Tooltip("Радиальных полос. Кольца основной сетки делятся между ними ровно.")]
-        [SerializeField] int radialBands = 5;
+        [SerializeField] int radialBands = 4;
 
         [Header("Grid Extent (1 в 1 с основной сеткой)")]
         [Tooltip("Внутренний радиус = InnerRadius основной сетки. В рантайме берётся из CityGrid, это fallback.")]
@@ -79,6 +82,9 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("Логировать вход/выход зон в консоль.")]
         [SerializeField] bool logZoneActivity = false;
 
+        [Tooltip("Писать в гизмо зон текст: что играет, громкость, параметры, LOD.")]
+        [SerializeField] bool showZoneLabels = true;
+
         [Tooltip("Логировать выстрелы случайных городских звуков.")]
         [SerializeField] bool logSfxRandom = false;
 
@@ -119,6 +125,7 @@ namespace TheyWillDescend.Presentation.Audio
         public float ZoneDeathDistance => zoneDeathDistance;
         public float ZoneDeathHysteresis => zoneDeathHysteresis;
         public bool LogZoneActivity => logZoneActivity;
+        public bool ShowZoneLabels => showZoneLabels;
         public bool LogSfxRandom => logSfxRandom;
 
         public EventReference SfxRandomEventReference => sfxRandomEventReference;

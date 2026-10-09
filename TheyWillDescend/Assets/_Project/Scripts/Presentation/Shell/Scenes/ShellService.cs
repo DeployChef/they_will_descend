@@ -15,6 +15,12 @@ namespace TheyWillDescend.Shell
         CancellationTokenSource _op;
         bool _busy;
 
+        /// <summary>Занавес на экране — независимо от того, кто загрузил сцену.</summary>
+        public bool IsLoadingVisible => _scenes.IsLoaded(GameScenes.Loading);
+
+        /// <summary>Game-сцена загружена — вместе с той, что осталась открытой в редакторе.</summary>
+        public bool IsGameSceneLoaded => _scenes.IsLoaded(GameScenes.Game);
+
         public void Dispose()
         {
             CancelOp();
@@ -29,6 +35,17 @@ namespace TheyWillDescend.Shell
         {
             return _scenes.LoadAdditive(GameScenes.MainMenu, setActive: false, cancellationToken);
         }
+
+        /// <summary>
+        /// В состоянии меню нет ни Loading, ни Game. Закрывает то, что приехало уже
+        /// загруженным (лишние сцены, открытые в редакторе на момент Play).
+        /// </summary>
+        public async UniTask CloseLeftoverScenes(CancellationToken cancellationToken = default)
+        {
+            await _scenes.Unload(GameScenes.Loading, cancellationToken);
+            await _scenes.Unload(GameScenes.Game, cancellationToken);
+        }
+
 
         public UniTask ShowLoading(CancellationToken cancellationToken = default)
         {
