@@ -1,0 +1,50 @@
+
+string assetPath="Assets/_Project/Art/Textures/Lava/Lava_FlowMap_01.png";
+string absolutePath=System.IO.Path.Combine(Application.dataPath,"_Project/Art/Textures/Lava/Lava_FlowMap_01.png");
+if(System.IO.File.Exists(absolutePath)) return "Already exists; not overwritten: "+assetPath;
+int size=512;
+var texture=new Texture2D(size,size,TextureFormat.RGBA32,false,true);
+var pixels=new Color32[size*size];
+float sum=0f, maximum=0f;
+int count=0;
+for(int y=0;y<size;y++){
+ for(int x=0;x<size;x++){
+  float u=(x+0.5f)/size-0.5f, v=(y+0.5f)/size-0.5f;
+  float radius=Mathf.Sqrt(u*u+v*v);
+  float angle=Mathf.Atan2(v,u);
+  float speed=0.55f+0.13f*Mathf.Sin(3f*angle+0.7f)+0.08f*Mathf.Sin(7f*angle-1.2f);
+  float vx=radius>0.001f?-v/radius*speed:0f;
+  float vy=radius>0.001f?u/radius*speed:0f;
+  for(int k=0;k<6;k++){
+   float a=k*Mathf.PI/3f+0.25f;
+   float r=0.285f+0.025f*Mathf.Sin(k*2.1f);
+   float dx=u-Mathf.Cos(a)*r, dy=v-Mathf.Sin(a)*r;
+   float sigma=0.035f+0.006f*(k%3);
+   float influence=Mathf.Exp(-(dx*dx+dy*dy)/(2f*sigma*sigma));
+   float sign=k%2==0?1f:-1f;
+   vx+=-dy/sigma*influence*sign*1.1f;
+   vy+=dx/sigma*influence*sign*1.1f;
+  }
+  float inner=Mathf.Clamp01((radius-0.16f)/0.045f);
+  float outer=Mathf.Clamp01((0.46f-radius)/0.055f);
+  float envelope=inner*inner*(3f-2f*inner)*outer*outer*(3f-2f*outer);
+  vx*=envelope; vy*=envelope;
+  float magnitude=Mathf.Sqrt(vx*vx+vy*vy);
+  if(magnitude>0.95f){vx*=0.95f/magnitude;vy*=0.95f/magnitude;magnitude=0.95f;}
+  pixels[y*size+x]=new Color32((byte)Mathf.RoundToInt((vx*0.5f+0.5f)*255f),(byte)Mathf.RoundToInt((vy*0.5f+0.5f)*255f),0,255);
+  if(radius>0.22f && radius<0.36f){sum+=magnitude;count++;maximum=Mathf.Max(maximum,magnitude);}
+ }
+}
+texture.SetPixels32(pixels);texture.Apply(false,false);
+System.IO.File.WriteAllBytes(absolutePath,texture.EncodeToPNG());
+UnityEngine.Object.DestroyImmediate(texture);
+AssetDatabase.ImportAsset(assetPath,ImportAssetOptions.ForceSynchronousImport);
+var importer=(TextureImporter)AssetImporter.GetAtPath(assetPath);
+importer.textureType=TextureImporterType.Default;
+importer.sRGBTexture=false;importer.alphaSource=TextureImporterAlphaSource.None;
+importer.wrapMode=TextureWrapMode.Clamp;importer.filterMode=FilterMode.Bilinear;
+importer.mipmapEnabled=true;importer.maxTextureSize=512;
+importer.textureCompression=TextureImporterCompression.Uncompressed;
+importer.SaveAndReimport();
+return "Created "+assetPath+"; 512x512, linear, clamp, bilinear, uncompressed; annular mean speed="+(sum/count)+" max="+maximum;
+
