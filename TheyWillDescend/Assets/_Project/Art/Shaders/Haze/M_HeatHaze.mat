@@ -38,9 +38,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _HeatNoiseScale: 5
+    - _HeatOpacity: 1
+    - _HeatStrength: 0.01
     - _QueueControl: 0
     - _QueueOffset: 0
-    m_Colors: []
+    m_Colors:
+    - _HeatScroll: {r: 0.02, g: -0.15, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &7786286765082855022
