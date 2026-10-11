@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _DialMeter_aabe3789957f4026ac95273b499c40ab_MainTex_800886423_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 6f88450202b8f44449f9fec22664b36b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -43,6 +47,7 @@ Material:
     m_Floats:
     - _ColorMask: 15
     - _Health: 0.618
+    - _MeterValue: 0.5
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
