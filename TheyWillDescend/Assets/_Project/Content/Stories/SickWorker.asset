@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: SickWorker
+  m_EditorClassIdentifier: TheyWillDescend.Simulation:TheyWillDescend.Simulation.Stories:StoryDialogAsset
+  dialogId: sick_worker
+  title: "\u0411\u043E\u043B\u0435\u0437\u043D\u044C"
+  body: "\u042D\u0442\u043E\u0442 \u0447\u0435\u043B\u043E\u0432\u0435\u043A \u0437\u0430\u0431\u043E\u043B\u0435\u043B."
+  delivery: 0
+  icon: 0
+  anchor: 3
+  anchorTypeId: 
+  openHours: 0
+  choices:
+  - choiceId: work
+    label: "\u0417\u0430\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C"
+    fallback: 1
+    effects:
+    - kind: 1
+      amount: -10
+      resourceId: 
+      dialog: {fileID: 0}
+      quest: {fileID: 0}
+      trigger: {fileID: 0}
+  - choiceId: sacrifice
+    label: "\u041F\u0440\u0438\u043D\u0435\u0441\u0442\u0438 \u0432 \u0436\u0435\u0440\u0442\u0432\u0443"
+    fallback: 0
+    effects:
+    - kind: 6
+      amount: 0
+      resourceId: 
+      dialog: {fileID: 0}
+      quest: {fileID: 0}
+      trigger: {fileID: 0}

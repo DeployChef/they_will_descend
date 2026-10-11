@@ -14,8 +14,8 @@ UI / FMOD / камера не считают экономику. Authoring и Sc
 
 ```
 Main             Startup / регистрация FSM
-Presentation     UI, camera, Shell, FMOD; Intent → Command (без economy math)
-        ↓ SimCommands.TryPost
+Presentation     UI, camera, Shell, FMOD; желание на Entity или разовый запрос
+        ↓ поле желания  или  SimCommands
 Simulation       ECS world — source of truth
         ↑ pull / редкие reject-события
 Content          Authoring, Baker, prefabs, balance

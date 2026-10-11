@@ -154,6 +154,7 @@ namespace TheyWillDescend.App
             buildings.Dispose();
             CaptureGods(em, bag, snapshot);
             CaptureResearch(em, bag, snapshot);
+            StorySave.Capture(em, bag, snapshot);
             GameLog.Info(
                 $"Captured snapshot: day {snapshot.day}, agents {snapshot.agents.Length}, buildings {snapshot.buildings.Length} ({constructing} constructing).");
             return snapshot;
@@ -234,6 +235,7 @@ namespace TheyWillDescend.App
             ApplyGods(snapshot);
             ResearchWorld.Populate(em, techCatalogs);
             ApplyResearch(snapshot);
+            StorySave.QueueRestore(em, session, snapshot);
             GameLog.Info(
                 $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
             return true;

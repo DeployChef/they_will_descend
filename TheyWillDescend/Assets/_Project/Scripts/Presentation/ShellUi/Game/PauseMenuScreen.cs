@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.App;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.Agents;
@@ -47,14 +46,17 @@ namespace TheyWillDescend.Presentation.ShellUi
         GameInput _input;
         ShellService _shell;
         GameSession _session;
+        SaveService _save;
         CancellationTokenSource _loadCts;
         bool _busy;
 
         [Inject]
-        public void Construct(ShellService shell, GameSession session)
+        public void Construct(ShellService shell, GameSession session, GameInput input, SaveService save)
         {
             _shell = shell;
             _session = session;
+            _input = input;
+            _save = save;
         }
 
         PauseCameraSwitch CameraSwitch => pauseCamera != null ? pauseCamera : PauseCameraSwitch.Current;
@@ -80,21 +82,19 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        /// <summary>GameRun turns the game map on and hands Esc to this overlay.</summary>
-        public void Use(GameInput input)
+        /// <summary>GameRun turns the game map on. Esc is the injected <see cref="GameInput"/>.</summary>
+        public void Use()
         {
-            if (_input != null)
-                _input.PausePressed -= OnPausePressed;
-            _input = input;
-            if (_input != null)
-                _input.PausePressed += OnPausePressed;
+            if (_input == null)
+                return;
+            _input.PausePressed -= OnPausePressed;
+            _input.PausePressed += OnPausePressed;
         }
 
         public void Release()
         {
             if (_input != null)
                 _input.PausePressed -= OnPausePressed;
-            _input = null;
             CancelLoad();
             _busy = false;
             HideImmediate();
@@ -253,15 +253,27 @@ namespace TheyWillDescend.Presentation.ShellUi
         {
             if (_busy)
                 return;
+            if (_save == null)
+            {
+                GameLog.Error("PauseMenuScreen: SaveService was not injected.");
+                return;
+            }
+
             CloseBuildIfBusy();
-            RunSnapshotStore.Write(RunSessionSnapshot.Capture());
+            _save.SaveCurrent();
         }
 
         void Load()
         {
             if (_busy)
                 return;
-            if (!RunSnapshotStore.TryRead(out var snapshot))
+            if (_save == null)
+            {
+                GameLog.Error("PauseMenuScreen: SaveService was not injected.");
+                return;
+            }
+
+            if (!_save.TryRead(out var snapshot))
                 return;
             if (_session == null)
             {
@@ -288,29 +300,21 @@ namespace TheyWillDescend.Presentation.ShellUi
         {
             if (_busy)
                 return;
-            if (_shell == null || _session == null)
+            if (_shell == null)
             {
-                GameLog.Error("PauseMenuScreen: the game scope did not inject the shell.");
+                GameLog.Error("PauseMenuScreen: ShellService was not injected.");
                 return;
             }
 
             _busy = true;
-            Hide();
-            Leave().Forget();
+            ReturnToMainMenu().Forget();
         }
 
-        async UniTaskVoid Leave()
+        async UniTaskVoid ReturnToMainMenu()
         {
-            _session.StopPlay();
-            await _shell.ShowLoading();
-            if (!await _session.Shutdown())
-            {
-                await _shell.HideLoading();
+            var left = await _shell.ReturnToMenu();
+            if (!left)
                 _busy = false;
-                return;
-            }
-
-            _shell.ReturnToMenu();
         }
 
         async UniTaskVoid LoadSlot(RunSnapshot snapshot, CancellationToken cancellationToken)

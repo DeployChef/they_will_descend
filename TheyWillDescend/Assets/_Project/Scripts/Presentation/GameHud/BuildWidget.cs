@@ -11,30 +11,31 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
     /// <summary>
-    /// Build catalog from the building prototype buffer.
+    /// Build catalog on the <c>BuildCatalog</c> prefab: mode button, panel, and an
+    /// authored row. One <see cref="catalogEntryPrefab"/> instance per unlocked
+    /// building. The row, button, and erase control are not created in code.
     /// Esc closes this overlay before Playing toggles player pause.
     /// </summary>
     public sealed class BuildWidget : MonoBehaviour
     {
         [SerializeField] Button buildModeButton;
         [SerializeField] GameObject buildCatalogPanel;
-        [SerializeField, FormerlySerializedAs("selectCube3x6Button")] Button catalogButtonTemplate;
-        [SerializeField, FormerlySerializedAs("selectCube2x2Button")] Button unusedLegacyCatalogButton;
+        [SerializeField] Button catalogEntryPrefab;
+        [SerializeField] Button eraseRoadButton;
         [SerializeField] BuildPlacementController placement;
         [SerializeField] RoadPaintController roadPaint;
+        [SerializeField] RectTransform catalogEntriesRoot;
 
         readonly List<Button> _spawnedButtons = new(8);
 
         bool _catalogOpen;
         bool _placedBound;
         bool _roadBound;
-        Transform _buttonRoot;
 
         public static BuildWidget Current { get; private set; }
 
@@ -47,7 +48,7 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             Current = this;
             HudButtons.Bind(buildModeButton, OnBuildModeClicked);
-            HideLegacyButtons();
+            HudButtons.Bind(eraseRoadButton, BeginEraseRoads);
             SetCatalogVisible(false);
             BindPlacement();
             BindRoadPaint();
@@ -58,6 +59,7 @@ namespace TheyWillDescend.Presentation.GameHud
             if (Current == this)
                 Current = null;
             HudButtons.Unbind(buildModeButton, OnBuildModeClicked);
+            HudButtons.Unbind(eraseRoadButton, BeginEraseRoads);
             ClearSpawnedButtons();
 
             if (IsBusy)
@@ -140,19 +142,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 Close(resumeSim: true);
         }
 
-        void SpawnEraseButton()
-        {
-            if (_buttonRoot == null || catalogButtonTemplate == null)
-                return;
-            var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
-            go.name = "Catalog_EraseRoad";
-            go.SetActive(true);
-            var button = go.GetComponent<Button>();
-            SetButtonLabel(button, "Удалить дорогу");
-            HudButtons.Bind(button, BeginEraseRoads);
-            _spawnedButtons.Add(button);
-        }
-
         void OpenCatalog()
         {
             EnsurePlacement();
@@ -179,12 +168,10 @@ namespace TheyWillDescend.Presentation.GameHud
 
         void RebuildCatalogButtons()
         {
-            HideLegacyButtons();
             ClearSpawnedButtons();
-            EnsureButtonRoot();
-            if (_buttonRoot == null || catalogButtonTemplate == null)
+            if (catalogEntriesRoot == null || catalogEntryPrefab == null)
             {
-                GameLog.Error("BuildWidget: catalog button template missing.");
+                GameLog.Error("BuildWidget: catalog entry prefab or entries root is not assigned.");
                 return;
             }
 
@@ -207,11 +194,10 @@ namespace TheyWillDescend.Presentation.GameHud
                     && !ResearchRules.IsBuildingUnlocked(em, prototype.TypeId))
                     continue;
                 count++;
-                var go = Instantiate(catalogButtonTemplate.gameObject, _buttonRoot, false);
                 var typeId = prototype.TypeId.ToString();
-                go.name = $"Catalog_{typeId}";
-                go.SetActive(true);
-                var button = go.GetComponent<Button>();
+                var button = Instantiate(catalogEntryPrefab, catalogEntriesRoot);
+                button.name = $"Catalog_{typeId}";
+                button.gameObject.SetActive(true);
                 var costs = em.HasBuffer<BuildingCatalogCost>(bag)
                     ? em.GetBuffer<BuildingCatalogCost>(bag)
                     : default;
@@ -230,45 +216,8 @@ namespace TheyWillDescend.Presentation.GameHud
             if (count == 0)
                 GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
 
-            SpawnEraseButton();
-        }
-
-        void EnsureButtonRoot()
-        {
-            if (_buttonRoot != null || buildCatalogPanel == null || catalogButtonTemplate == null)
-                return;
-
-            var root = new GameObject("CatalogEntries", typeof(RectTransform));
-            root.transform.SetParent(buildCatalogPanel.transform, false);
-            var rt = root.GetComponent<RectTransform>();
-            var templateRt = catalogButtonTemplate.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 1f);
-            rt.anchorMax = new Vector2(0.5f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = templateRt != null
-                ? templateRt.anchoredPosition
-                : new Vector2(140f, 120f);
-            rt.sizeDelta = new Vector2(templateRt != null ? templateRt.sizeDelta.x : 240f, 0f);
-
-            var layout = root.AddComponent<VerticalLayoutGroup>();
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.spacing = 12f;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.childControlWidth = true;
-            layout.childControlHeight = false;
-
-            var fitter = root.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            _buttonRoot = root.transform;
-        }
-
-        void HideLegacyButtons()
-        {
-            if (catalogButtonTemplate != null)
-                catalogButtonTemplate.gameObject.SetActive(false);
-            if (unusedLegacyCatalogButton != null)
-                unusedLegacyCatalogButton.gameObject.SetActive(false);
+            if (eraseRoadButton != null && eraseRoadButton.transform.parent == catalogEntriesRoot)
+                eraseRoadButton.transform.SetAsLastSibling();
         }
 
         void ClearSpawnedButtons()

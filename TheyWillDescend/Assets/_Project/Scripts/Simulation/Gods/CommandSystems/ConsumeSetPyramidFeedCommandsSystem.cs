@@ -44,8 +44,10 @@ namespace TheyWillDescend.Simulation.Gods
                 {
                     PyramidFeed.SetPerHour(feed, info, req.ResourceId, req.PerHour);
                 }
-                em.DestroyEntity(requestEntities[i]);
             }
+
+            // Structural changes invalidate feed/info; destroy requests after the batch.
+            em.DestroyEntity(requestEntities);
         }
     }
 }

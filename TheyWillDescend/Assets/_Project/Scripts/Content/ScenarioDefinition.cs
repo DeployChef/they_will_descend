@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Stories;
 using UnityEngine;
 
 namespace TheyWillDescend.Content
@@ -35,6 +36,9 @@ namespace TheyWillDescend.Content
         [SerializeField, Min(0)] int startingWorkers = 8;
         [SerializeField] DifficultyProfile[] difficulties = Array.Empty<DifficultyProfile>();
         [SerializeField] DifficultyProfile defaultDifficulty;
+        [SerializeField] StoryPackAsset storyPack;
+
+        public StoryPackAsset StoryPack => storyPack;
 
         public IReadOnlyList<ScenarioBuildingRecord> Buildings => buildings;
         public IReadOnlyList<ScenarioResourceRecord> StartingStock => startingStock;

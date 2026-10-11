@@ -6,7 +6,7 @@
 
 ## Закон
 
-> Шелл желает (кнопки → команды). Симуляция хранит истину. UI только показывает и шлёт intent.  
+> Симуляция хранит истину. UI показывает её и либо пишет поле желания, либо шлёт разовый запрос. Склад и лояльность с кнопки не пишутся.  
 > Save пишет **write model**, не GameObject’ы с экрана. Load **перестраивает** вид.
 
 `Time.timeScale` не используем.
@@ -197,9 +197,9 @@ SavePayload v22
 
 ### Save (последовательность)
 
-1. UI → `PauseMenuScreen` (не считает экономику).
+1. UI → `PauseMenuScreen` (не считает экономику) зовёт `SaveService.SaveCurrent`.
 2. Отменить ghost-placing, если открыт.
-3. Прочитать синглтоны из ECS (`RunSessionSnapshot`).
+3. Сервис читает синглтоны из ECS (`RunSessionSnapshot.Capture`).
 4. Собрать агентов и дома query’ем.
 5. Атомарно записать файл. Залог `GameLog`.
 
@@ -214,7 +214,7 @@ SavePayload v22
 
 Load **не** выгружает сцену Game и **не** зовёт `Shutdown`.
 
-Перед apply пауза показывает сцену Loading. Выход в главное меню — `PauseMenuScreen` делает `Shutdown`, затем `ShellService.ReturnToMenu` (штора, выгрузка Game, загрузка MainMenu). Load из главного меню — `RequestLaunch(RunLaunch.Slot)` и `EnterGame`: новая сцена Game сама зовёт `Begin`.
+Перед apply пауза показывает сцену Loading. Выход в главное меню — `ShellService.ReturnToMenu`: `Shutdown` (рана больше нет), выгрузка Game, загрузка MainMenu. Load из главного меню — `ShellService.EnterGame(RunLaunch.Slot)`: шелл грузит Game и зовёт `Begin`.
 
 Новый **Start Game / Start Debug** зовёт `RunPublisher.BeginRun`: runtime-дома не в SubScene, поэтому reset входит в тот же ECS pipeline до scenario seed.
 
@@ -229,7 +229,7 @@ Load **не** выгружает сцену Game и **не** зовёт `Shutdow
 | Спавн агента | Presentation (`AgentSpawner` → команда; вид — `AgentViewBoard`) |
 | Каталог / ghost стройки | Presentation (`BuildWidget`; Esc и `BuildLocked`) |
 | Часы | Simulation `SimControl` + `GameTime` |
-| Файл, версия payload | Presentation / `Infrastructure` (`RunSnapshotStore`) |
+| Файл, версия payload | Presentation / `Infrastructure` (`SaveService`, корень DI) |
 | Сбор/применение snapshot | Presentation / `Application` (`RunSessionSnapshot`) |
 
 Антипаттерн: `Button.onClick` → `File.WriteAllText` + `FindObjectsOfType` по всем Transform.  

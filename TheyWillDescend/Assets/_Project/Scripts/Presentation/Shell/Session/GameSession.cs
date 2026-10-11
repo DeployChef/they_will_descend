@@ -17,14 +17,13 @@ namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// One run inside the Game scene. Catalogs and rules live on this object.
-    /// Starts itself from <see cref="AppContext.Launch"/> once this scene is loaded.
-    /// Does not load or unload scenes. <see cref="GameRun"/> turns the clock on.
+    /// <see cref="ShellService.EnterGame"/> loads the scene and calls <see cref="Begin"/>.
+    /// This object does not load or unload scenes. <see cref="GameRun"/> turns the clock on.
     /// </summary>
     public sealed class GameSession : MonoBehaviour
     {
         GameRun _run;
-        AppContext _context;
-        ShellService _shell;
+        SaveService _save;
         bool _restorePlay;
         [Header("Ready")]
         [SerializeField] float simulationReadyTimeoutSeconds = 30f;
@@ -40,57 +39,11 @@ namespace TheyWillDescend.Shell
         [SerializeField] SimRulesAsset simRules;
         [SerializeField] TimelineCatalogAsset timelineCatalog;
 
-        bool _booting;
-
         [Inject]
-        public void Construct(GameRun run, AppContext context, ShellService shell)
+        public void Construct(GameRun run, SaveService save)
         {
             _run = run;
-            _context = context;
-            _shell = shell;
-        }
-
-        void OnEnable()
-        {
-            if (_context == null)
-                return;
-            _context.LaunchRequested += OnLaunchRequested;
-            if (_context.EnteringGame)
-                OnLaunchRequested();
-        }
-
-        void OnDisable()
-        {
-            if (_context != null)
-                _context.LaunchRequested -= OnLaunchRequested;
-        }
-
-        void OnLaunchRequested()
-        {
-            if (_booting || _context == null || !_context.EnteringGame)
-                return;
-            _context.MarkLaunchStarted();
-            _booting = true;
-            Boot().Forget();
-        }
-
-        async UniTaskVoid Boot()
-        {
-            var launch = _context != null ? _context.Launch : RunLaunch.Normal;
-            if (!await Begin(launch))
-            {
-                if (await Shutdown())
-                    _shell?.ReturnToMenu();
-                else
-                    _booting = false;
-                return;
-            }
-
-            if (launch.LoadSlot)
-                PauseMenuScreen.Current?.RebuildViews();
-
-            if (_shell != null)
-                await _shell.HideLoading();
+            _save = save;
         }
 
         public void StopPlay()
@@ -104,6 +57,11 @@ namespace TheyWillDescend.Shell
         public async UniTask<bool> Begin(RunLaunch launch, CancellationToken cancellationToken = default)
         {
             EnsureDefaultAssets();
+            var debug = !launch.LoadSlot && launch.Kind == RunKind.Debug;
+            var scenario = debug ? debugScenario : defaultScenario;
+            var storyPack = scenario != null ? scenario.StoryPack : null;
+            if (storyPack == null && defaultScenario != null)
+                storyPack = defaultScenario.StoryPack;
             if (SimWorld.TryGetEntityManager(out var em))
             {
                 SimulationBootstrap.InitializeRun(
@@ -111,7 +69,8 @@ namespace TheyWillDescend.Shell
                     buildingCatalog,
                     resourceCatalog,
                     simRules,
-                    timelineCatalog);
+                    timelineCatalog,
+                    storyPack);
             }
 
             if (!await WaitUntilSimulationReady(cancellationToken))
@@ -122,7 +81,13 @@ namespace TheyWillDescend.Shell
 
             if (launch.LoadSlot)
             {
-                if (!RunSnapshotStore.TryRead(out var snapshot))
+                if (_save == null)
+                {
+                    GameLog.Error("GameSession.Begin failed — SaveService was not injected.");
+                    return false;
+                }
+
+                if (!_save.TryRead(out var snapshot))
                 {
                     GameLog.Error("GameSession.Begin failed — save slot is missing.");
                     return false;
@@ -131,11 +96,10 @@ namespace TheyWillDescend.Shell
                 if (!await Apply(snapshot, cancellationToken))
                     return false;
                 ArmPlay();
+                PauseMenuScreen.Current?.RebuildViews();
                 return true;
             }
 
-            var debug = launch.Kind == RunKind.Debug;
-            var scenario = debug ? debugScenario : defaultScenario;
             if (debug && scenario == null)
                 GameLog.Error("GameSession: DebugScenario is not assigned.");
 

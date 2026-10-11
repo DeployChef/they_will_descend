@@ -17,6 +17,13 @@ namespace TheyWillDescend.Presentation.Environment
 
         [Header("Day/Night Curve (Intensity)")]
         [SerializeField] private AnimationCurve lightIntensityCurve;
+        [SerializeField, Min(0f)] private float dayLightIntensity = 1f;
+        [SerializeField, Min(0f)] private float nightLightIntensity = 0f;
+
+        [Header("Ambient Lighting")]
+        [SerializeField] private bool useAmbientLighting = true;
+        [SerializeField] private Color dayAmbientColor = Color.white;
+        [SerializeField] private Color nightAmbientColor = new Color(124f / 255f, 167f / 255f, 250f / 255f, 1f);
 
         [Header("Sun Angle")]
         [SerializeField] private float minSunAngle = -10f;
@@ -179,39 +186,45 @@ namespace TheyWillDescend.Presentation.Environment
             if (dayLight == null)
                 return;
 
-            if (!SimWorld.TryGet(out var em, out var bag))
-                return;
-
-            var simControl = em.GetComponentData<SimControl>(bag);
-            if (!simControl.IsRunning)
+            if (!SimWorld.TryGet(out var em, out _))
                 return;
 
             if (!TryGetGameTime(em, out var gameTime) || gameTime.DayDuration <= 0f)
                 return;
 
             // Доля дня: 0 = полночь, 0.25 = утро, 0.5 = полдень, 0.75 = вечер, 1 = полночь
-            float dayProgress = gameTime.ElapsedInDay / gameTime.DayDuration;
+            float dayProgress = Mathf.Repeat(gameTime.ElapsedInDay / gameTime.DayDuration, 1f);
+            float dayness = GetDayness(dayProgress);
 
             // 1. Угол солнца (дуга по небу)
             float sunAngle = Mathf.Lerp(minSunAngle, maxSunAngle, dayProgress);
             dayLight.transform.localEulerAngles = new Vector3(sunAngle, dayLight.transform.localEulerAngles.y, dayLight.transform.localEulerAngles.z);
 
-            // 2. Интенсивность по кривой
-            float intensity = lightIntensityCurve.Evaluate(dayProgress);
-            dayLight.intensity = intensity;
+            // Кривая задаёт форму дневного света; ночью сохраняется заданный минимум.
+            float lightBlend = dayness * Mathf.Clamp01(lightIntensityCurve.Evaluate(dayProgress));
+            dayLight.intensity = Mathf.Lerp(nightLightIntensity, dayLightIntensity, lightBlend);
+
+            if (useAmbientLighting)
+            {
+                // Фоновый свет независим от яркости солнца и видимого скайбокса.
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = Color.Lerp(nightAmbientColor, dayAmbientColor, dayness);
+            }
 
             // 3. Цвет солнца
             Color sunColor = GetSunColor(dayProgress);
             dayLight.color = sunColor;
 
             // 4. Тени: ночью нет, днём полная
-            float shadowIntensity = Mathf.SmoothStep(minShadowIntensity, maxShadowIntensity, intensity);
+            float shadowIntensity = useShadows
+                ? Mathf.SmoothStep(minShadowIntensity, maxShadowIntensity, lightBlend)
+                : 0f;
             dayLight.shadowStrength = shadowIntensity;
 
             // 5. Reflection Probe — меняем intensity по времени суток
             if (useReflectionProbeIntensity)
             {
-                float probeIntensity = Mathf.Lerp(nightProbeIntensity, dayProbeIntensity, intensity);
+                float probeIntensity = Mathf.Lerp(nightProbeIntensity, dayProbeIntensity, dayness);
                 var probes = UnityEngine.Object.FindObjectsOfType<ReflectionProbe>();
                 foreach (var probe in probes)
                 {
@@ -220,12 +233,12 @@ namespace TheyWillDescend.Presentation.Environment
             }
 
             // 6. Fog — плотнее ночью, прозрачнее днём
+            RenderSettings.fog = useFog;
             if (useFog)
             {
-                RenderSettings.fog = true;
-                float fogDensity = Mathf.Lerp(nightFogDensity, dayFogDensity, intensity);
+                float fogDensity = Mathf.Lerp(nightFogDensity, dayFogDensity, dayness);
                 RenderSettings.fogDensity = fogDensity;
-                RenderSettings.fogColor = Color.Lerp(nightFogColor, dayFogColor, intensity);
+                RenderSettings.fogColor = Color.Lerp(nightFogColor, dayFogColor, dayness);
             }
 
             // 7. Skybox — плавная смена материала
@@ -233,6 +246,15 @@ namespace TheyWillDescend.Presentation.Environment
         }
 
         // ==================== SKYBOX ====================
+        private float GetDayness(float dayProgress)
+        {
+            float range = Mathf.Clamp(skyboxBlendRange, 0.001f, 0.15f);
+            if (dayProgress < 0.5f)
+                return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f - range, 0.15f + range, dayProgress));
+
+            return Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.85f - range, 0.85f + range, dayProgress));
+        }
+
         void ApplySkyboxMaterial(float dayProgress)
         {
             if (daySkyboxMaterial == null && nightSkyboxMaterial == null) return;
@@ -242,12 +264,7 @@ namespace TheyWillDescend.Presentation.Environment
             {
                 // dayness: 0 = ночь, 1 = день
                 // Рассвет: плавно 0.15±range, закат: плавно 0.85±range
-                float range = Mathf.Max(0.001f, skyboxBlendRange);
-                float dayness;
-                if (dayProgress < 0.5f)
-                    dayness = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f - range, 0.15f + range, dayProgress));
-                else
-                    dayness = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.85f - range, 0.85f + range, dayProgress));
+                float dayness = GetDayness(dayProgress);
 
                 _blendMaterial.SetFloat("_Blend", dayness);
 

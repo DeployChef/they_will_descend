@@ -175,7 +175,8 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -311,7 +312,8 @@
     "m_StageCapability": 2,
     "m_Value": 1.0,
     "m_DefaultValue": 1.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -370,15 +372,6 @@
 }
 
 {
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.Rendering.Canvas.ShaderGraph.CanvasData",
-    "m_ObjectId": "2b3a97c7c4d942ce95605a4a33156029",
-    "m_Version": 0,
-    "m_AlphaClip": false,
-    "m_DisableTint": false
-}
-
-{
     "m_SGVersion": 1,
     "m_Type": "UnityEditor.Rendering.Universal.ShaderGraph.UniversalTarget",
     "m_ObjectId": "3b2540bad94e4697b395dac2fc498d1c",
@@ -409,6 +402,7 @@
     "m_CastShadows": true,
     "m_ReceiveShadows": true,
     "m_DisableTint": false,
+    "m_Sort3DAs2DCompatible": false,
     "m_AdditionalMotionVectorMode": 0,
     "m_AlembicMotionVectors": false,
     "m_SupportsLODCrossFade": false,
@@ -521,7 +515,8 @@
     "m_StageCapability": 2,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -544,12 +539,33 @@
 }
 
 {
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Texture2DInputMaterialSlot",
+    "m_ObjectId": "85ebfa385dd944d982fe980681e0d71d",
+    "m_Id": 800886423,
+    "m_DisplayName": "MainTex",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "_MainTex",
+    "m_StageCapability": 2,
+    "m_BareResource": false,
+    "m_Texture": {
+        "m_SerializedTexture": "{\"texture\":{\"fileID\":2800000,\"guid\":\"6f88450202b8f44449f9fec22664b36b\",\"type\":3}}",
+        "m_Guid": ""
+    },
+    "m_DefaultType": 0
+}
+
+{
     "m_SGVersion": 3,
     "m_Type": "UnityEditor.ShaderGraph.Internal.ColorShaderProperty",
     "m_ObjectId": "a4fcc5ad633f4efcad481d6dd1c7fc7d",
     "m_Guid": {
         "m_GuidSerialized": "dab423b7-9afd-45d7-932e-cd92329586d3"
     },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
     "m_Name": "Color",
     "m_DefaultRefNameVersion": 1,
     "m_RefNameGeneratedByDisplayName": "Color",
@@ -563,6 +579,8 @@
     "overrideHLSLDeclaration": false,
     "hlslDeclarationOverride": 0,
     "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
     "m_Value": {
         "r": 0.0,
         "g": 0.48235294222831728,
@@ -608,6 +626,9 @@
             "m_Id": "cfc976956e1d4ad1a606a13e3c316a56"
         },
         {
+            "m_Id": "85ebfa385dd944d982fe980681e0d71d"
+        },
+        {
             "m_Id": "52240c5f2e014ab7a6d807b818629026"
         },
         {
@@ -626,12 +647,14 @@
     "m_PropertyGuids": [
         "b0ec8286-670d-4850-a6b1-d3207b8773a3",
         "670fb5b6-79d2-4620-9a75-153191a3be60",
-        "f7bed4a8-8616-440b-87db-e78ede16f910"
+        "f7bed4a8-8616-440b-87db-e78ede16f910",
+        "fec732a0-92e6-4dae-849b-8d8155b5581d"
     ],
     "m_PropertyIds": [
         2065486678,
         1887705711,
-        766222311
+        766222311,
+        800886423
     ],
     "m_Dropdowns": [],
     "m_DropdownSelectedEntries": []
@@ -713,7 +736,8 @@
     "m_StageCapability": 2,
     "m_Value": 0.5,
     "m_DefaultValue": 0.0,
-    "m_Labels": []
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {

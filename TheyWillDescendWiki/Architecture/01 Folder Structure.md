@@ -28,7 +28,7 @@ Simulation, Authoring, Content: `autoReferenced: false` — на них ссыл
 | `TheyWillDescend.Simulation` | компоненты, команды, системы, сетка, occupancy; логические SO (`ResourceDefinition`, `SimRules`) | UI, виды, префабы домов, диск, FMOD |
 | `TheyWillDescend.Content` | арт-каталоги (`BuildingCatalogAsset`) | `ISystem`, экономика рана |
 | `TheyWillDescend.Authoring` | Baker’ы SubScene, editor-tools сценария | runtime UI |
-| `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, JSON-сейв, `GameLog`, FMOD-хост | `ISystem` / `SystemBase` на виджеты; писать стоки/occupy в обход команд |
+| `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, JSON-сейв, `GameLog`, FMOD-хост | `ISystem` / `SystemBase` на виджеты; писать стоки, лояльность, позу |
 | `TheyWillDescend.Main` | `Startup`, корневой и сценовые scope | экономика, `EntityManager` |
 
 Домены Shell / Application / Infrastructure — **папки** в Presentation, не отдельные сборки.  
@@ -62,7 +62,7 @@ Assets/_Project/Scripts/
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Application/ RunPublisher, RunSessionSnapshot
     Shell/       Scenes (ShellService), Session (GameSession, GameRun), Input, App (AppContext)
-    Infrastructure/ Logging, Save
+    Infrastructure/ Logging, Save (SaveService)
     Audio/       GameAudio
   Main/          Startup, RootLifetimeScope, scene scopes
 ```
@@ -76,12 +76,12 @@ Assets/_Project/Scripts/
 | `CommandSystems/` | consume команд (`CommandSystemGroup`) |
 | `Systems/` | тик (commute, construction, produce) |
 
-`CommandSystemGroup` живёт в `Session/CommandSystems`. Его pipeline линеен: clock → reset agents → reset buildings → scenario spawn → spawn → place → assign → unassign → workplace pause → pyramid feed → lifecycle finalizer → delta time. Finalizer переводит `SimSession.Phase` только после опустошения всех входящих очередей. Namespace остаётся на уровне фичи (`TheyWillDescend.Simulation.City`), не `City.Commands`.
+`CommandSystemGroup` живёт в `Session/CommandSystems`. Его pipeline линеен: clock → reset agents → reset buildings → scenario spawn → spawn → place → roads → pyramid feed → research → lifecycle finalizer → delta time. Штат и пауза дома в эту очередь не входят: UI пишет `Workplace`, `WorkforceDispatchSystem` выравнивает факт. Finalizer переводит `SimSession.Phase` только после опустошения всех входящих очередей. Namespace остаётся на уровне фичи (`TheyWillDescend.Simulation.City`), не `City.Commands`.
 
 Папка `Simulation/Io` — **не канон** (старый дубль). Порт: `Session/Components/SimWorld`, `SimSession`, `SimSessionAccess`; `Session/Commands/SimCommands`.
 
-Новая механика: система в `Simulation/<фича>/Systems`, команда рядом в `Commands`, consume в `CommandSystems`, вид в `Presentation/<фича>`.  
-Одна команда / один флаг сноса — **своя система** в `CommandSystemGroup`. Не общий `SimCommandProcessor`. HUD только `SimCommands.TryPost<T>`. Presentation не вызывает consume-системы вручную: `GameSession` асинхронно ждёт ECS-фазы `Ready` / `Unprepared`.
+Новая механика: система в `Simulation/<фича>/Systems`, вид в `Presentation/<фича>`. Желание — поле на компоненте. Разовое действие — команда рядом в `Commands` и consume в `CommandSystems`.  
+Одна команда / один флаг сноса — **своя система** в `CommandSystemGroup`. Не общий `SimCommandProcessor`. Presentation не вызывает consume-системы вручную: `GameSession` асинхронно ждёт ECS-фазы `Ready` / `Unprepared`.
 
 `GameHud` — оверлей-виджеты. `*View` / `*ViewBoard` — меш в мире следует за entity. Меню: экраны на сцене регистрируют `.Current` в Awake; стейты читают их в Enter.
 

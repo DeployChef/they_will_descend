@@ -1,0 +1,396 @@
+{
+    "Material": {
+        "serializedVersion": "8",
+        "m_Name": "M_Lava",
+        "m_Shader": {
+            "fileID": -6465566751694194690,
+            "guid": "ee10886172f3ced46a9bd11b18f7622b",
+            "type": 3
+        },
+        "m_Parent": {
+            "instanceID": 0
+        },
+        "m_ModifiedSerializedProperties": 0,
+        "m_ValidKeywords": [],
+        "m_InvalidKeywords": [],
+        "m_LightmapFlags": 2,
+        "m_EnableInstancingVariants": false,
+        "m_DoubleSidedGI": false,
+        "m_CustomRenderQueue": -1,
+        "stringTagMap": {},
+        "disabledShaderPasses": [
+            "MOTIONVECTORS"
+        ],
+        "m_LockedProperties": "",
+        "m_SavedProperties": {
+            "serializedVersion": "3",
+            "m_TexEnvs": [
+                {
+                    "first": "_CrustBaseColor",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "a4b7501a6b8e7724d80c7b2b81553271",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_CrustEmission",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "5e835ee224164df418346548be68d294",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_CrustMask",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "bb3ebe271cc5d954db5e619d4aef4d0f",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_CrustNormal",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "e0144d5089507fd4797d4e410603e721",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_FlowMap",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "d9aef9adf3714eb4ca8ec7321b995b08",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_LavaBaseColor",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "7c069d0610a006b44b9e00b1a6a09df3",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_LavaEmission",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "4ad4ca16bd5e2374799fc80e507f281a",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "_LavaNormal",
+                    "second": {
+                        "m_Texture": {
+                            "fileID": 2800000,
+                            "guid": "ff4816f6b1e41494fa2d90f6ba306187",
+                            "type": 3
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "unity_Lightmaps",
+                    "second": {
+                        "m_Texture": {
+                            "instanceID": 0
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "unity_LightmapsInd",
+                    "second": {
+                        "m_Texture": {
+                            "instanceID": 0
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                },
+                {
+                    "first": "unity_ShadowMasks",
+                    "second": {
+                        "m_Texture": {
+                            "instanceID": 0
+                        },
+                        "m_Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "m_Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    }
+                }
+            ],
+            "m_Ints": [],
+            "m_Floats": [
+                {
+                    "first": "_CrustMaskScale",
+                    "second": 1.0299999713897706
+                },
+                {
+                    "first": "_EmissionStr",
+                    "second": 1.0
+                },
+                {
+                    "first": "_Float",
+                    "second": 0.4300000071525574
+                },
+                {
+                    "first": "_Float_1",
+                    "second": 0.4699999988079071
+                },
+                {
+                    "first": "_FlowCycleSpeed",
+                    "second": 0.05000000074505806
+                },
+                {
+                    "first": "_FlowStrength",
+                    "second": 0.10000000149011612
+                },
+                {
+                    "first": "_LavaEmission_1",
+                    "second": 1.0
+                },
+                {
+                    "first": "_NoiseScale",
+                    "second": 0.05000000074505806
+                },
+                {
+                    "first": "_NoiseScale2",
+                    "second": 0.5199999809265137
+                },
+                {
+                    "first": "_NoiseScale3",
+                    "second": 3.0
+                },
+                {
+                    "first": "_NormalLevelStrength",
+                    "second": 0.30000001192092898
+                },
+                {
+                    "first": "_NormalSTR",
+                    "second": 0.49000000953674319
+                },
+                {
+                    "first": "_QueueControl",
+                    "second": 0.0
+                },
+                {
+                    "first": "_QueueOffset",
+                    "second": 0.0
+                },
+                {
+                    "first": "_Smooth",
+                    "second": 0.0
+                },
+                {
+                    "first": "_SmoothKorka",
+                    "second": 0.20000000298023225
+                },
+                {
+                    "first": "_SmoothLava",
+                    "second": 0.30000001192092898
+                },
+                {
+                    "first": "_SmoothStep1",
+                    "second": 0.4300000071525574
+                },
+                {
+                    "first": "_SmoothStep2",
+                    "second": 0.4699999988079071
+                },
+                {
+                    "first": "_Speed",
+                    "second": 0.003000000026077032
+                },
+                {
+                    "first": "_Wave2Amplitude",
+                    "second": 0.5
+                },
+                {
+                    "first": "_Wave2Length",
+                    "second": 38.0
+                },
+                {
+                    "first": "_Wave2Speed",
+                    "second": 0.6000000238418579
+                },
+                {
+                    "first": "_Wave2Steepness",
+                    "second": 0.20000000298023225
+                },
+                {
+                    "first": "_WaveAmplitude",
+                    "second": 1.0
+                },
+                {
+                    "first": "_WaveLength",
+                    "second": 24.0
+                },
+                {
+                    "first": "_WaveSpeed",
+                    "second": 1.0
+                },
+                {
+                    "first": "_WaveSteepness",
+                    "second": 0.20000000298023225
+                }
+            ],
+            "m_Colors": [
+                {
+                    "first": "_Color1",
+                    "second": {
+                        "r": 0.09433960914611817,
+                        "g": 0.025364894419908525,
+                        "b": 0.04782178997993469,
+                        "a": 1.0
+                    }
+                },
+                {
+                    "first": "_Color2",
+                    "second": {
+                        "r": 0.0,
+                        "g": 0.0,
+                        "b": 0.0,
+                        "a": 1.0
+                    }
+                },
+                {
+                    "first": "_Color3",
+                    "second": {
+                        "r": 1.0,
+                        "g": 0.2549019753932953,
+                        "b": 0.0313725508749485,
+                        "a": 1.0
+                    }
+                },
+                {
+                    "first": "_Color4",
+                    "second": {
+                        "r": 1.0,
+                        "g": 0.13725490868091584,
+                        "b": 0.0117647061124444,
+                        "a": 1.0
+                    }
+                },
+                {
+                    "first": "_Color5",
+                    "second": {
+                        "r": 1.0,
+                        "g": 0.6274510025978088,
+                        "b": 0.0784313753247261,
+                        "a": 1.0
+                    }
+                },
+                {
+                    "first": "_KorkaSize",
+                    "second": {
+                        "r": 0.004999999888241291,
+                        "g": 0.004999999888241291,
+                        "b": 0.0,
+                        "a": 0.0
+                    }
+                }
+            ]
+        },
+        "m_BuildTextureStacks": [],
+        "m_AllowLocking": true
+    }
+}

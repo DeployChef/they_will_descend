@@ -49,25 +49,25 @@ Root hosts (соседи)
 RootLifetimeScope
   родительский контейнер на Root, autoRun выключен
   Startup.Awake вызывает Build()
-  AppContext и ShellService — синглтоны здесь; ShellService не MonoBehaviour
+  AppContext, ShellService и SaveService — синглтоны здесь; сервисы не MonoBehaviour
   AppContext.IsFirstStart после старта рана становится true
   дочерние scope: MainMenu, Loading, Game. Они резолвят родителя по типу, без кросс-сценной ссылки
 
 ShellService
-  EnterGame / ReturnToMenu / ShowLoading / HideLoading / OpenMainMenu
-  только сцены. Не читает сейв, не зовёт Begin, не проверяет сессию
+  EnterGame(RunLaunch) / ReturnToMenu / ShowLoading / HideLoading / OpenMainMenu
+  EnterGame грузит Game и зовёт GameSession.Begin(launch)
+  IsFirstStart ставит сам, в момент входа в ран
+  RunLaunch — аргумент вызова, не поле контекста
 
 AppContext
-  RequestLaunch кладёт RunLaunch
-  IsFirstStart становится true в этот момент
+  только IsFirstStart
 
 GameSession (сцена Game)
-  сама берёт Launch, когда сцена включилась, и зовёт Begin
+  Begin / Apply / Shutdown
   каталоги и сценарий в инспекторе этой сцены
   сцены не грузит
   StopPlay гасит живой ран сразу, Shutdown сбрасывает ECS
   если сброс не подтвердился — GameRun включается снова
-  когда ран готов — HideLoading; если ран не собрался и Shutdown прошёл — ReturnToMenu
 
 GameRun (scope сцены Game)
   Arm, когда Begin дошёл до Ready: SimClockCommand.InGame(true), игровой ввод, пауза
@@ -99,10 +99,10 @@ GameInput
 
 ```text
 Root → MainMenu
-  → кнопка зовёт AppContext.RequestLaunch и ShellService.EnterGame
-  → Loading, пока грузится Game и выгружается MainMenu
-  → GameSession.Begin, затем GameRun включает часы; сессия снимает Loading
-  → выход в меню: Pause делает StopPlay и Shutdown, затем ShellService.ReturnToMenu
+  → кнопка зовёт ShellService.EnterGame(RunLaunch)
+  → Loading, пока грузится Game и выгружается MainMenu; session.Begin
+  → GameRun включает часы, шелл снимает Loading
+  → выход в меню: ShellService.ReturnToMenu гасит ран, выгружает Game, потом открывает MainMenu
 ```
 
 Сплэш и кнопки меню живут в сцене MainMenu (`MainMenuFlow`). Press any key играется один раз за процесс; `AppContext.IsFirstStart` это помнит.
@@ -152,7 +152,7 @@ var shell = rootScope.Container.Resolve<ShellService>();
 await shell.OpenMainMenu();
 ```
 
-Корневой scope регистрирует `AppContext`, `ShellService`, `GameAudio`, `GameInput`. Scope сцены Game регистрирует `GameRun`, `GameSession`, `PauseMenuScreen`. Сплэш и кнопки меню ведёт `MainMenuFlow` в сцене MainMenu. Пауза в ране — `PauseMenuScreen` на Game.
+Корневой scope регистрирует `AppContext`, `ShellService`, `SaveService`, `GameAudio`, `GameInput`. Scope сцены Game регистрирует `GameRun`, `GameSession`, `PauseMenuScreen`. Сплэш и кнопки меню ведёт `MainMenuFlow` в сцене MainMenu. Пауза в ране — `PauseMenuScreen` на Game. Слот читает и пишет `SaveService`; кнопки его не открывают файл сами.
 
 Меню: **Start Game** / **Load** / **Start Debug**. Список допустимых `DifficultyProfile` и default принадлежат `ScenarioDefinition`, а не отдельным полям `GameSession`. Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Null default = prefab-default balance. Load = слот (кнопка серая, если файла нет).
 

@@ -1,5 +1,6 @@
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Stories;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -78,9 +79,13 @@ namespace TheyWillDescend.Simulation.City
             var buildingId = em.HasComponent<Building>(site)
                 ? em.GetComponentData<Building>(site).Id
                 : 0;
+            var typeId = em.HasComponent<Building>(site)
+                ? em.GetComponentData<Building>(site).TypeId
+                : default;
             em.RemoveComponent<Construction>(site);
             if (buildingId > 0)
                 BuildingDismantle.ReleaseCrew(em, buildingId);
+            NoteStoryCompletion(em, site, typeId);
 #if UNITY_EDITOR
             if (em.Exists(site) && em.HasComponent<Building>(site))
             {
@@ -88,6 +93,22 @@ namespace TheyWillDescend.Simulation.City
                 em.SetName(site, $"Building_{building.Id}");
             }
 #endif
+        }
+
+        static void NoteStoryCompletion(EntityManager em, Entity site, Unity.Collections.FixedString64Bytes typeId)
+        {
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<SimSession>());
+            if (query.IsEmptyIgnoreFilter)
+                return;
+            var session = query.GetSingletonEntity();
+            if (!em.HasBuffer<StoryFact>(session))
+                return;
+            em.GetBuffer<StoryFact>(session).Add(new StoryFact
+            {
+                Kind = StoryFactKind.BuildingCompleted,
+                Id = typeId,
+                Subject = site
+            });
         }
     }
 }
