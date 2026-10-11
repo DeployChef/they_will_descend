@@ -64,6 +64,28 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Буфер позиций построек для случайного выбора точки звука.</summary>
         private readonly List<Vector3> _positionCandidates = new();
 
+        /// <summary>
+        /// Состав менялся с прошлого тика — параметры пересчитаются пачкой на
+        /// ближайшем тике (ApplyChanges), а не на каждом AddSource/RemoveSource.
+        /// </summary>
+        private bool _compositionDirty;
+
+        // ===== Guard отправки в FMOD =====
+        // Значения, реально отправленные в последний раз. Значения дискретные
+        // (0/1 и 0..Capacity), поэтому сравниваются точно.
+        // Позицию в 3D-атрибутах не сравниваем: она меняется только вместе с
+        // центроидом, а Update3DAttributes вызывается только когда центроид
+        // реально сдвинулся (или создан инстанс).
+
+        /// <summary>Отправленный IF_VILLAGE_SECTORE (-1 — ещё не отправлялся).</summary>
+        private float _sentVillageFlag = -1f;
+
+        /// <summary>Отправленный VILLAGE_DESTINY (-1 — ещё не отправлялся).</summary>
+        private float _sentVillageDensity = -1f;
+
+        /// <summary>Отправленный Distance (-1 — ещё не отправлялся).</summary>
+        private float _sentDistance = -1f;
+
         public AudioCell(int id, AudioZoneSettings settings)
         {
             Id = id;
@@ -128,6 +150,12 @@ namespace TheyWillDescend.Presentation.Audio
 
                 if (Instance.isValid())
                 {
+                    // Новый инстанс ничего не получал — guard сбрасываем, чтобы
+                    // первая отправка параметров состоялась гарантированно.
+                    _sentVillageFlag = -1f;
+                    _sentVillageDensity = -1f;
+                    _sentDistance = -1f;
+
                     Instance.start();
                     IsActive = true;
                 }
@@ -165,6 +193,9 @@ namespace TheyWillDescend.Presentation.Audio
 
         /// <summary>
         /// Обновляет 3D-атрибуты инстанса (позиция = центроид кластера).
+        /// Позиция эмитента статична, поэтому метод вызывается только когда
+        /// центроид реально сдвинулся (ApplyChanges) либо создан инстанс —
+        /// сравнение с прошлой точкой не нужен.
         /// </summary>
         public void Update3DAttributes()
         {
@@ -235,14 +266,25 @@ namespace TheyWillDescend.Presentation.Audio
             if (!Instance.isValid())
                 return;
 
+            // Состав ячейки меняется только по событию (построили/снесли/достроили),
+            // поэтому одинаковые значения в FMOD не дублируем.
+            var sameFlag = _sentVillageFlag == VillageFlag;
+            var sameDensity = _sentVillageDensity == VillageDensity;
+            if (sameFlag && sameDensity)
+                return;
+
             Instance.setParameterByName("IF_VILLAGE_SECTORE", VillageFlag);
             Instance.setParameterByName("VILLAGE_DESTINY", VillageDensity);
+
+            _sentVillageFlag = VillageFlag;
+            _sentVillageDensity = VillageDensity;
         }
 
         /// <summary>
         /// Обновляет Distance-параметр (audio LOD) — дистанция от камеры до центра
         /// ячейки, нормализованная в диапазон 0–100 (диапазон параметра в FMOD).
-        /// Вызывается каждый тик видимости.
+        /// Вызывается тиком менеджера, но в FMOD идёт только когда дистанция
+        /// реально изменилась: камера стоит — вызовов в FMOD нет.
         /// </summary>
         public void UpdateDistanceRtpc(Vector3 cameraPosition, string rtpcName, float range)
         {
@@ -251,7 +293,13 @@ namespace TheyWillDescend.Presentation.Audio
 
             var dist = Vector3.Distance(cameraPosition, WorldPosition);
             var normalized = range > 0f ? dist / range * 100f : 0f;
-            Instance.setParameterByName(rtpcName, Mathf.Clamp(normalized, 0f, 100f));
+            normalized = Mathf.Clamp(normalized, 0f, 100f);
+
+            if (_sentDistance == normalized)
+                return;
+
+            Instance.setParameterByName(rtpcName, normalized);
+            _sentDistance = normalized;
         }
 
         /// <summary>
@@ -311,38 +359,68 @@ namespace TheyWillDescend.Presentation.Audio
         bool CanSound() => CompletedCount > 0 && ActivityLevel > 0.01f;
 
         /// <summary>
-        /// Закрепляет постройку за ячейкой.
+        /// Закрепляет постройку за ячейкой. Пересчёт не запускает — помечает
+        /// ячейку грязной, параметры пересчитаются пачкой на тике (ApplyChanges).
+        /// При загрузке сцены это десятки OnEnable подряд, и каждый из них
+        /// раньше гонял центроид, счётчики и два setParameterByName.
         /// </summary>
         public void AddSource(BuildingAudioSource source)
         {
             if (source == null || IsDisposed)
                 return;
 
-            if (!_sources.Contains(source))
-                _sources.Add(source);
+            if (_sources.Contains(source))
+                return;
 
-            RecalculateParameters();
+            _sources.Add(source);
+            _compositionDirty = true;
         }
 
-        /// <summary>
-        /// Отвязывает постройку от ячейки.
-        /// </summary>
+        /// <summary>Отвязывает постройку от ячейки (пересчёт — на тике).</summary>
         public void RemoveSource(BuildingAudioSource source)
         {
             if (source == null)
                 return;
 
             if (_sources.Remove(source))
-                RecalculateParameters();
+                _compositionDirty = true;
         }
 
         /// <summary>
-        /// Пересчитывает состав: центроид, радиус, счётчики по типам, RTPC.
+        /// Пересчитывает параметры, если состав с прошлого тика менялся.
+        /// Дёргается менеджером раз в тик по всем ячейкам — проверка флага стоит
+        /// ничего, работа делается только над реально изменившимися.
+        /// Сдвинувшийся центроид сразу уходит в 3D-атрибуты: больше позиция
+        /// эмитента не толкается в FMOD без изменения.
+        /// </summary>
+        /// <returns>true, если пересчёт был (центроид мог сдвинуться).</returns>
+        public bool ApplyChanges()
+        {
+            if (!_compositionDirty)
+                return false;
+
+            _compositionDirty = false;
+            RecalculateParameters(true);
+
+            if (IsActive)
+                Update3DAttributes();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Пересчитывает состав: счётчики по типам, RTPC, и — только если
+        /// менялся набор построек — центроид с радиусом.
         /// В RTPC идут только законченные здания (CountsForAmbience).
         /// </summary>
-        private void RecalculateParameters()
+        /// <param name="shapeChanged">
+        /// Сдвигались ли постройки (добавление/удаление). Переход стройка→COMPLETE
+        /// позиции не меняет, и пересчитывать геометрию ради этого незачем.
+        /// </param>
+        private void RecalculateParameters(bool shapeChanged)
         {
-            RecalculateShape();
+            if (shapeChanged)
+                RecalculateShape();
 
             float totalActivity = 0f;
             var houseCount = 0;
@@ -438,10 +516,13 @@ namespace TheyWillDescend.Presentation.Audio
         /// перешло в COMPLETE или обратно в стройку). Ячейка могла ожить (первое
         /// законченное здание) — будим сразу: ApplyVisibility дёргает SetActive
         /// только на СМЕНЕ видимости, уже видимую спящую ячейку он не разбудит.
+        /// Геометрия пересчитывается только если при этом менялся набор построек.
         /// </summary>
         public void Refresh()
         {
-            RecalculateParameters();
+            var shapeChanged = _compositionDirty;
+            _compositionDirty = false;
+            RecalculateParameters(shapeChanged);
 
             if (_settings.LogZoneActivity)
                 Debug.Log($"[AudioCell] REFRESH: cell {Id}, visible={IsVisible}, active={IsActive}, " +
