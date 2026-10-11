@@ -34,13 +34,11 @@ namespace TheyWillDescend.Main
 
             rootScope.Build();
 
-            var context = rootScope.Container.Resolve<TheyWillDescend.Shell.AppContext>();
             var shell = rootScope.Container.Resolve<ShellService>();
             if (skipMenuToGameTemporarily)
             {
                 GameLog.Warning("TEMPORARY: skipMenuToGame — starting a normal run (MainMenu not loaded).");
-                context.RequestLaunch(RunLaunch.Normal);
-                shell.EnterGame();
+                shell.EnterGame(RunLaunch.Normal);
                 return;
             }
 
