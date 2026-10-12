@@ -24,8 +24,15 @@ namespace TheyWillDescend.Presentation.City
         /// <summary>Направление камеры на последнем тике.</summary>
         private Vector3 _lastCameraForward;
 
-        /// <summary>Половина ГОРИЗОНТАЛЬНОГО угла обзора в радианах.</summary>
-        private float _halfHorizontalFOVRadians;
+        /// <summary>Ступень дальнего зума на последнем тике (она тоже меняет слышимость).</summary>
+        private bool _lastFullyZoomedOut;
+
+        /// <summary>
+        /// Косинус половины ГОРИЗОНТАЛЬНОГО угла обзора. Хранится косинус, а не
+        /// угол: сравнение с ним и есть проверка попадания в конус, пересчёт —
+        /// только на смене ракурса камеры.
+        /// </summary>
+        private float _cosHalfFov;
 
         /// <summary>Контроллер RTS-камеры (ленивый поиск): факт максимального отдаления.</summary>
         private RTSCameraController _rtsController;
@@ -48,9 +55,7 @@ namespace TheyWillDescend.Presentation.City
                 mainCamera = Camera.main;
 
             if (mainCamera != null)
-            {
-                _halfHorizontalFOVRadians = HalfHorizontalFov(mainCamera);
-            }
+                _cosHalfFov = Mathf.Cos(HalfHorizontalFov(mainCamera));
         }
 
         /// <summary>
@@ -62,6 +67,40 @@ namespace TheyWillDescend.Presentation.City
             var vFovRad = cam.fieldOfView * Mathf.Deg2Rad * 0.5f;
             var hFovRad = 2f * Mathf.Atan(Mathf.Tan(vFovRad) * cam.aspect);
             return hFovRad * 0.5f;
+        }
+
+        /// <summary>
+        /// Сдвинулась ли камера с тех пор, как видимость считалась в последний раз:
+        /// позиция, направление взгляда или ступень дальнего зума. Дешёвая проверка
+        /// без аллокаций — по ней менеджер пропускает полный рескан ячеек, когда
+        /// камера стоит на месте.
+        /// </summary>
+        public bool CameraMoved()
+        {
+            if (mainCamera == null)
+                return true;
+
+            var t = mainCamera.transform;
+            if (t.position != _lastCameraPosition || t.forward != _lastCameraForward)
+                return true;
+
+            return IsFullyZoomedOut() != _lastFullyZoomedOut;
+        }
+
+        /// <summary>
+        /// Камера на самом дальнем шаге зума. Тогда локальные инстансы ячеек не
+        /// играют вообще — город слышен общим амбиентом.
+        /// </summary>
+        bool IsFullyZoomedOut()
+        {
+            // Контроллер в additive-сцене может появиться позже — ищем лениво, один раз.
+            if (_rtsController == null && !_lookedForController)
+            {
+                _lookedForController = true;
+                _rtsController = FindFirstObjectByType<RTSCameraController>();
+            }
+
+            return _rtsController != null && _rtsController.IsFullyZoomedOut;
         }
 
         /// <summary>
@@ -83,21 +122,17 @@ namespace TheyWillDescend.Presentation.City
                 _lastCameraPosition = cameraPos;
                 _lastCameraForward = cameraForward;
 
-                _halfHorizontalFOVRadians = HalfHorizontalFov(mainCamera);
+                _cosHalfFov = Mathf.Cos(HalfHorizontalFov(mainCamera));
             }
 
             _visibleCells.Clear();
             _hiddenCells.Clear();
 
-            // Ленивый поиск контроллера камеры (он в additive-сцене может появиться позже).
-            if (_rtsController == null && !_lookedForController)
-            {
-                _lookedForController = true;
-                _rtsController = FindFirstObjectByType<RTSCameraController>();
-            }
-
             // Самый дальний шаг зума — локальные инстансы ячеек не играют вообще.
-            if (_rtsController != null && _rtsController.IsFullyZoomedOut)
+            var fullyZoomedOut = IsFullyZoomedOut();
+            _lastFullyZoomedOut = fullyZoomedOut;
+
+            if (fullyZoomedOut)
             {
                 for (var i = 0; i < allCells.Count; i++)
                 {
@@ -125,9 +160,8 @@ namespace TheyWillDescend.Presentation.City
                 toCell.y = 0f;
                 toCell.Normalize();
                 var dot = Vector3.Dot(flatForward, toCell);
-                var cosHalfFov = Mathf.Cos(_halfHorizontalFOVRadians);
 
-                if (dot > cosHalfFov)
+                if (dot > _cosHalfFov)
                 {
                     _visibleCells.Add(cell);
                 }

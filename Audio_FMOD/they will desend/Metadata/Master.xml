@@ -4,6 +4,12 @@
 		<property name="name">
 			<value>Master Bus</value>
 		</property>
+		<property name="maxInstances">
+			<value>30</value>
+		</property>
+		<property name="instanceStealing">
+			<value>1</value>
+		</property>
 		<relationship name="effectChain">
 			<destination>{ec0d0f4e-b35f-404c-826c-7b66992819d6}</destination>
 		</relationship>
