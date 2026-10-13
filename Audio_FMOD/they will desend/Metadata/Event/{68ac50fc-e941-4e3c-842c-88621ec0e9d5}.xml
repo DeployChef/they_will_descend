@@ -65,6 +65,12 @@
 		<property name="maxVoices">
 			<value>20</value>
 		</property>
+		<property name="minimumDistance">
+			<value>0</value>
+		</property>
+		<property name="maximumDistance">
+			<value>70</value>
+		</property>
 	</object>
 	<object class="MarkerTrack" id="{405d8a26-453f-46c1-b69e-4825adb7869f}" />
 	<object class="MarkerTrack" id="{20e9faf5-e527-42ac-a3a9-7ce3201cc189}" />
@@ -124,6 +130,9 @@
 		</relationship>
 	</object>
 	<object class="EventMixerMaster" id="{61e3c914-1736-4616-9abe-1768353b7df7}">
+		<property name="color">
+			<value>Red</value>
+		</property>
 		<relationship name="effectChain">
 			<destination>{4a49c12a-15ae-442f-83d3-d0ae8492d4be}</destination>
 		</relationship>
@@ -154,6 +163,12 @@
 	</object>
 	<object class="MixerBusPanner" id="{a7387511-db7a-432e-9ebc-feff93a11484}" />
 	<object class="MultiSound" id="{9b82a306-8247-477a-a109-4657ffc92709}">
+		<property name="triggerProbabilityEnabled">
+			<value>true</value>
+		</property>
+		<property name="triggerProbability">
+			<value>58</value>
+		</property>
 		<property name="length">
 			<value>18</value>
 		</property>
@@ -211,6 +226,12 @@
 		</relationship>
 	</object>
 	<object class="MultiSound" id="{af4ad9b2-4b23-4158-a94a-9df5c556fa09}">
+		<property name="triggerProbabilityEnabled">
+			<value>true</value>
+		</property>
+		<property name="triggerProbability">
+			<value>47.5</value>
+		</property>
 		<property name="length">
 			<value>18</value>
 		</property>
@@ -257,6 +278,12 @@
 		</relationship>
 	</object>
 	<object class="MultiSound" id="{be80cf38-a92d-4777-9da0-4d8a5b00f91f}">
+		<property name="triggerProbabilityEnabled">
+			<value>true</value>
+		</property>
+		<property name="triggerProbability">
+			<value>68</value>
+		</property>
 		<property name="length">
 			<value>18</value>
 		</property>
@@ -303,11 +330,20 @@
 		</relationship>
 	</object>
 	<object class="MultiSound" id="{888fe4b2-b3e1-4c43-a6b3-64fc0833915f}">
+		<property name="triggerProbabilityEnabled">
+			<value>true</value>
+		</property>
+		<property name="triggerProbability">
+			<value>49.5</value>
+		</property>
 		<property name="isAsync">
 			<value>true</value>
 		</property>
 		<property name="length">
 			<value>18</value>
+		</property>
+		<property name="quantizationInterval">
+			<value>5</value>
 		</property>
 		<property name="looping">
 			<value>true</value>
@@ -426,7 +462,11 @@
 			<destination>{437d8aae-be9f-4e2e-b3a0-1d3369e5c22b}</destination>
 		</relationship>
 	</object>
-	<object class="MixerBusPanner" id="{a2f28924-54a2-4067-9cce-30ba6fb6eef6}" />
+	<object class="MixerBusPanner" id="{a2f28924-54a2-4067-9cce-30ba6fb6eef6}">
+		<property name="overridingOutputFormat">
+			<value>1</value>
+		</property>
+	</object>
 	<object class="MixerBusFader" id="{9903be83-8359-408d-8835-00b8a1ef6f59}" />
 	<object class="FadeCurve" id="{44958815-04eb-439e-b332-e9344d47346d}">
 		<relationship name="startPoint">

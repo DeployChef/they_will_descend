@@ -28,8 +28,21 @@ namespace TheyWillDescend.Presentation.City
         /// <summary>Следующий сквозной id ячейки (для логов и подписей).</summary>
         private int _nextCellId;
 
-        /// <summary>Счётчик кадров между тиками видимости.</summary>
+        /// <summary>Счётчик кадров между тиками.</summary>
         private int _frameCounter;
+
+        /// <summary>Кадров между тиками.</summary>
+        const int TickFrames = 2;
+
+        /// <summary>Отвязывали постройку — есть шанс опустевшей ячейки, прогнать чистку.</summary>
+        private bool _pruneNeeded;
+
+        /// <summary>
+        /// Изменилась ли топология: ячейку добавили, удалили, или сдвинули её
+        /// центроид. Вместе с движением камеры это единственный повод пересчитать
+        /// видимость — без них конус тот же, состав тот же.
+        /// </summary>
+        private bool _topologyDirty;
 
         /// <summary>Банки загружены (один раз; hot reload пересоздаёт ячейки сам).</summary>
         private bool _banksLoaded;
@@ -60,14 +73,37 @@ namespace TheyWillDescend.Presentation.City
 
             EnsureBanksLoaded();
 
-            // Тик видимости каждые 2 кадра.
             _frameCounter++;
-            if (_frameCounter < 2)
+            if (_frameCounter < TickFrames)
                 return;
 
             _frameCounter = 0;
-            PruneEmptyCells();
+
+            // Пересчёт только у ячеек, у которых менялся состав.
+            FlushDirtyCells();
+
+            // Чистка нужна после отвязки постройки, сама по себе она ничего не находит.
+            if (_pruneNeeded)
+            {
+                _pruneNeeded = false;
+                PruneEmptyCells();
+            }
+
             UpdateVisibilityBatch();
+        }
+
+        /// <summary>
+        /// Пересчитывает параметры ячеек с изменённым составом. Сдвинулся центроид —
+        /// топология считается грязной, видимость на этом тике пересчитается.
+        /// </summary>
+        private void FlushDirtyCells()
+        {
+            for (var i = 0; i < _cells.Count; i++)
+            {
+                var cell = _cells[i];
+                if (cell != null && cell.ApplyChanges())
+                    _topologyDirty = true;
+            }
         }
 
         /// <summary>
@@ -131,6 +167,11 @@ namespace TheyWillDescend.Presentation.City
             source.LinkedCell = best;
             best.AddSource(source);
 
+            // Здесь пересчёт нужен сразу: активация ниже опирается на CanSound(),
+            // а ончитает по свежему составу.
+            best.ApplyChanges();
+            _topologyDirty = true;
+
             // Мгновенная активация: ячейка уже в поле зрения — звук появляется
             // сразу после постройки, без ожидания тика видимости.
             if (best.IsVisible && !best.IsActive)
@@ -157,6 +198,8 @@ namespace TheyWillDescend.Presentation.City
                 return;
 
             cell.RemoveSource(source);
+            _topologyDirty = true;
+            _pruneNeeded = true;
 
             if (!cell.IsEmpty)
                 return;
@@ -189,6 +232,7 @@ namespace TheyWillDescend.Presentation.City
 
                 cell.Dispose();
                 _cells.RemoveAt(i);
+                _topologyDirty = true;
 
                 if (settings.LogZoneActivity)
                     GameLog.Info($"AudioZoneManager: pruned empty cell {cell.Id}.");
@@ -207,6 +251,7 @@ namespace TheyWillDescend.Presentation.City
 
             _cells.Clear();
             _nextCellId = 0;
+            _topologyDirty = true;
         }
 
         /// <summary>
@@ -234,12 +279,25 @@ namespace TheyWillDescend.Presentation.City
 
 
         /// <summary>
-        /// Обновляет видимость ячеек + Distance RTPC (audio LOD) и 3D-позицию
-        /// активных ячеек.
+        /// Обновляет видимость ячеек и Distance RTPC (audio LOD). Всё, что зависит
+        /// от камеры, считается только когда камера сдвинулась или изменилась
+        /// топология (ячейку добавили/убрали/сдвинули центроид). Стоячая камера и
+        /// неизменная застройка = ноль обращений в FMOD.
         /// </summary>
         private void UpdateVisibilityBatch()
         {
             if (_cells.Count == 0)
+                return;
+
+            var cam = visibilityChecker != null ? visibilityChecker.Camera : Camera.main;
+            if (cam == null)
+                return;
+
+            var poseChanged = visibilityChecker == null || visibilityChecker.CameraMoved();
+            var changed = poseChanged || _topologyDirty;
+            _topologyDirty = false;
+
+            if (!changed)
                 return;
 
             if (visibilityChecker != null)
@@ -248,12 +306,8 @@ namespace TheyWillDescend.Presentation.City
                 visibilityChecker.ApplyVisibility();
             }
 
-            // Audio LOD + 3D-позиция активных ячеек: каждый тик.
-            // Дистанционная смерть: дальше Zone Death Distance инстанс умирает.
-            var cam = visibilityChecker != null ? visibilityChecker.Camera : Camera.main;
-            if (cam == null)
-                return;
-
+            // Audio LOD активных ячеек + дистанционная смерть: дальше
+            // Zone Death Distance инстанс умирает.
             var camPos = cam.transform.position;
             var rtpcName = settings.DistanceRtpcName;
             var rtpcRange = settings.DistanceRtpcRange;
@@ -268,11 +322,8 @@ namespace TheyWillDescend.Presentation.City
 
                 cell.UpdateDistanceDeath(camPos, deathDist, deathHyst);
 
-                if (!cell.IsActive)
-                    continue;
-
-                cell.UpdateDistanceRtpc(camPos, rtpcName, rtpcRange);
-                cell.Update3DAttributes();
+                if (cell.IsActive)
+                    cell.UpdateDistanceRtpc(camPos, rtpcName, rtpcRange);
             }
         }
 

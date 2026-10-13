@@ -16,7 +16,7 @@ namespace TheyWillDescend.Presentation.Audio
     {
         [Header("Cells")]
         [Tooltip("Сколько построек вмещает одна ячейка. На лимите следующая постройка открывает новую ячейку.")]
-        [SerializeField] int cellCapacity = 6;
+        [SerializeField] int cellCapacity = 4;
 
         [Tooltip("Радиус привязки (м). Новая постройка входит в ячейку, если ближе этого расстояния до её центроида ИЛИ до любой её постройки. Дальше — новая ячейка.")]
         [SerializeField] float attachRadius = 12f;
