@@ -44,6 +44,9 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("Гистерезис возрождения ячейки (м), чтобы инстанс не дёргался на границе.")]
         [SerializeField] float zoneDeathHysteresis = 5f;
 
+        [Tooltip("Ближний радиус (м): ячейки в нём НЕ умирают за конусом камеры — живут постоянно, приглушёнными (приглушение за спиной делает FMOD, Event Orientation). Считается по ГОРИЗОНТАЛИ от позиции камеры (а камера в небе). Подбери под HQ-зону LOD ивента. 0 = ячейки за конусом умирают как раньше.")]
+        [SerializeField] float nearKeepAliveRadius = 40f;
+
         [Header("Random Town SFX (живчик города)")]
         [Tooltip("Одноразовый ивент городских случайностей. Лежит в том же банке, что и основной амбиент. Перетаскивается из FMOD Studio.")]
         [SerializeField] EventReference sfxRandomEventReference;
@@ -110,6 +113,9 @@ namespace TheyWillDescend.Presentation.Audio
 
         public float ZoneDeathDistance => zoneDeathDistance;
         public float ZoneDeathHysteresis => zoneDeathHysteresis;
+
+        /// <summary>Ближний радиус (м): в нём ячейки живут и за конусом камеры (приглушает FMOD). 0 = выкл.</summary>
+        public float NearKeepAliveRadius => nearKeepAliveRadius > 0f ? nearKeepAliveRadius : 0f;
         public bool LogZoneActivity => logZoneActivity;
         public bool ShowZoneLabels => showZoneLabels;
         public bool LogSfxRandom => logSfxRandom;

@@ -10,125 +10,94 @@ namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
     /// FMOD host on Root. Lives with the Root camera and AudioListener.
-    /// Simulation never calls this. Player pause follows <see cref="SimControl.PlayerPaused"/>.
-    /// main_soundtrack отключён флагом enableMusic (по умолчанию off).
+    /// Один инстанс музыки на сцене: event:/SOUNDTRACK/MUSIC_STATES (банк Main_theme).
+    /// Пауза следует за <see cref="SimControl.PlayerPaused"/> (меню паузы: Esc / Continue) —
+    /// это единственный источник истины, toggle по клавише разъезжался с кнопкой Continue.
+    /// Пауза → снэпшот ESC, выход из паузы → ESC снимается (DEAFULT удалён из FMOD-проекта).
     /// </summary>
     public sealed class GameAudio : MonoBehaviour
     {
+        // Банк музыки (MUSIC_STATES лежит в Main_theme вместе со саундтреком).
         public const string MusicBankName = "Main_theme";
-        // Ивент лежит в папке SOUNDTRACK → путь event:/SOUNDTRACK/main_soundtrack.
-        public const string MusicEventPath = "event:/SOUNDTRACK/main_soundtrack";
+        // Ивент лежит в папке SOUNDTRACK → путь event:/SOUNDTRACK/MUSIC_STATES.
+        public const string MusicEventPath = "event:/SOUNDTRACK/MUSIC_STATES";
 
-        // Снэпшоты FMOD (корень Snapshots). DEAFULT — имя в FMOD-проекте с опечаткой.
+        // Снэпшот паузы (корень Snapshots). DEAFULT удалён из FMOD-проекта — не стартовать.
         public const string PauseSnapshotPath = "snapshot:/ESC";
-        public const string DefaultSnapshotPath = "snapshot:/DEAFULT";
-
-        [SerializeField] EventReference musicEvent;
-
-        [Header("Music")]
-        [Tooltip("Включить main_soundtrack. По умолчанию выключен — трек не играет.")]
-        [SerializeField] bool enableMusic = false;
 
         EventInstance _music;
-        // Снэпшоты паузы: Esc → ESC, повторный Esc (выход из паузы) → DEAFULT.
         EventInstance _escSnapshot;
-        EventInstance _defaultSnapshot;
         bool _lastPaused;
 
-        void Awake()
+        void Start()
         {
-            // Гарантия: трек не играет, даже если его запустили раньше.
-            if (!enableMusic)
-                StopSessionMusic();
+            // Банк грузим явно: RuntimeManager может не успеть загрузить банки до Start().
+            FmodBankLoader.LoadBank(MusicBankName);
+            StartCoroutine(CreateMusicNextFrame());
         }
 
-        public void StartSessionMusic()
+        System.Collections.IEnumerator CreateMusicNextFrame()
         {
-            // Музыка выключена флагом — ничего не запускаем.
-            if (!enableMusic)
-                return;
-
-            StopSessionMusic();
-            TryLoadBank("Master");
-            TryLoadBank(MusicBankName);
+            // Ждём один кадр, чтобы банк точно прогрузился (паттерн GlobalAmbienceManager).
+            yield return null;
 
             try
             {
-                _music = musicEvent.IsNull
-                    ? RuntimeManager.CreateInstance(MusicEventPath)
-                    : RuntimeManager.CreateInstance(musicEvent);
+                _music = RuntimeManager.CreateInstance(MusicEventPath);
             }
             catch (EventNotFoundException)
             {
                 GameLog.Error(
-                    "GameAudio: event:/SOUNDTRACK/main_soundtrack not in loaded banks. " +
+                    "GameAudio: event:/SOUNDTRACK/MUSIC_STATES not in loaded banks. " +
                     "In FMOD Studio put it on bank Main_theme, Ctrl+B, copy .bank into StreamingAssets/Desktop/.");
-                return;
+                yield break;
             }
             catch (Exception e)
             {
                 GameLog.Error($"GameAudio: failed to create music instance. {e.Message}");
-                return;
+                yield break;
             }
 
             if (!_music.isValid())
             {
                 GameLog.Error("GameAudio: music instance is invalid.");
-                return;
+                yield break;
             }
 
+            // MUSIC_STATES — 3D-ивент: без атрибутов RuntimeManager варнит каждый кадр.
+            // Вешаем на слушателя — атрибуты обновляются сами, музыка звучит "вокруг" камеры.
             var listener = FindFirstObjectByType<StudioListener>();
             if (listener != null)
                 RuntimeManager.AttachInstanceToGameObject(_music, listener.transform);
 
             _music.start();
-            _lastPaused = false;
-            GameLog.Info("GameAudio: session music started.");
-        }
-
-        public void StopSessionMusic()
-        {
-            if (!_music.isValid())
-                return;
-
-            RuntimeManager.DetachInstanceFromGameObject(_music);
-            _music.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-            _music.release();
-            _music.clearHandle();
-            _lastPaused = false;
+            GameLog.Info("GameAudio: music started (event:/SOUNDTRACK/MUSIC_STATES).");
         }
 
         void LateUpdate()
         {
-            // Пауза по Esc (PlayerPaused) — переключение снэпшотов работает всегда,
-            // независимо от того, включена ли музыка.
+            // Источник истины — PlayerPaused (меню паузы). Esc открывает/закрывает меню,
+            // Continue закрывает кнопкой — оба пути сходятся здесь, рассинхрона нет.
             var paused = false;
             if (SimWorld.TryGet(out var em, out var bag) && em.HasComponent<SimControl>(bag))
                 paused = em.GetComponentData<SimControl>(bag).PlayerPaused != 0;
-            if (paused != _lastPaused)
-            {
-                ApplyPauseSnapshots(paused);
-                _lastPaused = paused;
-            }
 
-            if (!_music.isValid())
+            if (paused == _lastPaused)
                 return;
 
-            _music.setPaused(paused);
+            _lastPaused = paused;
+            ApplyPause(paused);
+
+            if (_music.isValid())
+                _music.setPaused(paused);
         }
 
-        void ApplyPauseSnapshots(bool paused)
+        void ApplyPause(bool paused)
         {
             if (paused)
-            {
-                StopSnapshot(ref _defaultSnapshot);
                 StartSnapshot(PauseSnapshotPath, ref _escSnapshot);
-            }
             else
-            {
                 StopSnapshot(ref _escSnapshot);
-                StartSnapshot(DefaultSnapshotPath, ref _defaultSnapshot);
-            }
         }
 
         static void StartSnapshot(string path, ref EventInstance snapshot)
@@ -164,23 +133,13 @@ namespace TheyWillDescend.Presentation.Audio
 
         void OnDestroy()
         {
-            StopSessionMusic();
+            if (_music.isValid())
+            {
+                _music.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+                _music.release();
+                _music.clearHandle();
+            }
             StopSnapshot(ref _escSnapshot);
-            StopSnapshot(ref _defaultSnapshot);
-        }
-
-        static void TryLoadBank(string bankName)
-        {
-            try
-            {
-                if (RuntimeManager.HasBankLoaded(bankName))
-                    return;
-                RuntimeManager.LoadBank(bankName, loadSamples: true);
-            }
-            catch (BankLoadException e)
-            {
-                GameLog.Warning($"GameAudio: bank '{bankName}' missing. {e.Message}");
-            }
         }
     }
 }

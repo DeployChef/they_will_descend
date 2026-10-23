@@ -1,5 +1,4 @@
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Session;
 
@@ -13,13 +12,11 @@ namespace TheyWillDescend.Shell
     public sealed class GameRun
     {
         readonly GameInput _input;
-        readonly GameAudio _audio;
         bool _live;
 
-        public GameRun(GameInput input, GameAudio audio)
+        public GameRun(GameInput input)
         {
             _input = input;
-            _audio = audio;
         }
 
         public bool IsLive => _live;
@@ -27,7 +24,6 @@ namespace TheyWillDescend.Shell
         public void Arm()
         {
             SimCommands.TryPost(SimClockCommand.InGame(true));
-            _audio?.StopSessionMusic();
             _input.EnableGame();
 
             var screen = PauseMenuScreen.Current;
@@ -48,7 +44,6 @@ namespace TheyWillDescend.Shell
             PauseMenuScreen.Current?.Release();
             _input.Disable();
             SimCommands.TryPost(SimClockCommand.InGame(false));
-            _audio?.StopSessionMusic();
         }
     }
 }
