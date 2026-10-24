@@ -4,8 +4,11 @@
 		<property name="color">
 			<value>Blue</value>
 		</property>
+		<property name="volume">
+			<value>-16</value>
+		</property>
 		<property name="name">
-			<value>GENERATIVE</value>
+			<value>MUSIC</value>
 		</property>
 		<property name="maxInstances">
 			<value>1</value>
@@ -38,7 +41,7 @@
 			<value>0</value>
 		</property>
 		<property name="inputFormat">
-			<value>5</value>
+			<value>2</value>
 		</property>
 		<relationship name="mixerReturn">
 			<destination>{c311acd4-a2b2-4a29-8c24-bce558d6064a}</destination>
