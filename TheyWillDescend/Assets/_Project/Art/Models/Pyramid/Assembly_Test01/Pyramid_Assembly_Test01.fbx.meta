@@ -1,11 +1,46 @@
 fileFormatVersion: 2
-guid: c00e63ee3038b9143acf2bc06b911908
+guid: fb27cd7b2e5086e48a3fbeaeb8e6e2cd
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bronze_Ornaments
+    second: {fileID: 2100000, guid: 5b51508a27054fa448e4b9530bfaf9b2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bronze_Plaques
+    second: {fileID: 2100000, guid: e14a1539ab6785b48a3d2c752176ed30, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bronze_Wheels
+    second: {fileID: 2100000, guid: 74ecf8d683dd7d44cb54b0ea6aa350d6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Core_Preview
+    second: {fileID: 2100000, guid: 2bd0ed8d312919b4f9710fb5df801d2a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Graphite_Backing
+    second: {fileID: 2100000, guid: 929cf0536e039de41a673f7a5138d414, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Obsidian
+    second: {fileID: 2100000, guid: e6fdfc660f32fc5409bf1d799499dac9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stone_Baked
+    second: {fileID: 2100000, guid: 962555c505ec04b42a2d2a4089caaf45, type: 2}
   materials:
-    materialImportMode: 0
+    materialImportMode: 2
     materialName: 0
     materialSearch: 1
     materialLocation: 1
@@ -41,8 +76,8 @@ ModelImporter:
     importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
-    importCameras: 1
-    importLights: 1
+    importCameras: 0
+    importLights: 0
     nodeNameCollisionStrategy: 1
     fileIdsGeneration: 2
     swapUVChannels: 0
@@ -50,8 +85,8 @@ ModelImporter:
     useFileUnits: 1
     keepQuads: 0
     weldVertices: 1
-    bakeAxisConversion: 0
-    preserveHierarchy: 0
+    bakeAxisConversion: 1
+    preserveHierarchy: 1
     skinWeightsMode: 0
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
@@ -79,7 +114,7 @@ ModelImporter:
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []
-  importAnimation: 1
+  importAnimation: 0
   humanDescription:
     serializedVersion: 3
     human: []

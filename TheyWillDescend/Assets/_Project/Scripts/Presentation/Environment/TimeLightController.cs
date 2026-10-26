@@ -70,6 +70,10 @@ namespace TheyWillDescend.Presentation.Environment
         private float _dayBaseExposure = 1f;
         private float _nightBaseExposure = 1f;
 
+        private Light _sunRotationLight;
+        private float _sunYaw;
+        private float _sunRoll;
+
         private void Awake()
         {
             // Инициализируем кривые при старте (OnValidate не вызывается в runtime)
@@ -181,6 +185,20 @@ namespace TheyWillDescend.Presentation.Environment
             }
         }
 
+        private void UpdateSunRotation(float sunAngle)
+        {
+            if (_sunRotationLight != dayLight)
+            {
+                // Euler-представление меняется около 90°. Не читаем Y/Z из результата прошлого кадра.
+                Vector3 initialAngles = dayLight.transform.localEulerAngles;
+                _sunYaw = initialAngles.y;
+                _sunRoll = initialAngles.z;
+                _sunRotationLight = dayLight;
+            }
+
+            dayLight.transform.localRotation = Quaternion.Euler(sunAngle, _sunYaw, _sunRoll);
+        }
+
         private void LateUpdate()
         {
             if (dayLight == null)
@@ -198,7 +216,7 @@ namespace TheyWillDescend.Presentation.Environment
 
             // 1. Угол солнца (дуга по небу)
             float sunAngle = Mathf.Lerp(minSunAngle, maxSunAngle, dayProgress);
-            dayLight.transform.localEulerAngles = new Vector3(sunAngle, dayLight.transform.localEulerAngles.y, dayLight.transform.localEulerAngles.z);
+            UpdateSunRotation(sunAngle);
 
             // Кривая задаёт форму дневного света; ночью сохраняется заданный минимум.
             float lightBlend = dayness * Mathf.Clamp01(lightIntensityCurve.Evaluate(dayProgress));
