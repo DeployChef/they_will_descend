@@ -86,6 +86,9 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Отправленный Distance (-1 — ещё не отправлялся).</summary>
         private float _sentDistance = -1f;
 
+        /// <summary>Отправленный FlyBy (пролёт камеры). Не число — ещё не отправлялся.</summary>
+        private float _sentFlyBy = float.NaN;
+
         public AudioCell(int id, AudioZoneSettings settings)
         {
             Id = id;
@@ -155,6 +158,7 @@ namespace TheyWillDescend.Presentation.Audio
                     _sentVillageFlag = -1f;
                     _sentVillageDensity = -1f;
                     _sentDistance = -1f;
+                    _sentFlyBy = float.NaN;
 
                     Instance.start();
                     IsActive = true;
@@ -300,6 +304,40 @@ namespace TheyWillDescend.Presentation.Audio
 
             Instance.setParameterByName(rtpcName, normalized);
             _sentDistance = normalized;
+        }
+
+        /// <summary>
+        /// Обновляет RTPC пролёта FlyBy (ручной доплер): радиальная скорость камеры
+        /// к/от ячейки, нормированная в −1..1. +1 — летим на ячейку (питч вверх),
+        /// −1 — удаляемся (питч вниз), 0 — стоим/мимо. Ниже порога скорости — 0,
+        /// чтобы питч не плыл при обычном панорамировании. С кэшем: в FMOD идёт
+        /// только заметное изменение.
+        /// </summary>
+        public void UpdateFlyByRtpc(Vector3 cameraPosition, Vector3 cameraVelocity, string rtpcName, float maxSpeed, float gateSpeed)
+        {
+            if (!Instance.isValid() || string.IsNullOrEmpty(rtpcName))
+                return;
+
+            var value = 0f;
+
+            var flatVel = cameraVelocity;
+            flatVel.y = 0f;
+            if (flatVel.magnitude > gateSpeed && maxSpeed > 0f)
+            {
+                var toCell = WorldPosition - cameraPosition;
+                toCell.y = 0f;
+                toCell.Normalize();
+
+                // Радиальная скорость: проекция скорости камеры на направление к ячейке.
+                var radial = Vector3.Dot(toCell, flatVel);
+                value = Mathf.Clamp(radial / maxSpeed, -1f, 1f);
+            }
+
+            if (!float.IsNaN(_sentFlyBy) && Mathf.Abs(_sentFlyBy - value) < 0.03f)
+                return;
+
+            Instance.setParameterByName(rtpcName, value);
+            _sentFlyBy = value;
         }
 
         /// <summary>
@@ -829,6 +867,7 @@ namespace TheyWillDescend.Presentation.Audio
             var readDestiny = 0f;
             var readDistance = 0f;
             var readOk = false;
+            var lod = "-";
 
             if (Instance.isValid())
             {
@@ -836,10 +875,11 @@ namespace TheyWillDescend.Presentation.Audio
                 Instance.getParameterByName("VILLAGE_DESTINY", out readDestiny);
                 Instance.getParameterByName(settings.DistanceRtpcName, out readDistance);
                 readOk = true;
+                lod = GetLodName(settings);
             }
 
             var state = !IsVisible ? "DEAD" : (IsActive ? "PLAY" : "IDLE");
-            var text = $"C{Id}  {_sources.Count}/{Capacity}  {state}  houses={HouseCount} completed={CompletedCount}\n" +
+            var text = $"C{Id}  {_sources.Count}/{Capacity}  {state}  LOD={lod}  houses={HouseCount} completed={CompletedCount}\n" +
                        $"IF_VILLAGE_SECTORE sent={sentIf:0} read={readIf:0}   " +
                        $"VILLAGE_DESTINY sent={sentDestiny:0} read={readDestiny:0}\n" +
                        $"dist={readDistance:F1} r={Radius:F1}";
@@ -848,6 +888,29 @@ namespace TheyWillDescend.Presentation.Audio
                 text += "  (no FMOD instance)";
 
             UnityEditor.Handles.Label(WorldPosition + Vector3.up * 3.2f, text, LabelStyle(StateColor()));
+        }
+
+        /// <summary>
+        /// Имя ветки audio LOD. Авто-параметр Distance у FMOD нормирован 0..1
+        /// (значение 1 = Max Distance параметра в инспекторе), поэтому диапазон
+        /// берём из settings.DistanceRtpcRange — он должен совпадать с Max Distance
+        /// параметра в FMOD Studio. Дистанция: Camera.main → центроид ячейки.
+        /// Пороги — как в условиях ивента: 0..0.33 HQ, ..0.67 MQ, дальше LQ.
+        /// </summary>
+        string GetLodName(AudioZoneSettings settings)
+        {
+            var max = settings.DistanceRtpcRange;
+            if (max <= 0f)
+                return "?";
+
+            var cam = Camera.main;
+            if (cam == null)
+                return "?";
+
+            var dist = Vector3.Distance(cam.transform.position, WorldPosition);
+            var ratio = Mathf.Clamp01(dist / max);
+            var lod = ratio < 0.33f ? "HQ" : ratio < 0.67f ? "MQ" : "LQ";
+            return $"{lod} ({dist:F0}/{max:F0}м)";
         }
 
         /// <summary>Кэш стиля подписи (пересобирается при смене цвета).</summary>

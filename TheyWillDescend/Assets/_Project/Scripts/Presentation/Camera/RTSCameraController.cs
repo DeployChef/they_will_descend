@@ -55,6 +55,12 @@ public class RTSCameraController : MonoBehaviour
     /// </summary>
     public bool IsFullyZoomedOut => zoomStepCount >= 2 && targetStep >= zoomStepCount - 1;
 
+    /// <summary>
+    /// Сглаженная скорость перемещения цели (м/с): Lerp-инерция, обнуляется на границе
+    /// карты. Аудио использует её для эффекта пролёта (FlyBy RTPC ячеек города).
+    /// </summary>
+    public Vector3 Velocity => currentVelocity;
+
     private void OnValidate()
     {
         if (camera == null) camera = GetComponent<CinemachineCamera>();

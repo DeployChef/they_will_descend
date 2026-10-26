@@ -148,6 +148,13 @@ namespace TheyWillDescend.Presentation.City
             flatForward.y = 0f;
             flatForward.Normalize();
 
+            // Ближний радиус: ячейки в нём не умирают за конусом — камера над
+            // ячейкой (HQ-зона LOD), инстанс живёт постоянно, приглушённым.
+            // Приглушение за спиной камеры делает FMOD (Event Orientation).
+            var nearRadius = settings.NearKeepAliveRadius;
+            // 0 = фича выключена: -1 не матчится ни с одной дистанцией.
+            var nearRadiusSq = nearRadius > 0f ? nearRadius * nearRadius : -1f;
+
             for (var i = 0; i < allCells.Count; i++)
             {
                 var cell = allCells[i];
@@ -158,10 +165,13 @@ namespace TheyWillDescend.Presentation.City
                 // дальние ячейки в кадре звучат так же, как ближние.
                 var toCell = cell.WorldPosition - cameraPos;
                 toCell.y = 0f;
+                var distSq = toCell.sqrMagnitude;
                 toCell.Normalize();
                 var dot = Vector3.Dot(flatForward, toCell);
 
-                if (dot > _cosHalfFov)
+                // В конусе — живая. Вне конуса, но в ближнем радиусе — тоже живая
+                // (приглушённая). Умирают только дальние вне конуса.
+                if (dot > _cosHalfFov || distSq <= nearRadiusSq)
                 {
                     _visibleCells.Add(cell);
                 }

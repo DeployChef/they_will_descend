@@ -1,0 +1,59 @@
+Playback::frame, 0
+Playback::version, 2, 131857
+#
+# FMOD v2.03.11 command capture
+#   System::setSoftwareChannels(numsoftwarechannels: 256)
+#   System::setDSPBufferSize(bufferlength: 512, numbuffers: 4)
+#   System::setSoftwareFormat(samplerate: 48000, speakermode: 3, numrawspeakers: 2)
+#   System::setAdvancedSettings(settings: {maxMPEGCodecs: 0, maxADPCMCodecs: 0, maxXMACodecs: 0, maxVorbisCodecs: 256, maxAT9Codecs: 0, maxFADPCMCodecs: 0, maxOpusCodecs: 0
+#       ASIONumChannels: 0, vol0virtualvol: 0, defaultDecodeBufferSize: 400, geometryMaxFadeTime: 0,
+#       distanceFilterCenterFreq: 1500, reverb3Dinstance: 0, DSPBufferPoolSize: 8, resamplerMethod: 2, randomSeed: 1124274972})
+#   Studio::System::setAdvancedSettings(settings: {commandqueuesize: 32768, handleinitialsize: 65536, studioupdateperiod: 20, idlesampledatapoolsize: 262144})
+#   Studio::System::initialize(maxchannels: 1024, studioflags: 0x00000009, flags: 0x00030000)
+#
+Playback::frame, 0
+# Printing initial instance state
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Master.strings.bank, 0, 2097184
+Playback::loadBankFinished, {9cf21517-c38e-0d72-375b-1a90fa83821d}, 2097184, 0
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Master.bank, 0, 2097440
+Playback::loadBankFinished, {04ef35c3-b2f5-4130-b112-906e0b708485}, 2097440, 0
+Bank::getEventListItem, 2097440, 0, {7bc9189b-84aa-4fcf-bd3d-763b4c99408c}, 2100512
+Bank::getBusListItem, 2097440, 0, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098976
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Town.bank, 0, 2097696
+Playback::loadBankFinished, {123b7101-03ea-4710-bd91-251c04365545}, 2097696, 0
+Bank::getEventListItem, 2097696, 0, {a8ad1b0c-aebe-4137-b904-f21af8eb3cca}, 2100768
+Bank::getEventListItem, 2097696, 1, {cadb07b9-309c-49a6-a9f8-523539410f4a}, 2100256
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Ambience_Wind_Generator.bank, 0, 2097952
+Playback::loadBankFinished, {cf19d234-3d96-481d-9fdb-3d44bba28e03}, 2097952, 0
+Bank::getEventListItem, 2097952, 0, {102f6c50-f56b-4adc-8005-2fadacdf7abb}, 2101024
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/BUILDING.bank, 0, 2098208
+Playback::loadBankFinished, {c755099a-a4d9-491f-97bd-6d6d7c31a324}, 2098208, 0
+Bank::getEventListItem, 2098208, 0, {5ac623a3-42a3-42e0-808d-6abdc50af32d}, 2101280
+Bank::getEventListItem, 2098208, 1, {cadb07b9-309c-49a6-a9f8-523539410f4a}, 2100256
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/Main_theme.bank, 0, 2098464
+Playback::loadBankFinished, {aa22e29b-ec28-428e-a101-d1d54faf3fb6}, 2098464, 0
+Bank::getEventListItem, 2098464, 0, {4ebdb25f-128c-409c-8e56-d69a1f0d737b}, 2101536
+Bank::getEventListItem, 2098464, 1, {53431ff2-5f28-4217-95fe-0b282a09673b}, 2101792
+Bank::getEventListItem, 2098464, 2, {d68cf6f6-e70f-478f-8b13-d298efd17852}, 2102048
+System::loadBankFile, ../Audio_FMOD/they will desend/Build/Desktop/UI.bank, 0, 2098720
+Playback::loadBankFinished, {493be555-d964-4b3b-93c0-481fd89cf32c}, 2098720, 0
+Bank::getEventListItem, 2098720, 0, {d048c9ce-42d9-4c07-9d56-cb1cffd8c04a}, 2099232
+System::setListenerAttributes, 0, {{0,66.9519,-37.5},{0,0,0},{0,-0.866025,0.5},{0,0.5,0.866025}}, {0,66.9519,-37.5}, true
+System::setParameterByName, Distance , 1, false
+EventDescription::createInstance, 2099232, 2100000
+EventInstance::setTimelinePosition, 2100000, 85920
+EventInstance::start, 2100000
+EventDescription::createInstance, 2101536, 2104608
+EventInstance::set3DAttributes, 2104608, {{0,66.9519,-37.5},{0,0,0},{0,-0.866025,0.5},{0,0.5,0.866025}}
+EventInstance::setTimelinePosition, 2104608, 405
+EventInstance::start, 2104608
+EventDescription::createInstance, 2101024, 2105632
+EventInstance::setTimelinePosition, 2105632, 10448
+EventInstance::start, 2105632
+# Finished printing initial instance state
+Playback::frame, 31744
+System::setParameterByID, {4060496566,2468639608}, 1, true
+System::setListenerAttributes, 0, {{0,66.9519,-37.5},{0,0,0},{0,-0.866025,0.5},{0,0.5,0.866025}}, {0,0,0}, false
+EventInstance::set3DAttributes, 2104608, {{0,66.9519,-37.5},{0,0,0},{0,-0.866025,0.5},{0,0.5,0.866025}}
+System::getBus, {c82f6295-5ab8-436b-a8e1-11837ed78744}, 2098976
+Bus::setMute, 2098976, false

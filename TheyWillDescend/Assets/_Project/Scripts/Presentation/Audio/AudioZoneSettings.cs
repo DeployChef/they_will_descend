@@ -44,6 +44,19 @@ namespace TheyWillDescend.Presentation.Audio
         [Tooltip("Гистерезис возрождения ячейки (м), чтобы инстанс не дёргался на границе.")]
         [SerializeField] float zoneDeathHysteresis = 5f;
 
+        [Tooltip("Ближний радиус (м): ячейки в нём НЕ умирают за конусом камеры — живут постоянно, приглушёнными (приглушение за спиной делает FMOD, Event Orientation). Считается по ГОРИЗОНТАЛИ от позиции камеры (а камера в небе). Подбери под HQ-зону LOD ивента. 0 = ячейки за конусом умирают как раньше.")]
+        [SerializeField] float nearKeepAliveRadius = 40f;
+
+        [Header("FlyBy (доплер пролёта)")]
+        [Tooltip("RTPC-параметр пролёта на ивенте Ambience_Town (−1..1: +1 камера летит на ячейку, −1 удаляется). Параметр должен быть Game Parameter на САМОМ ивенте (не вложенном). Пустая строка = выкл.")]
+        [SerializeField] string flyByRtpcName = "FlyBy";
+
+        [Tooltip("Скорость нормализации FlyBy (м/с): радиальная скорость камеры к ячейке делится на неё, дальше кламп −1..1.")]
+        [SerializeField] float flyByMaxSpeed = 30f;
+
+        [Tooltip("Порог скорости камеры (м/с): медленнее — FlyBy = 0, питч не плывёт при обычном панорамировании.")]
+        [SerializeField] float flyByGateSpeed = 5f;
+
         [Header("Random Town SFX (живчик города)")]
         [Tooltip("Одноразовый ивент городских случайностей. Лежит в том же банке, что и основной амбиент. Перетаскивается из FMOD Studio.")]
         [SerializeField] EventReference sfxRandomEventReference;
@@ -110,6 +123,18 @@ namespace TheyWillDescend.Presentation.Audio
 
         public float ZoneDeathDistance => zoneDeathDistance;
         public float ZoneDeathHysteresis => zoneDeathHysteresis;
+
+        /// <summary>Ближний радиус (м): в нём ячейки живут и за конусом камеры (приглушает FMOD). 0 = выкл.</summary>
+        public float NearKeepAliveRadius => nearKeepAliveRadius > 0f ? nearKeepAliveRadius : 0f;
+
+        /// <summary>Имя RTPC пролёта (пустое = фича выключена).</summary>
+        public string FlyByRtpcName => flyByRtpcName;
+
+        /// <summary>Скорость нормализации FlyBy (м/с).</summary>
+        public float FlyByMaxSpeed => flyByMaxSpeed > 0f ? flyByMaxSpeed : 30f;
+
+        /// <summary>Порог скорости камеры для FlyBy (м/с).</summary>
+        public float FlyByGateSpeed => flyByGateSpeed;
         public bool LogZoneActivity => logZoneActivity;
         public bool ShowZoneLabels => showZoneLabels;
         public bool LogSfxRandom => logSfxRandom;

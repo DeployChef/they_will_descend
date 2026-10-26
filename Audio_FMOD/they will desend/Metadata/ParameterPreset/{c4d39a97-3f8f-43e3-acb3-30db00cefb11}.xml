@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{c4d39a97-3f8f-43e3-acb3-30db00cefb11}">
+		<property name="name">
+			<value>FlyBy</value>
+		</property>
+		<relationship name="folder">
+			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{6757d01c-ff76-4e45-b078-b398bd3be056}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{6757d01c-ff76-4e45-b078-b398bd3be056}">
+		<property name="minimum">
+			<value>-1</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

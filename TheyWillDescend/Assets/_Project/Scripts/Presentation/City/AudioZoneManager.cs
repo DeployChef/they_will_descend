@@ -314,6 +314,23 @@ namespace TheyWillDescend.Presentation.City
             var deathDist = settings.ZoneDeathDistance;
             var deathHyst = settings.ZoneDeathHysteresis;
 
+            // Доплер пролёта (FlyBy): сглаженная скорость камеры от RTS-контроллера.
+            var flyByName = settings.FlyByRtpcName;
+            var flyBySpeed = !string.IsNullOrEmpty(flyByName);
+            var flyByMax = settings.FlyByMaxSpeed;
+            var flyByGate = settings.FlyByGateSpeed;
+            var camVel = Vector3.zero;
+            if (flyBySpeed)
+            {
+                if (_rtsController == null && !_lookedForRtsController)
+                {
+                    _lookedForRtsController = true;
+                    _rtsController = FindFirstObjectByType<RTSCameraController>();
+                }
+                if (_rtsController != null)
+                    camVel = _rtsController.Velocity;
+            }
+
             for (var i = 0; i < _cells.Count; i++)
             {
                 var cell = _cells[i];
@@ -323,9 +340,20 @@ namespace TheyWillDescend.Presentation.City
                 cell.UpdateDistanceDeath(camPos, deathDist, deathHyst);
 
                 if (cell.IsActive)
+                {
                     cell.UpdateDistanceRtpc(camPos, rtpcName, rtpcRange);
+
+                    if (flyBySpeed)
+                        cell.UpdateFlyByRtpc(camPos, camVel, flyByName, flyByMax, flyByGate);
+                }
             }
         }
+
+        /// <summary>RTS-контроллер камеры (ленивый поиск): скорость для доплера FlyBy.</summary>
+        private RTSCameraController _rtsController;
+
+        /// <summary>Пытались ли найти RTS-контроллер.</summary>
+        private bool _lookedForRtsController;
 
         void OnDestroy() => ClearCells();
 

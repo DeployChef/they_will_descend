@@ -4,8 +4,11 @@
 		<property name="color">
 			<value>Blue</value>
 		</property>
+		<property name="volume">
+			<value>-12</value>
+		</property>
 		<property name="name">
-			<value>GENERATIVE</value>
+			<value>MUSIC</value>
 		</property>
 		<property name="maxInstances">
 			<value>1</value>
@@ -24,19 +27,29 @@
 		<relationship name="effects">
 			<destination>{63ccd0fc-d2ba-4fa2-87fc-62a90e68e48e}</destination>
 			<destination>{628777d5-4e9c-4007-a967-3472a92514f8}</destination>
+			<destination>{6fb4ebbd-3505-41c1-a309-8e93517e7978}</destination>
 		</relationship>
 	</object>
-	<object class="MixerBusPanner" id="{a44ef062-205c-4595-a715-e7069b5d047b}" />
+	<object class="MixerBusPanner" id="{a44ef062-205c-4595-a715-e7069b5d047b}">
+		<property name="overridingOutputFormat">
+			<value>1</value>
+		</property>
+	</object>
 	<object class="MixerBusFader" id="{63ccd0fc-d2ba-4fa2-87fc-62a90e68e48e}" />
 	<object class="MixerSend" id="{628777d5-4e9c-4007-a967-3472a92514f8}">
 		<property name="level">
 			<value>0</value>
 		</property>
 		<property name="inputFormat">
-			<value>5</value>
+			<value>2</value>
 		</property>
 		<relationship name="mixerReturn">
 			<destination>{c311acd4-a2b2-4a29-8c24-bce558d6064a}</destination>
 		</relationship>
+	</object>
+	<object class="LowpassSimpleEffect" id="{6fb4ebbd-3505-41c1-a309-8e93517e7978}">
+		<property name="cutoff">
+			<value>22000</value>
+		</property>
 	</object>
 </objects>
