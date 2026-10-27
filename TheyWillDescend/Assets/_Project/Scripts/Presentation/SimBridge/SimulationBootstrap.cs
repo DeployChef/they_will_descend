@@ -62,6 +62,7 @@ namespace TheyWillDescend.Presentation.SimBridge
                 DeltaTime = 0f
             });
             em.AddComponentData(session, new AgentIdSequence());
+            em.AddComponentData(session, new WorkforceSummary());
             em.AddBuffer<SimClockCommand>(session);
             em.AddBuffer<BuildingRejectedEvent>(session);
 

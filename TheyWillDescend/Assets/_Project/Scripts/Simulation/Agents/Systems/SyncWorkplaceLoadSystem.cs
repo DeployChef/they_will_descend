@@ -6,7 +6,7 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Recounts AssignedCount / WorkingCount from agents. Assignment is the write model.
+    /// Recounts WorkingCount after commute. AssignedCount belongs to the dispatcher.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -26,7 +26,6 @@ namespace TheyWillDescend.Simulation.Agents
                          .WithAll<Building>()
                          .WithNone<Construction>())
             {
-                workplace.ValueRW.AssignedCount = 0;
                 workplace.ValueRW.WorkingCount = 0;
             }
 
@@ -41,10 +40,10 @@ namespace TheyWillDescend.Simulation.Agents
                     continue;
                 if (!workplaces.HasComponent(house) || constructions.HasComponent(house))
                     continue;
+                if (job.Arrived == 0 || job.HasConstructionTask)
+                    continue;
                 var workplace = workplaces.GetRefRW(house);
-                workplace.ValueRW.AssignedCount++;
-                if (job.Arrived != 0 && !job.HasConstructionTask)
-                    workplace.ValueRW.WorkingCount++;
+                workplace.ValueRW.WorkingCount++;
             }
         }
     }

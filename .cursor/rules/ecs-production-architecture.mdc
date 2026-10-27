@@ -29,7 +29,8 @@ Tick: Commands → commute/construction → production → day clock. Needs/Laws
 - One write model: ECS simulation world
 - Systems = domain rules; components = state; avoid rich OO aggregates on entities
 - Two writes from the player. **Desired state** is a field on an entity the player already has (`Workplace.DesiredWorkers`, building pause, a feed rate): the UI sets it, the next system reconciles the world to it. **One-shot actions** stay requests (`SimCommands` / a request entity): place, demolish, spawn, pay, clock, ritual. They change structure or must land in order on the tick.
-- UI does not write outcomes: stocks, loyalty, positions, `WorkingCount`. A button may read to grey itself. The clamp lives in the system.
+- Systems never write player desired fields (`DesiredWorkers`, `Paused`). They reconcile facts (`AssignedCount`) to the desire. Pause does not release crew.
+- UI does not write outcomes: stocks, loyalty, positions, `WorkingCount`. A button may read to grey itself. Slot clamp for the + button is UI; unmet demand is a visible shortage, not a rewrite of desire.
 - Singletons for global state (`GameTime`, `SimControl`, ledgers) — not VContainer in core
 - DI only optional in Presentation (UI, FMOD, save)
 - ScriptableObjects/authoring = design-time; runtime truth = entities

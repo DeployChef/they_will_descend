@@ -18,8 +18,6 @@ namespace TheyWillDescend.Simulation.City
             if (em.HasComponent<Workplace>(site))
             {
                 var wp = em.GetComponentData<Workplace>(site);
-                wp.DesiredWorkers = 0;
-                wp.Paused = 1;
                 wp.AssignedCount = 0;
                 wp.WorkingCount = 0;
                 em.SetComponentData(site, wp);

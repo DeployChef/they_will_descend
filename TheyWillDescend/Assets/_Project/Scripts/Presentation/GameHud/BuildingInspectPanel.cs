@@ -176,14 +176,14 @@ namespace TheyWillDescend.Presentation.GameHud
             var onShift = TryGetGameTime(em, out var time) && time.IsWorkShift;
             if (slots < 0)
                 slots = 0;
-            CountWorkforce(em, out var totalWorkers, out var totalDesired, out var freeWorkers);
+            var summary = em.HasComponent<WorkforceSummary>(bag)
+                ? em.GetComponentData<WorkforceSummary>(bag)
+                : default;
             if (workers != null)
-            {
-                workers.text = $"{workplace.DesiredWorkers} / {slots}";
-            }
+                workers.text = $"{occupied} / {workplace.DesiredWorkers}";
 
             if (idle != null)
-                idle.text = $"Idle workers  {freeWorkers}";
+                idle.text = $"Idle workers  {summary.IdleWorkers}";
 
             if (constructing)
             {
@@ -252,9 +252,9 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             var canStaff = !constructing && slots > 0;
-            HudButtons.SetInteractable(plusButton, canStaff && workplace.DesiredWorkers < slots && freeWorkers > 0);
+            HudButtons.SetInteractable(plusButton, canStaff && workplace.DesiredWorkers < slots);
             HudButtons.SetInteractable(minusButton, canStaff && workplace.DesiredWorkers > 0);
-            HudButtons.SetInteractable(maxPlusButton, canStaff && workplace.DesiredWorkers < slots && freeWorkers > 0);
+            HudButtons.SetInteractable(maxPlusButton, canStaff && workplace.DesiredWorkers < slots);
             HudButtons.SetInteractable(maxMinusButton, canStaff && workplace.DesiredWorkers > 0);
 
             HudButtons.SetInteractable(powerButton, !constructing && slots > 0);
@@ -347,33 +347,6 @@ namespace TheyWillDescend.Presentation.GameHud
             return resourceId.ToString();
         }
 
-        static void CountWorkforce(EntityManager em, out int totalWorkers, out int totalDesired, out int freeWorkers)
-        {
-            using var agentQuery = em.CreateEntityQuery(
-                ComponentType.ReadOnly<AgentId>(),
-                ComponentType.ReadOnly<AgentType>());
-            using var types = agentQuery.ToComponentDataArray<AgentType>(Allocator.Temp);
-            totalWorkers = 0;
-            for (var i = 0; i < types.Length; i++)
-            {
-                if (types[i].Kind == AgentKind.Worker)
-                    totalWorkers++;
-            }
-
-            using var buildingQuery = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadOnly<Workplace>());
-            using var workplaces = buildingQuery.ToComponentDataArray<Workplace>(Allocator.Temp);
-            totalDesired = 0;
-            for (var i = 0; i < workplaces.Length; i++)
-            {
-                if (!workplaces[i].IsPaused)
-                    totalDesired += workplaces[i].DesiredWorkers;
-            }
-
-            freeWorkers = Mathf.Max(0, totalWorkers - totalDesired);
-        }
-
         static void CountConstructionCrew(
             EntityManager em,
             Entity site,
@@ -437,10 +410,6 @@ namespace TheyWillDescend.Presentation.GameHud
             if (workplace.DesiredWorkers >= slots)
                 return;
 
-            CountWorkforce(em, out _, out _, out var freeWorkers);
-            if (freeWorkers <= 0)
-                return;
-
             workplace.DesiredWorkers++;
             em.SetComponentData(entity, workplace);
             Show(entity);
@@ -464,16 +433,10 @@ namespace TheyWillDescend.Presentation.GameHud
             var slots = em.HasComponent<BuildingType>(entity)
                 ? em.GetComponentData<BuildingType>(entity).WorkplaceSlots
                 : 0;
-            var needed = slots - workplace.DesiredWorkers;
-            if (needed <= 0)
+            if (workplace.DesiredWorkers >= slots)
                 return;
 
-            CountWorkforce(em, out _, out _, out var freeWorkers);
-            if (freeWorkers <= 0)
-                return;
-
-            var add = Mathf.Min(needed, freeWorkers);
-            workplace.DesiredWorkers += add;
+            workplace.DesiredWorkers = slots;
             em.SetComponentData(entity, workplace);
             Show(entity);
         }

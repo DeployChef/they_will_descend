@@ -1,5 +1,7 @@
 # 04. Ф3 — Честный desired state
 
+**Статус: сделано** (2026-10-27). `DesiredWorkers` пишет только UI / restore / spawn. Пауза не отпускает штат. Раздача по `Building.Id`. Сводка `WorkforceSummary` на сессии.
+
 ← [[03 F2 Entity Identity]] | [[Index]] | далее [[05 F4 Inputs]]
 
 Делать после Ф2: диспетчер уже ходит по `Entity`.

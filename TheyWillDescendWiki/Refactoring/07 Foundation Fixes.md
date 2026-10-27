@@ -312,6 +312,8 @@ foreach (var (assignment, motor, pose) in SystemAPI.Query<
 
 ## 5. Ф3. Рабочая сила: честный desired state
 
+> **Статус: сделано.** Подробности реализации: [[07-ECS/04 F3 Workforce]].
+
 ### 5.1. Диагноз
 
 ```csharp

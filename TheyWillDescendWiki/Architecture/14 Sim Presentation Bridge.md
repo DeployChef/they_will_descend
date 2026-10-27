@@ -23,7 +23,7 @@ Gameplay Presentation **никогда не запускает consume вруч�
 
 Два входа, оба канон:
 
-- **Желание.** Игрок уже держит `Entity` (выбор луча, штаб). Кнопка пишет поле, которое система считает входом: `Workplace.DesiredWorkers`, `Workplace.Paused`. Следующий тик `WorkforceDispatchSystem` сам добирает и отпускает людей. Команда назначения для этого не нужна: откат при смерти рабочего живёт в том же тике.
+- **Желание.** Игрок уже держит `Entity` (выбор луча, штаб). Кнопка пишет только поле входа: `Workplace.DesiredWorkers`, `Workplace.Paused`. Система желание не трогает. `+` серый только при `DesiredWorkers >= slots` — свободные люди не блокируют заказ. Недобор виден в строке `{assigned} / {desired}` и в `WorkforceSummary`. Следующий тик диспетчер добирает и отпускает людей.
 - **Разовое действие.** Поставить, снести, заспавнить, заплатить, сменить режим часов, ритуал. Это запрос (`SimCommands` или request-сущность). `CommandSystemGroup` применяет его на следующем тике, по порядку.
 
 Выбор дома — `BuildingSelection.Selected` / `Hovered` как `Entity`. Клик читает `BuildingIdTag.Target`. Инспектор не ищет дом по `Building.Id`: `em.Exists(Selected)` и компоненты этой сущности. Снос: `DemolishBuildingRequest.Building`. JSON сейва `Entity` не хранит.
