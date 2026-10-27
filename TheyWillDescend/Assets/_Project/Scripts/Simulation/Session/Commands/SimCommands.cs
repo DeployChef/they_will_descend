@@ -1,6 +1,5 @@
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 using TheyWillDescend.Simulation.City;
 
 namespace TheyWillDescend.Simulation.Session
@@ -17,12 +16,7 @@ namespace TheyWillDescend.Simulation.Session
             if (!SimWorld.TryGet(out var em, out var bag))
                 return false;
             if (!em.HasBuffer<T>(bag))
-            {
-                using var query = em.CreateEntityQuery(ComponentType.ReadWrite<T>());
-                if (query.CalculateEntityCount() != 1)
-                    return false;
-                bag = query.GetSingletonEntity();
-            }
+                return false;
             em.GetBuffer<T>(bag).Add(command);
             return true;
         }
@@ -33,6 +27,7 @@ namespace TheyWillDescend.Simulation.Session
             if (!SimWorld.TryGetEntityManager(out var em))
                 return false;
             var entity = em.CreateEntity();
+            RunWorld.Own(em, entity);
             em.AddComponentData(entity, request);
             return true;
         }
@@ -44,6 +39,7 @@ namespace TheyWillDescend.Simulation.Session
             if (validCount < 2 || nodes.Length < validCount)
                 return false;
             var entity = em.CreateEntity();
+            RunWorld.Own(em, entity);
             em.AddComponentData(entity, new PlaceRoadStrokeRequest
             {
                 ValidPointCount = validCount
@@ -61,5 +57,4 @@ namespace TheyWillDescend.Simulation.Session
             return Request(new DemolishRoadRequest { SegmentId = segmentId });
         }
     }
-
 }

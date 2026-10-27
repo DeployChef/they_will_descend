@@ -7,7 +7,6 @@ namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(ConsumePlaceBuildingCommandsSystem))]
-    [UpdateBefore(typeof(FinalizeSimSessionLifecycleSystem))]
     public partial struct ConsumePlaceRoadStrokeSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -28,14 +27,20 @@ namespace TheyWillDescend.Simulation.City
             if (network.SectionLength < 0.05f)
                 network.SectionLength = RoadMath.SectionLength(grid.Config);
 
-            if (em.GetComponentData<SimSession>(session).AcceptsSetupCommands)
-                RoadSections.SeedInnerRing(em, session, ref grid, ref network);
-
             var query = SystemAPI.QueryBuilder()
                 .WithAll<PlaceRoadStrokeRequest, RoadStrokePoint>()
                 .Build();
             if (query.IsEmptyIgnoreFilter)
             {
+                em.SetComponentData(session, grid);
+                em.SetComponentData(session, network);
+                return;
+            }
+
+            if (em.GetComponentData<SimControl>(session).SessionInGame == 0)
+            {
+                using var leftover = query.ToEntityArray(Allocator.Temp);
+                em.DestroyEntity(leftover);
                 em.SetComponentData(session, grid);
                 em.SetComponentData(session, network);
                 return;

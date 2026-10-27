@@ -201,8 +201,6 @@ namespace TheyWillDescend.Presentation.City
             if (!SimCommands.Request(new PlaceBuildingRequest
                 {
                     TypeId = _typeId,
-                    WidthClusters = _footprint.WidthClusters,
-                    DepthRadialRings = _footprint.DepthRadialRings,
                     AnchorCluster = _anchorCluster,
                     AnchorRadial = _anchorRadial
                 }))

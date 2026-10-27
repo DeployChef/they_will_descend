@@ -1,4 +1,5 @@
 using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -21,12 +22,6 @@ namespace TheyWillDescend.Simulation.Research
             return true;
         }
 
-        public static bool CommandsDrained(EntityManager em)
-        {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<SetActiveResearchRequest>());
-            return query.IsEmptyIgnoreFilter;
-        }
-
         public static void DestroyAll(EntityManager em)
         {
             using var cards = em.CreateEntityQuery(ComponentType.ReadOnly<TechCard>());
@@ -42,8 +37,10 @@ namespace TheyWillDescend.Simulation.Research
         /// </summary>
         public static int Populate(EntityManager em, TechCatalogAsset[] catalogs)
         {
+            em.CompleteAllTrackedJobs();
             DestroyAll(em);
             var board = em.CreateEntity();
+            RunWorld.Own(em, board);
             em.AddComponentData(board, ResearchControl.Initial);
             em.AddComponentData(board, new ResearchCapacity());
             em.AddBuffer<UnlockedBuilding>(board);
@@ -145,6 +142,7 @@ namespace TheyWillDescend.Simulation.Research
             }
 
             var card = em.CreateEntity();
+            RunWorld.Own(em, card);
             em.AddComponentData(card, new TechCard());
             em.AddComponentData(card, new TechInfo
             {

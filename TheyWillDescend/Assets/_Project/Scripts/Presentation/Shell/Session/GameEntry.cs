@@ -52,8 +52,6 @@ namespace TheyWillDescend.Presentation.Shell
 
         public void Initialize()
         {
-            // TEMPORARY until 07 Ф1: the ECS world outlives the scene, so the run is reset
-            // asynchronously before Game unloads. Correct shape: sync wipe in the scope's Dispose.
             _teardown = _transition.RegisterTeardown(EndRun);
 
             _loading.Add(AcquireWorldBanks(_life.Token), weight: 1f, label: "Loading sounds...");

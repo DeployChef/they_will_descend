@@ -17,9 +17,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.SimBridge
 {
     /// <summary>
-    /// Synchronous pure C# runtime bootstrap.
-    /// Replaces the SubScene bake cycle for catalogs, grid, rules, and the Headquarters.
-    /// Runs in 0 milliseconds and eliminates the 30-second bake timeout.
+    /// Synchronous C# runtime bootstrap. Always creates a fresh session; the caller wipes first.
     /// </summary>
     public static class SimulationBootstrap
     {
@@ -29,78 +27,67 @@ namespace TheyWillDescend.Presentation.SimBridge
             ResourceCatalogAsset resourceCatalog,
             SimRulesAsset rules,
             TimelineCatalogAsset timelineCatalog,
-            StoryPackAsset storyPack = null,
+            StoryPackAsset storyPack,
+            DifficultyProfile difficulty,
+            out BuildingPrototype[] catalog,
+            out BuildingCatalogRecipe[] recipes,
+            out BuildingCatalogCost[] costs,
+            out ResourceAmount[] stock,
+            out ResourceInfo[] info,
             RadialGridConfig? gridConfig = null)
         {
-            using var sessionQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimSession>());
-
-            Entity session;
-            if (sessionQuery.CalculateEntityCount() > 0)
+            catalog = default;
+            recipes = default;
+            costs = default;
+            stock = default;
+            info = default;
+            using var leftover = em.CreateEntityQuery(ComponentType.ReadOnly<SimSession>());
+            if (!leftover.IsEmptyIgnoreFilter)
             {
-                using var sessions = sessionQuery.ToEntityArray(Allocator.Temp);
-                session = sessions[0];
-                for (var i = 1; i < sessions.Length; i++)
-                    em.DestroyEntity(sessions[i]);
-            }
-            else
-            {
-                session = em.CreateEntity();
+                Debug.LogError("InitializeRun: a session still exists. Wipe the run first.");
+                return Entity.Null;
             }
 
-            using var gameTimeQuery = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (gameTimeQuery.CalculateEntityCount() > 0)
-            {
-                using var gameTimes = gameTimeQuery.ToEntityArray(Allocator.Temp);
-                for (var i = 0; i < gameTimes.Length; i++)
-                {
-                    if (gameTimes[i] != session)
-                        em.DestroyEntity(gameTimes[i]);
-                }
-            }
+            var session = em.CreateEntity();
+            RunWorld.Own(em, session);
+            em.AddComponent<SimSession>(session);
+#if UNITY_EDITOR
+            em.SetName(session, "SimSession");
+#endif
 
-            // Lifecycle & Control
-            EnsureComponent(em, session, new SimControl
+            em.AddComponentData(session, new SimControl
             {
                 Mode = SimRunMode.Off,
                 Speed = 1,
                 DeltaTime = 0f
             });
-            EnsureComponent(em, session, new SimSession { Phase = SimSessionPhase.Unprepared });
-            EnsureComponent(em, session, new AgentIdSequence());
-            EnsureComponent(em, session, new PendingScenarioSpawns());
+            em.AddComponentData(session, new AgentIdSequence());
+            em.AddBuffer<SimClockCommand>(session);
+            em.AddBuffer<BuildingRejectedEvent>(session);
 
-            // Lifecycle command queues
-            EnsureBuffer<SimClockCommand>(em, session);
-            EnsureBuffer<DespawnAllAgentsCommand>(em, session);
-            EnsureBuffer<DespawnAllBuildingsCommand>(em, session);
-            EnsureBuffer<BuildingRejectedEvent>(em, session);
-            EnsureBuffer<PendingScenarioPlace>(em, session);
-
-            // City Grid
             var cfg = gridConfig ?? RadialGridConfig.Default;
             if (!cfg.IsValid)
                 cfg = RadialGridConfig.Default;
 
-            EnsureComponent(em, session, new CityGrid
+            em.AddComponentData(session, new CityGrid
             {
                 Config = cfg,
                 Center = float3.zero,
                 Ready = 1,
                 NextBuildingId = 1
             });
-            EnsureBuffer<OccupiedCell>(em, session);
-            EnsureComponent(em, session, new RoadNetwork
+            em.AddBuffer<OccupiedCell>(session);
+            em.AddComponentData(session, new RoadNetwork
             {
                 SectionLength = RoadMath.SectionLength(cfg),
                 NextSegmentId = 1
             });
-            EnsureBuffer<RoadSegment>(em, session);
+            em.AddBuffer<RoadSegment>(session);
 
-            // Rules, Clock & PyramidConfig
             if (rules != null)
             {
-                EnsureComponent(em, session, rules.CreateClock());
-                EnsureComponent(em, session, new PyramidConfig
+                em.AddComponentData(session, rules.CreateClock());
+                em.AddComponentData(session, new PyramidConfig
                 {
                     EraChangeHour = rules.EraChangeHour,
                     DefaultStockCap = rules.DefaultStockCap,
@@ -109,13 +96,13 @@ namespace TheyWillDescend.Presentation.SimBridge
             }
             else
             {
-                EnsureComponent(em, session, new GameTime
+                em.AddComponentData(session, new GameTime
                 {
                     DayDuration = 60f,
                     WorkShiftStartHour = 6f,
                     WorkShiftEndHour = 18f
                 });
-                EnsureComponent(em, session, new PyramidConfig
+                em.AddComponentData(session, new PyramidConfig
                 {
                     EraChangeHour = 8f,
                     DefaultStockCap = 2000f,
@@ -123,139 +110,181 @@ namespace TheyWillDescend.Presentation.SimBridge
                 });
             }
 
-            // SimPrototypes
-            var workerSpeed = rules != null ? rules.WorkerSpeed : 2f;
-            EnsureAgentPrototype(em, session, workerSpeed);
-
-            // Catalogs
-            PopulateBuildingCatalog(em, session, buildingCatalog);
+            PopulateBuildingCatalog(em, session, buildingCatalog, difficulty, out catalog, out recipes, out costs);
             var defaultCap = rules != null ? rules.DefaultStockCap : 2000f;
-            PopulateResourceCatalog(em, session, resourceCatalog, defaultCap);
+            PopulateResourceCatalog(resourceCatalog, defaultCap, out stock, out info);
             PopulateTimelineCatalog(em, session, timelineCatalog);
             StoryBake.Apply(em, session, storyPack);
-
-            // Headquarters
-            EnsureHeadquarters(em, session);
-
             return session;
         }
 
-        static void EnsureComponent<T>(EntityManager em, Entity entity, in T data) where T : unmanaged, IComponentData
+        public static void SpawnRunEntities(EntityManager em, Entity session, float workerSpeed, ResourceInfo[] info)
         {
-            if (em.HasComponent<T>(entity))
-                em.SetComponentData(entity, data);
-            else
-                em.AddComponentData(entity, data);
+            CreateAgentPrototype(em, session, workerSpeed);
+            CreateHeadquarters(em, info);
         }
 
-        static DynamicBuffer<T> EnsureBuffer<T>(EntityManager em, Entity entity) where T : unmanaged, IBufferElementData
+        static void CreateAgentPrototype(EntityManager em, Entity session, float speed)
         {
-            return em.HasBuffer<T>(entity) ? em.GetBuffer<T>(entity) : em.AddBuffer<T>(entity);
-        }
-
-        static void EnsureAgentPrototype(EntityManager em, Entity session, float speed)
-        {
-            var existing = em.HasComponent<SimPrototypes>(session)
-                ? em.GetComponentData<SimPrototypes>(session).Agent
-                : Entity.Null;
-
-            if (existing != Entity.Null && em.Exists(existing))
-            {
-                if (em.HasComponent<AgentLocomotion>(existing))
-                {
-                    var loco = em.GetComponentData<AgentLocomotion>(existing);
-                    loco.Speed = speed;
-                    em.SetComponentData(existing, loco);
-                }
-                return;
-            }
-
             var prototype = em.CreateEntity();
+            RunWorld.Own(em, prototype);
             em.AddComponent<Prefab>(prototype);
             em.AddComponentData(prototype, new AgentLocomotion { Speed = speed });
             em.AddComponent<AgentAssignment>(prototype);
             em.AddComponent<AgentPlazaIdle>(prototype);
             em.AddComponent<AgentId>(prototype);
             em.AddComponentData(prototype, new AgentType { Kind = AgentKind.Worker });
-
-            EnsureComponent(em, session, new SimPrototypes { Agent = prototype });
+            em.AddComponentData(session, new SimPrototypes { Agent = prototype });
+#if UNITY_EDITOR
+            em.SetName(prototype, "AgentPrototype");
+#endif
         }
 
-        static void PopulateBuildingCatalog(EntityManager em, Entity session, BuildingCatalogAsset catalog)
+        static void PopulateBuildingCatalog(
+            EntityManager em,
+            Entity session,
+            BuildingCatalogAsset catalog,
+            DifficultyProfile difficulty,
+            out BuildingPrototype[] catalogCopy,
+            out BuildingCatalogRecipe[] recipeCopy,
+            out BuildingCatalogCost[] costCopy)
         {
-            EnsureBuffer<BaseBuildingPrototype>(em, session);
-            EnsureBuffer<BaseBuildingCatalogCost>(em, session);
-            EnsureBuffer<BaseBuildingCatalogRecipe>(em, session);
-            EnsureBuffer<BuildingPrototype>(em, session);
-            EnsureBuffer<BuildingCatalogCost>(em, session);
-            EnsureBuffer<BuildingCatalogRecipe>(em, session);
+            catalogCopy = System.Array.Empty<BuildingPrototype>();
+            recipeCopy = System.Array.Empty<BuildingCatalogRecipe>();
+            costCopy = System.Array.Empty<BuildingCatalogCost>();
+            var protoList = new List<BuildingPrototype>();
+            var costList = new List<BuildingCatalogCost>();
+            var recipeList = new List<BuildingCatalogRecipe>();
 
-            var basePrototypes = em.GetBuffer<BaseBuildingPrototype>(session);
-            var baseCosts = em.GetBuffer<BaseBuildingCatalogCost>(session);
-            var baseRecipes = em.GetBuffer<BaseBuildingCatalogRecipe>(session);
-            var prototypes = em.GetBuffer<BuildingPrototype>(session);
-            var costs = em.GetBuffer<BuildingCatalogCost>(session);
-            var recipes = em.GetBuffer<BuildingCatalogRecipe>(session);
-
-            basePrototypes.Clear();
-            baseCosts.Clear();
-            baseRecipes.Clear();
-            prototypes.Clear();
-            costs.Clear();
-            recipes.Clear();
-
-            if (catalog == null)
-                return;
-
-            var seen = new HashSet<string>(System.StringComparer.Ordinal);
-            var prefabs = catalog.Prefabs;
-            if (prefabs == null)
-                return;
-
-            for (var i = 0; i < prefabs.Count; i++)
+            if (catalog != null && catalog.Prefabs != null)
             {
-                var prefab = prefabs[i];
-                if (prefab == null)
-                    continue;
-
-                var stamp = prefab.GetComponent<BuildingStamp>();
-                if (stamp == null)
-                    continue;
-
-                var typeId = stamp.TypeId;
-                if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
-                    continue;
-
-                if (!seen.Add(typeId))
-                    continue;
-
-                var basePrototype = new BaseBuildingPrototype
+                var seen = new HashSet<string>(System.StringComparer.Ordinal);
+                var prefabs = catalog.Prefabs;
+                for (var i = 0; i < prefabs.Count; i++)
                 {
-                    TypeId = typeKey,
-                    WidthClusters = stamp.WidthClusters,
-                    DepthRadialRings = stamp.DepthRadialRings,
-                    ConstructionDuration = stamp.ConstructionDuration,
-                    ConstructionCrewSlots = stamp.ConstructionCrewSlots,
-                    WorkplaceSlots = stamp.WorkplaceSlots,
-                    ResearchWorkplace = stamp.IsResearchWorkplace ? (byte)1 : (byte)0,
-                    RequiresUnlock = stamp.RequiresUnlock ? (byte)1 : (byte)0,
-                    StrokePaint = stamp.StrokePaint ? (byte)1 : (byte)0
-                };
-                basePrototypes.Add(basePrototype);
-                prototypes.Add(basePrototype.ToResolved());
+                    var prefab = prefabs[i];
+                    if (prefab == null)
+                        continue;
 
-                AddCosts(baseCosts, costs, typeKey, stamp.Costs);
-                if (stamp.HasRecipe)
-                {
-                    AddRecipe(baseRecipes, recipes, typeKey, stamp.RecipeInputs, BuildingRecipeKind.Input);
-                    AddRecipe(baseRecipes, recipes, typeKey, stamp.RecipeOutputs, BuildingRecipeKind.Output);
+                    var stamp = prefab.GetComponent<BuildingStamp>();
+                    if (stamp == null)
+                        continue;
+
+                    var typeId = stamp.TypeId;
+                    if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
+                        continue;
+
+                    if (!seen.Add(typeId))
+                        continue;
+
+                    protoList.Add(new BuildingPrototype
+                    {
+                        TypeId = typeKey,
+                        WidthClusters = stamp.WidthClusters,
+                        DepthRadialRings = stamp.DepthRadialRings,
+                        ConstructionDuration = stamp.ConstructionDuration,
+                        ConstructionCrewSlots = ConstructionCrew.ResolveSlots(stamp.ConstructionCrewSlots),
+                        WorkplaceSlots = stamp.WorkplaceSlots,
+                        ResearchWorkplace = stamp.IsResearchWorkplace ? (byte)1 : (byte)0,
+                        RequiresUnlock = stamp.RequiresUnlock ? (byte)1 : (byte)0,
+                        StrokePaint = stamp.StrokePaint ? (byte)1 : (byte)0
+                    });
+
+                    CollectCosts(costList, typeKey, stamp.Costs);
+                    if (stamp.HasRecipe)
+                    {
+                        CollectRecipe(recipeList, typeKey, stamp.RecipeInputs, BuildingRecipeKind.Input);
+                        CollectRecipe(recipeList, typeKey, stamp.RecipeOutputs, BuildingRecipeKind.Output);
+                    }
                 }
+            }
+
+            if (difficulty != null)
+            {
+                var rows = difficulty.Buildings;
+                for (var i = 0; i < rows.Count; i++)
+                    ApplyOverride(protoList, costList, recipeList, rows[i]);
+            }
+
+            catalogCopy = protoList.ToArray();
+            recipeCopy = recipeList.ToArray();
+            costCopy = costList.ToArray();
+        }
+
+        public static void WriteCatalog(
+            EntityManager em,
+            Entity session,
+            BuildingPrototype[] catalog,
+            BuildingCatalogRecipe[] recipes,
+            BuildingCatalogCost[] costs,
+            ResourceAmount[] stock,
+            ResourceInfo[] info)
+        {
+            em.CompleteAllTrackedJobs();
+            WriteBuffer(em.AddBuffer<BuildingPrototype>(session), catalog);
+            WriteBuffer(em.AddBuffer<BuildingCatalogCost>(session), costs);
+            WriteBuffer(em.AddBuffer<BuildingCatalogRecipe>(session), recipes);
+            WriteBuffer(em.AddBuffer<ResourceAmount>(session), stock);
+            WriteBuffer(em.AddBuffer<ResourceInfo>(session), info);
+        }
+
+        static void ApplyOverride(
+            List<BuildingPrototype> prototypes,
+            List<BuildingCatalogCost> costs,
+            List<BuildingCatalogRecipe> recipes,
+            in DifficultyBuildingOverride row)
+        {
+            var typeId = row.TypeId;
+            if (string.IsNullOrEmpty(typeId) || !ContentId.TryEncode(typeId, out var typeKey))
+                return;
+            var index = -1;
+            for (var p = 0; p < prototypes.Count; p++)
+            {
+                if (prototypes[p].TypeId != typeKey)
+                    continue;
+                index = p;
+                break;
+            }
+
+            if (index < 0)
+            {
+                Debug.LogWarning($"Difficulty: unknown typeId {typeId}.");
+                return;
+            }
+
+            var spec = prototypes[index];
+            if (row.replaceConstruction)
+                spec.ConstructionDuration = row.constructionDuration < 0f ? 0f : row.constructionDuration;
+            if (row.replaceSlots)
+                spec.WorkplaceSlots = row.workplaceSlots < 0 ? 0 : row.workplaceSlots;
+            prototypes[index] = spec;
+
+            if (row.replaceCosts)
+            {
+                costs.RemoveAll(c => c.TypeId == typeKey);
+                CollectCosts(costs, typeKey, row.costs);
+            }
+
+            if (row.replaceRecipe)
+            {
+                recipes.RemoveAll(r => r.TypeId == typeKey);
+                CollectRecipe(recipes, typeKey, row.recipeInputs, BuildingRecipeKind.Input);
+                CollectRecipe(recipes, typeKey, row.recipeOutputs, BuildingRecipeKind.Output);
             }
         }
 
-        static void AddCosts(
-            DynamicBuffer<BaseBuildingCatalogCost> baseBuffer,
-            DynamicBuffer<BuildingCatalogCost> buffer,
+        static void WriteBuffer<T>(DynamicBuffer<T> buffer, T[] src)
+            where T : unmanaged, IBufferElementData
+        {
+            var length = src != null ? src.Length : 0;
+            buffer.Clear();
+            buffer.ResizeUninitialized(length);
+            for (var i = 0; i < length; i++)
+                buffer[i] = src[i];
+        }
+
+        static void CollectCosts(
+            List<BuildingCatalogCost> list,
             in FixedString64Bytes typeKey,
             BuildingCostEntry[] entries)
         {
@@ -266,20 +295,17 @@ namespace TheyWillDescend.Presentation.SimBridge
                 var entry = entries[i];
                 if (entry.Resource == null || entry.Amount <= 0.0001f)
                     continue;
-                var row = new BaseBuildingCatalogCost
+                list.Add(new BuildingCatalogCost
                 {
                     TypeId = typeKey,
                     ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
                     Amount = entry.Amount
-                };
-                baseBuffer.Add(row);
-                buffer.Add(row.ToResolved());
+                });
             }
         }
 
-        static void AddRecipe(
-            DynamicBuffer<BaseBuildingCatalogRecipe> baseBuffer,
-            DynamicBuffer<BuildingCatalogRecipe> buffer,
+        static void CollectRecipe(
+            List<BuildingCatalogRecipe> list,
             in FixedString64Bytes typeKey,
             ResourceRate[] rates,
             BuildingRecipeKind kind)
@@ -291,36 +317,31 @@ namespace TheyWillDescend.Presentation.SimBridge
                 var entry = rates[i];
                 if (entry.Resource == null || entry.PerHour <= 0.0001f)
                     continue;
-                var row = new BaseBuildingCatalogRecipe
+                list.Add(new BuildingCatalogRecipe
                 {
                     TypeId = typeKey,
                     Kind = kind,
                     ResourceId = ContentId.EncodeOrEmpty(entry.Resource.ResourceId),
                     PerHour = entry.PerHour
-                };
-                baseBuffer.Add(row);
-                buffer.Add(row.ToResolved());
+                });
             }
         }
 
-        static void PopulateResourceCatalog(EntityManager em, Entity session, ResourceCatalogAsset catalog, float defaultCap)
+        static void PopulateResourceCatalog(
+            ResourceCatalogAsset catalog,
+            float defaultCap,
+            out ResourceAmount[] stock,
+            out ResourceInfo[] info)
         {
-            EnsureBuffer<ResourceAmount>(em, session);
-            EnsureBuffer<ResourceInfo>(em, session);
-            var amounts = em.GetBuffer<ResourceAmount>(session);
-            var info = em.GetBuffer<ResourceInfo>(session);
-
-            amounts.Clear();
-            info.Clear();
-
-            if (catalog == null)
+            stock = System.Array.Empty<ResourceAmount>();
+            info = System.Array.Empty<ResourceInfo>();
+            if (catalog == null || catalog.Resources == null)
                 return;
 
+            var amounts = new List<ResourceAmount>();
+            var infos = new List<ResourceInfo>();
             var seen = new HashSet<string>(System.StringComparer.Ordinal);
             var resources = catalog.Resources;
-            if (resources == null)
-                return;
-
             for (var i = 0; i < resources.Count; i++)
             {
                 var definition = resources[i];
@@ -336,7 +357,7 @@ namespace TheyWillDescend.Presentation.SimBridge
 
                 amounts.Add(new ResourceAmount { ResourceId = key, Amount = 0f });
                 var cap = definition.StockCap > 0.0001f ? definition.StockCap : defaultCap;
-                info.Add(new ResourceInfo
+                infos.Add(new ResourceInfo
                 {
                     ResourceId = key,
                     DisplayName = definition.DisplayName,
@@ -346,33 +367,19 @@ namespace TheyWillDescend.Presentation.SimBridge
                     Category = (byte)definition.Category
                 });
             }
+
+            stock = amounts.ToArray();
+            info = infos.ToArray();
         }
 
         static void PopulateTimelineCatalog(EntityManager em, Entity session, TimelineCatalogAsset catalog)
         {
-            EnsureBuffer<EraLine>(em, session);
-            EnsureBuffer<EraTributeLine>(em, session);
-            var eras = em.GetBuffer<EraLine>(session);
-            var tribute = em.GetBuffer<EraTributeLine>(session);
-
-            eras.Clear();
-            tribute.Clear();
-
-            if (catalog == null)
-            {
-                EnsureComponent(em, session, new Timeline
-                {
-                    PreviousMaxLoyalty = 100f,
-                    TargetMaxLoyalty = 100f
-                });
-                EnsureComponent(em, session, GodLoyalty.Full());
-                return;
-            }
-
-            var specs = catalog.Eras;
+            var eraList = new List<EraLine>();
+            var tributeList = new List<EraTributeLine>();
             var firstMax = 100f;
-            if (specs != null)
+            if (catalog != null && catalog.Eras != null)
             {
+                var specs = catalog.Eras;
                 for (var i = 0; i < specs.Length; i++)
                 {
                     var spec = specs[i];
@@ -383,8 +390,7 @@ namespace TheyWillDescend.Presentation.SimBridge
                     var max = spec.maxLoyalty;
                     if (max < 0f) max = 0f;
                     else if (max > 100f) max = 100f;
-
-                    if (eras.Length == 0)
+                    if (eraList.Count == 0)
                         firstMax = max;
 
                     var name = string.IsNullOrWhiteSpace(spec.displayName) ? spec.eraId : spec.displayName;
@@ -392,7 +398,7 @@ namespace TheyWillDescend.Presentation.SimBridge
                     if (summary.Length > 500)
                         summary = summary.Substring(0, 500);
 
-                    eras.Add(new EraLine
+                    eraList.Add(new EraLine
                     {
                         EraId = id,
                         DisplayName = name,
@@ -403,71 +409,55 @@ namespace TheyWillDescend.Presentation.SimBridge
                         Summary = summary
                     });
 
-                    var eraIndex = eras.Length - 1;
+                    var eraIndex = eraList.Count - 1;
                     var gifts = spec.tribute;
-                    if (gifts != null)
+                    if (gifts == null)
+                        continue;
+                    for (var t = 0; t < gifts.Length; t++)
                     {
-                        for (var t = 0; t < gifts.Length; t++)
-                        {
-                            var res = gifts[t];
-                            if (res == null || !ContentId.TryEncode(res.ResourceId, out var resId))
-                                continue;
-
-                            tribute.Add(new EraTributeLine
-                            {
-                                EraIndex = eraIndex,
-                                ResourceId = resId
-                            });
-                        }
+                        var res = gifts[t];
+                        if (res == null || !ContentId.TryEncode(res.ResourceId, out var resId))
+                            continue;
+                        tributeList.Add(new EraTributeLine { EraIndex = eraIndex, ResourceId = resId });
                     }
                 }
             }
 
-            EnsureComponent(em, session, new Timeline
+            WriteBuffer(em.AddBuffer<EraLine>(session), eraList.ToArray());
+            WriteBuffer(em.AddBuffer<EraTributeLine>(session), tributeList.ToArray());
+            em.AddComponentData(session, new Timeline
             {
                 EraIndex = 0,
                 PreviousMaxLoyalty = firstMax,
                 TargetMaxLoyalty = firstMax
             });
-
             var loyalty = GodLoyalty.Full();
             loyalty.Value = firstMax;
             loyalty.EffectiveMax = firstMax;
-            EnsureComponent(em, session, loyalty);
+            em.AddComponentData(session, loyalty);
         }
 
-        static void EnsureHeadquarters(EntityManager em, Entity session)
+        static void CreateHeadquarters(EntityManager em, ResourceInfo[] info)
         {
-            using var hqQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Headquarters>());
-            Entity hqEntity;
-            if (hqQuery.IsEmptyIgnoreFilter)
+            var hqEntity = em.CreateEntity();
+            RunWorld.Own(em, hqEntity);
+            em.AddComponent<Headquarters>(hqEntity);
+            em.AddComponentData(hqEntity, LocalTransform.FromPosition(float3.zero));
+#if UNITY_EDITOR
+            em.SetName(hqEntity, "Headquarters");
+#endif
+            var feedLines = new List<PyramidFeedLine>();
+            if (info != null)
             {
-                hqEntity = em.CreateEntity();
-                em.AddComponent<Headquarters>(hqEntity);
-                em.AddBuffer<PyramidFeedLine>(hqEntity);
-                em.AddComponentData(hqEntity, LocalTransform.FromPosition(float3.zero));
-            }
-            else
-            {
-                hqEntity = hqQuery.GetSingletonEntity();
-            }
-
-            var feed = EnsureBuffer<PyramidFeedLine>(em, hqEntity);
-            if (em.HasBuffer<ResourceInfo>(session))
-            {
-                var info = em.GetBuffer<ResourceInfo>(session);
                 for (var i = 0; i < info.Length; i++)
                 {
-                    if (info[i].CanFeed != 0 && PyramidFeed.IndexOf(feed, info[i].ResourceId) < 0)
-                    {
-                        feed.Add(new PyramidFeedLine
-                        {
-                            ResourceId = info[i].ResourceId,
-                            PerHour = 0f
-                        });
-                    }
+                    if (info[i].CanFeed == 0)
+                        continue;
+                    feedLines.Add(new PyramidFeedLine { ResourceId = info[i].ResourceId, PerHour = 0f });
                 }
             }
+
+            WriteBuffer(em.AddBuffer<PyramidFeedLine>(hqEntity), feedLines.ToArray());
         }
     }
 }

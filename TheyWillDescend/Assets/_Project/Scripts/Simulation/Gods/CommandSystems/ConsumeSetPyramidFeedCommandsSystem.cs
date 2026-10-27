@@ -7,7 +7,6 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Gods
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateBefore(typeof(FinalizeSimSessionLifecycleSystem))]
     public partial struct ConsumeSetPyramidFeedCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)

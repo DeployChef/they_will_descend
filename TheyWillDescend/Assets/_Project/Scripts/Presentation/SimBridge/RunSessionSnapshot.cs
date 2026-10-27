@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Gods;
 using TheyWillDescend.Simulation.Research;
@@ -16,7 +14,7 @@ using Unity.Transforms;
 namespace TheyWillDescend.Presentation.SimBridge
 {
     /// <summary>
-    /// Maps ECS write model ↔ slot DTO. Does not own GameObjects.
+    /// Maps ECS write model → slot DTO. Restore is <see cref="SnapshotRestore"/>.
     /// </summary>
     public static class RunSessionSnapshot
     {
@@ -32,10 +30,9 @@ namespace TheyWillDescend.Presentation.SimBridge
             snapshot.speed = control.Speed;
             snapshot.playerPaused = control.TimePaused != 0;
 
-            using var timeQuery = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (!timeQuery.IsEmptyIgnoreFilter)
+            if (em.HasComponent<GameTime>(bag))
             {
-                var time = timeQuery.GetSingleton<GameTime>();
+                var time = em.GetComponentData<GameTime>(bag);
                 snapshot.day = time.Day;
                 snapshot.elapsedInDay = time.ElapsedInDay;
                 snapshot.dayDuration = time.DayDuration;
@@ -56,6 +53,7 @@ namespace TheyWillDescend.Presentation.SimBridge
                     };
                 }
             }
+
             CaptureResolvedCatalog(em, bag, snapshot);
 
             using var agentQuery = em.CreateEntityQuery(
@@ -109,7 +107,6 @@ namespace TheyWillDescend.Presentation.SimBridge
             plazas.Dispose();
 
             using var buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
-
             var buildingEntities = buildingQuery.ToEntityArray(Allocator.Temp);
             var buildings = buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
             snapshot.buildings = new BuildingSnapshot[buildings.Length];
@@ -155,85 +152,6 @@ namespace TheyWillDescend.Presentation.SimBridge
             GameLog.Info(
                 $"Captured snapshot: day {snapshot.day}, agents {snapshot.agents.Length}, buildings {snapshot.buildings.Length} ({constructing} constructing).");
             return snapshot;
-        }
-
-        public static bool BeginApply(RunSnapshot snapshot, TechCatalogAsset[] techCatalogs)
-        {
-            if (snapshot == null)
-                return false;
-            if (!SimWorld.TryGet(out var em, out var session)
-                || !SimSessionAccess.HasLifecycleQueues(em, session))
-            {
-                GameLog.Error("Snapshot apply: required session lifecycle queues are missing.");
-                return false;
-            }
-            em.CompleteAllTrackedJobs();
-            if (!TryRestoreResolvedCatalog(em, session, snapshot))
-            {
-                GameLog.Error("Snapshot apply: resolved building catalog is missing or invalid.");
-                return false;
-            }
-
-            RunPublisher.ClearLifecycleQueues(em, session);
-            var lifecycle = em.GetComponentData<SimSession>(session);
-            lifecycle.Phase = SimSessionPhase.Preparing;
-            em.SetComponentData(session, lifecycle);
-            var control = em.GetComponentData<SimControl>(session);
-            control.Mode = SimRunMode.Off;
-            control.SessionInGame = 0;
-            control.TimePaused = 0;
-            control.PlayerPaused = 0;
-            control.BuildLocked = 0;
-            control.DeltaTime = 0f;
-            em.SetComponentData(session, control);
-
-            em.GetBuffer<SimClockCommand>(session).Add(
-                SimClockCommand.Restore(snapshot.speed, snapshot.playerPaused));
-            em.GetBuffer<DespawnAllAgentsCommand>(session).Add(
-                new DespawnAllAgentsCommand { Requested = 1 });
-            em.GetBuffer<DespawnAllBuildingsCommand>(session).Add(
-                new DespawnAllBuildingsCommand { Requested = 1 });
-            ApplyGameTime(snapshot);
-
-            if (snapshot.buildings != null)
-            {
-                for (var i = 0; i < snapshot.buildings.Length; i++)
-                {
-                    var record = snapshot.buildings[i];
-                    SimCommands.Request(new PlaceBuildingRequest
-                    {
-                        BuildingId = record.id,
-                        TypeId = record.typeId,
-                        WidthClusters = record.widthClusters,
-                        DepthRadialRings = record.depthRadialRings,
-                        AnchorCluster = record.anchorCluster,
-                        AnchorRadial = record.anchorRadial,
-                        ConstructionElapsed = record.constructionElapsed,
-                        ConstructionDuration = record.constructionDuration,
-                        InstantComplete = record.built != 0 && record.dismantling == 0 ? (byte)1 : (byte)0,
-                        Dismantling = record.dismantling,
-                        Source = PlaceBuildingCommandSource.SnapshotRestore,
-                        DesiredWorkers = record.desiredWorkers,
-                        Paused = record.paused
-                    });
-                }
-            }
-
-            if (snapshot.agents != null)
-            {
-                for (var i = 0; i < snapshot.agents.Length; i++)
-                    EnqueueAgent(snapshot.agents[i]);
-            }
-
-            ApplyPausedBuildings(snapshot);
-            ApplyResources(snapshot);
-            ApplyGods(snapshot);
-            ResearchWorld.Populate(em, techCatalogs);
-            ApplyResearch(snapshot);
-            StorySave.QueueRestore(em, session, snapshot);
-            GameLog.Info(
-                $"Snapshot setup queued v{snapshot.version}: day {snapshot.day}, agents {snapshot.agents?.Length ?? 0}, buildings {snapshot.buildings?.Length ?? 0}.");
-            return true;
         }
 
         static void CaptureResolvedCatalog(
@@ -292,152 +210,6 @@ namespace TheyWillDescend.Presentation.SimBridge
             }
         }
 
-        static bool TryRestoreResolvedCatalog(
-            EntityManager em,
-            Entity session,
-            RunSnapshot snapshot)
-        {
-            if (snapshot.buildingCatalog == null
-                || snapshot.buildingCatalog.Length == 0
-                || !em.HasBuffer<BuildingPrototype>(session)
-                || !em.HasBuffer<BuildingCatalogCost>(session)
-                || !em.HasBuffer<BuildingCatalogRecipe>(session))
-                return false;
-
-            for (var i = 0; i < snapshot.buildingCatalog.Length; i++)
-            {
-                var row = snapshot.buildingCatalog[i];
-                if (row == null
-                    || !ContentId.TryEncode(row.typeId, out _)
-                    || row.widthClusters <= 0
-                    || row.depthRadialRings <= 0)
-                    return false;
-            }
-
-            var prototypes = em.GetBuffer<BuildingPrototype>(session);
-            prototypes.Clear();
-            for (var i = 0; i < snapshot.buildingCatalog.Length; i++)
-            {
-                var row = snapshot.buildingCatalog[i];
-                prototypes.Add(new BuildingPrototype
-                {
-                    TypeId = ContentId.EncodeOrEmpty(row.typeId),
-                    WidthClusters = row.widthClusters,
-                    DepthRadialRings = row.depthRadialRings,
-                    ConstructionDuration = math.max(0f, row.constructionDuration),
-                    ConstructionCrewSlots = ConstructionCrew.ResolveSlots(row.constructionCrewSlots),
-                    WorkplaceSlots = math.max(0, row.workplaceSlots),
-                    ResearchWorkplace = row.researchWorkplace,
-                    RequiresUnlock = row.requiresUnlock
-                });
-            }
-
-            var costs = em.GetBuffer<BuildingCatalogCost>(session);
-            costs.Clear();
-            if (snapshot.buildingCosts != null)
-            {
-                for (var i = 0; i < snapshot.buildingCosts.Length; i++)
-                {
-                    var row = snapshot.buildingCosts[i];
-                    if (row == null || row.amount <= 0.0001f)
-                        continue;
-                    var typeId = ContentId.EncodeOrEmpty(row.typeId);
-                    var resourceId = ContentId.EncodeOrEmpty(row.resourceId);
-                    if (typeId.IsEmpty || resourceId.IsEmpty)
-                        continue;
-                    costs.Add(new BuildingCatalogCost
-                    {
-                        TypeId = typeId,
-                        ResourceId = resourceId,
-                        Amount = row.amount
-                    });
-                }
-            }
-
-            var recipes = em.GetBuffer<BuildingCatalogRecipe>(session);
-            recipes.Clear();
-            if (snapshot.buildingRecipes != null)
-            {
-                for (var i = 0; i < snapshot.buildingRecipes.Length; i++)
-                {
-                    var row = snapshot.buildingRecipes[i];
-                    if (row == null || row.perHour <= 0.0001f)
-                        continue;
-                    var typeId = ContentId.EncodeOrEmpty(row.typeId);
-                    var resourceId = ContentId.EncodeOrEmpty(row.resourceId);
-                    var kind = (BuildingRecipeKind)row.kind;
-                    if (typeId.IsEmpty
-                        || resourceId.IsEmpty
-                        || (kind != BuildingRecipeKind.Input
-                            && kind != BuildingRecipeKind.Output))
-                        continue;
-                    recipes.Add(new BuildingCatalogRecipe
-                    {
-                        TypeId = typeId,
-                        Kind = kind,
-                        ResourceId = resourceId,
-                        PerHour = row.perHour
-                    });
-                }
-            }
-
-            return true;
-        }
-
-        static void ApplyPausedBuildings(RunSnapshot snapshot)
-
-        {
-            if (snapshot.buildings == null || !SimWorld.TryGet(out var em, out _))
-                return;
-
-            var pausedIds = new HashSet<int>();
-            for (var i = 0; i < snapshot.buildings.Length; i++)
-            {
-                if (snapshot.buildings[i].paused != 0)
-                    pausedIds.Add(snapshot.buildings[i].id);
-            }
-
-            if (pausedIds.Count == 0)
-                return;
-
-            using var query = em.CreateEntityQuery(
-                ComponentType.ReadOnly<Building>(),
-                ComponentType.ReadWrite<Workplace>());
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
-            for (var b = 0; b < buildings.Length; b++)
-            {
-                if (!pausedIds.Contains(buildings[b].Id))
-                    continue;
-                var workplace = em.GetComponentData<Workplace>(entities[b]);
-                workplace.Paused = 1;
-                em.SetComponentData(entities[b], workplace);
-            }
-            buildings.Dispose();
-        }
-
-        static void ApplyResources(RunSnapshot snapshot)
-        {
-            if (snapshot.resources == null || !SimWorld.TryGet(out var em, out var bag)
-                || !em.HasBuffer<ResourceAmount>(bag))
-                return;
-
-            var stock = em.GetBuffer<ResourceAmount>(bag);
-            var info = em.HasBuffer<ResourceInfo>(bag) ? em.GetBuffer<ResourceInfo>(bag) : default;
-
-            for (var i = 0; i < snapshot.resources.Length; i++)
-            {
-                var row = snapshot.resources[i];
-                if (string.IsNullOrWhiteSpace(row.resourceId))
-                    continue;
-                var id = ContentId.EncodeOrEmpty(row.resourceId);
-                if (info.IsCreated)
-                    ResourceLedger.SetClamped(stock, info, id, row.amount);
-                else
-                    ResourceLedger.Set(stock, id, row.amount);
-            }
-        }
-
         static void CaptureGods(EntityManager em, Entity bag, RunSnapshot snapshot)
         {
             if (em.HasComponent<GodLoyalty>(bag))
@@ -476,71 +248,6 @@ namespace TheyWillDescend.Presentation.SimBridge
             }
         }
 
-        static void ApplyGods(RunSnapshot snapshot)
-        {
-            if (!SimWorld.TryGet(out var em, out var bag))
-                return;
-
-            if (em.HasComponent<GodLoyalty>(bag))
-            {
-                em.SetComponentData(bag, new GodLoyalty
-                {
-                    Value = snapshot.faith,
-                    EffectiveMax = snapshot.faithMax > 0.0001f ? snapshot.faithMax : 100f
-                });
-            }
-
-            if (em.HasComponent<Timeline>(bag))
-            {
-                em.SetComponentData(bag, new Timeline
-                {
-                    EraIndex = snapshot.eraIndex,
-                    EraStartDay = snapshot.eraStartDay,
-                    EraStartElapsed = snapshot.eraStartElapsed,
-                    PreviousMaxLoyalty = snapshot.previousMaxLoyalty,
-                    TargetMaxLoyalty = snapshot.targetMaxLoyalty > 0.0001f
-                        ? snapshot.targetMaxLoyalty
-                        : 100f
-                });
-            }
-
-            if (snapshot.pyramidFeed == null)
-                return;
-            for (var i = 0; i < snapshot.pyramidFeed.Length; i++)
-            {
-                var row = snapshot.pyramidFeed[i];
-                if (string.IsNullOrWhiteSpace(row.resourceId))
-                    continue;
-                SimCommands.Request(new SetPyramidFeedRequest
-                {
-                    ResourceId = ContentId.EncodeOrEmpty(row.resourceId),
-                    PerHour = row.perHour
-                });
-            }
-        }
-
-        static void EnqueueAgent(AgentSnapshot record)
-        {
-            SimCommands.Request(new SpawnAgentRequest
-            {
-                Position = new float3(record.posX, record.posY, record.posZ),
-                Facing = new float3(record.fwdX, record.fwdY, record.fwdZ),
-                Target = new float3(record.targetX, record.targetY, record.targetZ),
-                Speed = record.speed > 0.001f ? record.speed : 2f,
-                AgentId = record.agentId,
-                WorkplaceBuildingId = record.workplaceBuildingId,
-                Arrived = record.arrived,
-                Moving = record.moving,
-                PlazaWalking = record.plazaWalking,
-                PlazaTimer = record.plazaTimer,
-                PlazaAngle = record.plazaAngle,
-                PlazaRadius = record.plazaRadius,
-                PlazaDirection = record.plazaDirection,
-                HasPose = 1,
-                Kind = (AgentKind)record.agentType
-            });
-        }
-
         static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)
         {
             if (ResearchWorld.TryGetBoard(em, out var board)
@@ -563,67 +270,6 @@ namespace TheyWillDescend.Presentation.SimBridge
                     costPaid = progress[i].CostPaid
                 };
             }
-        }
-
-        static void ApplyResearch(RunSnapshot snapshot)
-        {
-            if (!SimWorld.TryGet(out var em, out _)
-                || !ResearchWorld.TryGetBoard(em, out var board))
-                return;
-
-            using var query = em.CreateEntityQuery(
-                ComponentType.ReadWrite<TechInfo>(),
-                ComponentType.ReadWrite<ResearchProgress>());
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
-            for (var i = 0; i < entities.Length; i++)
-            {
-                var row = new ResearchProgress();
-                if (snapshot.research != null)
-                {
-                    var techId = infos[i].TechId.ToString();
-                    for (var s = 0; s < snapshot.research.Length; s++)
-                    {
-                        var saved = snapshot.research[s];
-                        if (saved == null || saved.techId != techId)
-                            continue;
-                        row.AccumulatedHours = math.max(0f, saved.accumulatedHours);
-                        row.Completed = saved.completed;
-                        row.CostPaid = saved.costPaid;
-                        break;
-                    }
-                }
-
-                em.SetComponentData(entities[i], row);
-            }
-
-            var control = ResearchControl.Initial;
-            control.ActiveTechId = ContentId.EncodeOrEmpty(snapshot.activeTechId);
-            em.SetComponentData(board, control);
-            ResearchRules.RebuildEffects(em);
-        }
-
-        static void ApplyGameTime(RunSnapshot snapshot)
-        {
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null || !world.IsCreated)
-                return;
-
-            var em = world.EntityManager;
-            using var timeQuery = em.CreateEntityQuery(ComponentType.ReadWrite<GameTime>());
-            if (timeQuery.IsEmptyIgnoreFilter)
-                return;
-
-            var entity = timeQuery.GetSingletonEntity();
-            var current = em.GetComponentData<GameTime>(entity);
-            em.SetComponentData(entity, new GameTime
-            {
-                Day = snapshot.day,
-                ElapsedInDay = snapshot.elapsedInDay,
-                DayDuration = snapshot.dayDuration > 0f ? snapshot.dayDuration : current.DayDuration,
-                WorkShiftStartHour = current.WorkShiftStartHour,
-                WorkShiftEndHour = current.WorkShiftEndHour
-            });
         }
     }
 }

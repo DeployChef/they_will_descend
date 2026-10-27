@@ -5,6 +5,7 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
+    [UpdateAfter(typeof(ConsumePlaceBuildingCommandsSystem))]
     public partial struct ConsumeDeconstructBuildingCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
@@ -22,13 +23,13 @@ namespace TheyWillDescend.Simulation.City
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var lifecycle = em.GetComponentData<SimSession>(session);
+            var inGame = em.GetComponentData<SimControl>(session).SessionInGame != 0;
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
             using var requests = query.ToComponentDataArray<DemolishBuildingRequest>(Allocator.Temp);
 
             for (var i = 0; i < requests.Length; i++)
             {
-                if (lifecycle.IsReady)
+                if (inGame)
                     BuildingDismantle.Begin(em, requests[i].BuildingId);
                 em.DestroyEntity(requestEntities[i]);
             }

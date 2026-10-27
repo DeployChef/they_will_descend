@@ -3,12 +3,11 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using TheyWillDescend.Content;
 using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Presentation.SimBridge;
-using TheyWillDescend.Simulation.Agents;
-using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
+using Unity.Entities;
 using UnityEngine;
 using VContainer;
 
@@ -17,13 +16,11 @@ namespace TheyWillDescend.Presentation.Shell
     /// <summary>
     /// One run inside the Game scene. Catalogs and rules live on this object.
     /// <see cref="GameEntry"/> calls <see cref="Begin"/> as loading work and registers <see cref="Shutdown"/> as teardown.
-    /// This object does not load or unload scenes, and does not turn the clock on — <see cref="GameEntry"/> does.
+    /// Begin/Shutdown are synchronous on the ECS world.
     /// </summary>
     public sealed class GameSession : MonoBehaviour
     {
         SaveService _save;
-        [Header("Ready")]
-        [SerializeField] float simulationReadyTimeoutSeconds = 30f;
 
         [Header("Run kits")]
         [SerializeField] ScenarioDefinition defaultScenario;
@@ -42,168 +39,156 @@ namespace TheyWillDescend.Presentation.Shell
             _save = save;
         }
 
-        public async UniTask<bool> Begin(RunLaunch launch, CancellationToken cancellationToken = default)
+        public UniTask<bool> Begin(RunLaunch launch, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             EnsureDefaultAssets();
+            if (!SimWorld.TryGetEntityManager(out var em))
+            {
+                GameLog.Error("GameSession.Begin failed — ECS world is missing.");
+                return UniTask.FromResult(false);
+            }
+
+            var world = World.DefaultGameObjectInjectionWorld;
+            var init = world != null ? world.GetExistingSystemManaged<InitializationSystemGroup>() : null;
+            var sim = world != null ? world.GetExistingSystemManaged<SimulationSystemGroup>() : null;
+            var initWasEnabled = init != null && init.Enabled;
+            var simWasEnabled = sim != null && sim.Enabled;
+            if (init != null)
+                init.Enabled = false;
+            if (sim != null)
+                sim.Enabled = false;
+
+            try
+            {
+                em.CompleteAllTrackedJobs();
+                RunWorld.Wipe(em);
+
             var debug = !launch.LoadSlot && launch.Kind == RunKind.Debug;
             var scenario = debug ? debugScenario : defaultScenario;
             var storyPack = scenario != null ? scenario.StoryPack : null;
             if (storyPack == null && defaultScenario != null)
                 storyPack = defaultScenario.StoryPack;
-            if (SimWorld.TryGetEntityManager(out var em))
-            {
-                SimulationBootstrap.InitializeRun(
-                    em,
-                    buildingCatalog,
-                    resourceCatalog,
-                    simRules,
-                    timelineCatalog,
-                    storyPack);
-            }
 
-            if (!await WaitUntilSimulationReady(cancellationToken))
-            {
-                GameLog.Error("GameSession.Begin failed — simulation not ready.");
-                return false;
-            }
+            var workerSpeed = simRules != null ? simRules.WorkerSpeed : 2f;
 
             if (launch.LoadSlot)
             {
                 if (_save == null)
                 {
                     GameLog.Error("GameSession.Begin failed — SaveService was not injected.");
-                    return false;
+                    return UniTask.FromResult(false);
                 }
 
                 if (!_save.TryRead(out var snapshot))
                 {
                     GameLog.Error("GameSession.Begin failed — save slot is missing.");
-                    return false;
+                    return UniTask.FromResult(false);
                 }
 
-                if (!await Apply(snapshot, cancellationToken))
-                    return false;
+                var session = SimulationBootstrap.InitializeRun(
+                    em,
+                    buildingCatalog,
+                    resourceCatalog,
+                    simRules,
+                    timelineCatalog,
+                    storyPack,
+                    null,
+                    out _,
+                    out _,
+                    out _,
+                    out _,
+                    out _);
+                if (session == Entity.Null || !SnapshotRestore.Apply(em, snapshot, techCatalogs, workerSpeed))
+                    return UniTask.FromResult(false);
+
                 PauseMenuScreen.Current?.RebuildViews();
-                return true;
+                return UniTask.FromResult(true);
             }
 
             if (debug && scenario == null)
                 GameLog.Error("GameSession: DebugScenario is not assigned.");
 
-            var difficulty = scenario != null ? scenario.DefaultDifficulty : null;
+            DifficultyProfile difficulty = null;
+            if (scenario != null)
+            {
+                var requested = scenario.DefaultDifficulty;
+                if (!scenario.TryResolveDifficulty(requested, out difficulty))
+                {
+                    GameLog.Error(
+                        $"GameSession: difficulty {requested.name} is not allowed by scenario {scenario.name}.");
+                    return UniTask.FromResult(false);
+                }
+            }
+
             GameLog.Info(
                 $"Run kit: {(debug ? "Debug" : "Normal")} " +
                 $"scenario={(scenario != null ? scenario.name : "null")} " +
                 $"difficulty={(difficulty != null ? difficulty.name : "stamp defaults")}.");
 
-            if (!RunPublisher.BeginRun(scenario, difficulty, techCatalogs)
-                || !await WaitForPhaseAsync(SimSessionPhase.Ready, cancellationToken))
+            var seeded = SimulationBootstrap.InitializeRun(
+                em,
+                buildingCatalog,
+                resourceCatalog,
+                simRules,
+                timelineCatalog,
+                storyPack,
+                difficulty,
+                out var catalog,
+                out var recipes,
+                out var costs,
+                out var stock,
+                out var info);
+            if (seeded == Entity.Null)
             {
-                GameLog.Error("GameSession.Begin failed — ECS setup did not reach Ready.");
-                return false;
+                GameLog.Error("GameSession.Begin failed — bootstrap did not create a session.");
+                return UniTask.FromResult(false);
             }
 
-            return true;
-        }
-
-        public async UniTask<bool> Apply(RunSnapshot snapshot, CancellationToken cancellationToken = default)
-        {
-            if (!RunSessionSnapshot.BeginApply(snapshot, techCatalogs))
-                return false;
-            if (!await WaitForPhaseAsync(SimSessionPhase.Ready, cancellationToken))
+            if (!ScenarioSetup.Apply(em, seeded, scenario, techCatalogs, workerSpeed, catalog, recipes, costs, stock, info))
             {
-                GameLog.Error("GameSession.Apply failed — ECS setup did not reach Ready.");
-                return false;
+                GameLog.Error("GameSession.Begin failed — scenario seed failed.");
+                return UniTask.FromResult(false);
             }
 
-            return true;
-        }
-
-        public async UniTask<bool> Shutdown(CancellationToken cancellationToken = default)
-        {
-            if (!SimWorld.TryGet(out _, out _))
-                return true;
-
-            if (!RunPublisher.BeginReset()
-                || !await WaitForPhaseAsync(SimSessionPhase.Unprepared, cancellationToken))
-            {
-                GameLog.Error("GameSession.Shutdown stopped — ECS reset was not confirmed.");
-                return false;
+            return UniTask.FromResult(true);
             }
-
-            return true;
+            catch (Exception e)
+            {
+                GameLog.Error($"GameSession.Begin failed — {e}");
+                return UniTask.FromResult(false);
+            }
+            finally
+            {
+                if (init != null)
+                    init.Enabled = initWasEnabled;
+                if (sim != null)
+                    sim.Enabled = simWasEnabled;
+            }
         }
 
-        UniTask<bool> WaitForPhaseAsync(
-            SimSessionPhase phase,
-            CancellationToken cancellationToken)
+        public UniTask<bool> Shutdown(CancellationToken cancellationToken = default)
         {
-            return AwaitCondition(
-                () => IsSessionPhase(phase),
-                $"ECS session did not reach {phase}.",
-                cancellationToken);
-        }
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!SimWorld.TryGetEntityManager(out var em))
+                return UniTask.FromResult(true);
 
-        UniTask<bool> WaitUntilSimulationReady(CancellationToken cancellationToken)
-        {
-            return AwaitCondition(
-                IsSimulationReady,
-                "Catalog/grid never appeared (SubScene bake). Check Simulation SubScene is in Game and Building Catalog is assigned.",
-                cancellationToken);
-        }
-
-        async UniTask<bool> AwaitCondition(
-            Func<bool> condition,
-            string timeoutMessage,
-            CancellationToken cancellationToken)
-        {
-            var timeout = simulationReadyTimeoutSeconds > 0f ? simulationReadyTimeoutSeconds : 30f;
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeout));
+            var world = World.DefaultGameObjectInjectionWorld;
+            var sim = world != null ? world.GetExistingSystemManaged<SimulationSystemGroup>() : null;
+            if (sim != null)
+                sim.Enabled = false;
             try
             {
-                await UniTask.WaitUntil(condition, cancellationToken: timeoutCts.Token);
-                return true;
+                em.CompleteAllTrackedJobs();
+                RunWorld.Wipe(em);
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            finally
             {
-                GameLog.Error($"GameSession: {timeoutMessage}");
-                return false;
+                if (sim != null)
+                    sim.Enabled = true;
             }
-            catch (OperationCanceledException)
-            {
-                GameLog.Info("GameSession: lifecycle wait cancelled.");
-                return false;
-            }
-        }
 
-        static bool IsSimulationReady()
-        {
-            if (!SimWorld.TryGet(out var em, out var session))
-                return false;
-            if (!em.HasComponent<CityGrid>(session)
-                || em.GetComponentData<CityGrid>(session).Ready == 0)
-                return false;
-            if (!em.HasBuffer<BaseBuildingPrototype>(session)
-                || em.GetBuffer<BaseBuildingPrototype>(session).Length == 0)
-                return false;
-            if (!em.HasBuffer<BaseBuildingCatalogCost>(session)
-                || !em.HasBuffer<BaseBuildingCatalogRecipe>(session)
-                || !em.HasBuffer<BuildingPrototype>(session)
-                || em.GetBuffer<BuildingPrototype>(session).Length == 0
-                || !em.HasBuffer<BuildingCatalogCost>(session)
-                || !em.HasBuffer<BuildingCatalogRecipe>(session))
-                return false;
-            if (!em.HasComponent<SimPrototypes>(session)
-                || em.GetComponentData<SimPrototypes>(session).Agent == Unity.Entities.Entity.Null)
-                return false;
-            return SimSessionAccess.HasLifecycleQueues(em, session);
-        }
-
-        static bool IsSessionPhase(SimSessionPhase phase)
-        {
-            return SimWorld.TryGet(out var em, out var session)
-                && em.GetComponentData<SimSession>(session).Phase == phase;
+            return UniTask.FromResult(true);
         }
 
         void Awake() => EnsureDefaultAssets();

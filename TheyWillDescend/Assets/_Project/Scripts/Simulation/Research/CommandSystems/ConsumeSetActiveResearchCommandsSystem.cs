@@ -6,7 +6,6 @@ namespace TheyWillDescend.Simulation.Research
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
     [UpdateAfter(typeof(TheyWillDescend.Simulation.Gods.ConsumeSetPyramidFeedCommandsSystem))]
-    [UpdateBefore(typeof(FinalizeSimSessionLifecycleSystem))]
     public partial struct ConsumeSetActiveResearchCommandsSystem : ISystem
     {
         EntityQuery _workshops;

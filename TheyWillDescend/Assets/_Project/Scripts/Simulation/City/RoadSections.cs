@@ -21,6 +21,7 @@ namespace TheyWillDescend.Simulation.City
             bool instant,
             byte protectedFlag)
         {
+            em.CompleteAllTrackedJobs();
             var roads = em.GetBuffer<RoadSegment>(session);
             if (Contains(roads, a, b))
                 return;
@@ -47,6 +48,7 @@ namespace TheyWillDescend.Simulation.City
             ref CityGrid grid,
             ref RoadNetwork network)
         {
+            em.CompleteAllTrackedJobs();
             if (!grid.Config.IsValid || !em.HasBuffer<RoadSegment>(session))
                 return;
 
@@ -117,6 +119,7 @@ namespace TheyWillDescend.Simulation.City
                 1f);
 
             var entity = em.CreateEntity();
+            RunWorld.Own(em, entity);
             em.AddComponentData(entity, new Building
             {
                 Id = siteId,

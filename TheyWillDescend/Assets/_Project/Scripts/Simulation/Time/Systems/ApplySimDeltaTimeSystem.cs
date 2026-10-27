@@ -10,7 +10,6 @@ namespace TheyWillDescend.Simulation.Time
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(CommandSystemGroup), OrderLast = true)]
-    [UpdateAfter(typeof(FinalizeSimSessionLifecycleSystem))]
     public partial struct ApplySimDeltaTimeSystem : ISystem
     {
         public void OnCreate(ref SystemState state)

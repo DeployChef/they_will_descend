@@ -1,5 +1,7 @@
 # 02. Ф1 — Чистый мир рана
 
+**Статус: сделано** (2026-10-27). Begin/Shutdown синхронны: `RunWorld.Wipe` → `InitializeRun` → `ScenarioSetup` / `SnapshotRestore`. Нет фаз, despawn-очередей, `WaitUntil`. Буферы каталога/склада/эр пишутся с `ResizeUninitialized` в конце сида — `DynamicBuffer.Add` в том же кадре, что и `CreateEntity`, роняет `BufferTypeHandle`.
+
 ← [[01 Inventory]] | [[Index]] | далее [[03 F2 Entity Identity]]
 
 Цель: `Begin` и `Shutdown` **синхронны по ECS**. Нет фаз, нет ожидания очередей, нет despawn-команд. Первый кадр после `Begin` уже показывает дома сценария и людей на плазе.
