@@ -62,7 +62,7 @@ namespace TheyWillDescend.Simulation.Agents
                 em.AddComponent<AgentAssignment>(entity);
             em.SetComponentData(entity, new AgentAssignment
             {
-                WorkplaceBuildingId = command.WorkplaceBuildingId,
+                Workplace = command.Workplace,
                 Arrived = command.Arrived
             });
             if (!em.HasComponent<AgentPlazaIdle>(entity))

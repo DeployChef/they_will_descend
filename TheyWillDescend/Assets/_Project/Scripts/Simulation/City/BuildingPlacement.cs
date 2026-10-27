@@ -55,6 +55,19 @@ namespace TheyWillDescend.Simulation.City
             BuildingPrototype[] catalog,
             BuildingCatalogRecipe[] recipes)
         {
+            return TryPlace(em, session, ref grid, in spec, catalog, recipes, out _);
+        }
+
+        public static bool TryPlace(
+            EntityManager em,
+            Entity session,
+            ref CityGrid grid,
+            in BuildingPlaceSpec spec,
+            BuildingPrototype[] catalog,
+            BuildingCatalogRecipe[] recipes,
+            out Entity house)
+        {
+            house = Entity.Null;
             em.CompleteAllTrackedJobs();
             if (!BuildingCatalog.TryResolve(catalog, spec.TypeId, out var stamp))
             {
@@ -126,20 +139,16 @@ namespace TheyWillDescend.Simulation.City
 
             occupiedCopy.Dispose();
 
-            var id = spec.BuildingId > 0 ? spec.BuildingId : grid.NextBuildingId + 1;
-            if (grid.NextBuildingId < id)
-                grid.NextBuildingId = id;
-
-            em.CompleteAllTrackedJobs();
-            var occupied = em.GetBuffer<OccupiedCell>(session);
-            for (var i = 0; i < clusters.Length; i++)
+            if (!em.HasComponent<BuildingIdSequence>(session))
             {
-                var cell = clusters[i];
-                cell.BuildingId = id;
-                occupied.Add(cell);
+                clusters.Dispose();
+                recipeLines.Dispose();
+                return false;
             }
 
-            clusters.Dispose();
+            var sequence = em.GetComponentData<BuildingIdSequence>(session);
+            var id = sequence.Take(spec.BuildingId);
+            em.SetComponentData(session, sequence);
 
             RadialFootprintMath.FootprintMarkerPose(
                 grid.Center, grid.Config, spec.AnchorCluster, spec.AnchorRadial, footprint,
@@ -176,8 +185,19 @@ namespace TheyWillDescend.Simulation.City
 
             var desired = spec.Mode == BuildingPlaceMode.Restore ? spec.DesiredWorkers : 0;
             var paused = spec.Mode == BuildingPlaceMode.Restore ? spec.Paused : (byte)0;
-            SpawnHouse(em, stamp, building, transform, construction, recipeLines, desired, paused);
+            house = SpawnHouse(em, stamp, building, transform, construction, recipeLines, desired, paused);
             recipeLines.Dispose();
+
+            em.CompleteAllTrackedJobs();
+            var occupied = em.GetBuffer<OccupiedCell>(session);
+            for (var i = 0; i < clusters.Length; i++)
+            {
+                var cell = clusters[i];
+                cell.Building = house;
+                occupied.Add(cell);
+            }
+
+            clusters.Dispose();
             return true;
         }
 

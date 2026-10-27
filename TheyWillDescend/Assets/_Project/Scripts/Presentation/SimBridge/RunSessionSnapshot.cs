@@ -89,7 +89,7 @@ namespace TheyWillDescend.Presentation.SimBridge
                     targetY = motors[i].Target.y,
                     targetZ = motors[i].Target.z,
                     moving = motors[i].Moving,
-                    workplaceBuildingId = assignments[i].WorkplaceBuildingId,
+                    workplaceBuildingId = BuildingIdOf(em, assignments[i].Workplace),
                     arrived = assignments[i].Arrived,
                     plazaWalking = plazas[i].Walking,
                     plazaTimer = plazas[i].Timer,
@@ -270,6 +270,13 @@ namespace TheyWillDescend.Presentation.SimBridge
                     costPaid = progress[i].CostPaid
                 };
             }
+        }
+
+        static int BuildingIdOf(EntityManager em, Entity house)
+        {
+            if (house == Entity.Null || !em.Exists(house) || !em.HasComponent<Building>(house))
+                return 0;
+            return em.GetComponentData<Building>(house).Id;
         }
     }
 }

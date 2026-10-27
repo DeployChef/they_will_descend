@@ -61,16 +61,16 @@ namespace TheyWillDescend.Presentation.City
                     ComponentType.ReadOnly<Building>());
             }
 
-            var progress = new NativeHashMap<int, float>(math.max(8, _sites.CalculateEntityCount()), Allocator.Temp);
+            var progress = new NativeHashMap<Entity, float>(math.max(8, _sites.CalculateEntityCount()), Allocator.Temp);
             using (var siteEntities = _sites.ToEntityArray(Allocator.Temp))
-            using (var buildings = _sites.ToComponentDataArray<Building>(Allocator.Temp))
             {
-                for (var i = 0; i < buildings.Length; i++)
+                for (var i = 0; i < siteEntities.Length; i++)
                 {
+                    var site = siteEntities[i];
                     var amount = 1f;
-                    if (em.HasComponent<Construction>(siteEntities[i]))
-                        amount = em.GetComponentData<Construction>(siteEntities[i]).Normalized;
-                    progress.TryAdd(buildings[i].Id, amount);
+                    if (em.HasComponent<Construction>(site))
+                        amount = em.GetComponentData<Construction>(site).Normalized;
+                    progress.TryAdd(site, amount);
                 }
             }
 
@@ -84,8 +84,8 @@ namespace TheyWillDescend.Presentation.City
                     RoadMath.NodeWorld(grid.Center, grid.Config, b),
                     width);
                 var done = 1f;
-                if (segments[i].SiteId != 0)
-                    progress.TryGetValue(segments[i].SiteId, out done);
+                if (segments[i].Site != Entity.Null)
+                    progress.TryGetValue(segments[i].Site, out done);
                 var color = Color.Lerp(constructionColor, finishedColor, done);
                 if (i < _renderers.Count && _renderers[i] != null)
                 {

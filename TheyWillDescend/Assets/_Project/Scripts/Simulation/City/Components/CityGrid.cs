@@ -7,7 +7,6 @@ namespace TheyWillDescend.Simulation.City
     {
         public RadialGridConfig Config;
         public float3 Center;
-        public int NextBuildingId;
         public byte Ready;
     }
 
@@ -15,6 +14,6 @@ namespace TheyWillDescend.Simulation.City
     {
         public int Cluster;
         public int Radial;
-        public int BuildingId;
+        public Entity Building;
     }
 }

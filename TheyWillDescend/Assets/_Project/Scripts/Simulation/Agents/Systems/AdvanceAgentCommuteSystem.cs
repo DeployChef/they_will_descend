@@ -2,7 +2,6 @@ using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -38,18 +37,9 @@ namespace TheyWillDescend.Simulation.Agents
             if (dt <= 0f)
                 return;
 
-            var sites = new NativeList<HouseRef>(8, state.WorldUpdateAllocator);
-            foreach (var (building, transform) in
-                     SystemAPI.Query<RefRO<Building>, RefRO<LocalTransform>>()
-                         .WithAll<Construction>())
-
-            {
-                sites.Add(new HouseRef
-                {
-                    Id = building.ValueRO.Id,
-                    Position = transform.ValueRO.Position
-                });
-            }
+            var transforms = SystemAPI.GetComponentLookup<LocalTransform>(true);
+            var constructions = SystemAPI.GetComponentLookup<Construction>(true);
+            var workplaces = SystemAPI.GetComponentLookup<Workplace>(true);
 
             foreach (var (assignment, locomotion, transform) in
                      SystemAPI.Query<RefRW<AgentAssignment>, RefRW<AgentLocomotion>, RefRO<LocalTransform>>()
@@ -60,9 +50,11 @@ namespace TheyWillDescend.Simulation.Agents
                     continue;
 
                 var motor = locomotion.ValueRO;
-                if (!TrySteerTo(sites, job.ConstructionBuildingId, transform.ValueRO.Position, ref job, ref motor))
+                var site = job.ConstructionSite;
+                if (!constructions.HasComponent(site) || !transforms.HasComponent(site)
+                    || !SteerTo(transforms[site].Position, transform.ValueRO.Position, ref job, ref motor))
                 {
-                    job.ConstructionBuildingId = 0;
+                    job.ConstructionSite = Entity.Null;
                     job.Arrived = 0;
                     motor.Moving = 0;
                 }
@@ -78,26 +70,12 @@ namespace TheyWillDescend.Simulation.Agents
                 {
                     if (assignment.ValueRO.HasConstructionTask)
                         continue;
-                    if (assignment.ValueRO.WorkplaceBuildingId == 0 || assignment.ValueRO.Arrived == 0)
+                    if (assignment.ValueRO.Workplace == Entity.Null || assignment.ValueRO.Arrived == 0)
                         continue;
                     assignment.ValueRW.Arrived = 0;
                 }
 
                 return;
-            }
-
-            var houses = new NativeList<HouseRef>(8, state.WorldUpdateAllocator);
-            foreach (var (building, transform) in
-                     SystemAPI.Query<RefRO<Building>, RefRO<LocalTransform>>()
-                         .WithAll<Workplace>()
-                         .WithNone<Construction>())
-
-            {
-                houses.Add(new HouseRef
-                {
-                    Id = building.ValueRO.Id,
-                    Position = transform.ValueRO.Position
-                });
             }
 
             foreach (var (assignment, locomotion, transform) in
@@ -107,13 +85,16 @@ namespace TheyWillDescend.Simulation.Agents
                 var job = assignment.ValueRO;
                 if (job.HasConstructionTask)
                     continue;
-                if (job.WorkplaceBuildingId == 0)
+                var house = job.Workplace;
+                if (house == Entity.Null)
                     continue;
 
                 var motor = locomotion.ValueRO;
-                if (!TrySteerTo(houses, job.WorkplaceBuildingId, transform.ValueRO.Position, ref job, ref motor))
+                if (!workplaces.HasComponent(house) || constructions.HasComponent(house)
+                    || !transforms.HasComponent(house)
+                    || !SteerTo(transforms[house].Position, transform.ValueRO.Position, ref job, ref motor))
                 {
-                    job.WorkplaceBuildingId = 0;
+                    job.Workplace = Entity.Null;
                     job.Arrived = 0;
                     motor.Moving = 0;
                 }
@@ -123,39 +104,19 @@ namespace TheyWillDescend.Simulation.Agents
             }
         }
 
-        static bool TrySteerTo(
-            NativeList<HouseRef> houses,
-            int buildingId,
+        static bool SteerTo(
+            float3 goal,
             float3 position,
             ref AgentAssignment job,
             ref AgentLocomotion motor)
         {
-            var houseIndex = -1;
-            for (var i = 0; i < houses.Length; i++)
-            {
-                if (houses[i].Id != buildingId)
-                    continue;
-                houseIndex = i;
-                break;
-            }
-
-            if (houseIndex < 0)
-                return false;
-
-            var house = houses[houseIndex];
-            var delta = house.Position - position;
+            var delta = goal - position;
             delta.y = 0f;
             var arrived = math.length(delta) <= ArriveDistance;
             job.Arrived = arrived ? (byte)1 : (byte)0;
-            motor.Target = house.Position;
+            motor.Target = goal;
             motor.Moving = arrived ? (byte)0 : (byte)1;
             return true;
-        }
-
-        struct HouseRef
-        {
-            public int Id;
-            public float3 Position;
         }
     }
 }

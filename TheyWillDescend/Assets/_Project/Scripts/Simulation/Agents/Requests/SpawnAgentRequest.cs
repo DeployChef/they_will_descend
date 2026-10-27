@@ -11,7 +11,7 @@ namespace TheyWillDescend.Simulation.Agents
         public float3 Facing;
         public float3 Target;
         public byte Moving;
-        public int WorkplaceBuildingId;
+        public Entity Workplace;
         public byte Arrived;
         public int AgentId;
         public byte HasPose;

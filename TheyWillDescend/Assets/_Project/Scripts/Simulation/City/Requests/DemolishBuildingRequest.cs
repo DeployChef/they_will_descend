@@ -4,6 +4,6 @@ namespace TheyWillDescend.Simulation.City
 {
     public struct DemolishBuildingRequest : IComponentData
     {
-        public int BuildingId;
+        public Entity Building;
     }
 }

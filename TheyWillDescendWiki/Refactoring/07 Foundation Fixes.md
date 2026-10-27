@@ -16,7 +16,7 @@
 | --- | --- |
 | 1. Runtime bootstrap вместо SubScene | SubScene из `Game.unity` убрана, `SimulationBootstrap` есть. Остались фазы, таймауты, despawn-команды |
 | 2. Рабочие через desired state | `DesiredWorkers` + `WorkforceDispatchSystem` есть, команды assign/unassign удалены. Семантика сломана (см. §3) |
-| 3. Стройка и снос через request-сущности | `PlaceBuildingRequest` / `DemolishBuildingRequest` есть. Внутри — поиск по `int Id` |
+| 3. Стройка и снос через request-сущности | `PlaceBuildingRequest` / `DemolishBuildingRequest` есть. Снос держит `Entity Building` (Ф2) |
 | 4. Очистка сессии и аллокаций | Частично |
 | 5. CMS (`BuildingDefinition`) | Не начат |
 | 06. Пирамида без `Building` | В основном сделан. `PyramidInspectPanel` ищет HQ запросом каждый кадр |
@@ -206,6 +206,8 @@ namespace TheyWillDescend.Simulation.Session
 ---
 
 ## 4. Ф2. Идентичность на Entity
+
+> **Статус: сделано.** Подробности реализации: [[07-ECS/03 F2 Entity Identity]].
 
 ### 4.1. Диагноз
 

@@ -47,10 +47,11 @@ namespace TheyWillDescend.Presentation.SimBridge
 
             ApplyGameTime(em, session, snapshot);
             ApplyClock(em, session, snapshot);
-            PlaceBuildings(em, session, snapshot);
+            var houses = PlaceBuildings(em, session, snapshot);
             SimulationBootstrap.SpawnRunEntities(em, session, workerSpeed, System.Array.Empty<ResourceInfo>());
             SeedInnerRing(em, session);
-            SpawnAgents(em, session, snapshot);
+            SpawnAgents(em, session, snapshot, houses);
+            houses.Dispose();
             ApplyResources(em, session, snapshot);
             ApplyGods(em, session, snapshot);
             ResearchWorld.Populate(em, techCatalogs);
@@ -182,10 +183,13 @@ namespace TheyWillDescend.Presentation.SimBridge
             em.SetComponentData(session, control);
         }
 
-        static void PlaceBuildings(EntityManager em, Entity session, RunSnapshot snapshot)
+        static NativeHashMap<int, Entity> PlaceBuildings(EntityManager em, Entity session, RunSnapshot snapshot)
         {
+            var map = new NativeHashMap<int, Entity>(
+                snapshot.buildings != null ? snapshot.buildings.Length : 0,
+                Allocator.Temp);
             if (snapshot.buildings == null || !em.HasComponent<CityGrid>(session))
-                return;
+                return map;
 
             var grid = em.GetComponentData<CityGrid>(session);
             CatalogFromSnapshot(snapshot, out var catalog, out var recipes);
@@ -209,10 +213,14 @@ namespace TheyWillDescend.Presentation.SimBridge
                     Paused = record.paused,
                     Mode = BuildingPlaceMode.Restore
                 };
-                BuildingPlacement.TryPlace(em, session, ref grid, in spec, catalog, recipes);
+                if (!BuildingPlacement.TryPlace(em, session, ref grid, in spec, catalog, recipes, out var house))
+                    continue;
+                if (record.id > 0)
+                    map.TryAdd(record.id, house);
             }
 
             em.SetComponentData(session, grid);
+            return map;
         }
 
         static void CatalogFromSnapshot(
@@ -286,7 +294,11 @@ namespace TheyWillDescend.Presentation.SimBridge
             em.SetComponentData(session, network);
         }
 
-        static void SpawnAgents(EntityManager em, Entity session, RunSnapshot snapshot)
+        static void SpawnAgents(
+            EntityManager em,
+            Entity session,
+            RunSnapshot snapshot,
+            NativeHashMap<int, Entity> houses)
         {
             if (snapshot.agents == null)
                 return;
@@ -296,6 +308,9 @@ namespace TheyWillDescend.Presentation.SimBridge
                 var record = snapshot.agents[i];
                 if (record == null)
                     continue;
+                var workplace = Entity.Null;
+                if (record.workplaceBuildingId > 0)
+                    houses.TryGetValue(record.workplaceBuildingId, out workplace);
                 AgentSpawn.Spawn(em, session, new SpawnAgentRequest
                 {
                     Position = new float3(record.posX, record.posY, record.posZ),
@@ -303,7 +318,7 @@ namespace TheyWillDescend.Presentation.SimBridge
                     Target = new float3(record.targetX, record.targetY, record.targetZ),
                     Speed = record.speed > 0.001f ? record.speed : 2f,
                     AgentId = record.agentId,
-                    WorkplaceBuildingId = record.workplaceBuildingId,
+                    Workplace = workplace,
                     Arrived = record.arrived,
                     Moving = record.moving,
                     PlazaWalking = record.plazaWalking,

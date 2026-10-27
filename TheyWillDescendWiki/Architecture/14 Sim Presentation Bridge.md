@@ -26,6 +26,8 @@ Gameplay Presentation **никогда не запускает consume вруч�
 - **Желание.** Игрок уже держит `Entity` (выбор луча, штаб). Кнопка пишет поле, которое система считает входом: `Workplace.DesiredWorkers`, `Workplace.Paused`. Следующий тик `WorkforceDispatchSystem` сам добирает и отпускает людей. Команда назначения для этого не нужна: откат при смерти рабочего живёт в том же тике.
 - **Разовое действие.** Поставить, снести, заспавнить, заплатить, сменить режим часов, ритуал. Это запрос (`SimCommands` или request-сущность). `CommandSystemGroup` применяет его на следующем тике, по порядку.
 
+Выбор дома — `BuildingSelection.Selected` / `Hovered` как `Entity`. Клик читает `BuildingIdTag.Target`. Инспектор не ищет дом по `Building.Id`: `em.Exists(Selected)` и компоненты этой сущности. Снос: `DemolishBuildingRequest.Building`. JSON сейва `Entity` не хранит.
+
 Итоги UI не пишет: склад, лояльность, позу, `WorkingCount`. Кнопка может прочитать мир, чтобы посереть. Ограничение (нельзя желать больше свободных людей, чем есть) остаётся в системе. Часы — запрос, потому что это режим тика, а не поле одного дома.
 
 Исключений для ручного playback нет. `RunPublisher.BeginRun`, `RunSessionSnapshot.BeginApply` и `RunPublisher.BeginReset` только атомарно ставят входящие команды и фазу. Линейный `CommandSystemGroup` исполняет их, lifecycle-finalizer подтверждает `Ready` / `Unprepared`, а `GameSession` асинхронно ждёт подтверждение с timeout/cancellation. Loading и gameplay input снимаются только после `Ready`; Game scene выгружается только после `Unprepared`.

@@ -20,44 +20,44 @@ namespace TheyWillDescend.Presentation.City
 
         EntityQuery _buildingQuery;
 
-        public int SelectedBuildingId { get; private set; }
-        public int HoveredBuildingId { get; private set; }
+        public Entity Selected { get; private set; }
+        public Entity Hovered { get; private set; }
         public bool IsPyramidSelected { get; private set; }
 
         public void Deselect()
         {
-            SelectedBuildingId = 0;
+            Selected = Entity.Null;
             IsPyramidSelected = false;
         }
 
-        public void SelectBuilding(int buildingId)
+        public void SelectBuilding(Entity building)
         {
-            SelectedBuildingId = buildingId;
+            Selected = building;
             IsPyramidSelected = false;
         }
 
         public void SelectPyramid()
         {
-            SelectedBuildingId = 0;
+            Selected = Entity.Null;
             IsPyramidSelected = true;
         }
 
-        public void ClearIf(int buildingId)
+        public void ClearIf(Entity building)
         {
-            if (SelectedBuildingId == buildingId)
-                SelectedBuildingId = 0;
+            if (Selected == building)
+                Selected = Entity.Null;
         }
 
         void Update()
         {
             UpdateHover();
-            if (!TryConsumeClick(out var hitBuildingId, out var hitPyramid))
+            if (!TryConsumeClick(out var hitBuilding, out var hitPyramid))
                 return;
 
             if (hitPyramid)
                 SelectPyramid();
-            else if (hitBuildingId > 0)
-                SelectBuilding(hitBuildingId);
+            else if (hitBuilding != Entity.Null)
+                SelectBuilding(hitBuilding);
             else
                 Deselect();
         }
@@ -69,7 +69,7 @@ namespace TheyWillDescend.Presentation.City
 
         void UpdateHover()
         {
-            HoveredBuildingId = 0;
+            Hovered = Entity.Null;
             if (Mouse.current == null)
                 return;
             if (placement != null && placement.IsPlacing)
@@ -78,14 +78,14 @@ namespace TheyWillDescend.Presentation.City
                 return;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
-            if (!TryPick(out var buildingId, out _))
+            if (!TryPick(out var building, out _))
                 return;
-            HoveredBuildingId = buildingId;
+            Hovered = building;
         }
 
-        bool TryConsumeClick(out int buildingId, out bool hitPyramid)
+        bool TryConsumeClick(out Entity building, out bool hitPyramid)
         {
-            buildingId = 0;
+            building = Entity.Null;
             hitPyramid = false;
 
             if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame)
@@ -97,26 +97,26 @@ namespace TheyWillDescend.Presentation.City
             if (roadPaint != null && roadPaint.IsPainting)
                 return false;
 
-            TryPick(out buildingId, out hitPyramid);
+            TryPick(out building, out hitPyramid);
             return true;
         }
 
-        bool TryPick(out int buildingId, out bool hitPyramid)
+        bool TryPick(out Entity building, out bool hitPyramid)
         {
-            buildingId = 0;
+            building = Entity.Null;
             hitPyramid = false;
             var cam = Camera.main;
             if (cam == null || Mouse.current == null)
                 return false;
 
             var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (TryPickMesh(ray, out buildingId, out hitPyramid))
+            if (TryPickMesh(ray, out building, out hitPyramid))
                 return true;
 
             if (!TryPlanePoint(cam, ray, out var world, out var center, out var config))
                 return false;
 
-            if (TryPickFootprint(center, config, world, out buildingId))
+            if (TryPickFootprint(center, config, world, out building))
                 return true;
 
             var dx = world.x - center.x;
@@ -130,9 +130,9 @@ namespace TheyWillDescend.Presentation.City
             return false;
         }
 
-        static bool TryPickMesh(Ray ray, out int buildingId, out bool hitPyramid)
+        static bool TryPickMesh(Ray ray, out Entity building, out bool hitPyramid)
         {
-            buildingId = 0;
+            building = Entity.Null;
             hitPyramid = false;
             var hits = Physics.RaycastAll(ray, 500f);
             var bestDist = float.MaxValue;
@@ -168,9 +168,9 @@ namespace TheyWillDescend.Presentation.City
                 return true;
             }
 
-            if (best is BuildingIdTag bTag && bTag.Id > 0)
+            if (best is BuildingIdTag bTag && bTag.Target != Entity.Null)
             {
-                buildingId = bTag.Id;
+                building = bTag.Target;
                 return true;
             }
 
@@ -199,9 +199,9 @@ namespace TheyWillDescend.Presentation.City
         }
 
         bool TryPickFootprint(
-            float3 center, in RadialGridConfig config, float3 world, out int buildingId)
+            float3 center, in RadialGridConfig config, float3 world, out Entity building)
         {
-            buildingId = 0;
+            building = Entity.Null;
             if (!SimWorld.TryGet(out var em, out _))
                 return false;
 
@@ -210,37 +210,39 @@ namespace TheyWillDescend.Presentation.City
             if (_buildingQuery.IsEmptyIgnoreFilter)
                 return false;
 
+            var houses = _buildingQuery.ToEntityArray(Allocator.Temp);
             var buildings = _buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
             var best = float.MaxValue;
-            var picked = 0;
+            var picked = Entity.Null;
             for (var i = 0; i < buildings.Length; i++)
             {
-                var building = buildings[i];
+                var row = buildings[i];
                 var footprint = new BuildingFootprint
                 {
-                    WidthClusters = building.WidthClusters,
-                    DepthRadialRings = building.DepthRadialRings
+                    WidthClusters = row.WidthClusters,
+                    DepthRadialRings = row.DepthRadialRings
                 };
                 if (!RadialFootprintMath.ContainsWorldPoint(
                         center, config, world,
-                        building.AnchorCluster, building.AnchorRadial, footprint))
+                        row.AnchorCluster, row.AnchorRadial, footprint))
                     continue;
 
                 RadialFootprintMath.FootprintMarkerPose(
                     center, config,
-                    building.AnchorCluster, building.AnchorRadial, footprint,
+                    row.AnchorCluster, row.AnchorRadial, footprint,
                     out var pose, out _);
                 var d = math.lengthsq(new float2(world.x - pose.x, world.z - pose.z));
                 if (d >= best)
                     continue;
                 best = d;
-                picked = building.Id;
+                picked = houses[i];
             }
 
+            houses.Dispose();
             buildings.Dispose();
-            if (picked <= 0)
+            if (picked == Entity.Null)
                 return false;
-            buildingId = picked;
+            building = picked;
             return true;
         }
     }

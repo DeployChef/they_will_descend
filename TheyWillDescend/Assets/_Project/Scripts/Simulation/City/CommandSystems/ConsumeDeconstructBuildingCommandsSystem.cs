@@ -30,7 +30,7 @@ namespace TheyWillDescend.Simulation.City
             for (var i = 0; i < requests.Length; i++)
             {
                 if (inGame)
-                    BuildingDismantle.Begin(em, requests[i].BuildingId);
+                    BuildingDismantle.Begin(em, requests[i].Building);
                 em.DestroyEntity(requestEntities[i]);
             }
         }

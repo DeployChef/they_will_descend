@@ -73,9 +73,9 @@ namespace TheyWillDescend.Presentation.SimBridge
             {
                 Config = cfg,
                 Center = float3.zero,
-                Ready = 1,
-                NextBuildingId = 1
+                Ready = 1
             });
+            em.AddComponentData(session, new BuildingIdSequence { NextBuildingId = 1 });
             em.AddBuffer<OccupiedCell>(session);
             em.AddComponentData(session, new RoadNetwork
             {

@@ -28,21 +28,21 @@ namespace TheyWillDescend.Simulation.City
             if (dt <= 0f)
                 return;
 
-            var arrivedBySite = new NativeHashMap<int, int>(8, state.WorldUpdateAllocator);
+            var arrivedBySite = new NativeHashMap<Entity, int>(8, state.WorldUpdateAllocator);
             foreach (var assignment in SystemAPI.Query<RefRO<AgentAssignment>>())
             {
                 var job = assignment.ValueRO;
-                if (job.ConstructionBuildingId == 0 || job.Arrived == 0)
+                if (job.ConstructionSite == Entity.Null || job.Arrived == 0)
                     continue;
-                arrivedBySite.TryGetValue(job.ConstructionBuildingId, out var arrived);
-                arrivedBySite[job.ConstructionBuildingId] = arrived + 1;
+                arrivedBySite.TryGetValue(job.ConstructionSite, out var arrived);
+                arrivedBySite[job.ConstructionSite] = arrived + 1;
             }
 
             var finished = new NativeList<Entity>(8, state.WorldUpdateAllocator);
-            foreach (var (construction, building, entity) in
-                     SystemAPI.Query<RefRW<Construction>, RefRO<Building>>().WithEntityAccess())
+            foreach (var (construction, entity) in
+                     SystemAPI.Query<RefRW<Construction>>().WithAll<Building>().WithEntityAccess())
             {
-                if (!arrivedBySite.TryGetValue(building.ValueRO.Id, out var arrived) || arrived < 1)
+                if (!arrivedBySite.TryGetValue(entity, out var arrived) || arrived < 1)
                     continue;
 
                 var site = construction.ValueRO;
@@ -76,15 +76,10 @@ namespace TheyWillDescend.Simulation.City
                 return;
             }
 
-            var buildingId = em.HasComponent<Building>(site)
-                ? em.GetComponentData<Building>(site).Id
-                : 0;
             var typeId = em.HasComponent<Building>(site)
                 ? em.GetComponentData<Building>(site).TypeId
                 : default;
             em.RemoveComponent<Construction>(site);
-            if (buildingId > 0)
-                BuildingDismantle.ReleaseCrew(em, buildingId);
             NoteStoryCompletion(em, site, typeId);
 #if UNITY_EDITOR
             if (em.Exists(site) && em.HasComponent<Building>(site))

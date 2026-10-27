@@ -159,8 +159,8 @@ namespace TheyWillDescend.Presentation.City
                 }
 
                 var buildMode = gridGuide != null && gridGuide.IsBuildModeActive;
-                var hovered = selection != null && building.Id == selection.HoveredBuildingId;
-                var selected = selection != null && building.Id == selection.SelectedBuildingId;
+                var hovered = selection != null && selection.Hovered == entity;
+                var selected = selection != null && selection.Selected == entity;
                 if (placed.Zone != null)
                 {
                     var show = buildMode || hovered || selected;
@@ -232,13 +232,13 @@ namespace TheyWillDescend.Presentation.City
             var houseTag = house.GetComponent<BuildingIdTag>();
             if (houseTag == null)
                 houseTag = house.AddComponent<BuildingIdTag>();
-            houseTag.Id = building.Id;
+            houseTag.Target = entity;
             EnsurePickColliders(house);
             var view = house.GetComponent<BuildingView>();
             if (view == null)
                 GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
 
-            var overlay = SpawnOverlay(building, center);
+            var overlay = SpawnOverlay(entity, building, center);
             var audioSource = RegisterAudioSource(house, position);
 
             var placed = new PlacedView
@@ -263,7 +263,7 @@ namespace TheyWillDescend.Presentation.City
             return placed;
         }
 
-        BuildingOverlay SpawnOverlay(in Building building, float3 center)
+        BuildingOverlay SpawnOverlay(Entity entity, in Building building, float3 center)
         {
             var footprint = new BuildingFootprint
             {
@@ -282,7 +282,7 @@ namespace TheyWillDescend.Presentation.City
             var overlay = Object.Instantiate(overlayPrefab, _root);
             overlay.name = $"Overlay_{building.Id}";
             if (overlay.IdTag != null)
-                overlay.IdTag.Id = building.Id;
+                overlay.IdTag.Target = entity;
 
             var n = config.GetClusterCount(building.AnchorRadial);
             var turns0 = n > 0 ? building.AnchorCluster / (float)n : 0f;
@@ -353,9 +353,15 @@ namespace TheyWillDescend.Presentation.City
 
         void DestroyView(int buildingId)
         {
-            selection?.ClearIf(buildingId);
             if (!_views.TryGetValue(buildingId, out var view))
                 return;
+            if (view?.Root != null)
+            {
+                var tag = view.Root.GetComponent<BuildingIdTag>();
+                if (tag != null)
+                    selection?.ClearIf(tag.Target);
+            }
+
             _views.Remove(buildingId);
             DestroyPlaced(view);
         }

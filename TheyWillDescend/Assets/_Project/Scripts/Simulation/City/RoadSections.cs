@@ -22,24 +22,29 @@ namespace TheyWillDescend.Simulation.City
             byte protectedFlag)
         {
             em.CompleteAllTrackedJobs();
+            if (Contains(em.GetBuffer<RoadSegment>(session), a, b))
+                return;
+
+            if (!em.HasComponent<BuildingIdSequence>(session))
+                return;
+            var sequence = em.GetComponentData<BuildingIdSequence>(session);
+            var siteId = sequence.Take();
+            em.SetComponentData(session, sequence);
+            var site = SpawnSite(em, grid, typeId, duration, crewSlots, siteId, a, b, instant);
+            var segmentId = network.NextSegmentId++;
             var roads = em.GetBuffer<RoadSegment>(session);
             if (Contains(roads, a, b))
                 return;
-
-            var siteId = grid.NextBuildingId + 1;
-            grid.NextBuildingId = siteId;
-            var segmentId = network.NextSegmentId++;
             roads.Add(new RoadSegment
             {
                 Id = segmentId,
-                SiteId = siteId,
+                Site = site,
                 RingA = a.Ring,
                 FineA = a.Fine,
                 RingB = b.Ring,
                 FineB = b.Fine,
                 Protected = protectedFlag
             });
-            SpawnSite(em, grid, typeId, duration, crewSlots, siteId, a, b, instant);
         }
 
         public static void SeedInnerRing(
@@ -68,21 +73,21 @@ namespace TheyWillDescend.Simulation.City
                 return false;
 
             var roads = em.GetBuffer<RoadSegment>(session);
-            var siteId = 0;
+            var site = Entity.Null;
             for (var i = 0; i < roads.Length; i++)
             {
                 if (roads[i].Id != segmentId)
                     continue;
                 if (roads[i].Protected != 0)
                     return false;
-                siteId = roads[i].SiteId;
+                site = roads[i].Site;
                 break;
             }
 
-            if (siteId <= 0)
+            if (site == Entity.Null)
                 return false;
 
-            BuildingDismantle.Begin(em, siteId);
+            BuildingDismantle.Begin(em, site);
             return true;
         }
 
@@ -97,7 +102,7 @@ namespace TheyWillDescend.Simulation.City
             return false;
         }
 
-        static void SpawnSite(
+        static Entity SpawnSite(
             EntityManager em,
             in CityGrid grid,
             in FixedString64Bytes typeId,
@@ -154,6 +159,7 @@ namespace TheyWillDescend.Simulation.City
 #if UNITY_EDITOR
             em.SetName(entity, instant ? $"Road_{siteId}" : $"RoadSite_{siteId}");
 #endif
+            return entity;
         }
     }
 }

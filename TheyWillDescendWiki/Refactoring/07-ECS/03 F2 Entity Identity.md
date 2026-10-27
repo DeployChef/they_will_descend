@@ -1,5 +1,7 @@
 # 03. Ф2 — Идентичность на Entity
 
+**Статус: сделано** (2026-10-27). Геймплейные ссылки — `Entity`. `Building.Id` / `AgentId` остаются ключами JSON и сортировки. Grep `WorkplaceBuildingId|ConstructionBuildingId|SelectedBuildingId|HoveredBuildingId|SiteId|TryGetBuilding` по `Scripts` пуст. Сейв мапит `workplaceBuildingId` ↔ Entity только в `RunSessionSnapshot` / `SnapshotRestore`.
+
 ← [[02 F1 Run World]] | [[Index]] | далее [[04 F3 Workforce]]
 
 Делать **только после Ф1**. Иначе restore снова гоняет id через запросы.

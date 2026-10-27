@@ -26,9 +26,8 @@ namespace TheyWillDescend.Simulation.Agents
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
-
         {
-            var assignedCounts = new NativeHashMap<int, int>(32, Allocator.Temp);
+            var assignedCounts = new NativeHashMap<Entity, int>(32, Allocator.Temp);
             var idleAgents = new NativeList<Entity>(64, Allocator.Temp);
             var assignedAgents = new NativeList<AgentRef>(128, Allocator.Temp);
 
@@ -39,32 +38,32 @@ namespace TheyWillDescend.Simulation.Agents
                 if (type.ValueRO.Kind != AgentKind.Worker)
                     continue;
 
-                var bId = assignment.ValueRO.WorkplaceBuildingId;
-                if (bId == 0)
+                var house = assignment.ValueRO.Workplace;
+                if (house == Entity.Null)
                 {
                     idleAgents.Add(entity);
                 }
                 else
                 {
-                    if (assignedCounts.TryGetValue(bId, out var current))
-                        assignedCounts[bId] = current + 1;
+                    if (assignedCounts.TryGetValue(house, out var current))
+                        assignedCounts[house] = current + 1;
                     else
-                        assignedCounts.Add(bId, 1);
+                        assignedCounts.Add(house, 1);
 
-                    assignedAgents.Add(new AgentRef { Entity = entity, BuildingId = bId });
+                    assignedAgents.Add(new AgentRef { Agent = entity, House = house });
                 }
             }
 
             var idleIndex = 0;
-            foreach (var (building, type, workplace, buildingEntity) in
-                     SystemAPI.Query<RefRO<Building>, RefRO<BuildingType>, RefRW<Workplace>>()
+            foreach (var (type, workplace, house) in
+                     SystemAPI.Query<RefRO<BuildingType>, RefRW<Workplace>>()
+                         .WithAll<Building>()
                          .WithNone<Construction>()
                          .WithEntityAccess())
             {
-                var bId = building.ValueRO.Id;
                 var maxSlots = type.ValueRO.WorkplaceSlots;
                 var desired = workplace.ValueRO.IsPaused ? 0 : math.clamp(workplace.ValueRO.DesiredWorkers, 0, maxSlots);
-                var current = assignedCounts.TryGetValue(bId, out var c) ? c : 0;
+                var current = assignedCounts.TryGetValue(house, out var c) ? c : 0;
 
                 if (current < desired)
                 {
@@ -74,7 +73,7 @@ namespace TheyWillDescend.Simulation.Agents
                     {
                         var agentEntity = idleAgents[idleIndex++];
                         var assign = SystemAPI.GetComponent<AgentAssignment>(agentEntity);
-                        assign.WorkplaceBuildingId = bId;
+                        assign.Workplace = house;
                         assign.Arrived = 0;
                         SystemAPI.SetComponent(agentEntity, assign);
                         needed--;
@@ -83,22 +82,20 @@ namespace TheyWillDescend.Simulation.Agents
 
                     if (needed > 0)
                     {
-                        // No free workers available to fulfill remainder: clamp DesiredWorkers to actual assigned
                         workplace.ValueRW.DesiredWorkers = current + assigned;
                     }
                 }
-
                 else if (current > desired)
                 {
                     var excess = current - desired;
                     for (var i = assignedAgents.Length - 1; i >= 0 && excess > 0; i--)
                     {
-                        if (assignedAgents[i].BuildingId != bId)
+                        if (assignedAgents[i].House != house)
                             continue;
 
-                        var agentEntity = assignedAgents[i].Entity;
+                        var agentEntity = assignedAgents[i].Agent;
                         var assign = SystemAPI.GetComponent<AgentAssignment>(agentEntity);
-                        assign.WorkplaceBuildingId = 0;
+                        assign.Workplace = Entity.Null;
                         assign.Arrived = 0;
                         SystemAPI.SetComponent(agentEntity, assign);
                         excess--;
@@ -113,8 +110,8 @@ namespace TheyWillDescend.Simulation.Agents
 
         struct AgentRef
         {
-            public Entity Entity;
-            public int BuildingId;
+            public Entity Agent;
+            public Entity House;
         }
     }
 }

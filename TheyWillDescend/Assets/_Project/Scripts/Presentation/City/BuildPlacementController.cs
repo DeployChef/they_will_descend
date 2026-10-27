@@ -598,7 +598,7 @@ namespace TheyWillDescend.Presentation.City
                 {
                     Cluster = clusters[i].cluster,
                     Radial = clusters[i].radial,
-                    BuildingId = 1
+                    Building = new Entity { Index = 1, Version = 1 }
                 };
             }
 
