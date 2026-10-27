@@ -10,6 +10,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -27,8 +28,8 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] Color hoverOutlineColor = new(0.88f, 0.88f, 0.88f, 1f);
         [SerializeField] Color selectedOutlineColor = Color.white;
         [SerializeField] float outlineWidth = 0.28f;
-        [SerializeField] AudioZoneManager audioZoneManager;
 
+        AudioZoneManager _audioZoneManager;
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
@@ -45,6 +46,12 @@ namespace TheyWillDescend.Presentation.City
             public BuildingView View;
             public BuildingAudioSource AudioSource;
             public BuildingConstructionAudio ConstructionAudio;
+        }
+
+        [Inject]
+        public void Construct(AudioZoneManager audioZoneManager)
+        {
+            _audioZoneManager = audioZoneManager;
         }
 
         public void RebuildViews()
@@ -291,24 +298,17 @@ namespace TheyWillDescend.Presentation.City
 
         GameObject ResolveStampPrefab(EntityManager em, Entity entity, in Building building)
         {
-            var source = catalog != null
-                ? catalog
-                : Object.FindFirstObjectByType<BuildPlacementController>()?.Catalog;
-            if (source == null)
+            if (catalog == null)
                 return null;
             var typeId = em.HasComponent<Building>(entity)
                 ? em.GetComponentData<Building>(entity).TypeId.ToString()
                 : building.TypeId.ToString();
-            return source.FindPrefab(typeId);
+            return catalog.FindPrefab(typeId);
         }
 
         BuildingAudioSource RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
         {
-            // Менеджер живёт в Bootstrap-сцене (грузится additive), сериализованная
-            // ссылка из Game-сцены невозможна — ищем автоматически.
-            if (audioZoneManager == null)
-                audioZoneManager = FindFirstObjectByType<AudioZoneManager>();
-            if (audioZoneManager == null)
+            if (_audioZoneManager == null)
                 return null;
 
             // Ищем аудио-источник на префабе или создаём.
@@ -321,7 +321,7 @@ namespace TheyWillDescend.Presentation.City
             // Привязка к ячейке: ближайшая неполная в радиусе привязки, иначе новая.
             // Менеджер сам заводит источник, будит ячейку в поле зрения и ведёт
             // реестр — здесь только заводим компонент.
-            audioZoneManager.AttachSource(audioSource);
+            _audioZoneManager.AttachSource(audioSource);
 
             return audioSource;
         }

@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -47,11 +49,23 @@ namespace TheyWillDescend.Presentation.City
         /// <summary>Банки загружены (один раз; hot reload пересоздаёт ячейки сам).</summary>
         private bool _banksLoaded;
 
+        /// <summary>RTS-контроллер камеры: скорость для доплера FlyBy.</summary>
+        RTSCameraController _rtsController;
+
         public AudioZoneSettings Settings => settings;
         public AudioVisibilityChecker VisibilityChecker => visibilityChecker;
 
         /// <summary>Живые ячейки (только для чтения).</summary>
         public IReadOnlyList<AudioCell> Cells => _cells;
+
+        /// <summary>Банки сейчас выгрузятся: инстансы на их ивентах надо заглушить.</summary>
+        public event Action BanksUnloading;
+
+        [Inject]
+        public void Construct(RTSCameraController rtsController)
+        {
+            _rtsController = rtsController;
+        }
 
         void Awake()
         {
@@ -254,6 +268,7 @@ namespace TheyWillDescend.Presentation.City
             _topologyDirty = true;
         }
 
+#if UNITY_EDITOR
         /// <summary>
         /// Перелинковывает все активные BuildingAudioSource заново — после hot
         /// reload ячеек. Неактивные сами придут через OnEnable.
@@ -276,6 +291,7 @@ namespace TheyWillDescend.Presentation.City
                 GameLog.Info($"AudioZoneManager: relinked {sources.Length} buildings into {_cells.Count} cells "
                     + $"(capacity {settings.CellCapacity}, attach radius {settings.AttachRadius:F1} m).");
         }
+#endif
 
 
         /// <summary>
@@ -320,16 +336,8 @@ namespace TheyWillDescend.Presentation.City
             var flyByMax = settings.FlyByMaxSpeed;
             var flyByGate = settings.FlyByGateSpeed;
             var camVel = Vector3.zero;
-            if (flyBySpeed)
-            {
-                if (_rtsController == null && !_lookedForRtsController)
-                {
-                    _lookedForRtsController = true;
-                    _rtsController = FindFirstObjectByType<RTSCameraController>();
-                }
-                if (_rtsController != null)
-                    camVel = _rtsController.Velocity;
-            }
+            if (flyBySpeed && _rtsController != null)
+                camVel = _rtsController.Velocity;
 
             for (var i = 0; i < _cells.Count; i++)
             {
@@ -349,14 +357,9 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
-        /// <summary>RTS-контроллер камеры (ленивый поиск): скорость для доплера FlyBy.</summary>
-        private RTSCameraController _rtsController;
-
-        /// <summary>Пытались ли найти RTS-контроллер.</summary>
-        private bool _lookedForRtsController;
-
         void OnDestroy() => ClearCells();
 
+#if UNITY_EDITOR
         /// <summary>
         /// Hot reload: выгружает ивентовые банки, грузит заново, пересобирает
         /// ячейки и перелинковывает постройки — без перезапуска сцены. Правой
@@ -370,7 +373,7 @@ namespace TheyWillDescend.Presentation.City
 
             // Случайные городские звуки лежат в том же банке — их инстансы
             // тоже сошлются на выгружаемые ивенты. Глушим их до выгрузки.
-            FindFirstObjectByType<ZoneAmbienceSfxScheduler>()?.SilenceAll();
+            BanksUnloading?.Invoke();
 
             // Глушим все ячейки до выгрузки банков (инстансы ссылаются на ивенты).
             ClearCells();
@@ -390,6 +393,7 @@ namespace TheyWillDescend.Presentation.City
 
             GameLog.Info("AudioZoneManager: hot reload banks done.");
         }
+#endif
 
         // ===== Debug Gizmos =====
 

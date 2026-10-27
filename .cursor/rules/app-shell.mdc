@@ -7,19 +7,18 @@ alwaysApply: true
 
 **Shell** (Presentation) loads scenes. **Simulation** (ECS) is the run. There is no app-level state machine.
 
-**Main** is the composition root. `Startup.Awake` builds `RootLifetimeScope` by hand (`autoRun` is off). Child scene scopes still build themselves. Simulation does not use the container.
+**Main** is the composition root. `AppScope` is the process scope: a prefab set as Root Lifetime Scope on `VContainerSettings` (Preloaded Assets). VContainer instantiates it once (DontDestroyOnLoad) and parents every scene scope to it. Simulation does not use the container.
 
 ## Elegant core (prefer this over jam GameDirector)
 
 - `ShellService` is a root singleton, not a MonoBehaviour. `EnterGame(RunLaunch)` loads Game and calls `GameSession.Begin`. `ReturnToMenu` shuts the run down and unloads Game before the menu is shown. `ShowLoading` / `HideLoading` only switch the curtain.
-- `AppContext` stores only `IsFirstStart`. `EnterGame` sets it, so the next menu skips the splash.
-- `RootLifetimeScope` (VContainer) is the parent container on Root. Auto Run is off on that component in the scene. `Startup.Awake` calls `Build()`. Each scene has a child `LifetimeScope`. `AppContext`, `ShellService`, and `SaveService` are singletons on the parent. The slot file is `SaveService`; UI and `GameSession` do not touch it as a static.
+- `AppScope` registers `ShellService`, `SaveService`, `GameInput`. Each scene has its own `LifetimeScope` deriving from `LifetimeScope` directly (no parent reference needed). The slot file is `SaveService`; UI and `GameSession` do not touch it as a static.
+- Temporary until 08 Ф4: Root holds only `Startup`, which takes `ShellService` from `AppScope` and opens the menu.
 - `GameSession` lives in the Game scene: catalogs, `Begin` / `Apply` / `Shutdown`. It does not load scenes.
 - `GameRun` (Game scope) turns the sim clock and game input on when `Begin` reaches Ready, and off when the run leaves. A game-scene machine is not built yet.
 - Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`
 - `SceneLoader` (narrow, UniTask) — used by `ShellService` only
-- MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `ShellService.EnterGame`. Press any key plays once per process; `AppContext.IsFirstStart` remembers that across scene loads.
-- Root hosts are siblings: Startup, RootLifetimeScope, GameAudio, GameInput, Main Camera. No scene object for the shell service.
+- MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `ShellService.EnterGame`. Press any key plays once per process; `ShellService.SplashShown` remembers that across scene loads.
 - VContainer stays in Presentation/Main. Never inside `ISystem`
 
 ## Do not treat as canon
@@ -28,4 +27,4 @@ Fat `GameDirector`, card Inject, soft restart via Find, economy pause via timeSc
 
 ## Canon wiki
 
-`TheyWillDescendWiki/Architecture/09 App Shell.md`
+`TheyWillDescendWiki/Architecture/09 App Shell.md` (in transition: `Refactoring/08 Shell, Scenes & Audio.md` wins until Ф6 syncs 09).

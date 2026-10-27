@@ -1,13 +1,15 @@
 ---
-description: One Main Camera on Root; VCams on Menu/Game; no duplicate listeners
+description: Each scene owns its camera and FMOD listener; process services live on AppScope
 alwaysApply: true
 ---
 
 # Camera & scenes
 
-- **Root:** Startup, RootLifetimeScope, GameAudio, GameInput, one Main Camera (+ listener), EventSystem. No menu canvas, no gameplay light/world. `ShellService` is a root singleton, not a scene object. `GameSession` lives in the Game scene.
-- **MainMenu:** splash/menu canvases + `PressAnyKeyScreen` / `MainMenuScreen`. No Main Camera.
-- **Loading:** transition while Game loads. Include in Build list.
-- **Game:** level, lights, VCams, Simulation SubScene, `GameSession`. No second Main Camera (Cinemachine Brain on Root).
+- **AppScope** (prefab via `VContainerSettings`, DontDestroyOnLoad): `ShellService`, `SaveService`, `GameInput`, `GameAudio`, EventSystem. No camera, no world.
+- **Root (temporary until 08 Ф4):** only `Startup`.
+- **MainMenu:** own Main Camera (+ `StudioListener`, no Brain), splash/menu canvases, `PressAnyKeyScreen` / `MainMenuScreen`.
+- **Loading (temporary until 08 Ф3):** curtain while Game loads. No camera.
+- **Game:** own Main Camera (+ `CinemachineBrain`, `StudioListener`), VCams, level, lights, `WorldAudio`, `GameSession`. World audio deps come from `GameLifetimeScope`, not `Find*ObjectByType`.
+- Exactly one `StudioListener` at a time. Scenes are never loaded on top of each other with two cameras.
 
-Canon: `TheyWillDescendWiki/Architecture/11 Camera & Presentation Scenes.md`
+Canon: `TheyWillDescendWiki/Refactoring/08 Shell, Scenes & Audio.md` (wiki 11 is synced in Ф6).

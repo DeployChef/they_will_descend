@@ -11,6 +11,7 @@ namespace TheyWillDescend.Presentation.Audio
     /// <summary>
     /// Глобальные ивенты атмосферы (ветер и т.п.). Один инстанс на ивент.
     /// Жёстко закодированные пути — без EventReference, без Inspector.
+    /// Живёт в сцене Game: инстансы освобождаются вместе с ней.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GlobalAmbienceManager : MonoBehaviour
@@ -107,10 +108,6 @@ namespace TheyWillDescend.Presentation.Audio
 
         void Start()
         {
-            // Persistent — не убивать при смене сцен/UI.
-            if (gameObject != null)
-                DontDestroyOnLoad(gameObject);
-
             var count = EternalEventPaths.Length;
             _events = new ManagedEvent[count];
 
@@ -409,6 +406,17 @@ namespace TheyWillDescend.Presentation.Audio
             {
                 if (logActivity)
                     GameLog.Warning($"GlobalAmbienceManager: failed to create {e.eventPath}: {ex.Message}");
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (_events == null)
+                return;
+            for (var i = 0; i < _events.Length; i++)
+            {
+                if (_events[i] != null)
+                    KillEvent(_events[i]);
             }
         }
 

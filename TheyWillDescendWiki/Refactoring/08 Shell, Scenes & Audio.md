@@ -390,6 +390,8 @@ Game: SimPauseAudioBridge (LateUpdate) — читает SimControl → AudioServ
 
 ### Ф2. Камеры и звук мира — в сцены
 
+> **Статус: сделано.** Main Camera перенесена из Root в Game; в MainMenu — своя камера со `StudioListener`. `Game/WorldAudio`: AudioZoneManager (+ AudioVisibilityChecker), ZoneAmbienceSfxScheduler, WindAmbience (`GlobalAmbienceManager` без DDOL, освобождает инстансы в `OnDestroy`). Зависимости — `[Inject]` от `GameLifetimeScope`; hot reload банков — `#if UNITY_EDITOR` + событие `BanksUnloading`. Музыка следует за текущим слушателем (`getListenerAttributes`), а не за найденным объектом. Класс `GlobalAmbienceManager` не переименован в `WindAmbience` — при Ф5. **Временно до Ф3:** пока идёт загрузка Game, камеры нет (Loading без камеры), FMOD один раз предупреждает об отсутствии слушателя.
+
 1. В Game: Main Camera + `CinemachineBrain` + `StudioListener`. В MainMenu: своя камера.
 2. Удалить Main Camera с Root.
 3. Звук мира переехать в `Game/WorldAudio` (§6.8), зависимости — через `GameScope`. Убрать `FindFirstObjectByType` в аудио и `BuildingViewBoard`.

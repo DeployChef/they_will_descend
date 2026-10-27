@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TheyWillDescend.Presentation.Audio;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -34,11 +35,8 @@ namespace TheyWillDescend.Presentation.City
         /// </summary>
         private float _cosHalfFov;
 
-        /// <summary>Контроллер RTS-камеры (ленивый поиск): факт максимального отдаления.</summary>
+        /// <summary>Контроллер RTS-камеры: факт максимального отдаления.</summary>
         private RTSCameraController _rtsController;
-
-        /// <summary>Попытались ли найти контроллер камеры.</summary>
-        private bool _lookedForController;
 
         /// <summary>Список видимых ячеек.</summary>
         private readonly List<AudioCell> _visibleCells = new();
@@ -48,6 +46,12 @@ namespace TheyWillDescend.Presentation.City
 
         public Camera Camera => mainCamera;
         public AudioZoneSettings Settings => settings;
+
+        [Inject]
+        public void Construct(RTSCameraController rtsController)
+        {
+            _rtsController = rtsController;
+        }
 
         void Awake()
         {
@@ -91,26 +95,13 @@ namespace TheyWillDescend.Presentation.City
         /// Камера на самом дальнем шаге зума. Тогда локальные инстансы ячеек не
         /// играют вообще — город слышен общим амбиентом.
         /// </summary>
-        bool IsFullyZoomedOut()
-        {
-            // Контроллер в additive-сцене может появиться позже — ищем лениво, один раз.
-            if (_rtsController == null && !_lookedForController)
-            {
-                _lookedForController = true;
-                _rtsController = FindFirstObjectByType<RTSCameraController>();
-            }
-
-            return _rtsController != null && _rtsController.IsFullyZoomedOut;
-        }
+        bool IsFullyZoomedOut() => _rtsController != null && _rtsController.IsFullyZoomedOut;
 
         /// <summary>
         /// Обновляет видимость всех ячеек.
         /// </summary>
         public void UpdateVisibility(IReadOnlyList<AudioCell> allCells)
         {
-            // Камера может появиться позже Bootstrap (Game-сцена additive) — ищем лениво.
-            if (mainCamera == null)
-                mainCamera = Camera.main;
             if (mainCamera == null || settings == null || allCells == null)
                 return;
 

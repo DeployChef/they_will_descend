@@ -4,6 +4,7 @@ using FMODUnity;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
 using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.Audio
 {
@@ -48,8 +49,7 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         const float MinLifetimeMargin = 30f;
 
-        [Tooltip("Менеджер ячеек. Если пусто — находится автоматически.")]
-        [SerializeField] AudioZoneManager zoneManager;
+        AudioZoneManager _zoneManager;
 
         /// <summary>Живые выстрелы: инстанс + потолок жизни (страховка от утечки).</summary>
         struct LiveShot
@@ -71,17 +71,20 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Число звуков, играющих прямо сейчас.</summary>
         public int LiveCount => _live.Count;
 
+        [Inject]
+        public void Construct(AudioZoneManager manager)
+        {
+            _zoneManager = manager;
+            _zoneManager.BanksUnloading += SilenceAll;
+        }
+
         void Update()
         {
-            // Менеджер может появиться позже (additive-сцены) — ищем лениво.
-            if (zoneManager == null)
-                zoneManager = FindFirstObjectByType<AudioZoneManager>();
-
-            var settings = zoneManager != null ? zoneManager.Settings : null;
+            var settings = _zoneManager != null ? _zoneManager.Settings : null;
             if (settings == null)
                 return;
 
-            var cells = zoneManager.Cells;
+            var cells = _zoneManager.Cells;
             if (cells == null || cells.Count == 0)
                 return;
 
@@ -279,7 +282,7 @@ namespace TheyWillDescend.Presentation.Audio
 
             // Кулдаун живёт внутри ячейки. Обнуляем у живых, чтобы после
             // перезагрузки банков жребий не встал на мёртвый срок.
-            var cells = zoneManager != null ? zoneManager.Cells : null;
+            var cells = _zoneManager != null ? _zoneManager.Cells : null;
             if (cells == null)
                 return;
 
@@ -290,7 +293,12 @@ namespace TheyWillDescend.Presentation.Audio
             }
         }
 
-        void OnDestroy() => SilenceAll();
+        void OnDestroy()
+        {
+            if (_zoneManager != null)
+                _zoneManager.BanksUnloading -= SilenceAll;
+            SilenceAll();
+        }
 
         private void LogOnce(string message)
         {

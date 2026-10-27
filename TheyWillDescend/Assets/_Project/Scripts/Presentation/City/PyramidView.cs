@@ -28,9 +28,6 @@ namespace TheyWillDescend.Presentation.City
 
         void Awake()
         {
-            if (selection == null)
-                selection = FindFirstObjectByType<BuildingSelection>();
-
             EnsureMaterials();
             EnsurePlazaMesh();
         }

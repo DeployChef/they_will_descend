@@ -1,3 +1,5 @@
+using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Shell;
 using VContainer;
@@ -12,6 +14,12 @@ namespace TheyWillDescend.Main
             builder.Register<GameRun>(Lifetime.Singleton);
             builder.RegisterComponentInHierarchy<GameSession>();
             builder.RegisterComponentInHierarchy<PauseMenuScreen>();
+
+            builder.RegisterComponentInHierarchy<RTSCameraController>();
+            builder.RegisterComponentInHierarchy<AudioZoneManager>();
+            builder.RegisterComponentInHierarchy<AudioVisibilityChecker>();
+            builder.RegisterComponentInHierarchy<ZoneAmbienceSfxScheduler>();
+            builder.RegisterComponentInHierarchy<BuildingViewBoard>();
         }
     }
 }

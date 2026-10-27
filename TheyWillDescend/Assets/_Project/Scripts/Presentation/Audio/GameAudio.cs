@@ -9,7 +9,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// FMOD host on Root. Lives with the Root camera and AudioListener.
+    /// FMOD host on AppScope (process lifetime). TEMPORARY until 08 Ф5 AudioService.
     /// Один инстанс музыки на сцене: event:/SOUNDTRACK/MUSIC_STATES (банк Main_theme).
     /// Пауза следует за <see cref="SimControl.PlayerPaused"/> (меню паузы: Esc / Continue) —
     /// это единственный источник истины, toggle по клавише разъезжался с кнопкой Continue.
@@ -64,18 +64,27 @@ namespace TheyWillDescend.Presentation.Audio
                 yield break;
             }
 
-            // MUSIC_STATES — 3D-ивент: без атрибутов RuntimeManager варнит каждый кадр.
-            // Вешаем на слушателя — атрибуты обновляются сами, музыка звучит "вокруг" камеры.
-            var listener = FindFirstObjectByType<StudioListener>();
-            if (listener != null)
-                RuntimeManager.AttachInstanceToGameObject(_music, listener.transform);
-
+            FollowListener();
             _music.start();
             GameLog.Info("GameAudio: music started (event:/SOUNDTRACK/MUSIC_STATES).");
         }
 
+        /// <summary>
+        /// MUSIC_STATES — 3D-ивент. Держим его в точке слушателя: слушатель у каждой сцены
+        /// свой (камера меню, камера Game), а музыка живёт дольше любой из них.
+        /// </summary>
+        void FollowListener()
+        {
+            if (!_music.isValid())
+                return;
+            if (RuntimeManager.StudioSystem.getListenerAttributes(0, out var attributes) == FMOD.RESULT.OK)
+                _music.set3DAttributes(attributes);
+        }
+
         void LateUpdate()
         {
+            FollowListener();
+
             // Источник истины — PlayerPaused (меню паузы). Esc открывает/закрывает меню,
             // Continue закрывает кнопкой — оба пути сходятся здесь, рассинхрона нет.
             var paused = false;
