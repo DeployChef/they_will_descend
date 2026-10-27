@@ -25,9 +25,6 @@ namespace TheyWillDescend.Main
         {
             builder.RegisterComponentInHierarchy<GameSession>();
             builder.RegisterComponentInHierarchy<PauseMenuScreen>();
-            builder.RegisterEntryPoint<GameEntry>()
-                .WithParameter(editorLaunch)
-                .WithParameter(debugLoadStageSeconds);
             builder.RegisterEntryPoint<SimPauseAudioBridge>();
 
             builder.RegisterComponentInHierarchy<RTSCameraController>();
@@ -42,6 +39,11 @@ namespace TheyWillDescend.Main
             builder.RegisterComponentInHierarchy<BuildPlacementController>();
             builder.RegisterComponentInHierarchy<BuildingInspectPanel>();
             builder.RegisterComponentInHierarchy<AgentViewBoard>();
+
+            // After the scene container builds, VContainer calls GameEntry.Initialize — that is the run start.
+            builder.RegisterEntryPoint<GameEntry>()
+                .WithParameter(editorLaunch)
+                .WithParameter(debugLoadStageSeconds);
         }
     }
 }
