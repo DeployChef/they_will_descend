@@ -19,9 +19,9 @@ HUD (`Presentation/GameHud`) не делает `CreateEntityQuery`. Карточ
 
 Редкое исключение наружу: `BuildingRejectedEvent` (тост). Не спавн, не тик дня.
 
-Пауза/скорость — команды на `SimControl`, не запись стоков. Готовность забега — unmanaged lifecycle `SimSession.Phase`: `Unprepared`, `Preparing`, `Ready`, `Resetting`. Это не состояние часов.
+Пауза/скорость — буфер `SimClockCommand` на сессии, не запись стоков. Ран готов, когда `GameSession.Begin` синхронно собрал мир (`RunWorld.Wipe` + bootstrap + scenario/save). Фаз `SimSession.Phase` нет.
 
-Gameplay Presentation **никогда не запускает consume вручную**.
+Gameplay Presentation **никогда не запускает** `Process*` вручную.
 
 Два входа, оба канон:
 
@@ -40,7 +40,7 @@ Gameplay Presentation **никогда не запускает consume вруч�
 
 Итоги UI не пишет: склад, лояльность, позу, `WorkingCount`. Кнопка может прочитать мир, чтобы посереть. Ограничение (нельзя желать больше свободных людей, чем есть) остаётся в системе. Часы — запрос, потому что это режим тика, а не поле одного дома.
 
-Исключений для ручного playback нет. `RunPublisher.BeginRun`, `RunSessionSnapshot.BeginApply` и `RunPublisher.BeginReset` только атомарно ставят входящие команды и фазу. Линейный `CommandSystemGroup` исполняет их, lifecycle-finalizer подтверждает `Ready` / `Unprepared`, а `GameSession` асинхронно ждёт подтверждение с timeout/cancellation. Loading и gameplay input снимаются только после `Ready`; Game scene выгружается только после `Unprepared`.
+Исключений для ручного playback нет. `GameSession.Begin` синхронно: wipe → bootstrap → `ScenarioSetup` или `SnapshotRestore.Apply`. Teardown — `RunWorld.Wipe` в `Shutdown` до выгрузки сцены.
 
 ## Меши и поза
 
@@ -69,7 +69,7 @@ Gameplay Presentation **никогда не запускает consume вруч�
   ← HQ: `_HqOverlay` (кольцо + клик)
   ← люди: AgentViewBoard — LocalTransform + Moving → Mixamo; Arrived (дом или стройка) → меш выключен
   ← сток HUD pull ResourceAmount
-  ← слот дома: BuildingInspectPanel +/− → Assign/Unassign
+  ← слот дома: BuildingInspectPanel +/− → Workplace.DesiredWorkers
 ```
 
 Отказ стройки — `BuildingRejectedEvent` → `BuildingRejectLog`. Спавн/день — не события.
@@ -78,14 +78,14 @@ Gameplay Presentation **никогда не запускает consume вруч�
 
 | Кусок | Слой |
 | --- | --- |
-| `SpawnAgentCommand`, `PlaceBuildingCommand`, `DeconstructBuildingCommand`, `AssignWorkerCommand`, `SimCommands` | Simulation |
+| `SpawnAgentRequest`, `PlaceBuildingRequest`, `DemolishBuildingRequest`, `SimCommands` | Simulation |
 | `LocalTransform`, `AgentLocomotion`, `AgentAssignment`, `Workplace`, `ResourceAmount` | Simulation |
-| Session singleton | SubScene: `SimControlAuthoring` печёт `SimSession`, `SimControl`, sequence и lifecycle buffers |
-| Плаза HQ | SubScene bake; не `PlaceBuilding` |
+| Session singleton | runtime `SimulationBootstrap`: `SimSession`, `SimControl`, `CityCore`, каталоги |
+| Плаза HQ | `CreateHeadquarters` в bootstrap; не `PlaceBuildingRequest` |
 | `AgentViewBoard` / `BuildingViewBoard` / `BuildingSelection` / `TimeWidget` | Presentation **читает** World |
 | Пауза / x1 x2 x3 | `SimClockCommand` → `SimControl` |
 
-`SimSessionAccess` находит session singleton по `SimSession`. Генератор ID живёт отдельно в `AgentIdSequence`; reset — типизированные `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`. Полный pipeline: clock → reset agents → reset buildings → scenario spawn → spawn → place → assign → unassign → deconstruct → workplace pause → pyramid feed → lifecycle finalizer → delta time. `BuildingRejectedEvent` — outbound и в drain-check не входит.
+`SimSessionAccess` находит session по `SimSession`. Генератор ID — `AgentIdSequence` / `BuildingIdSequence`. Wipe рана — тег `RunScoped`, не `UniversalQuery`. Тик: `CommandSystemGroup` (clock buffer + `Process*RequestsSystem`) → commute/construction → production → day clock. `BuildingRejectedEvent` — outbound.
 
 `AgentSpawner` только постит spawn (площадка/скорость). Префабы Mixamo и `spawnParent` — на `AgentViewBoard` (тот же GO).
 

@@ -10,18 +10,18 @@
 
 ## 0. Где мы сейчас
 
-Миграция из [[04 Step-by-Step Roadmap]] выполнена примерно наполовину. Целевые паттерны внедрены, но поверх старого фундамента.
+Пакет Ф0–Ф6 **сделан** (27.10.2026). Код — wipe/create рана, ссылки на `Entity`, честный desired state, `Process*RequestsSystem`, HUD без query на кадр. Документы 01–06 рефакторинга ниже по папке — история, не инструкция.
 
-| Шаг дорожной карты | Состояние |
+| Шаг | Состояние |
 | --- | --- |
-| 1. Runtime bootstrap вместо SubScene | SubScene из `Game.unity` убрана, `SimulationBootstrap` есть. Остались фазы, таймауты, despawn-команды |
-| 2. Рабочие через desired state | `DesiredWorkers` + `WorkforceDispatchSystem` есть, команды assign/unassign удалены. Семантика сломана (см. §3) |
-| 3. Стройка и снос через request-сущности | `PlaceBuildingRequest` / `DemolishBuildingRequest` есть. Снос держит `Entity Building` (Ф2) |
-| 4. Очистка сессии и аллокаций | Частично |
-| 5. CMS (`BuildingDefinition`) | Не начат |
-| 06. Пирамида без `Building` | В основном сделан. `PyramidInspectPanel` ищет HQ запросом каждый кадр |
+| Runtime bootstrap, без фаз и despawn-очередей | Сделано (Ф1) |
+| Desired state рабочих, пауза не отпускает | Сделано (Ф3) |
+| Request-сущности, гейт `SessionInGame` | Сделано (Ф4). Слайдеры пирамиды — всё ещё request (Ф0.4) |
+| Идентичность `Entity`, HUD читает сводки | Сделано (Ф2, Ф5) |
+| CMS (`BuildingDefinition`) | Не начат — [[05 Content Pipeline & CMS]] |
+| Пирамида без `Building` | Сделано. HQ — `CityCore.Headquarters` |
 
-Уже **не** проблема (документы 03/06 устарели в этих пунктах): `DestroyImmediate` в досках защищён `Application.isPlaying`; пул агентов есть; `SyncCityCenterFromHeadquartersSystem` и `HeadquartersCenterBakeSystem` удалены; у HQ нет `Building`.
+Уже **не** проблема: `DestroyImmediate` в досках защищён; пул агентов есть; `SyncCityCenterFromHeadquartersSystem` удалена; у HQ нет `Building`.
 
 ---
 
@@ -472,7 +472,7 @@ UI:      HQ entity (из CityCore, §7.2) → GetBuffer<PyramidFeedLine> → lin
 - Simulation не должна трогать `UnityEngine.Application` — уходит вместе с `ConsumePendingScenarioSpawnsSystem`.
 - Пустые строки-заглушки и лишние `using` в затронутых файлах — по ходу, не отдельной задачей.
 
-> **Статус: сделано, кроме пунктов, привязанных к Ф1.** Namespace Presentation приведены к правилу «сборка + первая папка» ([[../Architecture/01 Folder Structure|01]]): `Presentation/Application` → `Presentation/SimBridge` (`TheyWillDescend.Presentation.SimBridge`; имя `Application` затенило бы `UnityEngine.Application` в десяти файлах), `TheyWillDescend.Shell` → `Presentation.Shell`, `Infrastructure.Logging/Save` → `Presentation.Infrastructure`, `RTSCameraController` получил namespace `Presentation.Cameras`. Пустые строки в Presentation и Main убраны, пустые папки `Simulation/Gods/Commands` и `Simulation/Research/Commands` удалены, устаревшие вызовы API (`FindObjectsSortMode`, `FindObjectsOfType`, `FindFirstObjectByType`, `AttachInstanceToGameObject(Transform)`) заменены — консоль чистая. **Остаётся на Ф1:** `UnityEngine.Application` в Simulation (уходит вместе с `ConsumePendingScenarioSpawnsSystem`) и судьба `RunPublisher`. Simulation-файлы не трогались — фазы логики впереди.
+> **Статус: сделано.** Namespace Presentation: `SimBridge` (не `Application` — затенило бы `UnityEngine.Application`), `Presentation.Shell`, `Presentation.Infrastructure`, `Presentation.Cameras`. `RunPublisher` и `ConsumePendingScenarioSpawnsSystem` ушли в Ф1 (`ScenarioSetup` + прямой спавн). `UnityEngine.Application` в Simulation нет. Пустая `Simulation/Agents/Commands` снята после Ф4.
 
 ---
 

@@ -92,11 +92,7 @@ namespace TheyWillDescend.Simulation.City
 
         static void NoteStoryCompletion(EntityManager em, Entity site, Unity.Collections.FixedString64Bytes typeId)
         {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<SimSession>());
-            if (query.IsEmptyIgnoreFilter)
-                return;
-            var session = query.GetSingletonEntity();
-            if (!em.HasBuffer<StoryFact>(session))
+            if (!SimSessionAccess.TryGet(em, out var session) || !em.HasBuffer<StoryFact>(session))
                 return;
             em.GetBuffer<StoryFact>(session).Add(new StoryFact
             {

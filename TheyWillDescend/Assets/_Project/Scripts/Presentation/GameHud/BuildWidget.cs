@@ -177,7 +177,7 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (!SimWorld.TryGet(out var em, out var bag) || !em.HasBuffer<BuildingPrototype>(bag))
             {
-                GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
+                GameLog.Warning("Build catalog empty — session BuildingPrototype buffer is missing.");
                 return;
             }
 
@@ -214,7 +214,7 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             if (count == 0)
-                GameLog.Warning("Build catalog empty — SubScene / SimControl buildings not ready.");
+                GameLog.Warning("Build catalog empty — no unlocked BuildingPrototype entries.");
 
             if (eraseRoadButton != null && eraseRoadButton.transform.parent == catalogEntriesRoot)
                 eraseRoadButton.transform.SetAsLastSibling();

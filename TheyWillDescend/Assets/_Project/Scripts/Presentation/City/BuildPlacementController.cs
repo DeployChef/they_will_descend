@@ -17,7 +17,7 @@ using VContainer;
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Play aiming: ghost zone + the scene's body model, polar snap, click → PlaceBuildingCommand.
+    /// Play aiming: ghost zone + the scene's body model, polar snap, click → PlaceBuildingRequest.
     /// Does not own house types, live meshes, or BuildingViewBoard.
     /// </summary>
     public sealed class BuildPlacementController : MonoBehaviour
