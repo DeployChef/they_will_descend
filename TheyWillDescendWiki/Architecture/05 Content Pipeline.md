@@ -215,7 +215,9 @@ Kitchen                 ← BuildingStamp + BuildingView
 
 ### 5.3 Каталог
 
-Открыть `DefaultBuildingCatalog` → массив префабов (не SO-карточек). Тип ассета — `TheyWillDescend.Content.BuildingCatalogAsset`: вид и ghost Instantiates по `typeId`. Симуляция этот тип не видит; baker копирует цифры `BuildingStamp` в буферы session.
+Открыть `DefaultBuildingCatalog` → массив префабов (не SO-карточек). Тип ассета — `TheyWillDescend.Content.BuildingCatalogAsset`. Префаб здания — **оболочка без модели**: `BuildingStamp`, `BuildingView`, виджет, звук. Симуляция этот тип не видит; `SimulationBootstrap` копирует цифры `BuildingStamp` в буферы session.
+
+Модель (`Body`) — в наборе облика сцены (`VisualSet`: оболочка → модель). `BuildingViewBoard` ставит оболочку и вкладывает модель; призрак установки строится только из модели. Новое здание = оболочка в каталог + модель в каждый набор (`Content/Visuals/FullVisuals`, `Blockout/BlockoutVisuals`). Нет модели в наборе — дом встанет без вида, в консоли предупреждение.
 
 Один и тот же asset:
 

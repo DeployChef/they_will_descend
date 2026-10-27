@@ -57,7 +57,7 @@ public sealed class AppScope : LifetimeScope
 
 | Сервис | Роль |
 | --- | --- |
-| `ShellService` | Только навигация: `StartRun(launch)`, `RestartRun(launch)`, `GoToMenu()`, `TryTakeLaunch(out launch)`, `SplashShown`. Хранит параметры запуска между кнопкой и загрузкой Game. `GameSession` не знает |
+| `ShellService` | Только навигация: `StartRun(launch)` (→ `Game`), `RestartRun(launch)` (→ текущая сцена рана, поэтому рестарт блокаута остаётся в блокауте), `GoToMenu()`, `TryTakeLaunch(out launch)`, `SplashShown`. Хранит параметры запуска между кнопкой и загрузкой. `GameSession` не знает |
 | `TransitionService` | Единственный, кто грузит сцены. Конвейер перехода (§3), реестр teardown'ов сцены |
 | `LoadingTasks` | Сцена сообщает «мне нужно время»: `Add(task, weight, label)`. Ошибка задачи = исключение |
 | `LoadingScreen` | Визуал процесса: `Show` / `Hide` (асинхронные), `SetProgress`. Переживает выгрузку и загрузку сцен |

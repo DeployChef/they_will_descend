@@ -257,8 +257,11 @@ namespace TheyWillDescend.Presentation.City
             {
                 if (gridMaskMaterial != null)
                 {
-                    _runtimeMaterial = new Material(gridMaskMaterial);
-                    _runtimeMaterial.name = "RadialUnderlay_Runtime";
+                    _runtimeMaterial = new Material(gridMaskMaterial)
+                    {
+                        name = "RadialUnderlay_Runtime",
+                        hideFlags = HideFlags.DontSave
+                    };
                 }
                 else
                 {
@@ -289,7 +292,7 @@ namespace TheyWillDescend.Presentation.City
 
             if (_mesh == null)
             {
-                _mesh = new Mesh { name = "RadialClusterUnderlay" };
+                _mesh = new Mesh { name = "RadialClusterUnderlay", hideFlags = HideFlags.DontSave };
                 _mesh.MarkDynamic();
                 _mesh.indexFormat = IndexFormat.UInt32;
             }

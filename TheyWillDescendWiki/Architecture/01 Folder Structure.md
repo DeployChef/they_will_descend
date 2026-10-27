@@ -26,10 +26,10 @@ Simulation, Authoring, Content: `autoReferenced: false` — на них ссыл
 | Asmdef | Что внутри | Нельзя |
 | --- | --- | --- |
 | `TheyWillDescend.Simulation` | компоненты, команды, системы, сетка, occupancy; логические SO (`ResourceDefinition`, `SimRules`) | UI, виды, префабы домов, диск, FMOD |
-| `TheyWillDescend.Content` | арт-каталоги (`BuildingCatalogAsset`) | `ISystem`, экономика рана |
+| `TheyWillDescend.Content` | каталог зданий (`BuildingCatalogAsset`), наборы облика (`VisualSet`) | `ISystem`, экономика рана |
 | `TheyWillDescend.Authoring` | Baker’ы SubScene, editor-tools сценария | runtime UI |
 | `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell-сервисы, мост к симуляции, JSON-сейв, `GameLog`, `AudioService` | `ISystem` / `SystemBase` на виджеты; писать стоки, лояльность, позу |
-| `TheyWillDescend.Main` | `AppScope` (процесс), `MainMenuLifetimeScope`, `GameLifetimeScope` | экономика, `EntityManager` |
+| `TheyWillDescend.Main` | `AppScope` (процесс), `MainMenuLifetimeScope`, `GameLifetimeScope`. Ссылается на Presentation, Content, Input System | экономика, `EntityManager` |
 
 Домены Shell / SimBridge / Infrastructure — **папки** в Presentation, не отдельные сборки.
 
@@ -50,7 +50,7 @@ Assets/_Project/Scripts/
     Economy/     Components, Systems
     Gods/        Components, Commands, CommandSystems, Systems
     Content/     каталоги логики (ResourceDefinition, SimRules, Timeline, BuildingStamp identity)
-  Content/       BuildingCatalogAsset (арт+штамп), DifficultyProfile (оверлей), ScenarioDefinition
+  Content/       BuildingCatalogAsset (оболочки зданий со штампом), VisualSet (модели), DifficultyProfile (оверлей), ScenarioDefinition
   Authoring/
     Session/     SimControlAuthoring, SimRulesAuthoring
     Agents/      AgentSessionAuthoring
@@ -69,7 +69,19 @@ Assets/_Project/Scripts/
     ShellUi/     MainMenu, Game (PauseMenuScreen), Loading (LoadingScreen)
     Infrastructure/ Logging (GameLog), Save (SaveService, RunSnapshot)
     Audio/       звук мира (ячейки, ветер, стройка); Service/ — AudioService, каталог, банки, музыка
+    Environment/ SceneDressing, TimeLightController
   Main/          AppScope, MainMenuLifetimeScope, GameLifetimeScope
+```
+
+Ассеты вне `Scripts/`:
+
+```
+Assets/_Project/
+  Content/Buildings/   каталог и оболочки зданий (штамп, вид, виджет, звук — без модели)
+  Content/Visuals/     FullVisuals.asset, Bodies/ — модели зданий полной сцены
+  Prefabs/Game/        GameRun.prefab — весь функционал рана, общий для сцен рана
+  Scenes/              MainMenu, Game
+  Blockout/            GameBlockout.unity, BlockoutVisuals, блоки, материалы. Game на эту папку не ссылается
 ```
 
 Внутри фичи Simulation:

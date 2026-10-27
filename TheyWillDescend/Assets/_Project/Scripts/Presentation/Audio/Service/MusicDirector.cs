@@ -1,4 +1,7 @@
-using System;using FMOD.Studio; using FMODUnity; using TheyWillDescend.Presentation.Infrastructure;
+using System;
+using FMOD.Studio;
+using FMODUnity;
+using TheyWillDescend.Presentation.Infrastructure;
 using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace TheyWillDescend.Presentation.Audio

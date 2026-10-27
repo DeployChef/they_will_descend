@@ -1,4 +1,13 @@
-using System.Collections.Generic;using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.Agents; using TheyWillDescend.Simulation.Session; using Unity.Collections; using Unity.Entities; using Unity.Transforms; using UnityEngine;
+using System.Collections.Generic;
+using TheyWillDescend.Content;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Simulation.Agents;
+using TheyWillDescend.Simulation.Session;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Transforms;
+using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.Agents
 {
@@ -8,14 +17,20 @@ namespace TheyWillDescend.Presentation.Agents
     /// </summary>
     public sealed class AgentViewBoard : MonoBehaviour
     {
-        [SerializeField] GameObject[] characterPrefabs;
         [SerializeField] Transform spawnParent;
 
+        IReadOnlyList<GameObject> _characterPrefabs;
         readonly Dictionary<int, AgentView> _views = new();
         readonly HashSet<int> _seen = new();
         readonly List<int> _stale = new();
         readonly Dictionary<GameObject, Stack<AgentView>> _pool = new();
         EntityQuery _agentQuery;
+
+        [Inject]
+        public void Construct(VisualSet visuals)
+        {
+            _characterPrefabs = visuals.Workers;
+        }
 
         void LateUpdate() => Pump();
 
@@ -227,15 +242,15 @@ namespace TheyWillDescend.Presentation.Agents
 
         GameObject ResolvePrefab(AgentKind kind, int agentId)
         {
-            if (characterPrefabs == null || characterPrefabs.Length == 0)
+            if (_characterPrefabs == null || _characterPrefabs.Count == 0)
                 return null;
             if (kind != AgentKind.Worker)
-                return characterPrefabs[0];
+                return _characterPrefabs[0];
 
-            var index = agentId % characterPrefabs.Length;
+            var index = agentId % _characterPrefabs.Count;
             if (index < 0)
-                index += characterPrefabs.Length;
-            return characterPrefabs[index] != null ? characterPrefabs[index] : characterPrefabs[0];
+                index += _characterPrefabs.Count;
+            return _characterPrefabs[index] != null ? _characterPrefabs[index] : _characterPrefabs[0];
         }
 
         static float AnimSpeed()

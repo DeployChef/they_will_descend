@@ -1,4 +1,16 @@
-using System.Collections.Generic;using TheyWillDescend.Content; using TheyWillDescend.Presentation.Audio; using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.City; using TheyWillDescend.Simulation.Content; using TheyWillDescend.Simulation.Session; using Unity.Collections; using Unity.Entities; using Unity.Mathematics; using Unity.Transforms; using UnityEngine; using VContainer;
+using System.Collections.Generic;
+using TheyWillDescend.Content;
+using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Session;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -19,6 +31,7 @@ namespace TheyWillDescend.Presentation.City
 
         AudioZoneManager _audioZoneManager;
         AudioService _audio;
+        VisualSet _visuals;
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
@@ -37,10 +50,11 @@ namespace TheyWillDescend.Presentation.City
         }
 
         [Inject]
-        public void Construct(AudioZoneManager audioZoneManager, AudioService audio)
+        public void Construct(AudioZoneManager audioZoneManager, AudioService audio, VisualSet visuals)
         {
             _audioZoneManager = audioZoneManager;
             _audio = audio;
+            _visuals = visuals;
         }
 
         public void RebuildViews()
@@ -214,6 +228,7 @@ namespace TheyWillDescend.Presentation.City
             var house = Object.Instantiate(prefab, _root);
             house.name = $"Building_{building.Id}";
             house.transform.position = (Vector3)position;
+            AttachBody(house, building.TypeId.ToString());
             var houseTag = house.GetComponent<BuildingIdTag>();
             if (houseTag == null)
                 houseTag = house.AddComponent<BuildingIdTag>();
@@ -285,6 +300,18 @@ namespace TheyWillDescend.Presentation.City
                 ? em.GetComponentData<Building>(entity).TypeId.ToString()
                 : building.TypeId.ToString();
             return catalog.FindPrefab(typeId);
+        }
+
+        void AttachBody(GameObject house, string typeId)
+        {
+            var body = _visuals != null ? _visuals.FindBody(typeId) : null;
+            if (body == null)
+            {
+                GameLog.Warning($"BuildingViewBoard: visual set has no body for {typeId}.");
+                return;
+            }
+
+            Object.Instantiate(body, house.transform).name = "Body";
         }
 
         BuildingAudioSource RegisterAudioSource(GameObject buildingGo, float3 worldPosition)

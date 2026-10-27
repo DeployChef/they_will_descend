@@ -1,4 +1,17 @@
-using System.Collections.Generic;using TheyWillDescend.Presentation.City; using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.City; using TheyWillDescend.Simulation.Content; using TheyWillDescend.Simulation.Economy; using TheyWillDescend.Simulation.Research; using TheyWillDescend.Simulation.Session; using TMPro; using Unity.Collections; using Unity.Entities; using Unity.Mathematics; using UnityEngine.UI; using UnityEngine;
+using System.Collections.Generic;
+using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Research;
+using TheyWillDescend.Simulation.Session;
+using TMPro;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace TheyWillDescend.Presentation.GameHud
 {

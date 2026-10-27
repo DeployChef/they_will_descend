@@ -1,4 +1,15 @@
-using System.Collections;using Cysharp.Threading.Tasks; using TheyWillDescend.Presentation.Agents; using TheyWillDescend.Presentation.Cameras; using TheyWillDescend.Presentation.City; using TheyWillDescend.Presentation.GameHud; using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Presentation.Shell; using TheyWillDescend.Simulation.Session; using UnityEngine.UI; using UnityEngine; using VContainer;
+using System.Collections;
+using Cysharp.Threading.Tasks;
+using TheyWillDescend.Presentation.Agents;
+using TheyWillDescend.Presentation.Cameras;
+using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Presentation.GameHud;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Presentation.Shell;
+using TheyWillDescend.Simulation.Session;
+using UnityEngine;
+using UnityEngine.UI;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.ShellUi
 {

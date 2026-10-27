@@ -1,4 +1,17 @@
-using System.Collections.Generic;using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.Agents; using TheyWillDescend.Simulation.City; using TheyWillDescend.Simulation.Content; using TheyWillDescend.Simulation.Economy; using TheyWillDescend.Simulation.Gods; using TheyWillDescend.Simulation.Research; using TheyWillDescend.Simulation.Session; using TheyWillDescend.Simulation.Time; using Unity.Collections; using Unity.Entities; using Unity.Mathematics; using Unity.Transforms;
+using System.Collections.Generic;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Simulation.Agents;
+using TheyWillDescend.Simulation.City;
+using TheyWillDescend.Simulation.Content;
+using TheyWillDescend.Simulation.Economy;
+using TheyWillDescend.Simulation.Gods;
+using TheyWillDescend.Simulation.Research;
+using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Simulation.Time;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace TheyWillDescend.Presentation.SimBridge
 {

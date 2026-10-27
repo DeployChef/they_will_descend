@@ -1,6 +1,8 @@
+using TheyWillDescend.Presentation.Agents;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.Cameras;
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Presentation.Environment;
 using TheyWillDescend.Presentation.Shell;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Presentation.SimBridge;
@@ -28,7 +30,12 @@ namespace TheyWillDescend.Main
             builder.RegisterComponentInHierarchy<AudioVisibilityChecker>();
             builder.RegisterComponentInHierarchy<ZoneAmbienceSfxScheduler>();
             builder.RegisterComponentInHierarchy<WindAmbience>();
+
+            builder.RegisterComponentInHierarchy<SceneDressing>();
+            builder.Register(r => r.Resolve<SceneDressing>().Visuals, Lifetime.Scoped);
             builder.RegisterComponentInHierarchy<BuildingViewBoard>();
+            builder.RegisterComponentInHierarchy<BuildPlacementController>();
+            builder.RegisterComponentInHierarchy<AgentViewBoard>();
         }
     }
 }

@@ -31,16 +31,35 @@
 | VCam меню | позже, при 3D-фоне (тогда добавить Brain) |
 | `EventSystem` | **нет** |
 
-### Game
+### Game и сцены рана
 
-| Объект | Да / нет |
+Сцена рана = общий префаб `#GameRun` + свои декорации `@Dressing`. Таких сцен две: `Game.unity` и `Blockout/GameBlockout.unity`. Подробно: [[../Refactoring/09 Dressing & Blockout|09 Декорации и блокаут]].
+
+```text
+#GameRun        Prefabs/Game/GameRun.prefab — функционал, ни одной ссылки на арт
+   #Scope       GameLifetimeScope, GameSession
+   #Cameras     Main Camera (Brain + StudioListener), VCam_Gameplay, PauseCamera, RTSCameraTarget
+   #City        RadialGridGuide, BuildPlacement, Headquarters (PyramidView, клик, площадь)
+   #Agents      AgentSpawner, Humans
+   #WorldAudio  AudioZoneManager, ZoneAmbienceSfxScheduler, WindAmbience
+   #Hud         GameHudCanvas
+@Dressing       SceneDressing → VisualSet этой сцены
+   @Lighting    свет, volume, смена дня
+   @Environment земля, вода, горы
+   @Pyramid     модель пирамиды
+$Dev            ScenarioEditor (только Game)
+```
+
+Префиксы `#` `@` `$` — палитра `Colourful Hierarchy` (красит строку в Hierarchy, в игре ничего не стоит).
+
+| Объект | Где |
 | --- | --- |
-| Main Camera + `CinemachineBrain` + `StudioListener` | **да** |
-| VCam геймплея (и катсценные VCam) | **да** |
-| Environment / Humans / HUD | **да** |
-| Directional Light (+ volume) | **да** |
-| `WorldAudio`: `AudioZoneManager`, `AudioVisibilityChecker`, `ZoneAmbienceSfxScheduler`, `WindAmbience` | **да**. Зависимости — от `GameLifetimeScope` |
+| Камеры, HUD, `WorldAudio`, сессия, scope | `#GameRun`, одинаково во всех сценах рана |
+| Свет, volume, окружение, модель пирамиды | `@Dressing`, своё в каждой сцене |
+| Модели зданий и людей | `VisualSet` с `@Dressing` → `BuildingViewBoard`, `BuildPlacementController`, `AgentViewBoard` |
 | `EventSystem` | **нет** |
+
+Правило: **Game не ссылается на блокаут.** Блокаут берёт `#GameRun` и меняет только своё. Правка префаба `#GameRun` — правка обеих сцен.
 
 ## Cinemachine
 
@@ -80,13 +99,14 @@ Brain смотрит на виртуальную камеру. Сама VCam н�
 | --- | --- | --- |
 | **Play из меню** | `MainMenu.unity` | сплэш → меню → по Start экран загрузки и Game |
 | **Play из игры** | `Game.unity` | ран по `EditorRunLaunch` на `GameLifetimeScope` (Normal / Debug / Slot) |
+| **Play блокаута** | `Blockout/GameBlockout.unity` | тот же ран на блоках; рестарт остаётся в блокауте |
 | **Edit уровня / UI** | нужную сцену | открывать по одной: две контентные сцены в Play стартуют обе |
 
-`LoadSceneAsync` в Play **требует**, чтобы сцена была в Build Profiles / Build Settings. Build list: `MainMenu` (0), `Game`.
+`LoadSceneAsync` по имени **требует**, чтобы сцена была в Build Profiles / Build Settings. Build list: `MainMenu` (0), `Game`. Блокаута в сборке нет: в редакторе `TransitionService` грузит его по пути.
 
 ## Итог одной фразой
 
-**AppScope = процесс (ввод, звук, переходы, EventSystem). Каждая сцена = свой глаз и уши. MainMenu = экраны. Game = мир, его свет, VCam и звук мира.**
+**AppScope = процесс (ввод, звук, переходы, EventSystem). Каждая сцена = свой глаз и уши. MainMenu = экраны. Сцена рана = общий `#GameRun` + свои декорации и облик.**
 
 ---
 

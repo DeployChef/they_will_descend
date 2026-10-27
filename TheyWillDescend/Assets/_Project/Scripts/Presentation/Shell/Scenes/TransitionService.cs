@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Presentation.ShellUi;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace TheyWillDescend.Presentation.Shell
@@ -160,7 +161,7 @@ namespace TheyWillDescend.Presentation.Shell
         static async UniTask<bool> LoadSingle(string sceneName, CancellationToken ct)
         {
             GameLog.Info($"Loading '{sceneName}'…");
-            var op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            var op = StartLoad(sceneName);
             if (op == null)
             {
                 GameLog.Error($"Failed to load '{sceneName}'. Add it to Build Settings.");
@@ -172,6 +173,19 @@ namespace TheyWillDescend.Presentation.Shell
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
             GameLog.Info($"Scene '{sceneName}' loaded.");
             return true;
+        }
+
+        /// <summary>A name or an asset path. In the editor a path outside the build list still loads (dev scenes).</summary>
+        static AsyncOperation StartLoad(string scene)
+        {
+#if UNITY_EDITOR
+            if (scene.EndsWith(".unity") && SceneUtility.GetBuildIndexByScenePath(scene) < 0)
+            {
+                return UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(
+                    scene, new LoadSceneParameters(LoadSceneMode.Single));
+            }
+#endif
+            return SceneManager.LoadSceneAsync(scene, LoadSceneMode.Single);
         }
 
         sealed class Registration : IDisposable

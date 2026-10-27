@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using UnityEngine.SceneManagement;
 
 namespace TheyWillDescend.Presentation.Shell
 {
@@ -21,10 +22,10 @@ namespace TheyWillDescend.Presentation.Shell
 
         public void MarkSplashShown() => SplashShown = true;
 
-        public UniTask<bool> StartRun(RunLaunch launch) => GoToGame(launch);
+        public UniTask<bool> StartRun(RunLaunch launch) => GoToGame(launch, GameScenes.Game);
 
-        /// <summary>Restart or load a slot from inside a run: the same pipeline, Game again.</summary>
-        public UniTask<bool> RestartRun(RunLaunch launch) => GoToGame(launch);
+        /// <summary>Restart or load a slot from inside a run: the same pipeline, the same run scene again.</summary>
+        public UniTask<bool> RestartRun(RunLaunch launch) => GoToGame(launch, SceneManager.GetActiveScene().path);
 
         public UniTask<bool> GoToMenu()
         {
@@ -43,12 +44,12 @@ namespace TheyWillDescend.Presentation.Shell
             return had;
         }
 
-        async UniTask<bool> GoToGame(RunLaunch launch)
+        async UniTask<bool> GoToGame(RunLaunch launch, string scene)
         {
             if (_transition.IsRunning)
                 return false;
             _pending = launch;
-            var ok = await _transition.Run(GameScenes.Game);
+            var ok = await _transition.Run(scene);
             if (!ok)
                 _pending = null;
             return ok;
