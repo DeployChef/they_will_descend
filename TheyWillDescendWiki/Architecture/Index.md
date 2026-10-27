@@ -24,6 +24,8 @@
 - [[14 Sim Presentation Bridge]] — `SimCommands.TryPost`, pull видов, Playback
 - [[15 Refactoring — Target ECS & Interaction]] — целевой рефакторинг UI ↔ ECS (Reconciliation Loop + Request Entities)
 
+Реализация переписи симуляции (Ф1–Ф5): [[../Refactoring/07-ECS/Index|07-ECS]]. Сжатый план: [[../Refactoring/07 Foundation Fixes|07 Foundation Fixes]]. Не читать 01–06 рефакторинга как инструкцию к коду — они частично устарели.
+
 
 ## Связь с GDD
 

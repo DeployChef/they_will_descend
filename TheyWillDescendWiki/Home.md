@@ -55,6 +55,10 @@
 - [[Refactoring/04 Step-by-Step Roadmap|04. Дорожная карта]] — 4 изолированных шага миграции
 - [[Refactoring/05 Content Pipeline & CMS|05. Контент и CMS]] — разделение Data vs View, Scriptable Database, Google Sheets
 - [[Refactoring/06 Headquarters & City Core|06. Пирамида и Сердце Города]] — ликвидация SyncCityCenter, снятие Building с Пирамиды, C# спавн
+- [[Refactoring/07 Foundation Fixes|07. Базовые правки]] — сжатый план; Ф6 сделана
+- [[Refactoring/07-ECS/Index|07-ECS]] — **рабочий пакет** переписи симуляции (Ф1–Ф5) для агента
+- [[Refactoring/08 Shell, Scenes & Audio|08. Shell]] — закрыт
+- [[Refactoring/09 Dressing & Blockout|09. Декорации и блокаут]] — `#GameRun` + VisualSet
 
 
 
