@@ -408,6 +408,8 @@ Game: SimPauseAudioBridge (LateUpdate) — читает SimControl → AudioServ
 
 **Критерии:** меню → игра → меню → игра → загрузка сейва → перезапуск без ошибок. Экран загрузки виден на всех переходах и не висит при ошибке старта рана (возврат в меню). `rg "ResolveFrom|CloseLeftoverScenes|GameScenes.Loading"` — пусто.
 
+> **Статус: сделано.** `LoadingScreen` — префаб-ребёнок `AppScope` (Canvas поверх всего, CanvasGroup с фейдом, статус + полоса прогресса). `TransitionService.Run(scene)`: экран → teardown-реестр → Single-загрузка → кадр → `LoadingTasks.WaitAll` → скрыть; при провале задачи — `FallBackToMenu`. Если работа появилась вне перехода (`LoadingTasks.WorkAdded`), экран показывается сам. `ShellService`: `StartRun` / `RestartRun` / `GoToMenu` / `TryTakeLaunch` / `SplashShown`. `GameEntry` (entry point `GameLifetimeScope`) забирает запуск и кладёт `GameSession.Begin` в `LoadingTasks`. **Временно до 07 Ф1:** `GameSession.Shutdown` зарегистрирован как async teardown. **Временно до Ф4:** `Startup` в Root открывает меню; FMOD при старте один раз предупреждает об отсутствии слушателя (в Root нет камеры). Build list: Root, MainMenu, Game.
+
 ### Ф4. Самостоятельный Game: GameEntry, удаление Root
 
 1. `GameEntry` с редакторской настройкой запуска (§5.1). `GameRun` влить в него.

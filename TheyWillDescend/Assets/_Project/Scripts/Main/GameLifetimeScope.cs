@@ -14,6 +14,7 @@ namespace TheyWillDescend.Main
             builder.Register<GameRun>(Lifetime.Singleton);
             builder.RegisterComponentInHierarchy<GameSession>();
             builder.RegisterComponentInHierarchy<PauseMenuScreen>();
+            builder.RegisterEntryPoint<GameEntry>();
 
             builder.RegisterComponentInHierarchy<RTSCameraController>();
             builder.RegisterComponentInHierarchy<AudioZoneManager>();

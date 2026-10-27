@@ -7,8 +7,8 @@ namespace TheyWillDescend.Shell
     }
 
     /// <summary>
-    /// One launch request. The menu passes it to <see cref="ShellService.EnterGame"/>;
-    /// the service hands the same value to <see cref="GameSession.Begin"/>.
+    /// One launch request. The menu passes it to <see cref="ShellService.StartRun"/>;
+    /// <see cref="GameEntry"/> takes it back and hands it to <see cref="GameSession.Begin"/>.
     /// </summary>
     public readonly struct RunLaunch
     {

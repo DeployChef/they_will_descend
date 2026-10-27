@@ -1,4 +1,5 @@
 using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Shell;
 using UnityEngine;
 using VContainer;
@@ -13,12 +14,16 @@ namespace TheyWillDescend.Main
     public sealed class AppScope : LifetimeScope
     {
         [SerializeField] GameInput gameInput;
+        [SerializeField] LoadingScreen loadingScreen;
 
         protected override void Configure(IContainerBuilder builder)
         {
             builder.Register<ShellService>(Lifetime.Singleton);
+            builder.Register<TransitionService>(Lifetime.Singleton);
+            builder.Register<LoadingTasks>(Lifetime.Singleton);
             builder.Register<SaveService>(Lifetime.Singleton);
             builder.RegisterComponent(gameInput);
+            builder.RegisterComponent(loadingScreen);
         }
     }
 }

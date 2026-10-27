@@ -17,7 +17,7 @@ namespace TheyWillDescend.Shell
 {
     /// <summary>
     /// One run inside the Game scene. Catalogs and rules live on this object.
-    /// <see cref="ShellService.EnterGame"/> loads the scene and calls <see cref="Begin"/>.
+    /// <see cref="GameEntry"/> calls <see cref="Begin"/> as loading work and registers <see cref="Shutdown"/> as teardown.
     /// This object does not load or unload scenes. <see cref="GameRun"/> turns the clock on.
     /// </summary>
     public sealed class GameSession : MonoBehaviour

@@ -1,176 +1,57 @@
-using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine.SceneManagement;
-using VContainer;
-using VContainer.Unity;
 
 namespace TheyWillDescend.Shell
 {
     /// <summary>
-    /// Switches presentation scenes and starts a run once Game is loaded.
-    /// ReturnToMenu ends that run before unloading Game.
+    /// Navigation only: where the player goes next and with which launch.
+    /// Does not know <see cref="GameSession"/> and does not load scenes itself.
     /// </summary>
-    public sealed class ShellService : IDisposable
+    public sealed class ShellService
     {
-        readonly SceneLoader _scenes = new();
-        CancellationTokenSource _life = new();
-        CancellationTokenSource _op;
-        bool _busy;
+        readonly TransitionService _transition;
+        RunLaunch? _pending;
 
-        /// <summary>Занавес на экране — независимо от того, кто загрузил сцену.</summary>
-        public bool IsLoadingVisible => _scenes.IsLoaded(GameScenes.Loading);
-
-        /// <summary>Game-сцена загружена — вместе с той, что осталась открытой в редакторе.</summary>
-        public bool IsGameSceneLoaded => _scenes.IsLoaded(GameScenes.Game);
+        public ShellService(TransitionService transition)
+        {
+            _transition = transition;
+        }
 
         /// <summary>Press any key уже пройден в этом процессе — меню открывается сразу с кнопками.</summary>
         public bool SplashShown { get; private set; }
 
         public void MarkSplashShown() => SplashShown = true;
 
-        public void Dispose()
+        public UniTask<bool> StartRun(RunLaunch launch) => GoToGame(launch);
+
+        /// <summary>Restart or load a slot from inside a run: the same pipeline, Game again.</summary>
+        public UniTask<bool> RestartRun(RunLaunch launch) => GoToGame(launch);
+
+        public UniTask<bool> GoToMenu()
         {
-            CancelOp();
-            if (_life == null)
-                return;
-            _life.Cancel();
-            _life.Dispose();
-            _life = null;
+            if (_transition.IsRunning)
+                return UniTask.FromResult(false);
+            _pending = null;
+            return _transition.Run(GameScenes.MainMenu);
         }
 
-        public UniTask OpenMainMenu(CancellationToken cancellationToken = default)
+        /// <summary>Game's entry point takes the launch once. False when Game was opened directly.</summary>
+        public bool TryTakeLaunch(out RunLaunch launch)
         {
-            return _scenes.LoadAdditive(GameScenes.MainMenu, setActive: false, cancellationToken);
+            launch = _pending ?? default;
+            var had = _pending.HasValue;
+            _pending = null;
+            return had;
         }
 
-        /// <summary>
-        /// В состоянии меню нет ни Loading, ни Game. Закрывает то, что приехало уже
-        /// загруженным (лишние сцены, открытые в редакторе на момент Play).
-        /// </summary>
-        public async UniTask CloseLeftoverScenes(CancellationToken cancellationToken = default)
+        async UniTask<bool> GoToGame(RunLaunch launch)
         {
-            await _scenes.Unload(GameScenes.Loading, cancellationToken);
-            await _scenes.Unload(GameScenes.Game, cancellationToken);
-        }
-
-
-        public UniTask ShowLoading(CancellationToken cancellationToken = default)
-        {
-            return _scenes.LoadAdditive(GameScenes.Loading, setActive: false, cancellationToken);
-        }
-
-        public UniTask HideLoading(CancellationToken cancellationToken = default)
-        {
-            return _scenes.Unload(GameScenes.Loading, cancellationToken);
-        }
-
-        public void EnterGame(RunLaunch launch)
-        {
-            if (_busy)
-                return;
-            _busy = true;
-            Enter(launch).Forget();
-        }
-
-        public async UniTask<bool> ReturnToMenu()
-        {
-            if (_busy)
+            if (_transition.IsRunning)
                 return false;
-            _busy = true;
-            BeginOp();
-            var ct = _op.Token;
-            try
-            {
-                await ShowLoading(ct);
-
-                var session = ResolveFrom<GameSession>(GameScenes.Game);
-                if (session != null && !await session.Shutdown(ct))
-                {
-                    await HideLoading(ct);
-                    return false;
-                }
-
-                await _scenes.Unload(GameScenes.Game, ct);
-                await OpenMainMenu(ct);
-                await HideLoading(ct);
-                return true;
-            }
-            catch (OperationCanceledException)
-            {
-                return false;
-            }
-            finally
-            {
-                _busy = false;
-            }
-        }
-
-        async UniTaskVoid Enter(RunLaunch launch)
-        {
-            BeginOp();
-            var ct = _op.Token;
-            try
-            {
-                await ShowLoading(ct);
-                await _scenes.Unload(GameScenes.MainMenu, ct);
-                await _scenes.LoadAdditive(GameScenes.Game, setActive: true, ct);
-
-                var session = ResolveFrom<GameSession>(GameScenes.Game);
-                if (session != null && await session.Begin(launch, ct))
-                {
-                    await HideLoading(ct);
-                    return;
-                }
-
-                if (session != null)
-                    await session.Shutdown(ct);
-                await _scenes.Unload(GameScenes.Game, ct);
-                await OpenMainMenu(ct);
-                await HideLoading(ct);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                _busy = false;
-            }
-        }
-
-        void BeginOp()
-        {
-            if (_life == null)
-                _life = new CancellationTokenSource();
-            CancelOp();
-            _op = CancellationTokenSource.CreateLinkedTokenSource(_life.Token);
-        }
-
-        void CancelOp()
-        {
-            if (_op == null)
-                return;
-            _op.Cancel();
-            _op.Dispose();
-            _op = null;
-        }
-
-        static T ResolveFrom<T>(string sceneName) where T : class
-        {
-            var scene = SceneManager.GetSceneByName(sceneName);
-            if (!scene.IsValid() || !scene.isLoaded)
-                return null;
-
-            var roots = scene.GetRootGameObjects();
-            for (var i = 0; i < roots.Length; i++)
-            {
-                var scope = roots[i].GetComponentInChildren<LifetimeScope>(true);
-                if (scope == null || scope.Container == null)
-                    continue;
-                return scope.Container.Resolve<T>();
-            }
-
-            return null;
+            _pending = launch;
+            var ok = await _transition.Run(GameScenes.Game);
+            if (!ok)
+                _pending = null;
+            return ok;
         }
     }
 }
