@@ -16,7 +16,7 @@ namespace TheyWillDescend.Main
     {
         [Header("Editor only")]
         [SerializeField, Tooltip("Run started when Game is opened directly in the editor. The menu's choice wins; builds always start Normal.")]
-        EditorRunLaunch editorLaunch = EditorRunLaunch.Normal;
+        EditorRunLaunch editorLaunch = EditorRunLaunch.Debug;
 
         protected override void Configure(IContainerBuilder builder)
         {

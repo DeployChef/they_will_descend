@@ -58,7 +58,7 @@ namespace TheyWillDescend.Presentation.Infrastructure
             GameLog.Info($"Saved slot → {SlotPath}");
         }
 
-        void Delete()
+        public void Delete()
         {
             if (!File.Exists(SlotPath))
                 return;

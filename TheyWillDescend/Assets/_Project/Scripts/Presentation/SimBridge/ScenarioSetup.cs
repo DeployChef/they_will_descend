@@ -89,8 +89,6 @@ namespace TheyWillDescend.Presentation.SimBridge
                 };
                 if (BuildingPlacement.TryPlace(em, session, ref grid, in spec, catalog, recipes))
                     placed++;
-                else
-                    GameLog.Error($"PlaceHouses failed type={record.TypeId} c={record.Cluster} r={record.Radial}.");
             }
 
             em.SetComponentData(session, grid);
