@@ -14,7 +14,6 @@ namespace TheyWillDescend.Shell
     public sealed class ShellService : IDisposable
     {
         readonly SceneLoader _scenes = new();
-        readonly AppContext _context;
         CancellationTokenSource _life = new();
         CancellationTokenSource _op;
         bool _busy;
@@ -25,10 +24,10 @@ namespace TheyWillDescend.Shell
         /// <summary>Game-сцена загружена — вместе с той, что осталась открытой в редакторе.</summary>
         public bool IsGameSceneLoaded => _scenes.IsLoaded(GameScenes.Game);
 
-        public ShellService(AppContext context)
-        {
-            _context = context;
-        }
+        /// <summary>Press any key уже пройден в этом процессе — меню открывается сразу с кнопками.</summary>
+        public bool SplashShown { get; private set; }
+
+        public void MarkSplashShown() => SplashShown = true;
 
         public void Dispose()
         {
@@ -71,7 +70,6 @@ namespace TheyWillDescend.Shell
             if (_busy)
                 return;
             _busy = true;
-            _context.IsFirstStart = true;
             Enter(launch).Forget();
         }
 

@@ -15,11 +15,13 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] MainMenuScreen menu;
 
         bool _menuVisible;
+        ShellService _shell;
 
         [Inject]
-        public void Construct(AppContext context)
+        public void Construct(ShellService shell)
         {
-            if (context.IsFirstStart)
+            _shell = shell;
+            if (shell.SplashShown)
                 ShowMenu();
             else
                 ShowSplash();
@@ -45,6 +47,7 @@ namespace TheyWillDescend.Presentation.ShellUi
         void ShowMenu()
         {
             _menuVisible = true;
+            _shell.MarkSplashShown();
             if (splash != null)
                 splash.Hide();
             if (menu != null)

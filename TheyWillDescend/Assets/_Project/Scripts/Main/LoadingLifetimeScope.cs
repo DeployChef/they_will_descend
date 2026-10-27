@@ -1,6 +1,8 @@
+using VContainer.Unity;
+
 namespace TheyWillDescend.Main
 {
-    public sealed class LoadingLifetimeScope : SceneLifetimeScope
+    public sealed class LoadingLifetimeScope : LifetimeScope
     {
     }
 }

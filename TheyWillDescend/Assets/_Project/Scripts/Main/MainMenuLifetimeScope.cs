@@ -4,7 +4,7 @@ using VContainer.Unity;
 
 namespace TheyWillDescend.Main
 {
-    public sealed class MainMenuLifetimeScope : SceneLifetimeScope
+    public sealed class MainMenuLifetimeScope : LifetimeScope
     {
         protected override void Configure(IContainerBuilder builder)
         {

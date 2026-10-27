@@ -4,18 +4,18 @@ using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Shell;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 namespace TheyWillDescend.Main
 {
     /// <summary>
-    /// Builds the root container, then opens the menu or a run.
+    /// TEMPORARY (until 08 Ф4 GameEntry): Root's entry point. Takes the shell from the
+    /// process scope, then opens the menu or a run.
     /// </summary>
     public sealed class Startup : MonoBehaviour
     {
         [Header("Temporary debug")]
         [SerializeField] bool skipMenuToGameTemporarily;
-
-        [SerializeField] RootLifetimeScope rootScope;
 
         bool _started;
 
@@ -25,16 +25,16 @@ namespace TheyWillDescend.Main
                 return;
             _started = true;
 
-            if (rootScope == null)
+            var app = VContainerSettings.Instance != null
+                ? VContainerSettings.Instance.GetOrCreateRootLifetimeScopeInstance()
+                : null;
+            if (app == null || app.Container == null)
             {
-                GameLog.Error("Startup: RootLifetimeScope must be assigned.");
-                throw new InvalidOperationException(
-                    "Startup is missing RootLifetimeScope.");
+                GameLog.Error("Startup: AppScope is missing. Assign it on VContainerSettings (Preloaded Assets).");
+                throw new InvalidOperationException("Startup: AppScope is missing.");
             }
 
-            rootScope.Build();
-
-            var shell = rootScope.Container.Resolve<ShellService>();
+            var shell = app.Container.Resolve<ShellService>();
             if (skipMenuToGameTemporarily)
             {
                 GameLog.Warning("TEMPORARY: skipMenuToGame — starting a normal run (MainMenu not loaded).");

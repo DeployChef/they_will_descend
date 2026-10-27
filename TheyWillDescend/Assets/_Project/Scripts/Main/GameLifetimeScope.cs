@@ -5,7 +5,7 @@ using VContainer.Unity;
 
 namespace TheyWillDescend.Main
 {
-    public sealed class GameLifetimeScope : SceneLifetimeScope
+    public sealed class GameLifetimeScope : LifetimeScope
     {
         protected override void Configure(IContainerBuilder builder)
         {
