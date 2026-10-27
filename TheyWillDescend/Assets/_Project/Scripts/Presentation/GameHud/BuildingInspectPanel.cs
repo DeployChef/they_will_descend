@@ -137,13 +137,11 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (!SimWorld.TryGet(out var em, out var bag) || !TryFindBuilding(em, id, out var entity, out var building))
 
-
             {
                 selection?.ClearIf(id);
                 Hide();
                 return;
             }
-
 
             var constructing = em.HasComponent<Construction>(entity);
             var construction = constructing ? em.GetComponentData<Construction>(entity) : default;
@@ -183,7 +181,6 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (idle != null)
                 idle.text = $"Idle workers  {freeWorkers}";
-
 
             if (constructing)
             {
@@ -297,7 +294,7 @@ namespace TheyWillDescend.Presentation.GameHud
         BuildingCatalogAsset FindViewCatalog()
         {
             if (_placement == null)
-                _placement = FindFirstObjectByType<BuildPlacementController>();
+                _placement = FindAnyObjectByType<BuildPlacementController>();
             return _placement != null ? _placement.Catalog : null;
         }
 
@@ -519,8 +516,6 @@ namespace TheyWillDescend.Presentation.GameHud
             Show(selection.SelectedBuildingId);
         }
 
-
-
         void UpdatePowerIcon(bool paused)
         {
             // paused = производство остановлено → показываем Start
@@ -552,6 +547,5 @@ namespace TheyWillDescend.Presentation.GameHud
                 BuildingId = selection.SelectedBuildingId
             });
         }
-
     }
 }

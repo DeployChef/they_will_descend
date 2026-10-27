@@ -95,8 +95,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
             }
 
-
-
             EnsureUi();
             if (card != null)
                 card.SetActive(true);
@@ -306,9 +304,6 @@ namespace TheyWillDescend.Presentation.GameHud
             });
         }
 
-
-  
-
         void OnClose()
         {
             selection?.Deselect();
@@ -452,6 +447,5 @@ namespace TheyWillDescend.Presentation.GameHud
             entity = query.GetSingletonEntity();
             return true;
         }
-
     }
 }

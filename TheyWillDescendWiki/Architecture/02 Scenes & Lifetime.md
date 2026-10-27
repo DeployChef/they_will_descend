@@ -8,33 +8,38 @@
 
 | Сцена | Живёт | Содержимое |
 | --- | --- | --- |
-| **Root** | всегда | хосты: Main Camera + AudioListener, EventSystem, `Startup`, `GameAudio`, `GameInput`, `GameSession`. Без мира, без меню-canvas, без gameplay-света |
-| **MainMenu** | пока в меню | Canvas: `PressAnyKeyScreen`, `MainMenuScreen`. Опционально VCam/меню-свет. Без Main Camera |
-| **Loading** | переход в ран | экран загрузки, пока грузится Game |
-| **Game** | сессия рана | уровень, Directional Light, VCam геймплея, HUD, SubScene Simulation. **Без** второй Main Camera |
+| **MainMenu** | пока в меню | Main Camera (+ `StudioListener`), Canvas: `PressAnyKeyScreen`, `MainMenuScreen`; `MainMenuFlow`, `MainMenuLifetimeScope` |
+| **Game** | сессия рана | Main Camera (+ `CinemachineBrain`, `StudioListener`), VCam, уровень, свет, HUD, `WorldAudio`, `GameSession`, `GameLifetimeScope` |
+
+Сцен Root и Loading нет. Процесс — префаб `AppScope` (корневой scope VContainer), экран загрузки — его дочерний объект.
+
+Build list: `MainMenu` (0, стартовая в билде), `Game`.
 
 Поток:
 
 ```text
-Root (вечный)
-  → load MainMenu (additive)     // сплэш и кнопки крутит сцена меню
-  → «Начать» → Loading + Game, unload MainMenu
+AppScope (процесс, DontDestroyOnLoad)
+  → MainMenu                                   // сплэш и кнопки крутит сцена меню
+  → «Начать» → экран загрузки → Single-загрузка Game → GameEntry стартует ран
   → Playing (пауза часов = SimControl, не другой app-state)
-  → выход в меню → unload Game, load MainMenu
+  → выход в меню → экран → teardown рана → Single-загрузка MainMenu
 ```
 
-`skipMenuToGameTemporarily` на `Startup` — **отладочный флаг, по умолчанию выключен**. Не канон потока.
-
-Build list: Root (0), MainMenu, **Loading**, Game.
+Любая сцена — точка входа: Play на `Game.unity` стартует ран по редакторской настройке запуска (`EditorRunLaunch` на `GameLifetimeScope`).
 
 Меню **не** содержит игровой мир. Game появляется только по Start.
 
 ## Lifetime
 
-Сейчас без VContainer: `Startup` + `GameSession` / `SceneLoader` (UniTask).  
-Позже Root/Game scopes — только Shell/Presentation, не ECS.
+| Срок жизни | Владелец |
+| --- | --- |
+| Процесс | `AppScope`: Shell-сервисы, ввод, аудио-ядро, сейв, EventSystem |
+| Сцена | `LifetimeScope` сцены: камера, UI, звук сцены |
+| Ран | ECS DefaultWorld; ран = время жизни сцены Game |
 
-Хосты Root — **соседи**, ссылки в инспекторе. Не `GetComponent` / `AddComponent` между ними.
+Сцены грузятся только Single-загрузкой через `TransitionService`. Additive поверх контентной сцены — нет.
+
+Контейнер — только Presentation/Main, не ECS. Объекты сцены получают зависимости внедрением от scope своей сцены, не `Find*`.
 
 ## Часы рана (не отдельный стейт)
 
@@ -43,4 +48,4 @@ Off, пока нет сессии · Running в Playing · Frozen, если `Pla
 
 ---
 
-Связанные: [[11 Camera & Presentation Scenes]] · [[09 App Shell]] · [[10 Vertical Slice — Shell + ECS Walkers]]
+Связанные: [[11 Camera & Presentation Scenes]] · [[09 App Shell]]

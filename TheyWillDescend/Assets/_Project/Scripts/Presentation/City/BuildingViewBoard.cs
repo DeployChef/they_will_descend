@@ -1,16 +1,4 @@
-using System.Collections.Generic;
-using TheyWillDescend.Content;
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Content;
-using TheyWillDescend.Simulation.Session;
-using TheyWillDescend.Presentation.Audio;
-using Unity.Collections;
-using Unity.Entities;
-using Unity.Mathematics;
-using Unity.Transforms;
-using UnityEngine;
-using VContainer;
+using System.Collections.Generic;using TheyWillDescend.Content; using TheyWillDescend.Presentation.Audio; using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.City; using TheyWillDescend.Simulation.Content; using TheyWillDescend.Simulation.Session; using Unity.Collections; using Unity.Entities; using Unity.Mathematics; using Unity.Transforms; using UnityEngine; using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -37,7 +25,6 @@ namespace TheyWillDescend.Presentation.City
         readonly List<int> _stale = new();
         EntityQuery _buildingQuery;
         Camera _cam;
-
 
         sealed class PlacedView
         {
@@ -79,7 +66,6 @@ namespace TheyWillDescend.Presentation.City
             Sync(em, _buildingQuery);
         }
 
-
         public void ClearViews()
         {
             foreach (var view in _views.Values)
@@ -87,9 +73,6 @@ namespace TheyWillDescend.Presentation.City
             _views.Clear();
             selection?.Deselect();
         }
-
-
-
 
         void OnDisable()
         {
@@ -101,7 +84,6 @@ namespace TheyWillDescend.Presentation.City
             _buildingQuery = default;
             _cam = null;
         }
-
 
         void Sync(EntityManager em, EntityQuery query)
         {
@@ -134,7 +116,6 @@ namespace TheyWillDescend.Presentation.City
                 {
                     placed = CreateHouseView(em, entity, building, position);
                 }
-
 
                 if (placed == null)
                     continue;
@@ -195,7 +176,6 @@ namespace TheyWillDescend.Presentation.City
                     DestroyView(_stale[i]);
             }
 
-
             entities.Dispose();
             buildings.Dispose();
         }
@@ -208,8 +188,6 @@ namespace TheyWillDescend.Presentation.City
                 return em.GetComponentData<LocalTransform>(entity).Position;
             return default;
         }
-
-
 
         PlacedView CreateHouseView(EntityManager em, Entity entity, in Building building, float3 position)
         {
@@ -375,15 +353,12 @@ namespace TheyWillDescend.Presentation.City
                 Object.DestroyImmediate(go);
         }
 
-
         void EnsureReady()
         {
             if (_root != null)
                 return;
             _root = transform;
         }
-
-
 
         static bool TryGetCityCenter(out float3 center)
         {

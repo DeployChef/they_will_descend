@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TheyWillDescend.Infrastructure.Logging
+namespace TheyWillDescend.Presentation.Infrastructure
 {
     /// <summary>
     /// Thin logging facade. Managed only — not Burst.

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// A scene says "I need time" here when it activates. <see cref="TransitionService"/>

@@ -1,4 +1,4 @@
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// Scene name constants. Files under Assets/_Project/Scenes/.

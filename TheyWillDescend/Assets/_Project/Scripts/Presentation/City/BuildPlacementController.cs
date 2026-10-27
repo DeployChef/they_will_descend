@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TheyWillDescend.Content;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;

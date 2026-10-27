@@ -192,7 +192,6 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
- 
         static void DrawSectorGizmos(Vector3 origin, Vector4 polar, Color color)
         {
             Gizmos.color = color;

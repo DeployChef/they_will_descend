@@ -51,7 +51,6 @@ namespace TheyWillDescend.Presentation.GameHud
             HudButtons.SetActive(speed2Button, hasControl && !paused && control.Speed == 2);
             HudButtons.SetActive(speed3Button, hasControl && !paused && control.Speed == 3);
 
-
             if (clockLabel == null)
                 return;
 

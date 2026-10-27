@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Infrastructure.Save;
-using TheyWillDescend.Shell;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;

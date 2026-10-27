@@ -10,16 +10,15 @@
 
 - [[00 Overview]] — стек и слои
 - [[01 Folder Structure]] — `Assets/_Project`, сборки-стены
-- [[02 Scenes & Lifetime]] — Bootstrap, MainMenu, Loading, Game, SubScene
-- [[03 Core Systems]] — AppFlow, GameSession, SimControl, GameLog
+- [[02 Scenes & Lifetime]] — MainMenu, Game; три срока жизни
+- [[03 Core Systems]] — службы Shell, GameSession, SimControl, GameLog
 - [[04 Simulation]] — город, люди, экономика (что есть / что ещё нет)
 - [[05 Content Pipeline]] — здания, ресурсы, сценарий: как заводить
-- [[06 FMOD Audio]] — FMOD Studio 2.03 + хост `GameAudio`
+- [[06 FMOD Audio]] — FMOD Studio 2.03, `AudioService`, наборы банков, каталог
 - [[07 Mentorship & Learning]] — роль ментора, формат уроков
 - [[08 Production ECS]] — production-архитектура и точки расширения
-- [[09 App Shell]] — две машины, FSM без Tick, хосты Bootstrap
-- [[10 Vertical Slice — Shell + ECS Walkers]] — срез: меню → город → стройка/назначение
-- [[11 Camera & Presentation Scenes]] — одна Main Camera на Bootstrap
+- [[09 App Shell]] — процесс `AppScope`, переходы, любая сцена — точка входа
+- [[11 Camera & Presentation Scenes]] — своя камера и слушатель у каждой сцены
 - [[12 Radial City Grid]] — полярный cluster underlay; occupy в ECS
 - [[13 Time HUD and Save]] — пауза/x1/x2/x3, часы дня, однослотовый save/load
 - [[14 Sim Presentation Bridge]] — `SimCommands.TryPost`, pull видов, Playback

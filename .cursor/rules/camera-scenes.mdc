@@ -15,4 +15,4 @@ alwaysApply: true
 - `AudioService` (process) owns banks, music, snapshots, UI sound. It never reads ECS; Game's `SimPauseAudioBridge` feeds it the pause.
 - FMOD paths, banks and buses live in `Content/Audio/AudioCatalog` — no `event:/` strings in code. FMOD `Load Banks` is None: `Core` loads with the process, `GameWorld` is acquired by `GameEntry` and released on teardown.
 
-Canon: `TheyWillDescendWiki/Refactoring/08 Shell, Scenes & Audio.md` (wiki 11 is synced in Ф6).
+Canon: `TheyWillDescendWiki/Architecture/11 Camera & Presentation Scenes.md`, audio — `06 FMOD Audio.md`.

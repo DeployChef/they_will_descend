@@ -1,7 +1,7 @@
 using FMOD.Studio;
 using FMODUnity;
-using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.City;
 using Unity.Entities;
 using UnityEngine;
@@ -189,7 +189,7 @@ namespace TheyWillDescend.Presentation.Audio
             }
 
             ResolveParam();
-            RuntimeManager.AttachInstanceToGameObject(_instance, transform);
+            RuntimeManager.AttachInstanceToGameObject(_instance, gameObject);
             return true;
         }
 

@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Presentation.ShellUi;
 using UnityEngine.SceneManagement;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// The only scene loader. Every transition is the same pipeline:

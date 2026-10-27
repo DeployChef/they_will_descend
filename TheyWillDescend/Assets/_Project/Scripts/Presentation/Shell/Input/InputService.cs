@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Object = UnityEngine.Object;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// Shell input for the process. Works on a runtime clone of TheyWillDescend.inputactions:

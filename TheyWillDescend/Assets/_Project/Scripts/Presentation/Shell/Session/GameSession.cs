@@ -1,19 +1,18 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.App;
 using TheyWillDescend.Content;
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Presentation.ShellUi;
+using TheyWillDescend.Presentation.SimBridge;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
-using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Session;
 using UnityEngine;
 using VContainer;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// One run inside the Game scene. Catalogs and rules live on this object.

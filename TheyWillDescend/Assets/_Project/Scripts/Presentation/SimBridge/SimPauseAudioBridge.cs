@@ -3,7 +3,7 @@ using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Simulation.Session;
 using VContainer.Unity;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.SimBridge
 {
     /// <summary>
     /// Game-scene bridge: the player pause in ECS drives the audio pause. The game knows about sound,

@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// Navigation only: where the player goes next and with which launch.

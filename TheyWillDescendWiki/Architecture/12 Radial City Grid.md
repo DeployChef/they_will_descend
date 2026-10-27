@@ -1,6 +1,6 @@
 # 12 Radial City Grid (Frostpunk-like)
 
-← [[10 Vertical Slice — Shell + ECS Walkers]] | [[Index]]
+← [[11 Camera & Presentation Scenes]] | [[Index]]
 
 Канон полярной застройки. Наблюдения сверены с Frostpunk в игре (не реверс движка).
 
@@ -167,4 +167,4 @@ FineCount = InnerBandClusterCount × FinePerCluster   (сейчас 33 × 4)
 
 ---
 
-Связанные: [[04 Simulation]] · [[08 Production ECS]] · [[10 Vertical Slice — Shell + ECS Walkers]] · [[11 Camera & Presentation Scenes]]
+Связанные: [[04 Simulation]] · [[08 Production ECS]] · [[11 Camera & Presentation Scenes]]

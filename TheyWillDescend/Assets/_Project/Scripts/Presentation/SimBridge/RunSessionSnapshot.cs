@@ -1,22 +1,6 @@
-using System.Collections.Generic;
-using TheyWillDescend.Infrastructure.Logging;
+using System.Collections.Generic;using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.Agents; using TheyWillDescend.Simulation.City; using TheyWillDescend.Simulation.Content; using TheyWillDescend.Simulation.Economy; using TheyWillDescend.Simulation.Gods; using TheyWillDescend.Simulation.Research; using TheyWillDescend.Simulation.Session; using TheyWillDescend.Simulation.Time; using Unity.Collections; using Unity.Entities; using Unity.Mathematics; using Unity.Transforms;
 
-using TheyWillDescend.Infrastructure.Save;
-using TheyWillDescend.Simulation.Agents;
-using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Content;
-using TheyWillDescend.Simulation.Economy;
-using TheyWillDescend.Simulation.Gods;
-using TheyWillDescend.Simulation.Research;
-using TheyWillDescend.Simulation.Session;
-using TheyWillDescend.Simulation.Time;
-using TheyWillDescend.Shell;
-using Unity.Collections;
-using Unity.Entities;
-using Unity.Mathematics;
-using Unity.Transforms;
-
-namespace TheyWillDescend.App
+namespace TheyWillDescend.Presentation.SimBridge
 {
     /// <summary>
     /// Maps ECS write model ↔ slot DTO. Does not own GameObjects.
@@ -219,8 +203,6 @@ namespace TheyWillDescend.App
                         DesiredWorkers = record.desiredWorkers,
                         Paused = record.paused
                     });
-
-
                 }
             }
 
@@ -421,7 +403,6 @@ namespace TheyWillDescend.App
             buildings.Dispose();
         }
 
-
         static void ApplyResources(RunSnapshot snapshot)
         {
             if (snapshot.resources == null || !SimWorld.TryGet(out var em, out var bag)
@@ -523,8 +504,6 @@ namespace TheyWillDescend.App
                     PerHour = row.perHour
                 });
             }
-
-
         }
 
         static void EnqueueAgent(AgentSnapshot record)
@@ -548,8 +527,6 @@ namespace TheyWillDescend.App
                 Kind = (AgentKind)record.agentType
             });
         }
-
-
 
         static void CaptureResearch(EntityManager em, Entity bag, RunSnapshot snapshot)
         {

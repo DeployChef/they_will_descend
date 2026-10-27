@@ -13,7 +13,7 @@ UI / FMOD / камера не считают экономику. Authoring и Sc
 ## Слои
 
 ```
-Main             Startup / регистрация FSM
+Main             AppScope + scope'ы сцен — только композиция
 Presentation     UI, camera, Shell, FMOD; желание на Entity или разовый запрос
         ↓ поле желания  или  SimCommands
 Simulation       ECS world — source of truth
@@ -90,7 +90,7 @@ UI ← читает ledger / Construction
 - Геймплей: **Frostpunk assign/build**, не card DnD ([[../GDD/00 Overview|GDD]])
 - Workforce: **агенты** с assignment и commute. Pathfinding — позже. Один слот на здание — временно
 - Время: `GameTime` + `SimControl` (не отдельный `SimClock`, не `SimGate`)
-- Сцены: Bootstrap + additive MainMenu / Loading / Game + SubScene — [[09 App Shell]]
+- Сцены: процесс `AppScope` + Single-загрузка MainMenu / Game — [[09 App Shell]]
 - Тик экономики только при `SimControl.IsRunning`
 - Логи: `GameLog` + каналы
 

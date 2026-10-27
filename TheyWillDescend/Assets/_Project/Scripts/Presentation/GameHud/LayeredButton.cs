@@ -96,7 +96,6 @@ namespace TheyWillDescend.Presentation.GameHud
             ApplyInstant(ResolveState());
         }
 
-
         void Update()
         {
             var target = ResolveState();
@@ -115,8 +114,6 @@ namespace TheyWillDescend.Presentation.GameHud
             _pointerInside = false;
             _pointerDown = false;
         }
-
-
 
         public void OnPointerDown(PointerEventData eventData)
         {

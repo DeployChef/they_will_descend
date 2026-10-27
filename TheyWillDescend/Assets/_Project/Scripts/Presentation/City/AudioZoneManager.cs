@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Cameras;
+using TheyWillDescend.Presentation.Infrastructure;
+using UnityEngine;
 using VContainer;
 
 namespace TheyWillDescend.Presentation.City
@@ -228,7 +229,6 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
-
         /// <summary>
         /// Сбрасывает реестр ячеек: инстансы освобождаются, постройки остаются
         /// жить. Используется hot reload'ом банков.
@@ -250,7 +250,7 @@ namespace TheyWillDescend.Presentation.City
         /// </summary>
         private void RelinkAllSources()
         {
-            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Exclude);
             for (var i = 0; i < sources.Length; i++)
             {
                 var source = sources[i];
@@ -267,7 +267,6 @@ namespace TheyWillDescend.Presentation.City
                     + $"(capacity {settings.CellCapacity}, attach radius {settings.AttachRadius:F1} m).");
         }
 #endif
-
 
         /// <summary>
         /// Обновляет видимость ячеек и Distance RTPC (audio LOD). Всё, что зависит

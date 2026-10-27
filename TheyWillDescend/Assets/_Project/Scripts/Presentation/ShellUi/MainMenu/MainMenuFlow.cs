@@ -1,5 +1,5 @@
-﻿using TheyWillDescend.Presentation.Audio;
-using TheyWillDescend.Shell;
+using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Shell;
 using UnityEngine;
 using VContainer;
 

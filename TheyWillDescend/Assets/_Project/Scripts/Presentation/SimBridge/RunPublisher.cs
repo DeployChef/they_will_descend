@@ -1,5 +1,5 @@
 using TheyWillDescend.Content;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
@@ -9,7 +9,7 @@ using TheyWillDescend.Simulation.Session;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.SimBridge
 {
     /// <summary>
     /// Session-start publisher: overlay difficulty onto the baked catalog, then
@@ -118,9 +118,6 @@ namespace TheyWillDescend.Shell
             em.GetBuffer<DespawnAllAgentsCommand>(session).Clear();
             em.GetBuffer<DespawnAllBuildingsCommand>(session).Clear();
         }
-
-
-
 
         internal static bool RebuildResolvedCatalog(EntityManager em, Entity session)
         {

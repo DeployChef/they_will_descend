@@ -56,6 +56,8 @@
 - Комментарий в `Workplace.Paused` и тексты `BuildingInspectPanel` («Crew stays assigned») говорят, что люди **остаются**.
 - Вики: [[../Architecture/15 Refactoring — Target ECS & Interaction|15]] и [[01 ECS & Commands|01]] — отпускает; [[../Architecture/14 Sim Presentation Bridge|14]] — остаются.
 
+> **Решено (27.10.2026):** штат остаётся. Пауза останавливает только производство: люди по-прежнему ходят на работу, но ничего не производят.
+
 **Предлагаемое решение:** пауза = остановка рецепта, штат остаётся назначенным. Два поля — две ортогональные оси желания: `DesiredWorkers` отвечает «сколько людей», `Paused` — «работает ли рецепт». Хочешь отпустить людей — ставишь штат в 0. Тогда UI-тексты и комментарий уже верны, правится только диспетчер.
 
 ### 2.2. Кто ограничивает желание
@@ -79,6 +81,8 @@
 Правило `pyramid-timeline` и вики называют слайдер **желанием**. Код сделал его запросом `SetPyramidFeedRequest`.
 
 **Решение:** желание. `PyramidFeedLine.PerHour` на HQ пишет UI напрямую. См. §6.3.
+
+> **Отложено (27.10.2026):** слайдеры будут переписаны под другую геймдизайн-идею. Не трогать до нового дизайна.
 
 ### 2.5. Какой вход для чего
 
@@ -456,6 +460,8 @@ UI:      HQ entity (из CityCore, §7.2) → GetBuffer<PyramidFeedLine> → lin
 - Simulation не должна трогать `UnityEngine.Application` — уходит вместе с `ConsumePendingScenarioSpawnsSystem`.
 - Пустые строки-заглушки и лишние `using` в затронутых файлах — по ходу, не отдельной задачей.
 
+> **Статус: сделано, кроме пунктов, привязанных к Ф1.** Namespace Presentation приведены к правилу «сборка + первая папка» ([[../Architecture/01 Folder Structure|01]]): `Presentation/Application` → `Presentation/SimBridge` (`TheyWillDescend.Presentation.SimBridge`; имя `Application` затенило бы `UnityEngine.Application` в десяти файлах), `TheyWillDescend.Shell` → `Presentation.Shell`, `Infrastructure.Logging/Save` → `Presentation.Infrastructure`, `RTSCameraController` получил namespace `Presentation.Cameras`. Пустые строки в Presentation и Main убраны, пустые папки `Simulation/Gods/Commands` и `Simulation/Research/Commands` удалены, устаревшие вызовы API (`FindObjectsSortMode`, `FindObjectsOfType`, `FindFirstObjectByType`, `AttachInstanceToGameObject(Transform)`) заменены — консоль чистая. **Остаётся на Ф1:** `UnityEngine.Application` в Simulation (уходит вместе с `ConsumePendingScenarioSpawnsSystem`) и судьба `RunPublisher`. Simulation-файлы не трогались — фазы логики впереди.
+
 ---
 
 ## 9. Чек-лист после каждой фазы
@@ -482,7 +488,7 @@ UI:      HQ entity (из CityCore, §7.2) → GetBuffer<PyramidFeedLine> → lin
 | [[../Architecture/04 Simulation|04 Simulation]] | Нет assign/unassign/pause-команд; новый pipeline тика |
 | [[../Architecture/14 Sim Presentation Bridge|14 Bridge]] | Нет `SimControlAuthoring`, фаз и despawn; таблица входов §2.5 |
 | [[../Architecture/15 Refactoring — Target ECS & Interaction|15]] | Семантика паузы по §2.1; пример `WorkforceDispatchSystem` не пишет желание |
-| [[../Architecture/Index|Architecture Index]] | Убрать ссылку на несуществующий `10 Vertical Slice` |
+| [[../Architecture/Index|Architecture Index]] | ~~Убрать ссылку на несуществующий `10 Vertical Slice`~~ — сделано вместе с 08 Ф6 |
 | `Refactoring/01–06` | Ссылки `file:///f:/...` заменить на вики-ссылки или пути от `Assets/`; пометить выполненные пункты |
 | `.cursor/rules/ecs-production-architecture.mdc` | Папки фичи по §6.2, таблица входов §2.5, правило «система не пишет поле желания» |
 

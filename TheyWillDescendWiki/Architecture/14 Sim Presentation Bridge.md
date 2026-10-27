@@ -77,4 +77,4 @@ Gameplay Presentation **никогда не запускает consume вруч�
 
 `AgentSpawner` только постит spawn (площадка/скорость). Префабы Mixamo и `spawnParent` — на `AgentViewBoard` (тот же GO).
 
-Связанные: [[08 Production ECS]] · [[10 Vertical Slice — Shell + ECS Walkers]] · [[13 Time HUD and Save]]
+Связанные: [[08 Production ECS]] · [[13 Time HUD and Save]]

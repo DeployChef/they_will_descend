@@ -243,7 +243,7 @@ namespace TheyWillDescend.Presentation.Environment
             if (useReflectionProbeIntensity)
             {
                 float probeIntensity = Mathf.Lerp(nightProbeIntensity, dayProbeIntensity, dayness);
-                var probes = UnityEngine.Object.FindObjectsOfType<ReflectionProbe>();
+                var probes = UnityEngine.Object.FindObjectsByType<ReflectionProbe>();
                 foreach (var probe in probes)
                 {
                     probe.intensity = probeIntensity;

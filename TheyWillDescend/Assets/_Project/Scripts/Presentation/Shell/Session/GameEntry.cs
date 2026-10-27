@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Simulation.Session;
 using VContainer.Unity;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// Entry point of the Game scene. Picks the launch (menu → editor setting → Normal), reports the

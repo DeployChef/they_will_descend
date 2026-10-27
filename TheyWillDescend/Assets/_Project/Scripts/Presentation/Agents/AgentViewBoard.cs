@@ -1,11 +1,4 @@
-using System.Collections.Generic;
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Simulation.Agents;
-using TheyWillDescend.Simulation.Session;
-using Unity.Collections;
-using Unity.Entities;
-using Unity.Transforms;
-using UnityEngine;
+using System.Collections.Generic;using TheyWillDescend.Presentation.Infrastructure; using TheyWillDescend.Simulation.Agents; using TheyWillDescend.Simulation.Session; using Unity.Collections; using Unity.Entities; using Unity.Transforms; using UnityEngine;
 
 namespace TheyWillDescend.Presentation.Agents
 {
@@ -97,7 +90,6 @@ namespace TheyWillDescend.Presentation.Agents
 
             _views.Clear();
         }
-
 
         void Sync(EntityQuery query)
         {
@@ -222,7 +214,6 @@ namespace TheyWillDescend.Presentation.Agents
             }
         }
 
-
         static void DestroyGo(GameObject go)
         {
             if (go == null)
@@ -233,7 +224,6 @@ namespace TheyWillDescend.Presentation.Agents
             else
                 Object.DestroyImmediate(go);
         }
-
 
         GameObject ResolvePrefab(AgentKind kind, int agentId)
         {

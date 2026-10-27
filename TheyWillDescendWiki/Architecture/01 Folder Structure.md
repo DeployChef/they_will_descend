@@ -13,7 +13,7 @@
 Authoring      →  Simulation, Content
 Presentation   →  Simulation, Content
 Content        →  Simulation
-Main           →  Presentation
+Main           →  Presentation, Input System (ассет .inputactions для InputService)
 ```
 
 `TheyWillDescend.Simulation` **не** ссылается на Content, Presentation, uGUI, Input System, Animator.  
@@ -28,11 +28,13 @@ Simulation, Authoring, Content: `autoReferenced: false` — на них ссыл
 | `TheyWillDescend.Simulation` | компоненты, команды, системы, сетка, occupancy; логические SO (`ResourceDefinition`, `SimRules`) | UI, виды, префабы домов, диск, FMOD |
 | `TheyWillDescend.Content` | арт-каталоги (`BuildingCatalogAsset`) | `ISystem`, экономика рана |
 | `TheyWillDescend.Authoring` | Baker’ы SubScene, editor-tools сценария | runtime UI |
-| `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell FSM, JSON-сейв, `GameLog`, FMOD-хост | `ISystem` / `SystemBase` на виджеты; писать стоки, лояльность, позу |
-| `TheyWillDescend.Main` | `Startup`, корневой и сценовые scope | экономика, `EntityManager` |
+| `TheyWillDescend.Presentation` | HUD, ghost, view boards, Shell-сервисы, мост к симуляции, JSON-сейв, `GameLog`, `AudioService` | `ISystem` / `SystemBase` на виджеты; писать стоки, лояльность, позу |
+| `TheyWillDescend.Main` | `AppScope` (процесс), `MainMenuLifetimeScope`, `GameLifetimeScope` | экономика, `EntityManager` |
 
-Домены Shell / Application / Infrastructure — **папки** в Presentation, не отдельные сборки.  
-`TheyWillDescend.App` как имя сборки не используем: внутри `TheyWillDescend.*` оно затеняет `UnityEngine.Application`.
+Домены Shell / SimBridge / Infrastructure — **папки** в Presentation, не отдельные сборки.
+
+**Namespace = сборка + первая папка:** `TheyWillDescend.Presentation.<Папка>`, `TheyWillDescend.Simulation.<Фича>`. Подпапки внутри (`Shell/Scenes`, `Audio/Service`, `City/Components`) namespace не дробят.  
+Имена `Application` и `Camera` для namespace не используем: внутри `TheyWillDescend.*` они затеняют `UnityEngine.Application` и `UnityEngine.Camera`. Поэтому `Presentation/SimBridge` и `Presentation.Cameras`.
 
 Позже, когда заболит: Editor-tooling, dedicated server, чужие SDK (Steam) — тогда новая стена.
 
@@ -60,11 +62,14 @@ Assets/_Project/Scripts/
     Agents/      AgentSpawner, AgentViewBoard
     City/        placement, grid guide, BuildingViewBoard, BuildingSelection, BuildingRejectLog
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
-    Application/ RunPublisher, RunSessionSnapshot
-    Shell/       Scenes (ShellService), Session (GameSession, GameRun), Input, App (AppContext)
-    Infrastructure/ Logging, Save (SaveService)
-    Audio/       GameAudio
-  Main/          Startup, RootLifetimeScope, scene scopes
+    Camera/      RTSCameraController, PauseCamera*            (namespace Presentation.Cameras)
+    SimBridge/   SimulationBootstrap, RunPublisher, RunSessionSnapshot, StorySave, SimPauseAudioBridge
+    Shell/       Scenes (ShellService, TransitionService, LoadingTasks, GameScenes),
+                 Session (GameEntry, GameSession, RunLaunch), Input (InputService)
+    ShellUi/     MainMenu, Game (PauseMenuScreen), Loading (LoadingScreen)
+    Infrastructure/ Logging (GameLog), Save (SaveService, RunSnapshot)
+    Audio/       звук мира (ячейки, ветер, стройка); Service/ — AudioService, каталог, банки, музыка
+  Main/          AppScope, MainMenuLifetimeScope, GameLifetimeScope
 ```
 
 Внутри фичи Simulation:

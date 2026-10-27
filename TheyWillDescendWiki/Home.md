@@ -32,16 +32,15 @@
 - [[Architecture/Index|Index]] — индекс техдоков
 - [[Architecture/00 Overview|00 Overview]] — стек и слои
 - [[Architecture/01 Folder Structure|01 Folder Structure]] — `Assets/_Project`
-- [[Architecture/02 Scenes & Lifetime|02 Scenes & Lifetime]] — Bootstrap / MainMenu / Loading / Game
+- [[Architecture/02 Scenes & Lifetime|02 Scenes & Lifetime]] — MainMenu / Game, три срока жизни
 - [[Architecture/03 Core Systems|03 Core Systems]] — Shell FSM, session, часы ECS
 - [[Architecture/04 Simulation|04 Simulation]] — город, люди, экономика, тепло
 - [[Architecture/05 Content Pipeline|05 Content Pipeline]] — здания, ресурсы, сценарий (гайд)
 - [[Architecture/06 FMOD Audio|06 FMOD Audio]] — FMOD Studio 2.03
 - [[Architecture/07 Mentorship & Learning|07 Mentorship & Learning]] — ментор, уроки, прогресс
 - [[Architecture/08 Production ECS|08 Production ECS]] — production ECS, расширение
-- [[Architecture/09 App Shell|09 App Shell]] — две машины, FSM, хосты Bootstrap
-- [[Architecture/10 Vertical Slice — Shell + ECS Walkers|10 Vertical Slice]] — что уже в срезе
-- [[Architecture/11 Camera & Presentation Scenes|11 Camera]] — одна Main Camera на Bootstrap
+- [[Architecture/09 App Shell|09 App Shell]] — процесс `AppScope`, переходы, любая сцена — точка входа
+- [[Architecture/11 Camera & Presentation Scenes|11 Camera]] — своя камера и слушатель у каждой сцены
 - [[Architecture/12 Radial City Grid|12 Radial City Grid]] — полярная сетка, occupancy в ECS
 - [[Architecture/13 Time HUD and Save|13 Time HUD & Save]] — часы, скорость, слот save/load
 - [[Architecture/14 Sim Presentation Bridge|14 Bridge]] — команды в ECS, pull видов

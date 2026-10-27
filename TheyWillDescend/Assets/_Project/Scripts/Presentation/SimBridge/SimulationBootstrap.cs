@@ -8,14 +8,13 @@ using TheyWillDescend.Simulation.Gods;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Stories;
 using TheyWillDescend.Simulation.Time;
-
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.SimBridge
 {
     /// <summary>
     /// Synchronous pure C# runtime bootstrap.
@@ -33,7 +32,6 @@ namespace TheyWillDescend.Shell
             StoryPackAsset storyPack = null,
             RadialGridConfig? gridConfig = null)
         {
-
             using var sessionQuery = em.CreateEntityQuery(ComponentType.ReadOnly<SimSession>());
 
             Entity session;
@@ -60,7 +58,6 @@ namespace TheyWillDescend.Shell
                 }
             }
 
-
             // Lifecycle & Control
             EnsureComponent(em, session, new SimControl
             {
@@ -78,8 +75,6 @@ namespace TheyWillDescend.Shell
             EnsureBuffer<DespawnAllBuildingsCommand>(em, session);
             EnsureBuffer<BuildingRejectedEvent>(em, session);
             EnsureBuffer<PendingScenarioPlace>(em, session);
-
-
 
             // City Grid
             var cfg = gridConfig ?? RadialGridConfig.Default;
@@ -209,7 +204,6 @@ namespace TheyWillDescend.Shell
             costs.Clear();
             recipes.Clear();
 
-
             if (catalog == null)
                 return;
 
@@ -318,7 +312,6 @@ namespace TheyWillDescend.Shell
 
             amounts.Clear();
             info.Clear();
-
 
             if (catalog == null)
                 return;

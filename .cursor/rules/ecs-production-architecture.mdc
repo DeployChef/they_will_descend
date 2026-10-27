@@ -10,7 +10,7 @@ Target: mature, extensible DOTS architecture for a large AA city-survival sim.
 ## Layers
 
 ```
-Main: Startup / composition root only
+Main: composition root only (AppScope + scene scopes)
 Presentation (UI, camera, FMOD, Shell FSM, save file)
   → desired fields or one-shot requests, no economy math
 Simulation (ECS): source of truth

@@ -2,120 +2,131 @@
 
 ← [[Index]] | [[../Home|Home]]
 
-Сеньорский контракт оболочки. Цель — **элегантность большой игры**, не копирование джем-привычек.
+Контракт оболочки: как процесс поднимается, как сцены сменяют друг друга, кто стартует ран. История решений и отступлений — [[../Refactoring/08 Shell, Scenes & Audio|Рефакторинг 08]].
 
-Связано: [[02 Scenes & Lifetime]] · [[03 Core Systems]] · [[08 Production ECS]]
-
----
-
-## 0. Честный вердикт по gmtk / «GameDirector»
-
-То, что было в GMTK (Root scope, Director, `GameStartState`, pause keys) — **удобный jam-каркас**, не священный канон.
-
-| Идея джема | Оценка для полной игры |
-| --- | --- |
-| Вечный Root + additive Game | ✅ Оставить |
-| Тонкий оркестратор сцен | ✅ Оставить как **SceneLoader**, не как бог |
-| Один `GameDirector`, который грузит сцену *и* знает opening *и* restart | ❌ Жиреет |
-| VContainer everywhere | ⚪ Опционально позже; сейчас **Composition Root** без контейнера |
-| Pause = `timeScale` | ❌ Часы в ECS: `SimControl` |
-| Нет верхней FSM | ✅ Поток — `ShellService`: он включает сцены. Машина внутри Game — только если появится режим без смены сцены |
-| Tick из `Startup.Update` | ❌ `Startup` только собирает контейнер и открывает меню или ран |
-
-**Элегантная замена «директора»:** три узких роли вместо одного толстого.
+Связано: [[02 Scenes & Lifetime]] · [[03 Core Systems]] · [[06 FMOD Audio]] · [[11 Camera & Presentation Scenes]]
 
 ---
 
-## 1. Две стороны
+## 0. Три срока жизни
 
-| Сторона | Технология | Знает |
+| Срок жизни | Что живёт | Где |
 | --- | --- | --- |
-| **Shell** | обычный C# + UI + сцены | какие сцены загружены, input, FMOD-хост |
-| **Simulation** | ECS | дни, ресурсы, рабочие, стройка |
+| **Процесс** | навигация, переходы, экран загрузки, сейв, ввод, аудио-ядро, EventSystem | `AppScope` — корневой scope VContainer, не сцена |
+| **Сцена** | камера, слушатель, свет, UI, звук этой сцены | `MainMenu`, `Game` — у каждой свой `LifetimeScope` |
+| **Ран** | ECS-мир игровой сессии | живёт, пока загружена `Game` |
 
-Сим-часы включает `GameRun` в сцене Game, когда сессия дошла до Ready. ECS не знает меню.  
-Контейнер — VContainer в Main/Presentation. Сборки: [[01 Folder Structure]] — Shell-код в Presentation, вход в Main.
+Модель — как `GameInstance` / `World` / `GameMode` в Unreal. Из неё три правила:
 
-**Нет `SimGate`.** Желаемый тик — поля на `SimControl`. UI пишет `SimClockCommand`.
+1. **Любая сцена — точка входа.** Play на `MainMenu.unity` или `Game.unity` работает сам. Boot-сцены нет.
+2. **Процесс не знает сцен изнутри.** Он грузит сцену по имени и передаёт параметры запуска. Не резолвит объекты из чужого контейнера и не зовёт их `Begin` / `Shutdown`.
+3. **Сцена не знает других сцен.** Обе знают только сервисы процесса.
+
+Симуляция (ECS) — источник истины рана. Контейнер живёт только в Presentation и Main; ECS о нём не знает.
 
 ---
 
-## 2. Элегантное ядро Shell (канон)
+## 1. Процесс: AppScope
 
-```text
-Root hosts (соседи)
-  Main Camera, EventSystem, Startup, RootLifetimeScope, GameAudio, GameInput
+Префаб `Prefabs/App/AppScope.prefab` указан как Root Lifetime Scope в `Settings/VContainerSettings.asset` (Preloaded Assets). VContainer создаёт его один раз при первом построении любого scope, помечает `DontDestroyOnLoad` и делает родителем всех scope'ов сцен. Scope сцены родителя не задаёт.
 
-RootLifetimeScope
-  родительский контейнер на Root, autoRun выключен
-  Startup.Awake вызывает Build()
-  AppContext, ShellService и SaveService — синглтоны здесь; сервисы не MonoBehaviour
-  AppContext.IsFirstStart после старта рана становится true
-  дочерние scope: MainMenu, Loading, Game. Они резолвят родителя по типу, без кросс-сценной ссылки
+Следствие: **в каждой контентной сцене обязан быть свой `LifetimeScope`**, иначе процесс не поднимется.
 
-ShellService
-  EnterGame(RunLaunch) / ReturnToMenu / ShowLoading / HideLoading / OpenMainMenu
-  EnterGame грузит Game и зовёт GameSession.Begin(launch)
-  IsFirstStart ставит сам, в момент входа в ран
-  RunLaunch — аргумент вызова, не поле контекста
+```csharp
+public sealed class AppScope : LifetimeScope
+{
+    [SerializeField] InputActionAsset inputActions;
+    [SerializeField] LoadingScreen loadingScreen;    // дочерний объект префаба
+    [SerializeField] AudioCatalog audioCatalog;
 
-AppContext
-  только IsFirstStart
-
-GameSession (сцена Game)
-  Begin / Apply / Shutdown
-  каталоги и сценарий в инспекторе этой сцены
-  сцены не грузит
-  StopPlay гасит живой ран сразу, Shutdown сбрасывает ECS
-  если сброс не подтвердился — GameRun включается снова
-
-GameRun (scope сцены Game)
-  Arm, когда Begin дошёл до Ready: SimClockCommand.InGame(true), игровой ввод, пауза
-  Disarm, когда ран уходит
-  это не машина состояний
-
-SceneLoader (узкий)
-  LoadAdditive / Unload — без знания экономики; вызывает только ShellService
-
-GameInput
-  клон TheyWillDescend.inputactions (инспектор: только этот asset)
-  Menu/Proceed и Game/Pause — FindAction на клоне, не InputActionReference в сцене
-  Menu: Proceed (anyKey + ЛКМ/ПКМ/СКМ + gamepad south)
-  Game: Pause (Esc)
+    protected override void Configure(IContainerBuilder builder)
+    {
+        builder.Register<ShellService>(Lifetime.Singleton);
+        builder.Register<TransitionService>(Lifetime.Singleton);
+        builder.Register<LoadingTasks>(Lifetime.Singleton);
+        builder.Register<SaveService>(Lifetime.Singleton);
+        builder.Register<InputService>(Lifetime.Singleton).WithParameter(inputActions);
+        builder.RegisterComponent(loadingScreen);
+        builder.RegisterInstance(audioCatalog);
+        builder.RegisterEntryPoint<AudioService>().AsSelf();
+    }
+}
 ```
 
-### Почему это лучше GameDirector
+Дети префаба: `EventSystem` (единственный на процесс; в сценах запрещён), `LoadingScreen` (overlay-canvas).
 
-| GameDirector (джем) | Эта схема |
+| Сервис | Роль |
 | --- | --- |
-| Один класс копит обязанности | Обязанности разрезаны |
-| Restart = ad-hoc Find | `ShellService.ReturnToMenu()`, затем `Start(RunLaunch)` |
-| Opening зашит в Start | Режим без смены сцены (катсцена, брифинг) — позже, если понадобится |
-| Имя врёт («директор всего») | Имена = реальные роли |
+| `ShellService` | Только навигация: `StartRun(launch)`, `RestartRun(launch)`, `GoToMenu()`, `TryTakeLaunch(out launch)`, `SplashShown`. Хранит параметры запуска между кнопкой и загрузкой Game. `GameSession` не знает |
+| `TransitionService` | Единственный, кто грузит сцены. Конвейер перехода (§3), реестр teardown'ов сцены |
+| `LoadingTasks` | Сцена сообщает «мне нужно время»: `Add(task, weight, label)`. Ошибка задачи = исключение |
+| `LoadingScreen` | Визуал процесса: `Show` / `Hide` (асинхронные), `SetProgress`. Переживает выгрузку и загрузку сцен |
+| `InputService` | Клон `TheyWillDescend.inputactions`. Карты `Menu` (Proceed) и `Game` (Pause). Какую карту включить, решает точка входа сцены |
+| `SaveService` | Слот сейва. UI и `GameSession` получают его внедрением, не статикой |
+| `AudioService` | Банки, музыка, снапшоты, UI-звук. См. [[06 FMOD Audio]] |
 
 ---
 
-## 3. Поток продукта
+## 2. Сцены
+
+| Сцена | Scope | Точка входа | Что включает на входе |
+| --- | --- | --- | --- |
+| `MainMenu` | `MainMenuLifetimeScope` | `MainMenuFlow` | карта ввода `Menu`, музыка `Menu`; сплэш один раз за процесс (`ShellService.SplashShown`) |
+| `Game` | `GameLifetimeScope` | `GameEntry` | банки `GameWorld` и `GameSession.Begin` в `LoadingTasks`; по готовности часы, карта `Game`, меню паузы, музыка `Gameplay` |
+
+Build list: `MainMenu` (0), `Game`. Переходы только Single-загрузкой: одновременно живёт ровно одна сцена, одна камера, один слушатель FMOD.
+
+### 2.1. `GameEntry`
+
+Обычный класс, entry point `GameLifetimeScope` (не компонент).
 
 ```text
-Root → MainMenu
-  → кнопка зовёт ShellService.EnterGame(RunLaunch)
-  → Loading, пока грузится Game и выгружается MainMenu; session.Begin
-  → GameRun включает часы, шелл снимает Loading
-  → выход в меню: ShellService.ReturnToMenu гасит ран, выгружает Game, потом открывает MainMenu
+Initialize
+  teardown → TransitionService.RegisterTeardown(EndRun)
+  launch   = меню (TryTakeLaunch) → #if UNITY_EDITOR настройка EditorRunLaunch на GameLifetimeScope → Normal
+  LoadingTasks.Add(AcquireWorldBanks, 1, "Loading sounds…")
+  LoadingTasks.Add(BeginRun(launch),  3, "Preparing the city…")
+
+BeginRun:  GameSession.Begin(launch); провал → исключение; успех → Arm
+Arm:       SimClockCommand.InGame(true), InputService.EnableGame, PauseMenuScreen.Use, Music.Set(Gameplay)
+EndRun:    Disarm (меню паузы, ввод, InGame(false)) → GameSession.Shutdown; провал → Arm обратно
 ```
 
-Сплэш и кнопки меню живут в сцене MainMenu (`MainMenuFlow`). Press any key играется один раз за процесс; `AppContext.IsFirstStart` это помнит.
+Редакторская настройка (`Normal` / `Debug` / `Slot`) лежит полем на `GameLifetimeScope` и передаётся через `WithParameter`. В билде её ветка вырезана: без параметров всегда `Normal`, отладочный запуск не уедет игрокам.
 
-Пауза **часов** — оверлей на Game, не смена сцены. Esc: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе `PauseMenuScreen` + `SimClockCommand.PlayerPaused`.
+### 2.2. Меню
 
-Меню паузы (Continue / Save / Load / Main Menu) — оверлей на Game, не путать с Frozen.
+Кнопки: **Start Game** / **Load** / **Start Debug** → `ShellService.StartRun(launch)`. Допустимые `DifficultyProfile` и default принадлежат `ScenarioDefinition`: Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Load = слот; кнопка серая, если файла нет.
 
-| Момент | SimControl | Кто |
-| --- | --- | --- |
-| Меню, загрузка | Off (`SessionInGame = 0`) | ран ещё не вооружён |
-| Ран готов | Running или Frozen | `GameRun.Arm`; Frozen = PlayerPaused / BuildLocked |
-| Выход в меню | Off | `GameRun.Disarm` в `StopPlay`, затем `Shutdown` |
+---
+
+## 3. Потоки
+
+```text
+Play из MainMenu (и билд)
+  AppScope поднимается → MainMenu → MainMenuFlow: карта Menu, музыка Menu
+
+Меню → «Начать»
+  ShellService.StartRun(launch) → TransitionService.Run("Game")
+    1. LoadingScreen.Show
+    2. teardown'ы текущей сцены (у меню их нет)
+    3. Single-загрузка Game (меню выгружается само)
+    4. GameEntry забирает launch, кладёт работу в LoadingTasks; конвейер ждёт WaitAll
+    5. LoadingScreen.Hide
+
+Play из Game напрямую (редактор)
+  AppScope поднимается → GameEntry: launch не передан → редакторская настройка
+  LoadingTasks получил работу без активного перехода → TransitionService сам показывает экран
+
+Игра → «Главное меню» / «Перезапуск» / «Загрузить»
+  ShellService.GoToMenu() / RestartRun(launch) → тот же конвейер
+  teardown Game (EndRun) идёт под экраном, до выгрузки сцены
+```
+
+Правила конвейера:
+- Второй переход во время текущего игнорируется (`Run` возвращает `false`), а не ставится в очередь.
+- Teardown вернул `false` → переход отменяется, экран убирается, игрок остаётся в сцене.
+- Задача `LoadingTasks` упала → откат в `MainMenu`. Если упало само меню — экран убирается, дальше откатываться некуда.
 
 ---
 
@@ -129,78 +140,36 @@ Mode = Off | Frozen | Running   (считает ConsumeSimClockCommandsSystem)
 DeltaTime = frame * Speed       (ApplySimDeltaTime; не ноль на паузе)
 ```
 
-UI / `GameRun`: `SimCommands.TryPost(SimClockCommand.…)` — не пишут поля напрямую.
+UI и `GameEntry` пишут `SimCommands.TryPost(SimClockCommand.…)`, не поля напрямую. Системы читают `IsRunning` / `DeltaTime`. Не `timeScale`, нет `SimGate`.
 
-Системы читают `IsRunning` / `DeltaTime`. Не `timeScale`.
+| Режим | Смысл | Кто |
+| --- | --- | --- |
+| **Off** | рана нет: меню, загрузка | до `Arm` и после `Disarm` |
+| **Running** | город живёт | `GameEntry.Arm` |
+| **Frozen** | ран есть, пауза посреди сессии | `PlayerPaused` / `BuildLocked` |
 
-| Режим | Смысл продукта |
-| --- | --- |
-| **Off** | рана нет / меню / загрузка |
-| **Running** | город живёт |
-| **Frozen** | ран есть, пауза посреди сессии |
-
-Замки паузы: [[13 Time HUD and Save]].
+Пауза часов — оверлей на Game, не смена сцены. Esc: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе `PauseMenuScreen` (Continue / Save / Load / Main Menu) + `SimClockCommand.PlayerPaused`. Замки паузы: [[13 Time HUD and Save]].
 
 ---
 
-## 5. Composition Root
+## 5. Временное
 
-```csharp
-// Startup.Awake
-rootScope.Build();
-var shell = rootScope.Container.Resolve<ShellService>();
-await shell.OpenMainMenu();
-```
-
-Корневой scope регистрирует `AppContext`, `ShellService`, `SaveService`, `GameAudio`, `GameInput`. Scope сцены Game регистрирует `GameRun`, `GameSession`, `PauseMenuScreen`. Сплэш и кнопки меню ведёт `MainMenuFlow` в сцене MainMenu. Пауза в ране — `PauseMenuScreen` на Game. Слот читает и пишет `SaveService`; кнопки его не открывают файл сами.
-
-Меню: **Start Game** / **Load** / **Start Debug**. Список допустимых `DifficultyProfile` и default принадлежат `ScenarioDefinition`, а не отдельным полям `GameSession`. Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Null default = prefab-default balance. Load = слот (кнопка серая, если файла нет).
-
-`skipMenuToGameTemporarily` — debug: сразу ран, MainMenu не грузится. **По умолчанию выключен.**
+- **`GameSession.Shutdown` как teardown перехода** — до Ф1 [[../Refactoring/07 Foundation Fixes|07]]. ECS-мир переживает загрузку сцен, поэтому прошлый ран чистится вручную под экраном. Когда ран станет «стереть мир и создать заново», teardown упростится.
+- **`.Current`-синглтоны экранов** (`PauseMenuScreen.Current`, `BuildWidget.Current` и др.) живут внутри одной сцены — допустимо. Сервисы процесса к ним не обращаются.
+- **Перезагрузка домена при входе в Play включена.** Если её выключат, статики (`SimWorld`, `UiSound`, `.Current`) нужно сбрасывать через `RuntimeInitializeOnLoadMethod(SubsystemRegistration)`.
 
 ---
 
-## 6. Сцены
+## 6. Анти-паттерны
 
-| Сцена | Роль |
-| --- | --- |
-| Root | хосты + Main Camera. Без меню-canvas |
-| MainMenu | splash/menu + `PressAnyKeyScreen` / `MainMenuScreen` |
-| Loading | переход: старт рана, load слота, выход в меню |
-| Game | мир, HUD, SubScene Simulation |
-
----
-
-## 7. Что переносим из gmtk всё же
-
-- Вечный Root + additive session scene
-- Audio на Root
-- Явный «вход в ран» (`ShellService` + `GameSession`)
-
-## Что не переносим
-
-Card Inject, Find soft-restart, timeScale-as-sim, толстый Director, DI в симуляцию, `SimGate` как C#-write-model часов.
-
----
-
-## 8. Порядок дальше
-
-1. Ядро есть: `Startup` + `ShellService` + `GameSession` + `GameRun` + `SimControl`. Пауза часов — оверлей на Game.
-2. Выбор сценария — позже.
-3. Машина внутри Game — только если появится режим без смены сцены.
-
----
-
-## 9. Анти-паттерны
-
-- Толстый `GameDirector` «на всё»
-- Симуляция тикает на брифинге
-- `bool paused` на всё подряд
-- VContainer ради VContainer
-- Кнопки сами грузят сцены, мимо `ShellService`
-- Кэшировать меню-UI на boot и выгрузить MainMenu
-- `Startup.Update`
-- Грузить MainMenu только ради Find, если skip в Game
+- Толстый `GameDirector`, который грузит сцены, знает opening и restart
+- Сервис процесса резолвит объекты сцены или зовёт её жизненный цикл
+- Кнопки грузят сцены мимо `ShellService`
+- Boot-сцена или хук `playModeStartScene` вместо корневого scope
+- Additive-загрузка контентной сцены поверх другой (две камеры, два слушателя)
+- `EventSystem` в сцене
+- Пауза через `timeScale`; симуляция тикает в меню или на загрузке
+- VContainer внутри `ISystem`
 
 ---
 

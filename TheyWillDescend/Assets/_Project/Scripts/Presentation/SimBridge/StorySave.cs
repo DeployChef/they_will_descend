@@ -1,4 +1,4 @@
-using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.Agents;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
@@ -6,7 +6,7 @@ using TheyWillDescend.Simulation.Stories;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.SimBridge
 {
     static class StorySave
     {

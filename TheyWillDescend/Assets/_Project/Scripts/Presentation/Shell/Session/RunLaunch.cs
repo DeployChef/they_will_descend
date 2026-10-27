@@ -1,4 +1,4 @@
-namespace TheyWillDescend.Shell
+namespace TheyWillDescend.Presentation.Shell
 {
     public enum RunKind
     {
