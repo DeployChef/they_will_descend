@@ -5,8 +5,9 @@ using TheyWillDescend.Simulation.City;
 namespace TheyWillDescend.Simulation.Session
 {
     /// <summary>
-    /// Presentation-facing command posting boundary. Gameplay posts commands and lets
-    /// <see cref="CommandSystemGroup"/> consume them on the next simulation tick.
+    /// Presentation-facing posting boundary.
+    /// Buffers live on the session. Requests are one-shot entities tagged <see cref="RunScoped"/>.
+    /// <see cref="CommandSystemGroup"/> processes them on the next simulation tick.
     /// </summary>
     public static class SimCommands
     {

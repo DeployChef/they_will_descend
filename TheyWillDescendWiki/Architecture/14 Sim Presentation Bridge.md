@@ -24,7 +24,15 @@ Gameplay Presentation **никогда не запускает consume вруч�
 Два входа, оба канон:
 
 - **Желание.** Игрок уже держит `Entity` (выбор луча, штаб). Кнопка пишет только поле входа: `Workplace.DesiredWorkers`, `Workplace.Paused`. Система желание не трогает. `+` серый только при `DesiredWorkers >= slots` — свободные люди не блокируют заказ. Недобор виден в строке `{assigned} / {desired}` и в `WorkforceSummary`. Следующий тик диспетчер добирает и отпускает людей.
-- **Разовое действие.** Поставить, снести, заспавнить, заплатить, сменить режим часов, ритуал. Это запрос (`SimCommands` или request-сущность). `CommandSystemGroup` применяет его на следующем тике, по порядку.
+- **Разовое действие.** Поставить, снести, заспавнить, дорога, исследование. Request-сущность через `SimCommands.Request`. `CommandSystemGroup` обрабатывает на следующем тике (`Process*RequestsSystem`).
+- **Поток за кадр.** Часы и story UI — буфер на сессии (`SimCommands.TryPost`). Порядок постановки сохраняется. Часы — не request.
+
+| Канал | Примеры |
+| --- | --- |
+| Поле на entity | `Workplace.DesiredWorkers`, `Workplace.Paused` |
+| Request | `PlaceBuildingRequest`, `DemolishBuildingRequest`, `SpawnAgentRequest`, `PlaceRoadStrokeRequest`, `DemolishRoadRequest`, `SetActiveResearchRequest`. `SetPyramidFeedRequest` — временный долг (слайдеры не трогать) |
+| Буфер на сессии | `SimClockCommand`, `StoryUiCommand` |
+| Событие наружу | `BuildingRejectedEvent` |
 
 Выбор дома — `BuildingSelection.Selected` / `Hovered` как `Entity`. Клик читает `BuildingIdTag.Target`. Инспектор не ищет дом по `Building.Id`: `em.Exists(Selected)` и компоненты этой сущности. Снос: `DemolishBuildingRequest.Building`. JSON сейва `Entity` не хранит.
 

@@ -6,8 +6,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(ConsumeSpawnAgentCommandsSystem))]
-    public partial struct ConsumePlaceBuildingCommandsSystem : ISystem
+    [UpdateAfter(typeof(ProcessSpawnAgentRequestsSystem))]
+    public partial struct ProcessPlaceBuildingRequestsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {

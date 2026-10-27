@@ -7,7 +7,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Gods
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    public partial struct ConsumeSetPyramidFeedCommandsSystem : ISystem
+    [UpdateAfter(typeof(TheyWillDescend.Simulation.City.ProcessDemolishBuildingRequestsSystem))]
+    public partial struct ProcessSetPyramidFeedRequestsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {
@@ -23,6 +24,13 @@ namespace TheyWillDescend.Simulation.Gods
             var query = SystemAPI.QueryBuilder().WithAll<SetPyramidFeedRequest>().Build();
             if (query.IsEmptyIgnoreFilter)
                 return;
+
+            if (em.GetComponentData<SimControl>(session).SessionInGame == 0)
+            {
+                using var leftover = query.ToEntityArray(Allocator.Temp);
+                em.DestroyEntity(leftover);
+                return;
+            }
 
             if (!SystemAPI.TryGetSingletonEntity<Headquarters>(out var hq))
                 return;

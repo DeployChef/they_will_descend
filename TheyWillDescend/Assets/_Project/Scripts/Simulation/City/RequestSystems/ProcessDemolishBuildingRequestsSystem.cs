@@ -5,8 +5,9 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.City
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(ConsumePlaceBuildingCommandsSystem))]
-    public partial struct ConsumeDeconstructBuildingCommandsSystem : ISystem
+    [UpdateAfter(typeof(ProcessPlaceBuildingRequestsSystem))]
+    [UpdateAfter(typeof(ProcessDemolishRoadRequestsSystem))]
+    public partial struct ProcessDemolishBuildingRequestsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)
         {

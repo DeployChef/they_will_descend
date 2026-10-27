@@ -1,5 +1,7 @@
 # 05. Ф4 — Входы игрока
 
+**Статус: сделано** (2026-10-27). Request-системы в `RequestSystems/` как `Process*RequestsSystem`. Часы остаются `ConsumeSimClockCommandsSystem`. Слайдеры пирамиды — по-прежнему request (Ф0.4). `TryPost` пишет только буфер сессии.
+
 ← [[04 F3 Workforce]] | [[Index]] | далее [[06 F5 Presentation]]
 
 После Ф1 очередь setup-команд уже мертва. Ф4 наводит порядок на **оставшихся** входах.

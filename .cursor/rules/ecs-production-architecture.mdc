@@ -21,8 +21,8 @@ Assemblies are compile walls, not DDD layers. Simulation, Content (art catalogs)
 
 ## Simulation folders (feature, then layer)
 
-`Simulation/<Feature>/{Components,Commands,CommandSystems,Systems}`  
-Tick: Commands → commute/construction → production → day clock. Needs/Laws/Gods/WinLose later.
+`Simulation/<Feature>/{Components,Requests,RequestSystems,Commands,CommandSystems,Systems}`  
+Tick: CommandSystemGroup (clock buffer + Process* requests) → commute/construction → production → day clock. Needs/Laws/Gods/WinLose later.
 
 ## Rules
 

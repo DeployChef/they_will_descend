@@ -45,10 +45,11 @@ Assets/_Project/Scripts/
   Simulation/
     Session/     Components, Commands, CommandSystems   ← часы, SimWorld, SimCommands
     Time/        Components, Systems
-    City/        Components, Commands, CommandSystems, Systems, Math
-    Agents/      Components, Commands, CommandSystems, Systems
+    City/        Components, Commands, Requests, RequestSystems, Systems, Math
+    Agents/      Components, Requests, RequestSystems, Systems
     Economy/     Components, Systems
-    Gods/        Components, Commands, CommandSystems, Systems
+    Gods/        Components, Requests, RequestSystems, Systems
+    Research/    Components, Requests, RequestSystems, Systems
     Content/     каталоги логики (ResourceDefinition, SimRules, Timeline, BuildingStamp identity)
   Content/       BuildingCatalogAsset (оболочки зданий со штампом), VisualSet (модели), DifficultyProfile (оверлей), ScenarioDefinition
   Authoring/
@@ -88,17 +89,19 @@ Assets/_Project/
 
 | Подпапка | Что |
 | --- | --- |
-| `Components/` | состояние |
-| `Commands/` | буферы намерений / reject-события |
-| `CommandSystems/` | consume команд (`CommandSystemGroup`) |
+| `Components/` | состояние, поля желания |
+| `Requests/` | одноразовые request-сущности |
+| `RequestSystems/` | `Process*RequestsSystem` в `CommandSystemGroup` |
+| `Commands/` | буферы-потоки (`SimClockCommand`) и outbound (`BuildingRejectedEvent`) |
+| `CommandSystems/` | только буферные consume; группа и часы живут в `Session/CommandSystems` |
 | `Systems/` | тик (commute, construction, produce) |
 
-`CommandSystemGroup` живёт в `Session/CommandSystems`. Его pipeline линеен: clock → reset agents → reset buildings → scenario spawn → spawn → place → roads → pyramid feed → research → lifecycle finalizer → delta time. Штат и пауза дома в эту очередь не входят: UI пишет `Workplace`, `WorkforceDispatchSystem` выравнивает факт. Finalizer переводит `SimSession.Phase` только после опустошения всех входящих очередей. Namespace остаётся на уровне фичи (`TheyWillDescend.Simulation.City`), не `City.Commands`.
+`CommandSystemGroup` живёт в `Session/CommandSystems`. Pipeline: clock → spawn → place → road stroke → demolish road → demolish building → pyramid feed → research → delta time. Штат и пауза дома в очередь не входят: UI пишет `Workplace`, диспетчер выравнивает факт. Namespace на уровне фичи (`TheyWillDescend.Simulation.City`), не `City.Requests`.
 
 Папка `Simulation/Io` — **не канон** (старый дубль). Порт: `Session/Components/SimWorld`, `SimSession`, `SimSessionAccess`; `Session/Commands/SimCommands`.
 
-Новая механика: система в `Simulation/<фича>/Systems`, вид в `Presentation/<фича>`. Желание — поле на компоненте. Разовое действие — команда рядом в `Commands` и consume в `CommandSystems`.  
-Одна команда / один флаг сноса — **своя система** в `CommandSystemGroup`. Не общий `SimCommandProcessor`. Presentation не вызывает consume-системы вручную: `GameSession` асинхронно ждёт ECS-фазы `Ready` / `Unprepared`.
+Новая механика: система в `Simulation/<фича>/Systems`, вид в `Presentation/<фича>`. Желание — поле на компоненте. Разовое действие — `Requests/` + `Process*RequestsSystem`. Поток за кадр — буфер в `Commands/`.  
+Один вид входа — **своя система** в `CommandSystemGroup`. Не общий процессор. Presentation не вызывает process-системы вручную.
 
 `GameHud` — оверлей-виджеты. `*View` / `*ViewBoard` — меш в мире следует за entity. Меню: экраны на сцене регистрируют `.Current` в Awake; стейты читают их в Enter.
 

@@ -5,8 +5,8 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Research
 {
     [UpdateInGroup(typeof(CommandSystemGroup))]
-    [UpdateAfter(typeof(TheyWillDescend.Simulation.Gods.ConsumeSetPyramidFeedCommandsSystem))]
-    public partial struct ConsumeSetActiveResearchCommandsSystem : ISystem
+    [UpdateAfter(typeof(TheyWillDescend.Simulation.Gods.ProcessSetPyramidFeedRequestsSystem))]
+    public partial struct ProcessSetActiveResearchRequestsSystem : ISystem
     {
         EntityQuery _workshops;
 
@@ -28,13 +28,15 @@ namespace TheyWillDescend.Simulation.Research
             if (query.IsEmptyIgnoreFilter)
                 return;
 
+            var inGame = em.GetComponentData<SimControl>(session).SessionInGame != 0;
             var hasWorkshop = !_workshops.IsEmptyIgnoreFilter;
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
             using var requests = query.ToComponentDataArray<SetActiveResearchRequest>(Allocator.Temp);
 
             for (var i = 0; i < requests.Length; i++)
             {
-                ResearchRules.TryStart(em, session, requests[i].TechId, hasWorkshop);
+                if (inGame)
+                    ResearchRules.TryStart(em, session, requests[i].TechId, hasWorkshop);
                 em.DestroyEntity(requestEntities[i]);
             }
         }
