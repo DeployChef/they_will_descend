@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Cysharp.Threading.Tasks;
 using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Infrastructure.Save;
@@ -41,13 +41,13 @@ namespace TheyWillDescend.Presentation.ShellUi
         /// <summary>Меню открыто логически. На время исчезновения элементов сбрасывается сразу.</summary>
         public bool IsOpen { get; private set; }
 
-        GameInput _input;
+        InputService _input;
         ShellService _shell;
         SaveService _save;
         bool _busy;
 
         [Inject]
-        public void Construct(ShellService shell, GameInput input, SaveService save)
+        public void Construct(ShellService shell, InputService input, SaveService save)
         {
             _shell = shell;
             _input = input;
@@ -77,7 +77,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        /// <summary><see cref="GameEntry"/> turns the game map on. Esc is the injected <see cref="GameInput"/>.</summary>
+        /// <summary><see cref="GameEntry"/> turns the game map on. Esc is the injected <see cref="InputService"/>.</summary>
         public void Use()
         {
             if (_input == null)

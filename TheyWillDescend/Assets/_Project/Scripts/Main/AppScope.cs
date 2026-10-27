@@ -1,7 +1,9 @@
 using TheyWillDescend.Infrastructure.Save;
+using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.ShellUi;
 using TheyWillDescend.Shell;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using VContainer;
 using VContainer.Unity;
 
@@ -13,8 +15,9 @@ namespace TheyWillDescend.Main
     /// </summary>
     public sealed class AppScope : LifetimeScope
     {
-        [SerializeField] GameInput gameInput;
+        [SerializeField] InputActionAsset inputActions;
         [SerializeField] LoadingScreen loadingScreen;
+        [SerializeField] AudioCatalog audioCatalog;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -22,8 +25,10 @@ namespace TheyWillDescend.Main
             builder.Register<TransitionService>(Lifetime.Singleton);
             builder.Register<LoadingTasks>(Lifetime.Singleton);
             builder.Register<SaveService>(Lifetime.Singleton);
-            builder.RegisterComponent(gameInput);
+            builder.Register<InputService>(Lifetime.Singleton).WithParameter(inputActions);
             builder.RegisterComponent(loadingScreen);
+            builder.RegisterInstance(audioCatalog);
+            builder.RegisterEntryPoint<AudioService>().AsSelf();
         }
     }
 }

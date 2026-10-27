@@ -438,6 +438,19 @@ Game: SimPauseAudioBridge (LateUpdate) — читает SimControl → AudioServ
 - В меню FMOD-профайлер показывает загруженными только `Core`; в игре — `Core` + `GameWorld`; после выхода в меню `GameWorld` выгружен.
 - Музыка меняет состояние между меню и игрой по cue, без двойного инстанса.
 
+> **Статус: сделано.** Код — `Presentation/Audio/Service/`: `AudioCatalog`, `AudioBankSet`, `AudioBanks` (счётчик ссылок FMOD, `Acquire` ждёт сэмплы, выгрузка кадром позже), `MusicDirector`, `AudioSnapshots`, `UiAudio`, `AudioService` (entry point `AppScope`), `UiSound`. Ассеты — `Content/Audio/`: `AudioCatalog`, `CoreBanks` (Master.strings, Master, UI, Main_theme), `GameWorldBanks` (Ambience_Town, Ambience_Wind_Generator, BUILDING), `AudioZoneSettings`. `GameEntry` берёт `GameWorld` задачей `LoadingTasks` и отпускает в teardown; при рестарте Game новый набор берётся раньше, чем отпускается старый, — банки не перезагружаются. Мост паузы `SimPauseAudioBridge` (entry point `GameLifetimeScope`) читает `SimControl.PlayerPaused` и зовёт `AudioService.SetPaused` (снапшот ESC + пауза музыки). `GlobalAmbienceManager` → `WindAmbience` (событие и шина из каталога); `GameAudio`, `UiAudioManager`, `FmodBankLoader` удалены. `GameInput` → `InputService`: обычный класс `AppScope`, `.inputactions` через `WithParameter`, дочерний объект в префабе убран. Проверено в Play: холодный старт меню — только Core; меню → игра → меню; рестарт Debug; пауза; ветер, амбиент зон, случайные звуки, стройка.
+>
+> **Отступления от плана:**
+> - `Load Banks: None`, не Specified. Core грузит `AudioService` из каталога — список банков живёт в одном месте, а не в каталоге и в настройках FMOD одновременно.
+> - Громкости (`Volumes.Set`) не построены: ни потребителя (меню настроек), ни VCA в проекте FMOD. Появятся вместе с экраном настроек.
+> - Cue меню и игры — одно событие `MUSIC_STATES` без метки: у глобального параметра есть только IDLE / WIN / DEFEAT. **Вопрос звукорежиссёру:** нужны метки меню и игры (или отдельные события). Код готов — метка пишется в cue каталога.
+> - `WindAmbience` считает центр города константой (0,0,0) вместо чтения ECS — по критерию «Audio не читает SimWorld». Если центр начнёт двигаться — через мост, как пауза.
+> - Мост паузы лежит в `Presentation/Application`, не в `Audio`: он читает ECS.
+>
+> **Попутно найдено и исправлено:** амбиент зон молчал и до рефакторинга — событие переехало в `event:/AMBIENCE/TOWN_DESTINY/Ambience_Town`, а настройка указывала старый путь строкой. Теперь в `AudioZoneSettings` ссылки с GUID. Параметр `Distance` в новом событии встроенный (FMOD считает его сам), поэтому `distanceRtpcName` пуст — иначе FMOD предупреждает «readonly».
+>
+> **Известное:** `bus:/Ambience` нет в проекте FMOD — предупреждение `WindAmbience` на каждом входе в Game (нужна шина у звукорежиссёра). Горячая перезагрузка банков в редакторе пересоздаёт ячейки, но не ветер — только редактор.
+
 ### Ф6. Синхронизация вики и правил — §10.
 
 ---

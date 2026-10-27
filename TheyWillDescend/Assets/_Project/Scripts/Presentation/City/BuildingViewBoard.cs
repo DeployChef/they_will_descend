@@ -30,6 +30,7 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] float outlineWidth = 0.28f;
 
         AudioZoneManager _audioZoneManager;
+        AudioService _audio;
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
@@ -49,9 +50,10 @@ namespace TheyWillDescend.Presentation.City
         }
 
         [Inject]
-        public void Construct(AudioZoneManager audioZoneManager)
+        public void Construct(AudioZoneManager audioZoneManager, AudioService audio)
         {
             _audioZoneManager = audioZoneManager;
+            _audio = audio;
         }
 
         public void RebuildViews()
@@ -255,12 +257,13 @@ namespace TheyWillDescend.Presentation.City
                 AudioSource = audioSource
             };
 
-            // Строительный звук: берём компонент с префаба или добавляем
-            // (как BuildingAudioSource — на префабе настроить EventReference,
-            // auto-add работает по fallback-пути event:/BUILDINGS/BUILD).
+            // Строительный звук: компонент с префаба или добавленный; событие префаба
+            // главнее, иначе — событие стройки из каталога.
             var constructionAudio = house.GetComponent<BuildingConstructionAudio>();
             if (constructionAudio == null)
                 constructionAudio = house.AddComponent<BuildingConstructionAudio>();
+            if (_audio != null)
+                constructionAudio.UseDefaultEvent(_audio.Catalog.Construction);
             placed.ConstructionAudio = constructionAudio;
 
             _views[building.Id] = placed;

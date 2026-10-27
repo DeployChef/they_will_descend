@@ -146,10 +146,7 @@ namespace TheyWillDescend.Presentation.Audio
             EventInstance instance;
             try
             {
-                // Приоритет у EventReference (drag-and-drop), строковый путь — fallback.
-                instance = !settings.SfxRandomEventReference.IsNull
-                    ? RuntimeManager.CreateInstance(settings.SfxRandomEventReference)
-                    : RuntimeManager.CreateInstance(settings.SfxRandomEventPath);
+                instance = RuntimeManager.CreateInstance(settings.SfxRandomEventReference);
             }
             catch (System.Exception e)
             {
@@ -159,7 +156,7 @@ namespace TheyWillDescend.Presentation.Audio
 
             if (!instance.isValid())
             {
-                LogOnce($"event '{settings.SfxRandomEventPath}' not found. Build banks in FMOD Studio and copy them to StreamingAssets.");
+                LogOnce($"event {settings.SfxRandomEventReference} not found. Assign it in AudioZoneSettings; its bank belongs to the GameWorld set.");
                 return false;
             }
 

@@ -1,3 +1,4 @@
+﻿using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Shell;
 using UnityEngine;
 using VContainer;
@@ -6,7 +7,7 @@ namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
     /// Lives in the MainMenu scene. Owns the splash, then the button panel, and the menu input map
-    /// while the scene lives. Reveal is instant until menu animations exist.
+    /// while the scene lives; asks for the menu music on entry. Reveal is instant until menu animations exist.
     /// </summary>
     public sealed class MainMenuFlow : MonoBehaviour
     {
@@ -15,15 +16,16 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         bool _menuVisible;
         ShellService _shell;
-        GameInput _input;
+        InputService _input;
 
         [Inject]
-        public void Construct(ShellService shell, GameInput input)
+        public void Construct(ShellService shell, InputService input, AudioService audio)
         {
             _shell = shell;
             _input = input;
             _input.Proceeded += OnProceed;
             _input.EnableMenu();
+            audio.Music.Set(MusicTheme.Menu);
 
             if (shell.SplashShown)
                 ShowMenu();

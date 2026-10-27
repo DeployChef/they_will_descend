@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
@@ -17,7 +17,7 @@ namespace TheyWillDescend.Presentation.GameHud
     /// Это отладка, не игровая логика: день/ночь пишут GameTime напрямую,
     /// ресурсы двигают ResourceAmount тем же clamp, что и ledger.
     /// Ряды +/- клонируются из authored-шаблона по ResourceInfo — новый ресурс
-    /// в каталоге сам появляется в панели. Не кладём в GameInput.
+    /// в каталоге сам появляется в панели. Не кладём в InputService.
     /// </summary>
     public sealed class CheatButtons : MonoBehaviour
     {

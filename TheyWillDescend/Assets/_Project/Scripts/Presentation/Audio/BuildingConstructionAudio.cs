@@ -9,8 +9,8 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// Строительный звук постройки (event:/BUILDINGS/BUILD). Вешается на префаб
-    /// здания (BuildingViewBoard добавляет автоматически, если компонента нет).
+    /// Строительный звук постройки. Вешается на префаб здания; если компонента нет,
+    /// BuildingViewBoard добавляет его и отдаёт событие стройки из AudioCatalog.
     /// Состояние читается из ECS каждый кадр (компонент Construction):
     ///   поставлено, рабочие не пришли (Elapsed = 0) → PLACEMENT (ваншот);
     ///   рабочие на площадке (Elapsed &gt; 0)          → BUILD (держится до конца стройки);
@@ -28,17 +28,10 @@ namespace TheyWillDescend.Presentation.Audio
 
         // В FMOD у параметра хвостовой пробел ("BUILDING ") — резолвим по ID через Trim.
         const string ParamName = "BUILDING";
-        const string FallbackEventPath = "event:/BUILDINGS/BUILD";
 
         [Header("FMOD")]
-        [Tooltip("Ивент BUILD (drag-and-drop из FMOD Studio). Пусто — используется путь ниже.")]
+        [Tooltip("Ивент BUILD (drag-and-drop из FMOD Studio). Пусто — событие стройки из AudioCatalog. Банк — в наборе GameWorld.")]
         [SerializeField] EventReference buildEvent;
-
-        [Tooltip("Fallback-путь ивента, если EventReference не задан.")]
-        [SerializeField] string eventPath = FallbackEventPath;
-
-        [Tooltip("Банки ивента (без .bank). Грузятся до создания инстанса.")]
-        [SerializeField] string[] bankNames = { "BUILDING" };
 
         [Header("Debug")]
         [SerializeField] bool logActivity;
@@ -46,12 +39,18 @@ namespace TheyWillDescend.Presentation.Audio
         EventInstance _instance;
         PARAMETER_ID _paramId;
         bool _paramResolved;
-        bool _banksLoaded;
         BuildState _state = BuildState.None;
         bool _synced;
         bool _logOnce;
 
         BuildingAudioSource _audioSource;
+
+        /// <summary>Событие, если на префабе своё не задано. Отдаёт владелец вида.</summary>
+        public void UseDefaultEvent(EventReference fallback)
+        {
+            if (buildEvent.IsNull)
+                buildEvent = fallback;
+        }
 
         /// <summary>
         /// Синхронизация состояния из ECS. Вызывается BuildingViewBoard каждый кадр.
@@ -167,28 +166,25 @@ namespace TheyWillDescend.Presentation.Audio
             if (_instance.isValid())
                 return true;
 
-            if (!_banksLoaded)
+            if (buildEvent.IsNull)
             {
-                _banksLoaded = true;
-                FmodBankLoader.LoadBanks(bankNames);
+                LogOnce($"BuildingConstructionAudio: {name} has no build event (prefab or AudioCatalog).");
+                return false;
             }
 
             try
             {
-                _instance = !buildEvent.IsNull
-                    ? RuntimeManager.CreateInstance(buildEvent)
-                    : RuntimeManager.CreateInstance(eventPath);
+                _instance = RuntimeManager.CreateInstance(buildEvent);
             }
             catch (EventNotFoundException)
             {
-                LogOnce($"BuildingConstructionAudio: event '{eventPath}' not in loaded banks. " +
-                        "Ctrl+B in FMOD Studio, copy BUILDING.bank into StreamingAssets/Desktop/.");
+                LogOnce($"BuildingConstructionAudio: event {buildEvent} not in loaded banks (GameWorld set).");
                 return false;
             }
 
             if (!_instance.isValid())
             {
-                LogOnce($"BuildingConstructionAudio: instance invalid for '{eventPath}'.");
+                LogOnce($"BuildingConstructionAudio: instance invalid for {buildEvent}.");
                 return false;
             }
 
@@ -236,7 +232,7 @@ namespace TheyWillDescend.Presentation.Audio
                 return;
             }
 
-            LogOnce($"BuildingConstructionAudio: параметр '{ParamName}' не найден в '{eventPath}'. " +
+            LogOnce($"BuildingConstructionAudio: параметр '{ParamName}' не найден в {buildEvent}. " +
                     "Добавь его в ивент и пересобери банки.");
         }
 

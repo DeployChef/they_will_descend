@@ -19,11 +19,13 @@ namespace TheyWillDescend.Main
             builder.RegisterComponentInHierarchy<GameSession>();
             builder.RegisterComponentInHierarchy<PauseMenuScreen>();
             builder.RegisterEntryPoint<GameEntry>().WithParameter(editorLaunch);
+            builder.RegisterEntryPoint<SimPauseAudioBridge>();
 
             builder.RegisterComponentInHierarchy<RTSCameraController>();
             builder.RegisterComponentInHierarchy<AudioZoneManager>();
             builder.RegisterComponentInHierarchy<AudioVisibilityChecker>();
             builder.RegisterComponentInHierarchy<ZoneAmbienceSfxScheduler>();
+            builder.RegisterComponentInHierarchy<WindAmbience>();
             builder.RegisterComponentInHierarchy<BuildingViewBoard>();
         }
     }

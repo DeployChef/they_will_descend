@@ -20,10 +20,6 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] AudioZoneSettings settings;
         [SerializeField] AudioVisibilityChecker visibilityChecker;
 
-        [Header("FMOD Banks")]
-        [Tooltip("Банки с ивентом (без расширения .bank). Используется, если EventReference в настройках не задан. Master грузится всегда.")]
-        [SerializeField] string[] fmodBanks = { "Ambience_Town" };
-
         /// <summary>Живые ячейки. Порядок не фиксирован — идентификатор у каждой свой.</summary>
         private readonly List<AudioCell> _cells = new();
 
@@ -46,11 +42,10 @@ namespace TheyWillDescend.Presentation.City
         /// </summary>
         private bool _topologyDirty;
 
-        /// <summary>Банки загружены (один раз; hot reload пересоздаёт ячейки сам).</summary>
-        private bool _banksLoaded;
-
         /// <summary>RTS-контроллер камеры: скорость для доплера FlyBy.</summary>
         RTSCameraController _rtsController;
+
+        AudioService _audio;
 
         public AudioZoneSettings Settings => settings;
         public AudioVisibilityChecker VisibilityChecker => visibilityChecker;
@@ -62,9 +57,10 @@ namespace TheyWillDescend.Presentation.City
         public event Action BanksUnloading;
 
         [Inject]
-        public void Construct(RTSCameraController rtsController)
+        public void Construct(RTSCameraController rtsController, AudioService audio)
         {
             _rtsController = rtsController;
+            _audio = audio;
         }
 
         void Awake()
@@ -84,8 +80,6 @@ namespace TheyWillDescend.Presentation.City
         {
             if (!enabled || settings == null)
                 return;
-
-            EnsureBanksLoaded();
 
             _frameCounter++;
             if (_frameCounter < TickFrames)
@@ -120,23 +114,6 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
-        /// <summary>
-        /// Грузит банки до первого создания инстансов. Если задан EventReference —
-        /// банки определяются автоматически из ивента (принцип StudioEventEmitter).
-        /// </summary>
-        private void EnsureBanksLoaded()
-        {
-            if (_banksLoaded)
-                return;
-
-            _banksLoaded = true;
-
-            if (!settings.EventReference.IsNull)
-                FmodBankLoader.LoadBanksForEvent(settings.EventReference);
-            else
-                FmodBankLoader.LoadBanks(fmodBanks);
-        }
-
         // ===== Привязка построек =====
 
         /// <summary>
@@ -147,8 +124,6 @@ namespace TheyWillDescend.Presentation.City
         {
             if (settings == null || source == null)
                 return null;
-
-            EnsureBanksLoaded();
 
             var pos = source.transform.position;
             var radius = settings.AttachRadius;
@@ -361,14 +336,17 @@ namespace TheyWillDescend.Presentation.City
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Hot reload: выгружает ивентовые банки, грузит заново, пересобирает
+        /// Hot reload: перезагружает набор банков GameWorld, пересобирает
         /// ячейки и перелинковывает постройки — без перезапуска сцены. Правой
         /// кнопкой по заголовку компонента в инспекторе во время Play.
-        /// Master и Master.strings не трогаем — они нужны для резолва путей.
+        /// Ветер и звук стройки сидят на тех же банках — их инстансы FMOD оборвёт.
         /// </summary>
         [ContextMenu("Reload FMOD Banks")]
         private void ReloadFmodBanks()
         {
+            if (_audio == null)
+                return;
+
             GameLog.Info("AudioZoneManager: hot reload banks started.");
 
             // Случайные городские звуки лежат в том же банке — их инстансы
@@ -378,15 +356,7 @@ namespace TheyWillDescend.Presentation.City
             // Глушим все ячейки до выгрузки банков (инстансы ссылаются на ивенты).
             ClearCells();
 
-            // Выгружаем ивентовые банки (найденные ранее для EventReference)
-            // и вручную указанные. Master/Master.strings не трогаем — они
-            // нужны для резолва путей ивентов.
-            FmodBankLoader.UnloadEventBanks();
-            FmodBankLoader.UnloadBanks(fmodBanks);
-
-            // Грузим заново: EventReference → автоопределение, иначе ручной список.
-            _banksLoaded = false;
-            EnsureBanksLoaded();
+            _audio.Banks.ReloadInEditor(_audio.Catalog.GameWorld);
 
             // Пересобираем ячейки из стоящих построек.
             RelinkAllSources();

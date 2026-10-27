@@ -1,58 +1,22 @@
-using FMOD.Studio;
+﻿using FMOD.Studio;
 using FMODUnity;
 using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Simulation.City;
-using TheyWillDescend.Simulation.Session;
 using Unity.Mathematics;
 using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.Audio
 {
     /// <summary>
-    /// Глобальные ивенты атмосферы (ветер и т.п.). Один инстанс на ивент.
-    /// Жёстко закодированные пути — без EventReference, без Inspector.
-    /// Живёт в сцене Game: инстансы освобождаются вместе с ней.
+    /// Ветер над городом: один вечный 2D-ивент из <see cref="AudioCatalog.Wind"/>, громкость — от высоты камеры.
+    /// Банк приходит с набором GameWorld. Живёт в сцене Game: инстанс освобождается вместе с ней.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class GlobalAmbienceManager : MonoBehaviour
+    public sealed class WindAmbience : MonoBehaviour
     {
-        // === Хардкод путей ивентов и банков ===
-        // Ивенты амбиентов лежат в папке AMBIENCE → путь event:/AMBIENCE/...
-        private static readonly string[] EternalEventPaths =
-        {
-            "event:/AMBIENCE/Ambience_Wind_Generation"
-        };
-
-        // Имя банка (без .bank). FMOD-конвенция не универсальна:
-        // Ambience_Wind_Generation → Ambience_Wind_Generator (с 'r')
-        // Ambience_Town → Ambience_Town (без 'r')
-        private static readonly string[] EternalBankNames =
-        {
-            "Ambience_Wind_Generator"
-        };
-
-        private static readonly string[] EternalRtpcNames =
-        {
-            "Distance"
-        };
-
-        private static readonly float[] EternalDeathDistances =
-        {
-            0f // 0 = звучит всегда
-        };
-
-        private static readonly float[] EternalRtpcRanges =
-        {
-            100f // дистанция в метрах: 0 = центр города, 100 = параметр FMOD = 1
-        };
-
-        private static readonly float[] EternalHysteresis =
-        {
-            5f
-        };
-
         private sealed class ManagedEvent
         {
+            public EventReference reference;
             public string eventPath;
             public string distanceRtpc;
             public FMOD.Studio.PARAMETER_ID distanceRtpcId;
@@ -94,50 +58,55 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Сглаженное значение Distance 0..1 — реально отправляется в FMOD.</summary>
         float _smoothedDistance;
 
-        /// <summary>Центр города (из DOTS), fallback (0,0,0).</summary>
-        float3 _cityCenter;
+        /// <summary>Центр города — начало координат (HQ стоит в нуле, см. вики 06).</summary>
+        readonly float3 _cityCenter = float3.zero;
 
-        [Header("Ambience Bus")]
-        [Tooltip("Studio-шина для всех амбиент-инстансов. Шина должна существовать в проекте FMOD Studio (Buses) и попасть в собранные банки.")]
-        [SerializeField] string ambienceBusPath = "bus:/Ambience";
+        string ambienceBusPath;
 
         // Studio-шина амбиента: все инстансы перематываются в её ChannelGroup,
         // mute/unmute — один вызов _ambienceBus.setMute(...).
         FMOD.Studio.Bus _ambienceBus;
         bool _muted;
 
+        AudioService _audio;
+
+        [Inject]
+        public void Construct(AudioService audio)
+        {
+            _audio = audio;
+        }
+
         void Start()
         {
-            var count = EternalEventPaths.Length;
-            _events = new ManagedEvent[count];
-
-            for (var i = 0; i < count; i++)
+            _events = System.Array.Empty<ManagedEvent>();
+            if (_audio == null)
             {
-                _events[i] = new ManagedEvent
+                GameLog.Error("WindAmbience: AudioService was not injected. Register WindAmbience in GameLifetimeScope.");
+                return;
+            }
+
+            var wind = _audio.Catalog.Wind;
+            if (wind.IsNull)
+            {
+                GameLog.Warning("WindAmbience: wind event is not assigned in AudioCatalog.");
+                return;
+            }
+
+            _events = new[]
+            {
+                new ManagedEvent
                 {
-                    eventPath = EternalEventPaths[i],
-                    distanceRtpc = i < EternalRtpcNames.Length ? EternalRtpcNames[i] : "Distance",
-                    deathDistance = i < EternalDeathDistances.Length ? EternalDeathDistances[i] : 0f,
-                    rtpcRange = i < EternalRtpcRanges.Length ? EternalRtpcRanges[i] : 120f,
-                    hysteresis = i < EternalHysteresis.Length ? EternalHysteresis[i] : 5f,
+                    reference = wind,
+                    eventPath = wind.ToString(),
+                    distanceRtpc = "Distance",
+                    deathDistance = 0f, // 0 = звучит всегда
+                    rtpcRange = 100f,
+                    hysteresis = 5f,
                     isDead = true
-                };
+                }
+            };
 
-                if (logActivity)
-                    GameLog.Info($"GlobalAmbienceManager: registered event[{i}] path={_events[i].eventPath} deathDist={_events[i].deathDistance}.");
-            }
-
-            // Загружаем нужные банки перед созданием ивентов.
-            // RuntimeManager может не успеть загрузить банки до Start().
-            // Грузим явно по хардкод-именам.
-            for (var i = 0; i < _events.Length; i++)
-            {
-                var bankName = i < EternalBankNames.Length ? EternalBankNames[i] : null;
-                if (!string.IsNullOrEmpty(bankName))
-                    FmodBankLoader.LoadBank(bankName);
-            }
-
-            // Резолвим шину амбиента после загрузки банков (шины живут в банках).
+            ambienceBusPath = _audio.Catalog.AmbienceBus;
             ResolveAmbienceBus();
 
             // Резолвим ID глобального параметра. Сравниваем имена с обрезкой
@@ -153,7 +122,7 @@ namespace TheyWillDescend.Presentation.Audio
                 var listResult = RuntimeManager.StudioSystem.getParameterDescriptionList(out var descriptions);
                 if (listResult != FMOD.RESULT.OK || descriptions == null)
                 {
-                    GameLog.Warning($"GlobalAmbienceManager: getParameterDescriptionList FAILED: {listResult}.");
+                    GameLog.Warning($"WindAmbience: getParameterDescriptionList FAILED: {listResult}.");
                     continue;
                 }
 
@@ -167,12 +136,12 @@ namespace TheyWillDescend.Presentation.Audio
                     e.distanceRtpcId = descriptions[p].id;
                     found = true;
                     if (logActivity)
-                        GameLog.Info($"GlobalAmbienceManager: resolved global param '{actualName}' (wanted '{e.distanceRtpc}') id=({descriptions[p].id.data1}, {descriptions[p].id.data2}) min={descriptions[p].minimum} max={descriptions[p].maximum}.");
+                        GameLog.Info($"WindAmbience: resolved global param '{actualName}' (wanted '{e.distanceRtpc}') id=({descriptions[p].id.data1}, {descriptions[p].id.data2}) min={descriptions[p].minimum} max={descriptions[p].maximum}.");
                     break;
                 }
 
                 if (!found)
-                    GameLog.Warning($"GlobalAmbienceManager: global param '{e.distanceRtpc}' NOT FOUND in banks (дамп: см. DumpGlobalParameters).");
+                    GameLog.Warning($"WindAmbience: global param '{e.distanceRtpc}' NOT FOUND in banks (дамп: см. DumpGlobalParameters).");
             }
 
             // Ждём один кадр, чтобы банки точно прогрузились.
@@ -195,7 +164,7 @@ namespace TheyWillDescend.Presentation.Audio
                     if (e.deathDistance == 0f)
                     {
                         if (logActivity)
-                            GameLog.Info($"GlobalAmbienceManager: creating eternal event[{i}]: {e.eventPath}.");
+                            GameLog.Info($"WindAmbience: creating eternal event[{i}]: {e.eventPath}.");
                         CreateEvent(e, camPos);
                     }
                 }
@@ -232,13 +201,13 @@ namespace TheyWillDescend.Presentation.Audio
                         UpdateWheelDistance();
                         target = _wheelTarget;
                         if (logActivity && Time.frameCount % 60 == 0)
-                            GameLog.Info($"GlobalAmbienceManager: RTPC {e.distanceRtpc} target={target:F1} (mouse wheel, global).");
+                            GameLog.Info($"WindAmbience: RTPC {e.distanceRtpc} target={target:F1} (mouse wheel, global).");
                     }
                     else
                     {
                         target = ComputeCameraDistanceNormalized();
                         if (logActivity && Time.frameCount % 60 == 0)
-                            GameLog.Info($"GlobalAmbienceManager: RTPC {e.distanceRtpc} target={target:F3} (camera vs city center, global).");
+                            GameLog.Info($"WindAmbience: RTPC {e.distanceRtpc} target={target:F3} (camera vs city center, global).");
                     }
 
                     // Направление прямое: приближение к центру = 0, отдаление = 1.
@@ -263,14 +232,14 @@ namespace TheyWillDescend.Presentation.Audio
                     if (result != FMOD.RESULT.OK)
                     {
                         if (logActivity && Time.frameCount % 60 == 0)
-                            GameLog.Warning($"GlobalAmbienceManager: setParameterByID('{e.distanceRtpc}') FAILED: {result}.");
+                            GameLog.Warning($"WindAmbience: setParameterByID('{e.distanceRtpc}') FAILED: {result}.");
                     }
 
                     // Читаем обратно по ID — доказательство, что FMOD получил значение.
                     if (logActivity && Time.frameCount % 60 == 0)
                     {
                         var readResult = RuntimeManager.StudioSystem.getParameterByID(e.distanceRtpcId, out var readBack);
-                        GameLog.Info($"GlobalAmbienceManager: FMOD readback '{e.distanceRtpc}'={readBack:F3} (sent {normalized:F3}, read result={readResult}).");
+                        GameLog.Info($"WindAmbience: FMOD readback '{e.distanceRtpc}'={readBack:F3} (sent {normalized:F3}, read result={readResult}).");
 
                         // Если значение не применилось — дампим ВСЕ глобальные
                         // параметры, чтобы увидеть, что реально есть в банках.
@@ -295,7 +264,6 @@ namespace TheyWillDescend.Presentation.Audio
             if (mainCamera == null)
                 return;
 
-            TryUpdateCityCenter();
             var camPos = mainCamera.transform.position;
 
             for (var i = 0; i < _events.Length; i++)
@@ -313,7 +281,7 @@ namespace TheyWillDescend.Presentation.Audio
                     if (!deathEnabled || dist < e.deathDistance - Mathf.Max(0f, e.hysteresis))
                     {
                         if (logActivity)
-                            GameLog.Info($"GlobalAmbienceManager: try create [{i}] (dist={dist:F1}, deathDist={e.deathDistance}).");
+                            GameLog.Info($"WindAmbience: try create [{i}] (dist={dist:F1}, deathDist={e.deathDistance}).");
                         CreateEvent(e, camPos);
                     }
                 }
@@ -336,7 +304,7 @@ namespace TheyWillDescend.Presentation.Audio
                             var clamped = Mathf.Clamp(normalized, 0f, 100f);
                             e.instance.setParameterByName(rtpc, clamped);
                             if (logActivity && Time.frameCount % 60 == 0)
-                                GameLog.Info($"GlobalAmbienceManager: RTPC [{i}] {rtpc}={clamped:F1} (dist={dist:F1}).");
+                                GameLog.Info($"WindAmbience: RTPC [{i}] {rtpc}={clamped:F1} (dist={dist:F1}).");
                         }
                     }
 
@@ -351,7 +319,7 @@ namespace TheyWillDescend.Presentation.Audio
                         RuntimeManager.StudioSystem.getParameterByName(e.distanceRtpc, out globalVal);
                         e.instance.getParameterByName(e.distanceRtpc, out instVal);
 
-                        GameLog.Info($"GlobalAmbienceManager: instance [{i}] state={playState}, Distance global={globalVal:F3}, instance={instVal:F3}.");
+                        GameLog.Info($"WindAmbience: instance [{i}] state={playState}, Distance global={globalVal:F3}, instance={instVal:F3}.");
                     }
                 }
             }
@@ -367,27 +335,27 @@ namespace TheyWillDescend.Presentation.Audio
                     e.instance.release();
                 }
 
-                e.instance = RuntimeManager.CreateInstance(e.eventPath);
+                e.instance = RuntimeManager.CreateInstance(e.reference);
                 if (!e.instance.isValid())
                 {
                     if (logActivity)
-                        GameLog.Warning($"GlobalAmbienceManager: instance not valid for {e.eventPath}.");
+                        GameLog.Warning($"WindAmbience: instance not valid for {e.eventPath}.");
                     return;
                 }
 
                 var preState = FMOD.Studio.PLAYBACK_STATE.STOPPED;
                 e.instance.getPlaybackState(out preState);
                 if (logActivity)
-                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] pre-start state={preState}.");
+                    GameLog.Info($"WindAmbience: [{e.eventPath}] pre-start state={preState}.");
 
                 var startResult = e.instance.start();
                 if (logActivity)
-                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] start()={startResult}.");
+                    GameLog.Info($"WindAmbience: [{e.eventPath}] start()={startResult}.");
 
                 var postState = FMOD.Studio.PLAYBACK_STATE.STOPPED;
                 e.instance.getPlaybackState(out postState);
                 if (logActivity)
-                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] after start state={postState}.");
+                    GameLog.Info($"WindAmbience: [{e.eventPath}] after start state={postState}.");
 
                 // Маршрутизируем инстанс в шину амбиента (после start():
                 // channel group инстанса гарантированно живёт только с ним).
@@ -400,12 +368,12 @@ namespace TheyWillDescend.Presentation.Audio
                 e.isDead = false;
 
                 if (logActivity)
-                    GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] ACTIVATED.");
+                    GameLog.Info($"WindAmbience: [{e.eventPath}] ACTIVATED.");
             }
             catch (System.Exception ex)
             {
                 if (logActivity)
-                    GameLog.Warning($"GlobalAmbienceManager: failed to create {e.eventPath}: {ex.Message}");
+                    GameLog.Warning($"WindAmbience: failed to create {e.eventPath}: {ex.Message}");
             }
         }
 
@@ -434,7 +402,7 @@ namespace TheyWillDescend.Presentation.Audio
             e.isDead = true;
 
             if (logActivity)
-                GameLog.Info($"GlobalAmbienceManager: [{e.eventPath}] KILLED.");
+                GameLog.Info($"WindAmbience: [{e.eventPath}] KILLED.");
         }
 
         /// <summary>
@@ -465,7 +433,7 @@ namespace TheyWillDescend.Presentation.Audio
                 if (!_warnedNoMouse && logActivity)
                 {
                     _warnedNoMouse = true;
-                    GameLog.Warning("GlobalAmbienceManager: Mouse.current is NULL — Input System не видит мышь. Проверь Active Input Handling.");
+                    GameLog.Warning("WindAmbience: Mouse.current is NULL — Input System не видит мышь. Проверь Active Input Handling.");
                 }
                 return;
             }
@@ -479,7 +447,7 @@ namespace TheyWillDescend.Presentation.Audio
             _wheelTarget = Mathf.Clamp01(_wheelTarget + direction * WheelStep);
 
             if (logActivity)
-                GameLog.Info($"GlobalAmbienceManager: wheel scroll={scroll:F1}, target={_wheelTarget:F1}.");
+                GameLog.Info($"WindAmbience: wheel scroll={scroll:F1}, target={_wheelTarget:F1}.");
         }
 
         bool _warnedNoMouse;
@@ -497,16 +465,16 @@ namespace TheyWillDescend.Presentation.Audio
             var countResult = RuntimeManager.StudioSystem.getParameterDescriptionCount(out var count);
             if (countResult != FMOD.RESULT.OK)
             {
-                GameLog.Warning($"GlobalAmbienceManager: getParameterDescriptionCount FAILED: {countResult}.");
+                GameLog.Warning($"WindAmbience: getParameterDescriptionCount FAILED: {countResult}.");
                 return;
             }
 
-            GameLog.Info($"GlobalAmbienceManager: FMOD has {count} global parameter(s):");
+            GameLog.Info($"WindAmbience: FMOD has {count} global parameter(s):");
 
             var listResult = RuntimeManager.StudioSystem.getParameterDescriptionList(out var descriptions);
             if (listResult != FMOD.RESULT.OK || descriptions == null)
             {
-                GameLog.Warning($"GlobalAmbienceManager: getParameterDescriptionList FAILED: {listResult}.");
+                GameLog.Warning($"WindAmbience: getParameterDescriptionList FAILED: {listResult}.");
                 return;
             }
 
@@ -515,22 +483,12 @@ namespace TheyWillDescend.Presentation.Audio
                 var d = descriptions[i];
                 var name = (string)d.name; // StringWrapper → строка
                 RuntimeManager.StudioSystem.getParameterByID(d.id, out var current);
-                GameLog.Info($"GlobalAmbienceManager:   [{i}] '{name}' min={d.minimum} max={d.maximum} type={d.type} current={current:F3}");
-            }
-        }
-
-        void TryUpdateCityCenter()
-        {
-            if (SimWorld.TryGet(out var em, out var bag) && em.HasComponent<CityGrid>(bag))
-            {
-                var grid = em.GetComponentData<CityGrid>(bag);
-                if (grid.Ready != 0 && grid.Config.IsValid)
-                    _cityCenter = grid.Center;
+                GameLog.Info($"WindAmbience:   [{i}] '{name}' min={d.minimum} max={d.maximum} type={d.type} current={current:F3}");
             }
         }
 
         /// <summary>
-        /// Находит Studio-шину амбиента по пути (например "bus:/Ambience").
+        /// Находит Studio-шину амбиента по пути из каталога.
         /// Шина должна быть создана в проекте FMOD Studio и собранна в банки —
         /// в этой версии обёртки нет createBus/getMasterBus, создать шину
         /// из кода нельзя.
@@ -539,7 +497,7 @@ namespace TheyWillDescend.Presentation.Audio
         {
             if (string.IsNullOrEmpty(ambienceBusPath))
             {
-                GameLog.Warning("GlobalAmbienceManager: ambienceBusPath пуст — шина не будет использована.");
+                GameLog.Warning("WindAmbience: ambienceBusPath пуст — шина не будет использована.");
                 return;
             }
 
@@ -547,7 +505,7 @@ namespace TheyWillDescend.Presentation.Audio
             if (result != FMOD.RESULT.OK || !_ambienceBus.hasHandle())
             {
                 _ambienceBus = default;
-                GameLog.Warning($"GlobalAmbienceManager: bus '{ambienceBusPath}' NOT FOUND ({result}). Создай шину в FMOD Studio (Buses) и пересобери банки. Ambience зазвучит напрямую в мастер-шину.");
+                GameLog.Warning($"WindAmbience: bus '{ambienceBusPath}' NOT FOUND ({result}). Создай шину в FMOD Studio (Buses) и пересобери банки. Ambience зазвучит напрямую в мастер-шину.");
                 return;
             }
 
@@ -555,7 +513,7 @@ namespace TheyWillDescend.Presentation.Audio
                 _ambienceBus.setMute(true);
 
             if (logActivity)
-                GameLog.Info($"GlobalAmbienceManager: ambience bus resolved: '{ambienceBusPath}' (muted={_muted}).");
+                GameLog.Info($"WindAmbience: ambience bus resolved: '{ambienceBusPath}' (muted={_muted}).");
         }
 
         /// <summary>
@@ -585,9 +543,9 @@ namespace TheyWillDescend.Presentation.Audio
             if (logActivity)
             {
                 if (reparentResult == FMOD.RESULT.OK)
-                    GameLog.Info($"GlobalAmbienceManager: [{eventPath}] routed to bus '{ambienceBusPath}'.");
+                    GameLog.Info($"WindAmbience: [{eventPath}] routed to bus '{ambienceBusPath}'.");
                 else
-                    GameLog.Warning($"GlobalAmbienceManager: [{eventPath}] route to bus FAILED: busGroup={busGroupResult}, instGroup={instGroupResult}, addGroup={reparentResult}.");
+                    GameLog.Warning($"WindAmbience: [{eventPath}] route to bus FAILED: busGroup={busGroupResult}, instGroup={instGroupResult}, addGroup={reparentResult}.");
             }
         }
 
@@ -612,7 +570,7 @@ namespace TheyWillDescend.Presentation.Audio
                 }
 
                 if (logActivity)
-                    GameLog.Warning($"GlobalAmbienceManager: bus недоступна — применён volume-fallback на инстансы (muted={muted}).");
+                    GameLog.Warning($"WindAmbience: bus недоступна — применён volume-fallback на инстансы (muted={muted}).");
                 return;
             }
 
@@ -621,7 +579,7 @@ namespace TheyWillDescend.Presentation.Audio
             if (logActivity)
             {
                 _ambienceBus.getMute(out var confirm);
-                GameLog.Info($"GlobalAmbienceManager: bus '{ambienceBusPath}' setMute({muted}) → подтверждение getMute={confirm}.");
+                GameLog.Info($"WindAmbience: bus '{ambienceBusPath}' setMute({muted}) → подтверждение getMute={confirm}.");
             }
         }
 

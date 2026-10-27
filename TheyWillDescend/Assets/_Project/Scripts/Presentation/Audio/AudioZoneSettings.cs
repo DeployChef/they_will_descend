@@ -22,14 +22,8 @@ namespace TheyWillDescend.Presentation.Audio
         [SerializeField] float attachRadius = 12f;
 
         [Header("FMOD")]
-        [Tooltip("FMOD event для зон. Перетаскивается из FMOD Studio (как у StudioEventEmitter). Банки определяются автоматически.")]
+        [Tooltip("FMOD event для зон. Перетаскивается из FMOD Studio (как у StudioEventEmitter). Банк — в наборе GameWorld каталога.")]
         [SerializeField] EventReference eventReference;
-
-        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан. Ивент лежит в папке AMBIENCE.")]
-        [SerializeField] string eventPath = "event:/AMBIENCE/Ambience_Town";
-
-        [Tooltip("FMOD bus для аудио-сетки.")]
-        [SerializeField] string audioBusPath = "bus:/";
 
         [Header("Audio LOD")]
         [Tooltip("RTPC-параметр дистанции (audio LOD) в ивенте Ambience_Town.")]
@@ -60,9 +54,6 @@ namespace TheyWillDescend.Presentation.Audio
         [Header("Random Town SFX (живчик города)")]
         [Tooltip("Одноразовый ивент городских случайностей. Лежит в том же банке, что и основной амбиент. Перетаскивается из FMOD Studio.")]
         [SerializeField] EventReference sfxRandomEventReference;
-
-        [Tooltip("Fallback: путь ивента строкой, если EventReference не задан. Ивент лежит в папке AMBIENCE.")]
-        [SerializeField] string sfxRandomEventPath = "event:/AMBIENCE/Ambience_Town_SFX_Random";
 
         [Tooltip("Вероятность выстрела ячейки в тик планировщика (независимый бросок на каждую активную ячейку).")]
         [Range(0f, 1f)]
@@ -114,8 +105,6 @@ namespace TheyWillDescend.Presentation.Audio
         public float AttachRadius => attachRadius > 0f ? attachRadius : 1f;
 
         public EventReference EventReference => eventReference;
-        public string EventPath => eventPath;
-        public string AudioBusPath => audioBusPath;
         public string DistanceRtpcName => distanceRtpcName;
 
         /// <summary>Диапазон нормализации Distance RTPC (м).</summary>
@@ -144,7 +133,6 @@ namespace TheyWillDescend.Presentation.Audio
         public bool ShowAttachRadius => showAttachRadius;
 
         public EventReference SfxRandomEventReference => sfxRandomEventReference;
-        public string SfxRandomEventPath => sfxRandomEventPath;
         public float SfxRandomChance => sfxRandomChance;
         public float SfxRandomTickInterval => sfxRandomTickInterval > 0f ? sfxRandomTickInterval : 1f;
         public float SfxRandomZoneCooldown => sfxRandomZoneCooldown;
