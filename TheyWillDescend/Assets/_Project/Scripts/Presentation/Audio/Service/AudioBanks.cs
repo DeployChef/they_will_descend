@@ -33,6 +33,25 @@ namespace TheyWillDescend.Presentation.Audio
             return handle;
         }
 
+        public bool IsLoaded(AudioBankSet set)
+        {
+            if (set == null)
+                return false;
+
+            var any = false;
+            for (var i = 0; i < set.Banks.Count; i++)
+            {
+                var bank = set.Banks[i];
+                if (string.IsNullOrEmpty(bank))
+                    continue;
+                any = true;
+                if (!RuntimeManager.HasBankLoaded(bank))
+                    return false;
+            }
+
+            return any;
+        }
+
         /// <summary>Loads bank data now and starts sample loading without waiting for it.</summary>
         public IDisposable Load(AudioBankSet set)
         {

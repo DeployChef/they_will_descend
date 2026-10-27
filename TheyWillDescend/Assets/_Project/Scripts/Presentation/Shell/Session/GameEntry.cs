@@ -17,6 +17,17 @@ namespace TheyWillDescend.Presentation.Shell
     /// </summary>
     public sealed class GameEntry : IInitializable, IDisposable
     {
+#if UNITY_EDITOR
+        static readonly string[] DebugLoadLabels =
+        {
+            "Gathering tribute...",
+            "Carving the plaza...",
+            "Calling the workers...",
+            "Waking the pyramid...",
+            "Binding the era..."
+        };
+#endif
+
         readonly ShellService _shell;
         readonly TransitionService _transition;
         readonly LoadingTasks _loading;
@@ -25,6 +36,9 @@ namespace TheyWillDescend.Presentation.Shell
         readonly PauseMenuScreen _pause;
         readonly AudioService _audio;
         readonly EditorRunLaunch _editorLaunch;
+#if UNITY_EDITOR
+        readonly float _debugLoadStageSeconds;
+#endif
         readonly CancellationTokenSource _life = new();
         IDisposable _teardown;
         IDisposable _worldBanks;
@@ -38,7 +52,8 @@ namespace TheyWillDescend.Presentation.Shell
             InputService input,
             PauseMenuScreen pause,
             AudioService audio,
-            EditorRunLaunch editorLaunch)
+            EditorRunLaunch editorLaunch,
+            float debugLoadStageSeconds)
         {
             _shell = shell;
             _transition = transition;
@@ -48,14 +63,23 @@ namespace TheyWillDescend.Presentation.Shell
             _pause = pause;
             _audio = audio;
             _editorLaunch = editorLaunch;
+#if UNITY_EDITOR
+            _debugLoadStageSeconds = debugLoadStageSeconds;
+#endif
         }
 
         public void Initialize()
         {
             _teardown = _transition.RegisterTeardown(EndRun);
 
-            _loading.Add(AcquireWorldBanks(_life.Token), weight: 1f, label: "Loading sounds...");
-            _loading.Add(BeginRun(PickLaunch(), _life.Token), weight: 3f, label: "Preparing the city...");
+#if UNITY_EDITOR
+            if (_debugLoadStageSeconds > 0.001f)
+            {
+                _loading.Add(DebugLoadStage(0), weight: 1f, label: DebugLoadLabels[0]);
+                return;
+            }
+#endif
+            QueueRunWork();
         }
 
         public void Dispose()
@@ -67,6 +91,30 @@ namespace TheyWillDescend.Presentation.Shell
             _life.Cancel();
             _life.Dispose();
         }
+
+        void QueueRunWork()
+        {
+            _loading.Add(AcquireWorldBanks(_life.Token), weight: 1f, label: "Loading sounds...");
+            _loading.Add(BeginRun(PickLaunch(), _life.Token), weight: 3f, label: "Preparing the city...");
+        }
+
+#if UNITY_EDITOR
+        async UniTask DebugLoadStage(int index)
+        {
+            await UniTask.Delay(
+                TimeSpan.FromSeconds(_debugLoadStageSeconds),
+                DelayType.UnscaledDeltaTime,
+                cancellationToken: _life.Token);
+            var next = index + 1;
+            if (next < DebugLoadLabels.Length)
+            {
+                _loading.Add(DebugLoadStage(next), weight: 1f, label: DebugLoadLabels[next]);
+                return;
+            }
+
+            QueueRunWork();
+        }
+#endif
 
         async UniTask AcquireWorldBanks(CancellationToken ct)
         {

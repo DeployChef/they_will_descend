@@ -143,6 +143,9 @@ namespace TheyWillDescend.Presentation.Audio
         {
             var position = cell.GetRandomSoundPosition(settings.SfxRandomJitterRadius);
 
+            if (AudioService.Current == null || !AudioService.Current.WorldBanksLoaded)
+                return false;
+
             EventInstance instance;
             try
             {

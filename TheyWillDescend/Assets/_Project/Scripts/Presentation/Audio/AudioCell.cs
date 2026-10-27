@@ -139,6 +139,8 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         public void CreateInstance()
         {
+            if (AudioService.Current == null || !AudioService.Current.WorldBanksLoaded)
+                return;
             if (Instance.isValid())
                 return;
 

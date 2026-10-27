@@ -32,6 +32,8 @@ namespace TheyWillDescend.Presentation.Audio
         public MusicDirector Music { get; }
         public UiAudio Ui { get; }
 
+        public bool WorldBanksLoaded => Banks.IsLoaded(Catalog.GameWorld);
+
         /// <summary>Game pause: the ESC snapshot, and music holds with it.</summary>
         public void SetPaused(bool paused)
         {

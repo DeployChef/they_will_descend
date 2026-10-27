@@ -172,6 +172,9 @@ namespace TheyWillDescend.Presentation.Audio
                 return false;
             }
 
+            if (AudioService.Current == null || !AudioService.Current.WorldBanksLoaded)
+                return false;
+
             try
             {
                 _instance = RuntimeManager.CreateInstance(buildEvent);

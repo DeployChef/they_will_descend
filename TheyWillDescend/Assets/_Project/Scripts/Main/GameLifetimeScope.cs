@@ -18,12 +18,16 @@ namespace TheyWillDescend.Main
         [Header("Editor only")]
         [SerializeField, Tooltip("Run started when Game is opened directly in the editor. The menu's choice wins; builds always start Normal.")]
         EditorRunLaunch editorLaunch = EditorRunLaunch.Debug;
+        [SerializeField, Min(0f), Tooltip("Hold the loading curtain this many seconds per fake stage (five stages, then real work). 0 = off.")]
+        float debugLoadStageSeconds;
 
         protected override void Configure(IContainerBuilder builder)
         {
             builder.RegisterComponentInHierarchy<GameSession>();
             builder.RegisterComponentInHierarchy<PauseMenuScreen>();
-            builder.RegisterEntryPoint<GameEntry>().WithParameter(editorLaunch);
+            builder.RegisterEntryPoint<GameEntry>()
+                .WithParameter(editorLaunch)
+                .WithParameter(debugLoadStageSeconds);
             builder.RegisterEntryPoint<SimPauseAudioBridge>();
 
             builder.RegisterComponentInHierarchy<RTSCameraController>();

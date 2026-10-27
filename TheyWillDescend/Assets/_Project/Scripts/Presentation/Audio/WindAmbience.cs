@@ -327,6 +327,9 @@ namespace TheyWillDescend.Presentation.Audio
 
         void CreateEvent(ManagedEvent e, Vector3 camPos)
         {
+            if (_audio == null || !_audio.WorldBanksLoaded)
+                return;
+
             try
             {
                 if (e.instance.isValid())
