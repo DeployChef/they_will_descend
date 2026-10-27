@@ -7,7 +7,7 @@ alwaysApply: true
 
 - **AppScope** (prefab via `VContainerSettings`, DontDestroyOnLoad): `ShellService`, `TransitionService`, `LoadingTasks`, `SaveService`, `InputService`, `AudioService`, EventSystem, `LoadingScreen` (overlay canvas). No camera, no world.
 - **MainMenu:** own Main Camera (+ `StudioListener`, no Brain), splash/menu canvases, `PressAnyKeyScreen` / `MainMenuScreen`.
-- **Run scenes** (`Game`, `Blockout/GameBlockout`): the shared `#GameRun` prefab (scope, session, cameras with Brain + `StudioListener`, city, agents, `WorldAudio`, HUD) plus the scene's own `@Dressing` (lights, volume, environment, pyramid model). World audio deps come from `GameLifetimeScope`, not `Find*ObjectByType`.
+- **Run scenes** (`Game`, `Blockout/GameBlockout`): the shared `#GameRun` prefab (scope, session, cameras with Brain + `StudioListener`, city, agents, `WorldAudio`, HUD) plus the scene's own `@Dressing` (lights, volume, environment, pyramid model). `$Dev` / `ScenarioEditor` lives only on GameBlockout. World audio deps come from `GameLifetimeScope`, not `Find*ObjectByType`.
 - `#GameRun` holds no art. Building and worker models come from the `VisualSet` on `SceneDressing`; catalog building prefabs are shells without a model.
 - `Game` never references `Blockout/`. The blockout only overrides on its own instance; editing `GameRun.prefab` edits both scenes.
 - Exactly one `StudioListener` at a time. Scenes are never loaded on top of each other with two cameras.

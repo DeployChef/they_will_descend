@@ -79,7 +79,7 @@ Unity грузит всё, на что ссылается загруженная
    @Lighting              Directional Light, Global Volume, DayCycle
    @Environment           своё в каждой сцене
    @Pyramid               модель пирамиды
-$Dev                      только в Game
+$Dev                      только в GameBlockout
    ScenarioEditor
 ```
 
@@ -117,6 +117,8 @@ public sealed class VisualSet : ScriptableObject
 Только в редакторе: открыть `GameBlockout.unity` → Play. В сборку сцена не входит.
 
 `ShellService.RestartRun` перезапускает **текущую** сцену рана, а не всегда `Game`. В редакторе `TransitionService` грузит сцену, которой нет в списке сборки, по пути (`EditorSceneManager.LoadSceneAsyncInPlayMode`). Для Game поведение не меняется.
+
+`$Dev` / `ScenarioEditor` живёт только в блокауте: это мастерская стартового сценария (`DefaultScenario` и т.п.). `Game` в сборке редактор домов не тащит. Ран по-прежнему читает `ScenarioDefinition` с `GameSession`, не из сцены.
 
 ---
 

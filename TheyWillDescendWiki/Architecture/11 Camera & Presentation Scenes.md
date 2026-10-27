@@ -47,7 +47,7 @@
    @Lighting    свет, volume, смена дня
    @Environment земля, вода, горы
    @Pyramid     модель пирамиды
-$Dev            ScenarioEditor (только Game)
+$Dev            ScenarioEditor (только GameBlockout)
 ```
 
 Префиксы `#` `@` `$` — палитра `Colourful Hierarchy` (красит строку в Hierarchy, в игре ничего не стоит).
@@ -57,6 +57,7 @@ $Dev            ScenarioEditor (только Game)
 | Камеры, HUD, `WorldAudio`, сессия, scope | `#GameRun`, одинаково во всех сценах рана |
 | Свет, volume, окружение, модель пирамиды | `@Dressing`, своё в каждой сцене |
 | Модели зданий и людей | `VisualSet` с `@Dressing` → `BuildingViewBoard`, `BuildPlacementController`, `AgentViewBoard` |
+| `$Dev` / `ScenarioEditor` | только `GameBlockout` — мастерская стартового сценария |
 | `EventSystem` | **нет** |
 
 Правило: **Game не ссылается на блокаут.** Блокаут берёт `#GameRun` и меняет только своё. Правка префаба `#GameRun` — правка обеих сцен.
