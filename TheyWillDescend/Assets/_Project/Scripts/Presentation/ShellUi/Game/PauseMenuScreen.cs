@@ -77,7 +77,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        /// <summary>GameRun turns the game map on. Esc is the injected <see cref="GameInput"/>.</summary>
+        /// <summary><see cref="GameEntry"/> turns the game map on. Esc is the injected <see cref="GameInput"/>.</summary>
         public void Use()
         {
             if (_input == null)

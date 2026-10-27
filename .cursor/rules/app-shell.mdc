@@ -14,11 +14,11 @@ alwaysApply: true
 - `ShellService` is navigation only: `StartRun` / `RestartRun(RunLaunch)`, `GoToMenu`, `TryTakeLaunch`, `SplashShown`. It never calls `GameSession`.
 - `TransitionService` owns every scene change: loading screen → teardown registry → Single load → `LoadingTasks.WaitAll` → hide. A failed task falls back to MainMenu. Scenes are never loaded additively on top of each other.
 - `LoadingTasks` is the only way a scene says "wait for me": `Add(task, weight, label)`; failure = exception. `LoadingScreen` is a child of the `AppScope` prefab — there is no Loading scene.
-- `GameEntry` (entry point of `GameLifetimeScope`) takes the launch from `ShellService` (or Normal) and adds `GameSession.Begin` to `LoadingTasks`. Temporary until 07 Ф1: `GameSession.Shutdown` is registered as an async teardown.
+- `GameEntry` (entry point of `GameLifetimeScope`) picks the launch: menu (`TryTakeLaunch`) → editor setting `EditorRunLaunch` on `GameLifetimeScope` (editor only) → Normal. It adds `GameSession.Begin` to `LoadingTasks`, then turns the clock, the `Game` input map and the pause menu on; its teardown turns them off before the run resets. Temporary until 07 Ф1: `GameSession.Shutdown` is registered as an async teardown.
+- Any scene is an entry point: Play on `MainMenu.unity` or `Game.unity` works on its own. Build list: MainMenu (0), Game. There is no Root/boot scene.
+- `MainMenuFlow` turns the `Menu` input map on and listens to `GameInput.Proceeded`.
 - `AppScope` registers `ShellService`, `TransitionService`, `LoadingTasks`, `SaveService`, `GameInput`, `LoadingScreen`. Each scene has its own `LifetimeScope` deriving from `LifetimeScope` directly (no parent reference needed). The slot file is `SaveService`; UI and `GameSession` do not touch it as a static.
-- Temporary until 08 Ф4: Root holds only `Startup`, which takes `ShellService` from `AppScope` and opens the menu.
 - `GameSession` lives in the Game scene: catalogs, `Begin` / `Apply` / `Shutdown`. It does not load scenes.
-- `GameRun` (Game scope) turns the sim clock and game input on when `Begin` reaches Ready, and off when the run leaves. A game-scene machine is not built yet.
 - Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`
 - MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `ShellService.StartRun`. Press any key plays once per process; `ShellService.SplashShown` remembers that across scene loads.
 - VContainer stays in Presentation/Main. Never inside `ISystem`

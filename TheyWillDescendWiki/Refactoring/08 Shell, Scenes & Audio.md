@@ -422,6 +422,8 @@ Game: SimPauseAudioBridge (LateUpdate) — читает SimControl → AudioServ
 - Билд стартует с меню.
 - `rg "Startup|skipMenuToGame|GameScenes.Root"` — пусто.
 
+> **Статус: сделано.** `GameEntry` — обычный класс (entry point `GameLifetimeScope`), а не компонент: настройка `EditorRunLaunch` (Normal / Debug / Slot) лежит полем на `GameLifetimeScope` и передаётся через `WithParameter`. Сцена владеет своей конфигурацией в композиционном корне, а `GameEntry` остаётся без MonoBehaviour. В билде ветка редактора вырезана `#if UNITY_EDITOR` → всегда `Normal`. `GameRun` влит в `GameEntry`: после `Begin` — часы InGame, карта `Game`, `PauseMenuScreen.Use`; teardown сначала выключает их, затем `GameSession.Shutdown` (при провале включает обратно). `GameSession` больше не трогает часы и ввод. `MainMenuFlow` включает карту `Menu` и слушает `GameInput.Proceeded` вместо прямого опроса клавиатуры; при уничтожении сцены выключает ввод. Root, `Startup`, `GameRun`, `GameScenes.Root` удалены; Build list: MainMenu (0), Game. Предупреждение FMOD о слушателе при старте ушло вместе с Root. **Не сделано, переезжает в Ф5:** музыкальное состояние на входе сцены (`Music.Set(...)`) — у музыки пока нет состояний, их вводит `AudioService`. `GameInput` не переименован в `InputService` — тоже Ф5.
+
 ### Ф5. AudioService по-взрослому
 
 1. `AudioCatalog`, `AudioBankSet` (`Core`, `GameWorld`), `AudioService` с банками, директором, снапшотами, громкостями, UI.

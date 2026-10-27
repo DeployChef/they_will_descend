@@ -6,7 +6,6 @@ alwaysApply: true
 # Camera & scenes
 
 - **AppScope** (prefab via `VContainerSettings`, DontDestroyOnLoad): `ShellService`, `TransitionService`, `LoadingTasks`, `SaveService`, `GameInput`, `GameAudio`, EventSystem, `LoadingScreen` (overlay canvas). No camera, no world.
-- **Root (temporary until 08 Ф4):** only `Startup`.
 - **MainMenu:** own Main Camera (+ `StudioListener`, no Brain), splash/menu canvases, `PressAnyKeyScreen` / `MainMenuScreen`.
 - **Game:** own Main Camera (+ `CinemachineBrain`, `StudioListener`), VCams, level, lights, `WorldAudio`, `GameSession`. World audio deps come from `GameLifetimeScope`, not `Find*ObjectByType`.
 - Exactly one `StudioListener` at a time. Scenes are never loaded on top of each other with two cameras.

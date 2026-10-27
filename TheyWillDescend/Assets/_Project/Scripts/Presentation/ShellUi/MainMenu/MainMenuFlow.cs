@@ -1,13 +1,12 @@
 using TheyWillDescend.Shell;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using VContainer;
 
 namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
-    /// Lives in the MainMenu scene. Owns the splash, then the button panel.
-    /// Reveal is instant until menu animations exist.
+    /// Lives in the MainMenu scene. Owns the splash, then the button panel, and the menu input map
+    /// while the scene lives. Reveal is instant until menu animations exist.
     /// </summary>
     public sealed class MainMenuFlow : MonoBehaviour
     {
@@ -16,23 +15,34 @@ namespace TheyWillDescend.Presentation.ShellUi
 
         bool _menuVisible;
         ShellService _shell;
+        GameInput _input;
 
         [Inject]
-        public void Construct(ShellService shell)
+        public void Construct(ShellService shell, GameInput input)
         {
             _shell = shell;
+            _input = input;
+            _input.Proceeded += OnProceed;
+            _input.EnableMenu();
+
             if (shell.SplashShown)
                 ShowMenu();
             else
                 ShowSplash();
         }
 
-        void Update()
+        void OnDestroy()
         {
-            if (_menuVisible || !WasProceedPressed())
+            if (_input == null)
                 return;
+            _input.Proceeded -= OnProceed;
+            _input.Disable();
+        }
 
-            ShowMenu();
+        void OnProceed()
+        {
+            if (!_menuVisible)
+                ShowMenu();
         }
 
         void ShowSplash()
@@ -52,23 +62,6 @@ namespace TheyWillDescend.Presentation.ShellUi
                 splash.Hide();
             if (menu != null)
                 menu.Show();
-        }
-
-        static bool WasProceedPressed()
-        {
-            var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.anyKey.wasPressedThisFrame)
-                return true;
-
-            var mouse = Mouse.current;
-            if (mouse != null
-                && (mouse.leftButton.wasPressedThisFrame
-                    || mouse.rightButton.wasPressedThisFrame
-                    || mouse.middleButton.wasPressedThisFrame))
-                return true;
-
-            var pad = Gamepad.current;
-            return pad != null && pad.buttonSouth.wasPressedThisFrame;
         }
     }
 }

@@ -18,13 +18,11 @@ namespace TheyWillDescend.Shell
     /// <summary>
     /// One run inside the Game scene. Catalogs and rules live on this object.
     /// <see cref="GameEntry"/> calls <see cref="Begin"/> as loading work and registers <see cref="Shutdown"/> as teardown.
-    /// This object does not load or unload scenes. <see cref="GameRun"/> turns the clock on.
+    /// This object does not load or unload scenes, and does not turn the clock on — <see cref="GameEntry"/> does.
     /// </summary>
     public sealed class GameSession : MonoBehaviour
     {
-        GameRun _run;
         SaveService _save;
-        bool _restorePlay;
         [Header("Ready")]
         [SerializeField] float simulationReadyTimeoutSeconds = 30f;
 
@@ -40,18 +38,9 @@ namespace TheyWillDescend.Shell
         [SerializeField] TimelineCatalogAsset timelineCatalog;
 
         [Inject]
-        public void Construct(GameRun run, SaveService save)
+        public void Construct(SaveService save)
         {
-            _run = run;
             _save = save;
-        }
-
-        public void StopPlay()
-        {
-            if (_run == null || !_run.IsLive)
-                return;
-            _restorePlay = true;
-            _run.Disarm();
         }
 
         public async UniTask<bool> Begin(RunLaunch launch, CancellationToken cancellationToken = default)
@@ -95,7 +84,6 @@ namespace TheyWillDescend.Shell
 
                 if (!await Apply(snapshot, cancellationToken))
                     return false;
-                ArmPlay();
                 PauseMenuScreen.Current?.RebuildViews();
                 return true;
             }
@@ -116,7 +104,6 @@ namespace TheyWillDescend.Shell
                 return false;
             }
 
-            ArmPlay();
             return true;
         }
 
@@ -135,37 +122,17 @@ namespace TheyWillDescend.Shell
 
         public async UniTask<bool> Shutdown(CancellationToken cancellationToken = default)
         {
-            StopPlay();
             if (!SimWorld.TryGet(out _, out _))
-            {
-                _restorePlay = false;
                 return true;
-            }
 
             if (!RunPublisher.BeginReset()
                 || !await WaitForPhaseAsync(SimSessionPhase.Unprepared, cancellationToken))
             {
                 GameLog.Error("GameSession.Shutdown stopped — ECS reset was not confirmed.");
-                if (_restorePlay)
-                    ArmPlay();
-                _restorePlay = false;
                 return false;
             }
 
-            _restorePlay = false;
             return true;
-        }
-
-        void ArmPlay()
-        {
-            if (_run == null)
-            {
-                GameLog.Error("GameSession: GameRun was not injected.");
-                return;
-            }
-
-            _run.Arm();
-            _restorePlay = false;
         }
 
         UniTask<bool> WaitForPhaseAsync(
