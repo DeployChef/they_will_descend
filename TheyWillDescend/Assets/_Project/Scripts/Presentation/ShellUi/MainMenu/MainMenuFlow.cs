@@ -1,13 +1,13 @@
-using TheyWillDescend.Shell;
+using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Shell;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using VContainer;
 
 namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
-    /// Lives in the MainMenu scene. Owns the splash, then the button panel.
-    /// Reveal is instant until menu animations exist.
+    /// Lives in the MainMenu scene. Owns the splash, then the button panel, and the menu input map
+    /// while the scene lives; asks for the menu music on entry. Reveal is instant until menu animations exist.
     /// </summary>
     public sealed class MainMenuFlow : MonoBehaviour
     {
@@ -15,22 +15,36 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] MainMenuScreen menu;
 
         bool _menuVisible;
+        ShellService _shell;
+        InputService _input;
 
         [Inject]
-        public void Construct(AppContext context)
+        public void Construct(ShellService shell, InputService input, AudioService audio)
         {
-            if (context.IsFirstStart)
+            _shell = shell;
+            _input = input;
+            _input.Proceeded += OnProceed;
+            _input.EnableMenu();
+            audio.Music.Set(MusicTheme.Menu);
+
+            if (shell.SplashShown)
                 ShowMenu();
             else
                 ShowSplash();
         }
 
-        void Update()
+        void OnDestroy()
         {
-            if (_menuVisible || !WasProceedPressed())
+            if (_input == null)
                 return;
+            _input.Proceeded -= OnProceed;
+            _input.Disable();
+        }
 
-            ShowMenu();
+        void OnProceed()
+        {
+            if (!_menuVisible)
+                ShowMenu();
         }
 
         void ShowSplash()
@@ -45,27 +59,11 @@ namespace TheyWillDescend.Presentation.ShellUi
         void ShowMenu()
         {
             _menuVisible = true;
+            _shell.MarkSplashShown();
             if (splash != null)
                 splash.Hide();
             if (menu != null)
                 menu.Show();
-        }
-
-        static bool WasProceedPressed()
-        {
-            var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.anyKey.wasPressedThisFrame)
-                return true;
-
-            var mouse = Mouse.current;
-            if (mouse != null
-                && (mouse.leftButton.wasPressedThisFrame
-                    || mouse.rightButton.wasPressedThisFrame
-                    || mouse.middleButton.wasPressedThisFrame))
-                return true;
-
-            var pad = Gamepad.current;
-            return pad != null && pad.buttonSouth.wasPressedThisFrame;
         }
     }
 }

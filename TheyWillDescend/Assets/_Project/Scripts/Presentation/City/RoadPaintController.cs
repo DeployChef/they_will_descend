@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;

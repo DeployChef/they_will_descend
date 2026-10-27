@@ -14,6 +14,12 @@
 | Laws | — | модификаторы |
 | WinLose | — | условия конца рана |
 
+## Идентичность
+
+Геймплейные ссылки — `Entity`, не поиск по `int`. `AgentAssignment.Workplace` / `ConstructionSite`, `OccupiedCell.Building`, `RoadSegment.Site`, `DemolishBuildingRequest.Building`. `Entity.Null` = нет цели. Висячая ссылка после Destroy — норма: `ComponentLookup.HasComponent` сбрасывает её на тике.
+
+`Building.Id` и `AgentId` — ключи JSON и стабильного порядка (claim сортирует площадки по `Building.Id`). Генератор домов — синглтон `BuildingIdSequence`, не поле сетки. Искать сущность по `Building.Id` в тике запрещено: только `RunSessionSnapshot` (Entity → id) и `SnapshotRestore` (id → Entity).
+
 ## Правило тика
 
 Симуляция **работает**, только если `SimControl.IsRunning`. Меню и брифинг — `SessionInGame = 0` → Mode Off.

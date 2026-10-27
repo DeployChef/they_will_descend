@@ -8,15 +8,20 @@
 
 | Служба | Ответственность |
 | --- | --- |
-| **ShellService** | какие сцены загружены: меню, загрузка, Game. **Нет** верхней FSM |
-| **GameSession** | `Begin` / `Apply` / `Shutdown` одной попытки; ждёт bake через `SimWorld.TryGet` |
-| **GameRun** | на Ready включает сим-часы и игровой ввод; на выходе гасит |
-| **SceneLoader** | узкая загрузка сцен (UniTask) |
-| **GameInput** | клон `.inputactions`; Menu/Proceed, Game/Pause (Esc) |
-| **GameAudio** | FMOD на Bootstrap; пауза музыки читает `SimControl.PlayerPaused` |
-| **GameLog** | каналы логов (`Presentation/Infrastructure/Logging`) |
+| Служба | Срок жизни | Ответственность |
+| --- | --- | --- |
+| **ShellService** | процесс | навигация: `StartRun` / `RestartRun` / `GoToMenu`, параметры запуска. **Нет** верхней FSM |
+| **TransitionService** | процесс | единственный загрузчик сцен: экран → teardown → Single-загрузка → `LoadingTasks` → экран прочь |
+| **LoadingTasks** | процесс | сцена кладёт сюда работу, которую надо дождаться под экраном загрузки |
+| **InputService** | процесс | клон `.inputactions`; Menu/Proceed, Game/Pause (Esc) |
+| **AudioService** | процесс | банки по наборам, музыка, снапшоты, UI-звук. ECS не читает |
+| **SaveService** | процесс | слот сейва |
+| **GameEntry** | сцена Game | выбирает запуск, кладёт подготовку рана в `LoadingTasks`, на Ready включает часы, ввод, меню паузы |
+| **GameSession** | сцена Game | `Begin` / `Apply` / `Shutdown` одной попытки; ждёт bake через `SimWorld.TryGet` |
+| **SimPauseAudioBridge** | сцена Game | читает `SimControl.PlayerPaused`, передаёт паузу в `AudioService` |
+| **GameLog** | статика | каналы логов (`Presentation/Infrastructure/Logging`) |
 
-Composition Root — сборка `TheyWillDescend.Main`. `Startup` **не** имеет `Update`. Код Shell живёт в Presentation.
+Composition Root — сборка `TheyWillDescend.Main`: `AppScope` (процесс) и scope'ы сцен. Код Shell живёт в Presentation. Подробно: [[09 App Shell]].
 
 Меню-экраны: `PressAnyKeyScreen.Current` / `MainMenuScreen.Current`. Нет `ShellUiBinder` / `IShellUi` / порта.
 
@@ -46,9 +51,10 @@ Composition Root — сборка `TheyWillDescend.Main`. `Startup` **не** и�
 ## Порядок при старте рана
 
 ```
-AppFlow → MainMenu «Начать»
-  → LoadingGame: session.StartAsync (Loading + Game, unload MainMenu)
-  → Playing: SimClockCommand.InGame(true)
+MainMenu «Начать» → ShellService.StartRun(launch)
+  → TransitionService: экран загрузки, Single-загрузка Game
+  → GameEntry: банки GameWorld + GameSession.Begin(launch) в LoadingTasks
+  → Ready: GameEntry.Arm → SimClockCommand.InGame(true), карта Game, меню паузы
   → ECS Time / City / Agents / Economy тикают, пока Mode == Running
 ```
 

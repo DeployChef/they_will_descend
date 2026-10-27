@@ -1,13 +1,12 @@
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Session;
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 
 namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
-    /// Recounts AssignedCount / WorkingCount from agents. Assignment is the write model.
+    /// Recounts WorkingCount after commute. AssignedCount belongs to the dispatcher.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -27,33 +26,25 @@ namespace TheyWillDescend.Simulation.Agents
                          .WithAll<Building>()
                          .WithNone<Construction>())
             {
-                workplace.ValueRW.AssignedCount = 0;
                 workplace.ValueRW.WorkingCount = 0;
             }
 
-            var houses = new NativeHashMap<int, Entity>(16, state.WorldUpdateAllocator);
-            foreach (var (building, entity) in
-                     SystemAPI.Query<RefRO<Building>>()
-                         .WithAll<Workplace>()
-                         .WithNone<Construction>()
-                         .WithEntityAccess())
-            {
-                houses.TryAdd(building.ValueRO.Id, entity);
-            }
+            var workplaces = SystemAPI.GetComponentLookup<Workplace>(false);
+            var constructions = SystemAPI.GetComponentLookup<Construction>(true);
 
             foreach (var assignment in SystemAPI.Query<RefRO<AgentAssignment>>())
             {
                 var job = assignment.ValueRO;
-                if (job.WorkplaceBuildingId == 0)
+                var house = job.Workplace;
+                if (house == Entity.Null)
                     continue;
-                if (!houses.TryGetValue(job.WorkplaceBuildingId, out var house))
+                if (!workplaces.HasComponent(house) || constructions.HasComponent(house))
                     continue;
-                var workplace = SystemAPI.GetComponentRW<Workplace>(house);
-                workplace.ValueRW.AssignedCount++;
-                if (job.Arrived != 0 && !job.HasConstructionTask)
-                    workplace.ValueRW.WorkingCount++;
+                if (job.Arrived == 0 || job.HasConstructionTask)
+                    continue;
+                var workplace = workplaces.GetRefRW(house);
+                workplace.ValueRW.WorkingCount++;
             }
-
         }
     }
 }

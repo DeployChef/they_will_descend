@@ -49,46 +49,6 @@ namespace TheyWillDescend.Simulation.Stories
         public StoryEffectAuthoring[] effects;
     }
 
-    [CreateAssetMenu(fileName = "StoryDialog", menuName = "They Will Descend/Story Dialog")]
-    public sealed class StoryDialogAsset : ScriptableObject
-    {
-        public string dialogId;
-        public string title;
-        [TextArea(3, 8)] public string body;
-        public StoryDelivery delivery;
-        public StoryIconKind icon = StoryIconKind.Exclamation;
-        public StoryAnchorRule anchor = StoryAnchorRule.Headquarters;
-        public string anchorTypeId;
-        [Min(0f)] public float openHours;
-        public StoryChoiceAuthoring[] choices = Array.Empty<StoryChoiceAuthoring>();
-    }
-
-    [CreateAssetMenu(fileName = "StoryQuest", menuName = "They Will Descend/Story Quest")]
-    public sealed class StoryQuestAsset : ScriptableObject
-    {
-        public string questId;
-        public string title;
-        [TextArea(2, 5)] public string description;
-        public StoryGoalKind goal;
-        public string goalId;
-        [Min(1)] public int required = 1;
-        [Min(0f)] public float deadlineHours;
-        public StoryEffectAuthoring[] onSuccess = Array.Empty<StoryEffectAuthoring>();
-        public StoryEffectAuthoring[] onFail = Array.Empty<StoryEffectAuthoring>();
-    }
-
-    [CreateAssetMenu(fileName = "StoryTrigger", menuName = "They Will Descend/Story Trigger")]
-    public sealed class StoryTriggerAsset : ScriptableObject
-    {
-        public string triggerId;
-        public bool armedAtStart = true;
-        public bool repeat;
-        public StoryFactKind fact = StoryFactKind.RunStarted;
-        public string factId;
-        public StoryDialogAsset dialog;
-        public StoryQuestAsset quest;
-    }
-
     /// <summary>
     /// Scenario pack. Runtime copy is session buffers. Strings stay here for the HUD.
     /// </summary>

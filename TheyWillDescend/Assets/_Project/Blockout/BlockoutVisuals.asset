@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22d388411c3a59046bc157d4bcd1ac4c, type: 3}
+  m_Name: BlockoutVisuals
+  m_EditorClassIdentifier: TheyWillDescend.Content::TheyWillDescend.Content.VisualSet
+  buildings:
+  - Building: {fileID: 4773640749899098690, guid: 99e3351ebb858a44580ef93db3fdb6db, type: 3}
+    Body: {fileID: 4380095079412086391, guid: f3386d4a786f7d945adbf9fb342a47f6, type: 3}
+  - Building: {fileID: 4447309251788943178, guid: 7cf942c225593ae49824e674ed9d7878, type: 3}
+    Body: {fileID: 3194183498927371031, guid: 53645e7d76a64de46a0eb1e25205e2ac, type: 3}
+  - Building: {fileID: 4773640749899098690, guid: b7d3e91c4a6f5820e8c1d4a9b6f3e275, type: 3}
+    Body: {fileID: 2401621984099617402, guid: 214b8c3fb3d98a04aa3e3827993acc88, type: 3}
+  workers:
+  - {fileID: 6046071817293915734, guid: 36b8524a01ec84644a0ac6cda401a5f3, type: 3}

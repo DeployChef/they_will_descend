@@ -8,19 +8,19 @@ namespace TheyWillDescend.Simulation.City
 {
     public static class BuildingDismantle
     {
-        public static void Begin(EntityManager em, int buildingId)
+        public static void Begin(EntityManager em, Entity site)
         {
-            if (buildingId <= 0 || !TryGetBuilding(em, buildingId, out var entity))
+            if (site == Entity.Null || !em.Exists(site) || !em.HasComponent<Building>(site))
                 return;
 
-            if (em.HasComponent<Workplace>(entity))
+            var buildingId = em.GetComponentData<Building>(site).Id;
+
+            if (em.HasComponent<Workplace>(site))
             {
-                var wp = em.GetComponentData<Workplace>(entity);
-                wp.DesiredWorkers = 0;
-                wp.Paused = 1;
+                var wp = em.GetComponentData<Workplace>(site);
                 wp.AssignedCount = 0;
                 wp.WorkingCount = 0;
-                em.SetComponentData(entity, wp);
+                em.SetComponentData(site, wp);
             }
 
             using var agentsQuery = em.CreateEntityQuery(ComponentType.ReadWrite<AgentAssignment>());
@@ -28,10 +28,10 @@ namespace TheyWillDescend.Simulation.City
             var assignments = agentsQuery.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
             for (var i = 0; i < assignments.Length; i++)
             {
-                if (assignments[i].WorkplaceBuildingId != buildingId)
+                if (assignments[i].Workplace != site)
                     continue;
                 var job = assignments[i];
-                job.WorkplaceBuildingId = 0;
+                job.Workplace = Entity.Null;
                 if (!job.HasConstructionTask)
                     job.Arrived = 0;
                 em.SetComponentData(agentEntities[i], job);
@@ -39,40 +39,41 @@ namespace TheyWillDescend.Simulation.City
 
             assignments.Dispose();
 
-            if (em.HasComponent<Construction>(entity))
+            if (em.HasComponent<Construction>(site))
             {
-                var site = em.GetComponentData<Construction>(entity);
-                if (site.IsDismantling)
+                var construction = em.GetComponentData<Construction>(site);
+                if (construction.IsDismantling)
                     return;
-                site.Dismantling = 1;
-                em.SetComponentData(entity, site);
-                if (site.IsComplete)
-                    Complete(em, entity);
+                construction.Dismantling = 1;
+                em.SetComponentData(site, construction);
+                if (construction.IsComplete)
+                    Complete(em, site);
                 return;
             }
 
-            var duration = em.HasComponent<BuildingType>(entity)
-                ? em.GetComponentData<BuildingType>(entity).ConstructionDuration
+            var duration = em.HasComponent<BuildingType>(site)
+                ? em.GetComponentData<BuildingType>(site).ConstructionDuration
                 : 0f;
             if (duration < 0f)
                 duration = 0f;
-            if (duration < 0.001f && em.HasComponent<RoadSpan>(entity))
+            if (duration < 0.001f && em.HasComponent<RoadSpan>(site))
                 duration = RoadMath.DefaultSectionSeconds;
 
-            var construction = new Construction
+            var next = new Construction
             {
                 Elapsed = duration,
                 Duration = duration,
                 Dismantling = 1
             };
-            if (construction.IsComplete)
+            if (next.IsComplete)
             {
-                Complete(em, entity);
+                Complete(em, site);
                 return;
             }
-            em.AddComponentData(entity, construction);
+
+            em.AddComponentData(site, next);
 #if UNITY_EDITOR
-            em.SetName(entity, em.HasComponent<RoadSpan>(entity)
+            em.SetName(site, em.HasComponent<RoadSpan>(site)
                 ? $"RoadSite_{buildingId}"
                 : $"BuildingSite_{buildingId}");
 #endif
@@ -84,65 +85,24 @@ namespace TheyWillDescend.Simulation.City
                 return;
 
             var building = em.GetComponentData<Building>(site);
-            ReleaseCrew(em, building.Id);
             if (SimSessionAccess.TryGet(em, out var session))
             {
                 Refund(em, session, building.TypeId);
-                FreeCells(em, session, building);
-                RemoveRoad(em, session, building.Id);
+                FreeCells(em, session, site);
+                RemoveRoad(em, session, site);
             }
 
             em.DestroyEntity(site);
         }
 
-        public static void ReleaseCrew(EntityManager em, int buildingId)
+        static void RemoveRoad(EntityManager em, Entity session, Entity site)
         {
-            if (buildingId <= 0)
-                return;
-
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<AgentAssignment>());
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
-            for (var i = 0; i < assignments.Length; i++)
-            {
-                var job = assignments[i];
-                if (job.ConstructionBuildingId != buildingId)
-                    continue;
-                job.ConstructionBuildingId = 0;
-                job.Arrived = 0;
-                em.SetComponentData(entities[i], job);
-            }
-
-            assignments.Dispose();
-        }
-
-        static bool TryGetBuilding(EntityManager em, int buildingId, out Entity entity)
-        {
-            entity = Entity.Null;
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
-            using var entities = query.ToEntityArray(Allocator.Temp);
-            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
-            for (var i = 0; i < buildings.Length; i++)
-            {
-                if (buildings[i].Id != buildingId)
-                    continue;
-                entity = entities[i];
-                buildings.Dispose();
-                return true;
-            }
-
-            buildings.Dispose();
-            return false;
-        }
-
-        static void RemoveRoad(EntityManager em, Entity session, int siteId)
-        {
-            if (siteId <= 0 || !em.HasBuffer<RoadSegment>(session))
+            if (site == Entity.Null || !em.HasBuffer<RoadSegment>(session))
                 return;
             var roads = em.GetBuffer<RoadSegment>(session);
             for (var i = roads.Length - 1; i >= 0; i--)
             {
-                if (roads[i].SiteId != siteId)
+                if (roads[i].Site != site)
                     continue;
                 roads.RemoveAt(i);
                 break;
@@ -165,39 +125,18 @@ namespace TheyWillDescend.Simulation.City
                 info);
         }
 
-        static void FreeCells(EntityManager em, Entity session, in Building building)
+        static void FreeCells(EntityManager em, Entity session, Entity site)
         {
-            if (!em.HasComponent<CityGrid>(session) || !em.HasBuffer<OccupiedCell>(session))
+            if (site == Entity.Null || !em.HasBuffer<OccupiedCell>(session))
                 return;
-
-            var grid = em.GetComponentData<CityGrid>(session);
-            var footprint = new BuildingFootprint
-            {
-                WidthClusters = building.WidthClusters,
-                DepthRadialRings = building.DepthRadialRings
-            };
-            var clusters = new NativeList<OccupiedCell>(64, Allocator.Temp);
-            if (!RadialFootprintMath.TryExpandClusters(
-                    grid.Config, building.AnchorCluster, building.AnchorRadial, footprint, clusters))
-            {
-                clusters.Dispose();
-                return;
-            }
 
             var occupied = em.GetBuffer<OccupiedCell>(session);
-            for (var i = 0; i < clusters.Length; i++)
+            for (var j = occupied.Length - 1; j >= 0; j--)
             {
-                var cell = clusters[i];
-                for (var j = occupied.Length - 1; j >= 0; j--)
-                {
-                    if (occupied[j].Cluster != cell.Cluster || occupied[j].Radial != cell.Radial)
-                        continue;
-                    occupied.RemoveAt(j);
-                    break;
-                }
+                if (occupied[j].Building != site)
+                    continue;
+                occupied.RemoveAt(j);
             }
-
-            clusters.Dispose();
         }
     }
 }

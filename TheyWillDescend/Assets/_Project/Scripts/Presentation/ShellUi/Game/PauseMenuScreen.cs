@@ -1,14 +1,11 @@
-using System;
 using System.Collections;
-using System.Threading;
 using Cysharp.Threading.Tasks;
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Infrastructure.Save;
 using TheyWillDescend.Presentation.Agents;
 using TheyWillDescend.Presentation.Cameras;
 using TheyWillDescend.Presentation.City;
 using TheyWillDescend.Presentation.GameHud;
-using TheyWillDescend.Shell;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Presentation.Shell;
 using TheyWillDescend.Simulation.Session;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,18 +40,15 @@ namespace TheyWillDescend.Presentation.ShellUi
         /// <summary>Меню открыто логически. На время исчезновения элементов сбрасывается сразу.</summary>
         public bool IsOpen { get; private set; }
 
-        GameInput _input;
+        InputService _input;
         ShellService _shell;
-        GameSession _session;
         SaveService _save;
-        CancellationTokenSource _loadCts;
         bool _busy;
 
         [Inject]
-        public void Construct(ShellService shell, GameSession session, GameInput input, SaveService save)
+        public void Construct(ShellService shell, InputService input, SaveService save)
         {
             _shell = shell;
-            _session = session;
             _input = input;
             _save = save;
         }
@@ -82,7 +76,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 Current = null;
         }
 
-        /// <summary>GameRun turns the game map on. Esc is the injected <see cref="GameInput"/>.</summary>
+        /// <summary><see cref="GameEntry"/> turns the game map on. Esc is the injected <see cref="InputService"/>.</summary>
         public void Use()
         {
             if (_input == null)
@@ -95,7 +89,6 @@ namespace TheyWillDescend.Presentation.ShellUi
         {
             if (_input != null)
                 _input.PausePressed -= OnPausePressed;
-            CancelLoad();
             _busy = false;
             HideImmediate();
         }
@@ -273,14 +266,8 @@ namespace TheyWillDescend.Presentation.ShellUi
                 return;
             }
 
-            if (!_save.TryRead(out var snapshot))
+            if (!_save.HasSlot)
                 return;
-            if (_session == null)
-            {
-                GameLog.Error("PauseMenuScreen: GameSession was not injected.");
-                return;
-            }
-
             if (_shell == null)
             {
                 GameLog.Error("PauseMenuScreen: ShellService was not injected.");
@@ -290,10 +277,7 @@ namespace TheyWillDescend.Presentation.ShellUi
             _busy = true;
             CloseBuildIfBusy();
             Hide();
-            _input?.Disable();
-            CancelLoad();
-            _loadCts = new CancellationTokenSource();
-            LoadSlot(snapshot, _loadCts.Token).Forget();
+            Navigate(_shell.RestartRun(RunLaunch.Slot)).Forget();
         }
 
         void LeaveToMainMenu()
@@ -307,55 +291,14 @@ namespace TheyWillDescend.Presentation.ShellUi
             }
 
             _busy = true;
-            ReturnToMainMenu().Forget();
+            Navigate(_shell.GoToMenu()).Forget();
         }
 
-        async UniTaskVoid ReturnToMainMenu()
+        /// <summary>The scene goes away on success; on failure the menu becomes usable again.</summary>
+        async UniTaskVoid Navigate(UniTask<bool> transition)
         {
-            var left = await _shell.ReturnToMenu();
-            if (!left)
+            if (!await transition && this != null)
                 _busy = false;
-        }
-
-        async UniTaskVoid LoadSlot(RunSnapshot snapshot, CancellationToken cancellationToken)
-        {
-            var ready = false;
-            try
-            {
-                await _shell.ShowLoading(cancellationToken);
-                ready = await _session.Apply(snapshot, cancellationToken);
-                await _shell.HideLoading(cancellationToken);
-                if (!ready || cancellationToken.IsCancellationRequested)
-                    return;
-                if (!SimCommands.TryPost(SimClockCommand.InGame(true)))
-                {
-                    ready = false;
-                    return;
-                }
-
-                RebuildViews();
-            }
-            catch (OperationCanceledException)
-            {
-                ready = false;
-            }
-            finally
-            {
-                _busy = false;
-                if (ready)
-                    _input?.EnableGame();
-                else if (!cancellationToken.IsCancellationRequested)
-                    GameLog.Error("Playing load failed — ECS did not reach Ready.");
-            }
-        }
-
-        void CancelLoad()
-        {
-            if (_loadCts == null)
-                return;
-            _loadCts.Cancel();
-            _loadCts.Dispose();
-            _loadCts = null;
         }
     }
 }

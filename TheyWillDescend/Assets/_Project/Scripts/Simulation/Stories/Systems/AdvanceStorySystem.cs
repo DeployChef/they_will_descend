@@ -633,6 +633,7 @@ namespace TheyWillDescend.Simulation.Stories
             var serial = board.NextSerial++;
             em.SetComponentData(session, board);
             var entity = em.CreateEntity();
+            RunWorld.Own(em, entity);
             var ready = def.Anchor == StoryAnchorKind.FactSubject && subject != Entity.Null;
             em.AddComponentData(entity, new StoryLiveDialog
             {
@@ -652,6 +653,7 @@ namespace TheyWillDescend.Simulation.Stories
                 return;
             var deadlineHours = defs[index].DeadlineHours;
             var entity = em.CreateEntity();
+            RunWorld.Own(em, entity);
             em.AddComponentData(entity, new StoryLiveQuest
             {
                 DefIndex = index,

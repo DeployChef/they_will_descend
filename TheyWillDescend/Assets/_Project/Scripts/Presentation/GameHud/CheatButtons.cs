@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Session;
 using TheyWillDescend.Simulation.Time;
@@ -17,7 +17,7 @@ namespace TheyWillDescend.Presentation.GameHud
     /// Это отладка, не игровая логика: день/ночь пишут GameTime напрямую,
     /// ресурсы двигают ResourceAmount тем же clamp, что и ledger.
     /// Ряды +/- клонируются из authored-шаблона по ResourceInfo — новый ресурс
-    /// в каталоге сам появляется в панели. Не кладём в GameInput.
+    /// в каталоге сам появляется в панели. Не кладём в InputService.
     /// </summary>
     public sealed class CheatButtons : MonoBehaviour
     {
@@ -226,27 +226,12 @@ namespace TheyWillDescend.Presentation.GameHud
         static bool TryGetGameTime(out GameTime time)
         {
             time = default;
-            if (!SimWorld.TryGet(out var em, out _))
-                return false;
-
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-                return false;
-
-            time = query.GetSingleton<GameTime>();
-            return true;
+            return SimWorld.TryGet(out var em, out var bag) && SimWorld.TryGetGameTime(em, bag, out time);
         }
 
         static void WriteGameTime(GameTime time)
         {
-            if (!SimWorld.TryGet(out var em, out _))
-                return;
-
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-                return;
-
-            em.SetComponentData(query.GetSingletonEntity(), time);
+            SimWorld.TrySetGameTime(time);
         }
     }
 }

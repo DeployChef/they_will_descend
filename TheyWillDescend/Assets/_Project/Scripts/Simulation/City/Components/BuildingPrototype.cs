@@ -36,36 +36,6 @@ namespace TheyWillDescend.Simulation.City
         };
     }
 
-    /// <summary>
-    /// Immutable prefab defaults baked onto the session. Run setup copies these
-    /// rows into <see cref="BuildingPrototype"/> before applying overlays.
-    /// </summary>
-    public struct BaseBuildingPrototype : IBufferElementData
-    {
-        public FixedString64Bytes TypeId;
-        public int WidthClusters;
-        public int DepthRadialRings;
-        public float ConstructionDuration;
-        public int WorkplaceSlots;
-        public int ConstructionCrewSlots;
-        public byte ResearchWorkplace;
-        public byte RequiresUnlock;
-        public byte StrokePaint;
-
-        public BuildingPrototype ToResolved() => new()
-        {
-            TypeId = TypeId,
-            WidthClusters = WidthClusters,
-            DepthRadialRings = DepthRadialRings,
-            ConstructionDuration = ConstructionDuration,
-            WorkplaceSlots = WorkplaceSlots,
-            ConstructionCrewSlots = ConstructionCrew.ResolveSlots(ConstructionCrewSlots),
-            ResearchWorkplace = ResearchWorkplace,
-            RequiresUnlock = RequiresUnlock,
-            StrokePaint = StrokePaint
-        };
-    }
-
     public static class BuildingCatalog
     {
         public static bool TryResolve(
@@ -75,6 +45,25 @@ namespace TheyWillDescend.Simulation.City
         {
             prototype = default;
             if (typeId.IsEmpty || catalog.Length == 0)
+                return false;
+            for (var i = 0; i < catalog.Length; i++)
+            {
+                if (catalog[i].TypeId != typeId)
+                    continue;
+                prototype = catalog[i];
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TryResolve(
+            BuildingPrototype[] catalog,
+            in FixedString64Bytes typeId,
+            out BuildingPrototype prototype)
+        {
+            prototype = default;
+            if (catalog == null || typeId.IsEmpty || catalog.Length == 0)
                 return false;
 
             for (var i = 0; i < catalog.Length; i++)

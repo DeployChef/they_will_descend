@@ -9,20 +9,20 @@ namespace TheyWillDescend.Simulation.Agents
     /// </summary>
     public struct AgentAssignment : IComponentData
     {
-        public int WorkplaceBuildingId;
-        public int ConstructionBuildingId;
+        public Entity Workplace;
+        public Entity ConstructionSite;
         public byte Arrived;
 
-        public readonly bool HasConstructionTask => ConstructionBuildingId != 0;
+        public readonly bool HasConstructionTask => ConstructionSite != Entity.Null;
 
         /// <summary>
         /// Already on the site finishes the house even if the work shift starts.
         /// Still walking + has a workplace + on shift → released back to the job.
         /// </summary>
         public readonly bool CanKeepConstruction(bool onShift) =>
-            !onShift || WorkplaceBuildingId == 0 || Arrived != 0;
+            !onShift || Workplace == Entity.Null || Arrived != 0;
 
         public readonly bool IsFreeForConstruction(bool onShift) =>
-            ConstructionBuildingId == 0 && (!onShift || WorkplaceBuildingId == 0);
+            ConstructionSite == Entity.Null && (!onShift || Workplace == Entity.Null);
     }
 }

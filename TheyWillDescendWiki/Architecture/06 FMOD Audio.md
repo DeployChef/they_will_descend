@@ -92,8 +92,7 @@ Master
 ### Загрузка банков
 
 ```csharp
-// Автоматически: в FMODSettings → "Load All Banks" = true (по умолчанию)
-// Вручную:
+// В проекте не вызывается напрямую — только через наборы AudioBanks (см. «Аудио в проекте»).
 Bank gameplayBank = RuntimeManager.LoadBank("Gameplay");
 RuntimeManager.LoadBank("Cinematic", loadSamples: true);
 RuntimeManager.UnloadBank("Cinematic");
@@ -236,13 +235,50 @@ public class Fire : MonoBehaviour {
 
 ---
 
-## Хост в Unity
+## Аудио в проекте
 
-`GameAudio` — сосед на Bootstrap (инспектор-ссылка с `Startup`). Живёт с Root-камерой и `AudioListener`. Симуляция его не вызывает.
+Три слоя по срокам жизни, как у оболочки ([[09 App Shell]]):
 
-- Старт/стоп сессионной музыки — `PlayingState` Enter/Exit
-- Пауза инстанса — `LateUpdate` читает `SimControl.PlayerPaused` (не Speed, не `timeScale`)
-- Событие сейчас: `event:/main_soundtrack`, банк `Main_theme`
+| Слой | Что | Где |
+| --- | --- | --- |
+| **Процесс** | банки, музыка, снапшоты, UI-звук | `AudioService` — entry point `AppScope` (`Presentation/Audio/Service`) |
+| **Сцена Game** | звук мира: ячейки зон, ветер, случайные звуки города, стройка | `WorldAudio` в `Game.unity`; зависимости от `GameLifetimeScope` |
+| **Мост ECS → звук** | пауза | `SimPauseAudioBridge` в сцене Game (`Presentation/SimBridge`) |
+
+`AudioService` **не читает ECS**. Всё, что звук должен знать о ране, приносит мост в сцене Game. Симуляция звук не вызывает.
+
+### AudioService
+
+```text
+AudioService (ITickable, ILateTickable, IDisposable)
+  Catalog   AudioCatalog — все ссылки FMOD
+  Banks     AudioBanks: Acquire(set, ct) → IDisposable; счётчик ссылок FMOD
+  Music     MusicDirector: Set(MusicTheme) / Set(MusicCue); один инстанс на процесс; следует за текущим слушателем
+  Ui        UiAudio: Play(UiState); hover/click по raycast указателя
+  SetPaused(bool)   снапшот ESC + пауза музыки
+```
+
+Статический вход для UI-кода без внедрения — `UiSound.Play(state)`. Один экземпляр, два входа: DI для сервисов, статика для мелких компонентов UI.
+
+### Каталог вместо строк
+
+`Content/Audio/AudioCatalog.asset` — единственное место с ссылками FMOD: наборы банков, cue музыки (меню / игра), снапшот паузы, UI-событие и его параметр, ветер, шина амбиента, стройка. В коде `event:/`, `snapshot:/`, `bank:/` не встречаются (проверка: `rg "event:/|snapshot:/|bank:/" Presentation`). Настройки звука зон — `Content/Audio/AudioZoneSettings.asset`.
+
+### Наборы банков
+
+| Набор | Банки | Кто держит |
+| --- | --- | --- |
+| `CoreBanks` | Master.strings, Master, UI, Main_theme | `AudioService`, весь процесс |
+| `GameWorldBanks` | Ambience_Town, Ambience_Wind_Generator, BUILDING | `GameEntry`: задача `LoadingTasks` на входе в Game, отпускает в teardown |
+
+- `Acquire` грузит банки с сэмплами и ждёт, пока сэмплы догрузятся — под экраном загрузки.
+- Выгрузка — кадром позже, чтобы инстансы сцены успели остановиться.
+- При рестарте Game новый набор берётся раньше, чем отпускается старый: счётчик ссылок не падает до нуля, банки не перезагружаются.
+- Новый звук мира → его банк в `GameWorldBanks`. Новая сцена со своим звуком → свой набор, берёт её точка входа.
+
+### Музыка
+
+Одно событие `MUSIC_STATES` на процесс. Cue = событие + параметр + метка. Смена cue с тем же событием меняет только метку; с другим — ALLOWFADEOUT старого и старт нового. **Сейчас** cue меню и игры без метки: у глобального параметра `MUSIC_STATES` есть только IDLE / WIN / DEFEAT. Метки меню и игры — за звукорежиссёром; код их уже понимает.
 
 Не ускорять pitch музыки через `timeScale`.
 
@@ -292,13 +328,19 @@ void Update() {
 }
 ```
 
-### 4. Unload неиспользуемых банков
+### 4. Банки — только через наборы
 
 ```csharp
-// Кинематик больше не нужен — выгружаем:
-RuntimeManager.UnloadBank("Cinematic");
-// Память освобождается.
+// Точка входа сцены:
+_loading.Add(AcquireWorldBanks(ct), 1f, "Loading sounds…");
+async UniTask AcquireWorldBanks(CancellationToken ct) =>
+    _worldBanks = await _audio.Banks.Acquire(_audio.Catalog.GameWorld, ct);
+
+// Teardown сцены:
+_worldBanks.Dispose();   // выгрузка кадром позже
 ```
+
+`RuntimeManager.LoadBank` / `UnloadBank` напрямую в коде фич не зовём: у банка один владелец — набор.
 
 ### 5. 3D-позиция — через RuntimeUtils
 
@@ -309,12 +351,9 @@ instance.set3DAttributes(RuntimeUtils.To3DAttributes(transform));
 // ❌ Не вручную собирать ATTRIBUTES_3D.
 ```
 
-### 6. Проверять HasBankLoaded перед использованием
+### 6. Звук сцены не живёт дольше её банков
 
-```csharp
-if (!RuntimeManager.HasBankLoaded("Gameplay"))
-    RuntimeManager.LoadBank("Gameplay");
-```
+Инстансы звука мира создаются после `Acquire` и останавливаются в `OnDestroy` своего компонента. Сервис процесса не держит инстансы событий из банков сцены.
 
 ---
 
@@ -326,8 +365,8 @@ if (!RuntimeManager.HasBankLoaded("Gameplay"))
 |---|---|
 | **Import Type** | Streaming Assets |
 | **Bank Sub Folder** | `Desktop` |
-| **Load All Banks** | ✅ (если банки небольшие) |
-| **Load All Sample Data** | ❌ (грузить по необходимости) |
+| **Load Banks** | **None** — Core грузит `AudioService` из каталога, GameWorld — `GameEntry`. Список банков живёт в одном месте |
+| **Load All Sample Data** | ❌ — сэмплы грузит `Acquire` набора |
 | **Live Update** | ✅ в редакторе, ❌ в билде |
 | **Studio Project Path** | `../../Audio_FMOD/they will desend/they will desend.fspro` |
 

@@ -2,72 +2,83 @@
 
 ← [[02 Scenes & Lifetime]] | [[Index]]
 
-Канон презентации: **одна реальная камера на Root**, остальное — виртуальные камеры (Cinemachine) и UI на своих сценах.
+Канон презентации: **у каждой контентной сцены своя Main Camera и свой слушатель FMOD**. Сцены сменяют друг друга Single-загрузкой, поэтому одновременно живёт ровно одна камера и один `StudioListener`.
 
-## Зачем
+## Зачем так
 
-Две Main Camera (Boot + Game) → конфликт AudioListener, clear flags, stack.  
-Одна Main Camera + Brain + VCam’ы → меню, подлёт, геймплей без смены «настоящей» камеры.
+Раньше была одна камера на вечной Root-сцене. Из-за этого Game не стартовала без Root: рендерить её VCam и слышать мир было нечем. Камера — часть сцены, как свет: сцена, которая сама себе точка входа, должна уметь себя показать.
+
+Две камеры одновременно (конфликт `StudioListener`, clear flags, stack) исключены не правилом «камера одна на процесс», а правилом «сцены не грузятся друг на друга».
 
 ## Что где лежит
 
-### Root — всегда
+### AppScope — процесс
 
 | Объект | Да / нет | Почему |
 | --- | --- | --- |
-| Main Camera | **да** | единственный вывод; `CinemachineBrain` + `AudioListener` |
-| AudioListener | **да** (на Main Camera) | один на игру |
-| EventSystem | **да** | UI input глобально |
-| Startup / GameAudio / GameInput | **да** | хосты оболочки (соседи). `ShellService` — синглтон корневого scope, не объект сцены. `GameSession` — в сцене Game |
-| Canvas меню | **нет** | на сцене MainMenu |
-| Directional Light | **нет** | свет мира/меню — у тех сцен |
-| Уровень / NPC | **нет** | только Game |
+| `EventSystem` | **да** | один на процесс; в сценах запрещён |
+| `LoadingScreen` (overlay-canvas) | **да** | переживает смену сцен |
+| Shell-сервисы, `InputService`, `AudioService` | **да** | обычные классы в контейнере, не объекты |
+| Камера / слушатель / свет | **нет** | у сцен |
 
-### MainMenu — additive, пока в оболочке меню
+### MainMenu
 
 | Объект | Да / нет |
 | --- | --- |
-| Canvas (Press Any Key, Main Menu, кнопка Start) | **да** |
-| `PressAnyKeyScreen` / `MainMenuScreen` | **да** (на панелях; `.Current`) |
-| VCam меню (опционально) | да, когда будет 3D-фон |
-| Свет только для меню-декора | по необходимости |
-| Main Camera | **нет** |
+| Main Camera + `StudioListener` | **да**. Без `CinemachineBrain`, пока у меню нет VCam |
+| Canvas (Press Any Key, Main Menu) | **да** |
+| `PressAnyKeyScreen` / `MainMenuScreen` / `MainMenuFlow` | **да** |
+| VCam меню | позже, при 3D-фоне (тогда добавить Brain) |
+| `EventSystem` | **нет** |
 
-### Loading — переход
+### Game и сцены рана
 
-Экран загрузки, пока `ShellService` грузит Game.
+Сцена рана = общий префаб `#GameRun` + свои декорации `@Dressing`. Таких сцен две: `Game.unity` и `Blockout/GameBlockout.unity`. Подробно: [[../Refactoring/09 Dressing & Blockout|09 Декорации и блокаут]].
 
-### Game — сессия
+```text
+#GameRun        Prefabs/Game/GameRun.prefab — функционал, ни одной ссылки на арт
+   #Scope       GameLifetimeScope, GameSession
+   #Cameras     Main Camera (Brain + StudioListener), VCam_Gameplay, PauseCamera, RTSCameraTarget
+   #City        RadialGridGuide, BuildPlacement, Headquarters (PyramidView, клик, площадь)
+   #Agents      AgentSpawner, Humans
+   #WorldAudio  AudioZoneManager, ZoneAmbienceSfxScheduler, WindAmbience
+   #Hud         GameHudCanvas
+@Dressing       SceneDressing → VisualSet этой сцены
+   @Lighting    свет, volume, смена дня
+   @Environment земля, вода, горы
+   @Pyramid     модель пирамиды
+$Dev            ScenarioEditor (только GameBlockout)
+```
 
-| Объект | Да / нет |
+Префиксы `#` `@` `$` — палитра `Colourful Hierarchy` (красит строку в Hierarchy, в игре ничего не стоит).
+
+| Объект | Где |
 | --- | --- |
-| Environment / Humans / HUD | **да** |
-| Directional Light (+ volume) | **да** |
-| VCam геймплея (и катсценные VCam) | **да** |
-| SubScene Simulation | **да** |
-| Main Camera | **нет** — смотрит Root-камера через Brain на активный VCam |
+| Камеры, HUD, `WorldAudio`, сессия, scope | `#GameRun`, одинаково во всех сценах рана |
+| Свет, volume, окружение, модель пирамиды | `@Dressing`, своё в каждой сцене |
+| Модели зданий и людей | `VisualSet` с `@Dressing` → `BuildingViewBoard`, `BuildPlacementController`, `AgentViewBoard` |
+| `$Dev` / `ScenarioEditor` | только `GameBlockout` — мастерская стартового сценария |
+| `EventSystem` | **нет** |
 
-Если на Game ещё висит камера — **временно**, пометить и убрать.
+Правило: **Game не ссылается на блокаут.** Блокаут берёт `#GameRun` и меняет только своё. Правка префаба `#GameRun` — правка обеих сцен.
 
 ## Cinemachine
 
-Пакет: `com.unity.cinemachine` **3.x** (в проекте есть).
+Пакет: `com.unity.cinemachine` **3.x**.
 
 | Где | Компонент |
 | --- | --- |
-| Root Main Camera | `CinemachineBrain` + `AudioListener` |
-| Game | `VCam_Gameplay` (`CinemachineCamera`) + `RTSCameraTarget`. **Без** Main Camera |
+| Game Main Camera | `CinemachineBrain` + `StudioListener` |
+| Game | `VCam_Gameplay` (`CinemachineCamera`) + `RTSCameraTarget` |
 | MainMenu | позже VCam меню при 3D-фоне |
-
-До VCam на меню Overlay UI достаточно Root-камеры (чистый/нейтральный clear).
 
 ### RTS-риг на Game
 
-Brain на Root смотрит на виртуальную камеру. Сама VCam не рендерит — она задаёт позу и линзу.
+Brain смотрит на виртуальную камеру. Сама VCam не рендерит — она задаёт позу и линзу.
 
 | Объект | Роль |
 | --- | --- |
-| `RTSCameraTarget` | точка орбиты; пан WASD двигает её по земле. Старт: плаза `(0, 2, 0)` |
+| `RTSCameraTarget` | точка орбиты; пан WASD двигает её по земле |
 | `VCam_Gameplay` | `CinemachineCamera` + `CinemachineOrbitalFollow` + `CinemachineHardLookAt` + `CinemachineInputAxisController` + `RTSCameraController` |
 
 Управление:
@@ -75,38 +86,29 @@ Brain на Root смотрит на виртуальную камеру. Сам�
 | Ввод | Что делает |
 | --- | --- |
 | WASD | пан цели по XZ относительно взгляда |
-| Shift | спринт пан |
-| колёсико | зум: радиус 14–42, угол по параболе 20°→75° |
+| Shift | спринт пана |
+| колёсико | зум по шагам: радиус 5–15, 4 шага; угол по кривой `angleCurve` |
 | ПКМ / СКМ + мышь | орбита по yaw вокруг цели |
 
-Лимит пана: круг `maxMapRadius = 75` вокруг `(0,0,0)` (внешнее кольцо города ≈ 59).  
-Pitch от зума, не от мыши — иначе контроллер и ось Y орбиты дерутся каждый кадр.
+Лимит пана: круг `maxMapRadius = 55` вокруг `(0,0,0)`. Pitch от зума, не от мыши — иначе контроллер и ось Y орбиты дерутся каждый кадр. Самый дальний шаг зума глушит локальные звуковые ячейки (`RTSCameraController.IsFullyZoomedOut`).
 
-`RTSCameraController` пока в `Assets/Scripts` (Assembly-CSharp, наследие Sample). Канон позже — Presentation.
+`RTSCameraController` — `Presentation/Camera`, namespace `TheyWillDescend.Presentation.Cameras` (во множественном числе, чтобы не спорить с `UnityEngine.Camera`). Внедряется через `GameLifetimeScope`.
 
-## Play Mode vs Editor (обязательно)
+## Play Mode vs Editor
 
-| Режим | Что в Hierarchy | Что происходит |
+| Режим | Что открыть | Что происходит |
 | --- | --- | --- |
-| **Play (канон)** | Достаточно **одной** Root | `Startup` грузит MainMenu → по Start Loading+Game, выгружает MainMenu |
-| **Edit уровня** | Root + Game (additive) | Видишь мир через Brain+VCam |
-| **Edit UI** | Root + MainMenu | Правишь Canvas |
+| **Play из меню** | `MainMenu.unity` | сплэш → меню → по Start экран загрузки и Game |
+| **Play из игры** | `Game.unity` | ран по `EditorRunLaunch` на `GameLifetimeScope` (Normal / Debug / Slot) |
+| **Play блокаута** | `Blockout/GameBlockout.unity` | тот же ран на блоках; рестарт остаётся в блокауте |
+| **Edit уровня / UI** | нужную сцену | открывать по одной: две контентные сцены в Play стартуют обе |
 
-`LoadSceneAsync` в Play **требует**, чтобы сцена была в **Build Profiles / Build Settings**.  
-Иначе: «couldn't be loaded… not added to build profile» — AppFlow не стартует. Это не баг архитектуры.
-
-Build list (порядок):
-1. `Root` (index 0 — стартовая)
-2. `MainMenu`
-3. `Loading`
-4. `Game`
-
-SampleScene из билда убрать.
+`LoadSceneAsync` по имени **требует**, чтобы сцена была в Build Profiles / Build Settings. Build list: `MainMenu` (0), `Game`. Блокаута в сборке нет: в редакторе `TransitionService` грузит его по пути.
 
 ## Итог одной фразой
 
-**Root = вечный глаз и нервная система (камера, input, startup, audio). MainMenu = экраны. Loading = переход. Game = мир и его свет/VCam.**
+**AppScope = процесс (ввод, звук, переходы, EventSystem). Каждая сцена = свой глаз и уши. MainMenu = экраны. Сцена рана = общий `#GameRun` + свои декорации и облик.**
 
 ---
 
-Связанные: [[02 Scenes & Lifetime]] · [[10 Vertical Slice — Shell + ECS Walkers]] · [[../GDD/08 UI & Visual|GDD UI]]
+Связанные: [[02 Scenes & Lifetime]] · [[09 App Shell]] · [[../GDD/08 UI & Visual|GDD UI]]

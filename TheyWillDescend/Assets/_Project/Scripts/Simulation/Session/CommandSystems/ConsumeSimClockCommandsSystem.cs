@@ -4,7 +4,6 @@ using Unity.Entities;
 namespace TheyWillDescend.Simulation.Session
 {
     [UpdateInGroup(typeof(CommandSystemGroup), OrderFirst = true)]
-    [UpdateBefore(typeof(TheyWillDescend.Simulation.Agents.ConsumeDespawnAgentsSystem))]
     public partial struct ConsumeSimClockCommandsSystem : ISystem
     {
         public void OnCreate(ref SystemState state)

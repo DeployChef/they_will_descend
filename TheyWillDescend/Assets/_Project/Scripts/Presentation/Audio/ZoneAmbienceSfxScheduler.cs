@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using FMOD.Studio;
 using FMODUnity;
-using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Presentation.Infrastructure;
 using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.Audio
 {
@@ -48,8 +49,7 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         const float MinLifetimeMargin = 30f;
 
-        [Tooltip("Менеджер ячеек. Если пусто — находится автоматически.")]
-        [SerializeField] AudioZoneManager zoneManager;
+        AudioZoneManager _zoneManager;
 
         /// <summary>Живые выстрелы: инстанс + потолок жизни (страховка от утечки).</summary>
         struct LiveShot
@@ -71,17 +71,20 @@ namespace TheyWillDescend.Presentation.Audio
         /// <summary>Число звуков, играющих прямо сейчас.</summary>
         public int LiveCount => _live.Count;
 
+        [Inject]
+        public void Construct(AudioZoneManager manager)
+        {
+            _zoneManager = manager;
+            _zoneManager.BanksUnloading += SilenceAll;
+        }
+
         void Update()
         {
-            // Менеджер может появиться позже (additive-сцены) — ищем лениво.
-            if (zoneManager == null)
-                zoneManager = FindFirstObjectByType<AudioZoneManager>();
-
-            var settings = zoneManager != null ? zoneManager.Settings : null;
+            var settings = _zoneManager != null ? _zoneManager.Settings : null;
             if (settings == null)
                 return;
 
-            var cells = zoneManager.Cells;
+            var cells = _zoneManager.Cells;
             if (cells == null || cells.Count == 0)
                 return;
 
@@ -140,13 +143,13 @@ namespace TheyWillDescend.Presentation.Audio
         {
             var position = cell.GetRandomSoundPosition(settings.SfxRandomJitterRadius);
 
+            if (AudioService.Current == null || !AudioService.Current.WorldBanksLoaded)
+                return false;
+
             EventInstance instance;
             try
             {
-                // Приоритет у EventReference (drag-and-drop), строковый путь — fallback.
-                instance = !settings.SfxRandomEventReference.IsNull
-                    ? RuntimeManager.CreateInstance(settings.SfxRandomEventReference)
-                    : RuntimeManager.CreateInstance(settings.SfxRandomEventPath);
+                instance = RuntimeManager.CreateInstance(settings.SfxRandomEventReference);
             }
             catch (System.Exception e)
             {
@@ -156,7 +159,7 @@ namespace TheyWillDescend.Presentation.Audio
 
             if (!instance.isValid())
             {
-                LogOnce($"event '{settings.SfxRandomEventPath}' not found. Build banks in FMOD Studio and copy them to StreamingAssets.");
+                LogOnce($"event {settings.SfxRandomEventReference} not found. Assign it in AudioZoneSettings; its bank belongs to the GameWorld set.");
                 return false;
             }
 
@@ -279,7 +282,7 @@ namespace TheyWillDescend.Presentation.Audio
 
             // Кулдаун живёт внутри ячейки. Обнуляем у живых, чтобы после
             // перезагрузки банков жребий не встал на мёртвый срок.
-            var cells = zoneManager != null ? zoneManager.Cells : null;
+            var cells = _zoneManager != null ? _zoneManager.Cells : null;
             if (cells == null)
                 return;
 
@@ -290,7 +293,12 @@ namespace TheyWillDescend.Presentation.Audio
             }
         }
 
-        void OnDestroy() => SilenceAll();
+        void OnDestroy()
+        {
+            if (_zoneManager != null)
+                _zoneManager.BanksUnloading -= SilenceAll;
+            SilenceAll();
+        }
 
         private void LogOnce(string message)
         {

@@ -139,17 +139,14 @@ namespace TheyWillDescend.Presentation.Audio
         /// </summary>
         public void CreateInstance()
         {
+            if (AudioService.Current == null || !AudioService.Current.WorldBanksLoaded)
+                return;
             if (Instance.isValid())
                 return;
 
             try
             {
-                // Приоритет у EventReference (drag-and-drop из FMOD Studio),
-                // строковый путь — fallback.
-                if (!_settings.EventReference.IsNull)
-                    Instance = FMODUnity.RuntimeManager.CreateInstance(_settings.EventReference);
-                else
-                    Instance = FMODUnity.RuntimeManager.CreateInstance(_settings.EventPath);
+                Instance = FMODUnity.RuntimeManager.CreateInstance(_settings.EventReference);
 
                 if (Instance.isValid())
                 {
@@ -166,7 +163,7 @@ namespace TheyWillDescend.Presentation.Audio
                 else if (!_logCreated)
                 {
                     _logCreated = true;
-                    Debug.LogWarning($"[AudioCell] event '{_settings.EventPath}' not found. FMOD event must be created in FMOD Studio first.");
+                    Debug.LogWarning($"[AudioCell] event {_settings.EventReference} not found. Assign it in AudioZoneSettings; its bank belongs to the GameWorld set.");
                 }
             }
             catch (System.Exception e)

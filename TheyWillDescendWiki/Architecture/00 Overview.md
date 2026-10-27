@@ -8,7 +8,7 @@
 | --- | --- |
 | Engine | Unity 6, URP |
 | Simulation | **DOTS / Entities** — единственный write model рана |
-| Shell / App | `ShellService` грузит сцены; `GameRun` в сцене Game включает часы. Верхней FSM нет |
+| Shell / App | `AppScope` — процесс; `TransitionService` грузит сцены; `GameEntry` в сцене Game стартует ран и включает часы. Любая сцена — точка входа. Верхней FSM нет |
 | Часы рана | `SimControl` + `SimClockCommand` в ECS. Нет `SimGate`, нет `timeScale` |
 | DI | **VContainer** в Main/Presentation (не внутри `ISystem`) |
 | Presentation | UI, камера, FMOD, Shell; читает ECS / шлёт commands |
@@ -21,9 +21,9 @@
 ## Слои
 
 ```
-Main (Startup — собирает корневой scope)
+Main (AppScope + scope'ы сцен — только композиция)
         ↓
-Presentation (ShellService, HUD, камера, FMOD)
+Presentation (Shell-сервисы, HUD, камера, AudioService, мост SimBridge)
         ↓ поле желания  или  разовый запрос
 Simulation ECS  ← истина рана
         ↑ pull / BuildingRejectedEvent

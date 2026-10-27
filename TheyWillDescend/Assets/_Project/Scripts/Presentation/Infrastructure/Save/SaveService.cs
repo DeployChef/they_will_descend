@@ -1,9 +1,8 @@
 using System.IO;
-using TheyWillDescend.App;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.SimBridge;
 using UnityEngine;
 
-namespace TheyWillDescend.Infrastructure.Save
+namespace TheyWillDescend.Presentation.Infrastructure
 {
     /// <summary>
     /// One-slot JSON store on the root scope. Temporary file format, not DOTS SerializeUtility.
@@ -59,7 +58,7 @@ namespace TheyWillDescend.Infrastructure.Save
             GameLog.Info($"Saved slot → {SlotPath}");
         }
 
-        void Delete()
+        public void Delete()
         {
             if (!File.Exists(SlotPath))
                 return;

@@ -11,7 +11,7 @@ namespace TheyWillDescend.Simulation.Agents
 {
     /// <summary>
     /// Night (and idle by day): nearest free workers claim a construction site.
-    /// Does not touch <see cref="AgentAssignment.WorkplaceBuildingId"/>.
+    /// Does not touch <see cref="AgentAssignment.Workplace"/>.
     /// </summary>
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -36,13 +36,14 @@ namespace TheyWillDescend.Simulation.Agents
 
             var onShift = SystemAPI.GetSingleton<GameTime>().IsWorkShift;
             var sites = new NativeList<Site>(8, state.WorldUpdateAllocator);
-            foreach (var (building, type, transform) in
+            foreach (var (building, type, transform, entity) in
                      SystemAPI.Query<RefRO<Building>, RefRO<BuildingType>, RefRO<LocalTransform>>()
-                         .WithAll<Construction>())
-
+                         .WithAll<Construction>()
+                         .WithEntityAccess())
             {
                 sites.Add(new Site
                 {
+                    Entity = entity,
                     Id = building.ValueRO.Id,
                     Position = transform.ValueRO.Position,
                     Slots = ConstructionCrew.ResolveSlots(type.ValueRO.ConstructionCrewSlots)
@@ -69,13 +70,13 @@ namespace TheyWillDescend.Simulation.Agents
             {
                 var agent = agents[i];
                 var job = agent.Job;
-                if (job.ConstructionBuildingId == 0)
+                if (job.ConstructionSite == Entity.Null)
                     continue;
 
-                var siteIndex = FindSite(sites, job.ConstructionBuildingId);
+                var siteIndex = FindSite(sites, job.ConstructionSite);
                 if (siteIndex < 0 || !job.CanKeepConstruction(onShift))
                 {
-                    job.ConstructionBuildingId = 0;
+                    job.ConstructionSite = Entity.Null;
                     job.Arrived = 0;
                     agent.Job = job;
                     agents[i] = agent;
@@ -112,7 +113,7 @@ namespace TheyWillDescend.Simulation.Agents
 
                     var agent = agents[best];
                     var job = agent.Job;
-                    job.ConstructionBuildingId = site.Id;
+                    job.ConstructionSite = site.Entity;
                     job.Arrived = 0;
                     agent.Job = job;
                     agents[best] = agent;
@@ -121,6 +122,26 @@ namespace TheyWillDescend.Simulation.Agents
                 }
 
                 sites[s] = site;
+            }
+
+            var constructions = SystemAPI.GetComponentLookup<Construction>(false);
+            for (var s = 0; s < sites.Length; s++)
+            {
+                var site = sites[s];
+                if (!constructions.HasComponent(site.Entity))
+                    continue;
+                var arrived = 0;
+                for (var i = 0; i < agents.Length; i++)
+                {
+                    var job = agents[i].Job;
+                    if (job.ConstructionSite != site.Entity || job.Arrived == 0)
+                        continue;
+                    arrived++;
+                }
+
+                var construction = constructions.GetRefRW(site.Entity);
+                construction.ValueRW.CrewAssigned = site.Claimed;
+                construction.ValueRW.CrewArrived = arrived;
             }
         }
 
@@ -140,11 +161,11 @@ namespace TheyWillDescend.Simulation.Agents
             }
         }
 
-        static int FindSite(NativeList<Site> sites, int buildingId)
+        static int FindSite(NativeList<Site> sites, Entity site)
         {
             for (var i = 0; i < sites.Length; i++)
             {
-                if (sites[i].Id == buildingId)
+                if (sites[i].Entity == site)
                     return i;
             }
 
@@ -160,6 +181,7 @@ namespace TheyWillDescend.Simulation.Agents
 
         struct Site
         {
+            public Entity Entity;
             public int Id;
             public float3 Position;
             public int Slots;

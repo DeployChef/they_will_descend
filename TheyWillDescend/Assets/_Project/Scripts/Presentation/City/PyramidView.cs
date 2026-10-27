@@ -7,13 +7,12 @@ namespace TheyWillDescend.Presentation.City
     /// <summary>
     /// Presentation view for the unique central Pyramid (Headquarters).
     /// Placed statically in the scene at (0, 0, 0).
-    /// Handles its own visuals, plaza ring, and selection highlight.
+    /// Owns the click proxy, plaza ring and selection highlight; the model is scene dressing.
     /// Completely separate from BuildingViewBoard (which is strictly for player-constructed buildings).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PyramidView : MonoBehaviour
     {
-        [SerializeField] MeshRenderer visualRenderer;
         [SerializeField] MeshFilter plazaFilter;
         [SerializeField] MeshRenderer plazaRenderer;
         [SerializeField] BuildingSelection selection;
@@ -23,14 +22,10 @@ namespace TheyWillDescend.Presentation.City
         Material _placedZoneMaterial;
         Material _selectedZoneMaterial;
 
-        public MeshRenderer VisualRenderer => visualRenderer;
         public MeshRenderer PlazaRenderer => plazaRenderer;
 
         void Awake()
         {
-            if (selection == null)
-                selection = FindFirstObjectByType<BuildingSelection>();
-
             EnsureMaterials();
             EnsurePlazaMesh();
         }

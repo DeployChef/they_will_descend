@@ -1,13 +1,20 @@
 ---
-description: One Main Camera on Root; VCams on Menu/Game; no duplicate listeners
+description: Each scene owns its camera and FMOD listener; process services live on AppScope
 alwaysApply: true
 ---
 
 # Camera & scenes
 
-- **Root:** Startup, RootLifetimeScope, GameAudio, GameInput, one Main Camera (+ listener), EventSystem. No menu canvas, no gameplay light/world. `ShellService` is a root singleton, not a scene object. `GameSession` lives in the Game scene.
-- **MainMenu:** splash/menu canvases + `PressAnyKeyScreen` / `MainMenuScreen`. No Main Camera.
-- **Loading:** transition while Game loads. Include in Build list.
-- **Game:** level, lights, VCams, Simulation SubScene, `GameSession`. No second Main Camera (Cinemachine Brain on Root).
+- **AppScope** (prefab via `VContainerSettings`, DontDestroyOnLoad): `ShellService`, `TransitionService`, `LoadingTasks`, `SaveService`, `InputService`, `AudioService`, EventSystem, `LoadingScreen` (overlay canvas). No camera, no world.
+- **MainMenu:** own Main Camera (+ `StudioListener`, no Brain), splash/menu canvases, `PressAnyKeyScreen` / `MainMenuScreen`.
+- **Run scenes** (`Game`, `Blockout/GameBlockout`): the shared `#GameRun` prefab (scope, session, cameras with Brain + `StudioListener`, city, agents, `WorldAudio`, HUD) plus the scene's own `@Dressing` (lights, volume, environment, pyramid model). `$Dev` / `ScenarioEditor` lives only on GameBlockout. World audio deps come from `GameLifetimeScope`, not `Find*ObjectByType`.
+- `#GameRun` holds no art. Building and worker models come from the `VisualSet` on `SceneDressing`; catalog building prefabs are shells without a model.
+- `Game` never references `Blockout/`. The blockout only overrides on its own instance; editing `GameRun.prefab` edits both scenes.
+- Exactly one `StudioListener` at a time. Scenes are never loaded on top of each other with two cameras.
 
-Canon: `TheyWillDescendWiki/Architecture/11 Camera & Presentation Scenes.md`
+# Audio
+
+- `AudioService` (process) owns banks, music, snapshots, UI sound. It never reads ECS; Game's `SimPauseAudioBridge` feeds it the pause.
+- FMOD paths, banks and buses live in `Content/Audio/AudioCatalog` — no `event:/` strings in code. FMOD `Load Banks` is None: `Core` loads with the process, `GameWorld` is acquired by `GameEntry` and released on teardown.
+
+Canon: `TheyWillDescendWiki/Architecture/11 Camera & Presentation Scenes.md`, audio — `06 FMOD Audio.md`, dressing — `Refactoring/09 Dressing & Blockout.md`.

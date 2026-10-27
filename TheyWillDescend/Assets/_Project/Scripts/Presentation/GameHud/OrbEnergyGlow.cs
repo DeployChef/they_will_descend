@@ -64,7 +64,6 @@ namespace TheyWillDescend.Presentation.GameHud
         [Tooltip("Energy at and above this counts as a full orb. 0 = the reservoir cap from the simulation. Example: the game starts with 50 energy out of a 2000 cap, so the default cap would pin the orb near empty — set 100 here to sweep the whole glow between 0 and 100 energy.")]
         [SerializeField, Min(0f)] float rangeMax = 100f;
 
-
         Material _instance;
         Material _source;
         int[] _ids;

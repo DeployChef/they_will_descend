@@ -87,15 +87,14 @@ namespace TheyWillDescend.Presentation.GameHud
         void Show()
         {
             if (!SimWorld.TryGet(out var em, out var bag)
-                || !TryFindHq(em, out var entity)
+                || !em.HasComponent<CityCore>(bag)
+                || !TryHq(em, bag, out var entity)
                 || !em.HasBuffer<PyramidFeedLine>(entity)
                 || !em.HasBuffer<ResourceInfo>(bag))
             {
                 Hide();
                 return;
             }
-
-
 
             EnsureUi();
             if (card != null)
@@ -306,9 +305,6 @@ namespace TheyWillDescend.Presentation.GameHud
             });
         }
 
-
-  
-
         void OnClose()
         {
             selection?.Deselect();
@@ -443,15 +439,10 @@ namespace TheyWillDescend.Presentation.GameHud
             return resourceId.ToString();
         }
 
-        static bool TryFindHq(EntityManager em, out Entity entity)
+        static bool TryHq(EntityManager em, Entity session, out Entity entity)
         {
-            entity = Entity.Null;
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Headquarters>());
-            if (query.IsEmptyIgnoreFilter)
-                return false;
-            entity = query.GetSingletonEntity();
-            return true;
+            entity = em.GetComponentData<CityCore>(session).Headquarters;
+            return entity != Entity.Null && em.Exists(entity) && em.HasComponent<Headquarters>(entity);
         }
-
     }
 }

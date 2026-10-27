@@ -1,15 +1,16 @@
 using System.Collections.Generic;
 using TheyWillDescend.Content;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Session;
-using TheyWillDescend.Presentation.Audio;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -27,15 +28,16 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] Color hoverOutlineColor = new(0.88f, 0.88f, 0.88f, 1f);
         [SerializeField] Color selectedOutlineColor = Color.white;
         [SerializeField] float outlineWidth = 0.28f;
-        [SerializeField] AudioZoneManager audioZoneManager;
 
+        AudioZoneManager _audioZoneManager;
+        AudioService _audio;
+        VisualSet _visuals;
         Transform _root;
         readonly Dictionary<int, PlacedView> _views = new();
         readonly HashSet<int> _seen = new();
         readonly List<int> _stale = new();
         EntityQuery _buildingQuery;
         Camera _cam;
-
 
         sealed class PlacedView
         {
@@ -45,6 +47,14 @@ namespace TheyWillDescend.Presentation.City
             public BuildingView View;
             public BuildingAudioSource AudioSource;
             public BuildingConstructionAudio ConstructionAudio;
+        }
+
+        [Inject]
+        public void Construct(AudioZoneManager audioZoneManager, AudioService audio, VisualSet visuals)
+        {
+            _audioZoneManager = audioZoneManager;
+            _audio = audio;
+            _visuals = visuals;
         }
 
         public void RebuildViews()
@@ -70,7 +80,6 @@ namespace TheyWillDescend.Presentation.City
             Sync(em, _buildingQuery);
         }
 
-
         public void ClearViews()
         {
             foreach (var view in _views.Values)
@@ -78,9 +87,6 @@ namespace TheyWillDescend.Presentation.City
             _views.Clear();
             selection?.Deselect();
         }
-
-
-
 
         void OnDisable()
         {
@@ -92,7 +98,6 @@ namespace TheyWillDescend.Presentation.City
             _buildingQuery = default;
             _cam = null;
         }
-
 
         void Sync(EntityManager em, EntityQuery query)
         {
@@ -126,7 +131,6 @@ namespace TheyWillDescend.Presentation.City
                     placed = CreateHouseView(em, entity, building, position);
                 }
 
-
                 if (placed == null)
                     continue;
 
@@ -155,8 +159,8 @@ namespace TheyWillDescend.Presentation.City
                 }
 
                 var buildMode = gridGuide != null && gridGuide.IsBuildModeActive;
-                var hovered = selection != null && building.Id == selection.HoveredBuildingId;
-                var selected = selection != null && building.Id == selection.SelectedBuildingId;
+                var hovered = selection != null && selection.Hovered == entity;
+                var selected = selection != null && selection.Selected == entity;
                 if (placed.Zone != null)
                 {
                     var show = buildMode || hovered || selected;
@@ -186,7 +190,6 @@ namespace TheyWillDescend.Presentation.City
                     DestroyView(_stale[i]);
             }
 
-
             entities.Dispose();
             buildings.Dispose();
         }
@@ -199,8 +202,6 @@ namespace TheyWillDescend.Presentation.City
                 return em.GetComponentData<LocalTransform>(entity).Position;
             return default;
         }
-
-
 
         PlacedView CreateHouseView(EntityManager em, Entity entity, in Building building, float3 position)
         {
@@ -227,16 +228,17 @@ namespace TheyWillDescend.Presentation.City
             var house = Object.Instantiate(prefab, _root);
             house.name = $"Building_{building.Id}";
             house.transform.position = (Vector3)position;
+            AttachBody(house, building.TypeId.ToString());
             var houseTag = house.GetComponent<BuildingIdTag>();
             if (houseTag == null)
                 houseTag = house.AddComponent<BuildingIdTag>();
-            houseTag.Id = building.Id;
+            houseTag.Target = entity;
             EnsurePickColliders(house);
             var view = house.GetComponent<BuildingView>();
             if (view == null)
                 GameLog.Error($"BuildingViewBoard: {prefab.name} has no BuildingView.");
 
-            var overlay = SpawnOverlay(building, center);
+            var overlay = SpawnOverlay(entity, building, center);
             var audioSource = RegisterAudioSource(house, position);
 
             var placed = new PlacedView
@@ -248,19 +250,20 @@ namespace TheyWillDescend.Presentation.City
                 AudioSource = audioSource
             };
 
-            // Строительный звук: берём компонент с префаба или добавляем
-            // (как BuildingAudioSource — на префабе настроить EventReference,
-            // auto-add работает по fallback-пути event:/BUILDINGS/BUILD).
+            // Строительный звук: компонент с префаба или добавленный; событие префаба
+            // главнее, иначе — событие стройки из каталога.
             var constructionAudio = house.GetComponent<BuildingConstructionAudio>();
             if (constructionAudio == null)
                 constructionAudio = house.AddComponent<BuildingConstructionAudio>();
+            if (_audio != null)
+                constructionAudio.UseDefaultEvent(_audio.Catalog.Construction);
             placed.ConstructionAudio = constructionAudio;
 
             _views[building.Id] = placed;
             return placed;
         }
 
-        BuildingOverlay SpawnOverlay(in Building building, float3 center)
+        BuildingOverlay SpawnOverlay(Entity entity, in Building building, float3 center)
         {
             var footprint = new BuildingFootprint
             {
@@ -279,7 +282,7 @@ namespace TheyWillDescend.Presentation.City
             var overlay = Object.Instantiate(overlayPrefab, _root);
             overlay.name = $"Overlay_{building.Id}";
             if (overlay.IdTag != null)
-                overlay.IdTag.Id = building.Id;
+                overlay.IdTag.Target = entity;
 
             var n = config.GetClusterCount(building.AnchorRadial);
             var turns0 = n > 0 ? building.AnchorCluster / (float)n : 0f;
@@ -291,24 +294,29 @@ namespace TheyWillDescend.Presentation.City
 
         GameObject ResolveStampPrefab(EntityManager em, Entity entity, in Building building)
         {
-            var source = catalog != null
-                ? catalog
-                : Object.FindFirstObjectByType<BuildPlacementController>()?.Catalog;
-            if (source == null)
+            if (catalog == null)
                 return null;
             var typeId = em.HasComponent<Building>(entity)
                 ? em.GetComponentData<Building>(entity).TypeId.ToString()
                 : building.TypeId.ToString();
-            return source.FindPrefab(typeId);
+            return catalog.FindPrefab(typeId);
+        }
+
+        void AttachBody(GameObject house, string typeId)
+        {
+            var body = _visuals != null ? _visuals.FindBody(typeId) : null;
+            if (body == null)
+            {
+                GameLog.Warning($"BuildingViewBoard: visual set has no body for {typeId}.");
+                return;
+            }
+
+            Object.Instantiate(body, house.transform).name = "Body";
         }
 
         BuildingAudioSource RegisterAudioSource(GameObject buildingGo, float3 worldPosition)
         {
-            // Менеджер живёт в Bootstrap-сцене (грузится additive), сериализованная
-            // ссылка из Game-сцены невозможна — ищем автоматически.
-            if (audioZoneManager == null)
-                audioZoneManager = FindFirstObjectByType<AudioZoneManager>();
-            if (audioZoneManager == null)
+            if (_audioZoneManager == null)
                 return null;
 
             // Ищем аудио-источник на префабе или создаём.
@@ -321,7 +329,7 @@ namespace TheyWillDescend.Presentation.City
             // Привязка к ячейке: ближайшая неполная в радиусе привязки, иначе новая.
             // Менеджер сам заводит источник, будит ячейку в поле зрения и ведёт
             // реестр — здесь только заводим компонент.
-            audioZoneManager.AttachSource(audioSource);
+            _audioZoneManager.AttachSource(audioSource);
 
             return audioSource;
         }
@@ -345,9 +353,15 @@ namespace TheyWillDescend.Presentation.City
 
         void DestroyView(int buildingId)
         {
-            selection?.ClearIf(buildingId);
             if (!_views.TryGetValue(buildingId, out var view))
                 return;
+            if (view?.Root != null)
+            {
+                var tag = view.Root.GetComponent<BuildingIdTag>();
+                if (tag != null)
+                    selection?.ClearIf(tag.Target);
+            }
+
             _views.Remove(buildingId);
             DestroyPlaced(view);
         }
@@ -372,15 +386,12 @@ namespace TheyWillDescend.Presentation.City
                 Object.DestroyImmediate(go);
         }
 
-
         void EnsureReady()
         {
             if (_root != null)
                 return;
             _root = transform;
         }
-
-
 
         static bool TryGetCityCenter(out float3 center)
         {

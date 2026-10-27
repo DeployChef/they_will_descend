@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283e974244469eb4991a03e5bcae2e22, type: 3}
+  m_Name: AudioCatalog
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Audio.AudioCatalog
+  core: {fileID: 11400000, guid: 77fd1e3cd9cfeae4887923497acca5bf, type: 2}
+  gameWorld: {fileID: 11400000, guid: 08ab954bca2997245ad6592640c24f93, type: 2}
+  menuMusic:
+    Event:
+      Guid:
+        Data1: 1321054815
+        Data2: 1083970188
+        Data3: -1697229170
+        Data4: 2071137567
+      Path: event:/SOUNDTRACK/MUSIC_STATES
+    Parameter: 
+    Label: 
+  gameplayMusic:
+    Event:
+      Guid:
+        Data1: 1321054815
+        Data2: 1083970188
+        Data3: -1697229170
+        Data4: 2071137567
+      Path: event:/SOUNDTRACK/MUSIC_STATES
+    Parameter: 
+    Label: 
+  pauseSnapshot:
+    Guid:
+      Data1: 2076776603
+      Data2: 1338999978
+      Data3: 997604797
+      Data4: -1941923508
+    Path: snapshot:/ESC
+  uiEvent:
+    Guid:
+      Data1: -800536114
+      Data2: 1275544281
+      Data3: 483088029
+      Data4: 1254152447
+    Path: event:/UI/UI
+  uiStateParameter: UI_States
+  wind:
+    Guid:
+      Data1: 271543376
+      Data2: 1255994731
+      Data3: -1389427328
+      Data4: -1149575252
+    Path: event:/AMBIENCE/Ambience_Wind_Generation
+  ambienceBus: bus:/Ambience
+  construction:
+    Guid:
+      Data1: 1522934691
+      Data2: 1121993379
+      Data3: -1117090432
+      Data4: 770902725
+    Path: event:/BUILDINGS/BUILD

@@ -48,7 +48,7 @@ namespace TheyWillDescend.Simulation.Agents
             {
                 if (assignment.ValueRO.HasConstructionTask)
                     continue;
-                if (assignment.ValueRO.WorkplaceBuildingId != 0 && onShift)
+                if (assignment.ValueRO.Workplace != Entity.Null && onShift)
                     continue;
 
                 var idle = idleRef.ValueRO;

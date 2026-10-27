@@ -113,13 +113,10 @@ public partial struct WorkforceDispatchSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // 1. Поиск зданий с дефицитом: DesiredWorkers > AssignedCount (при !IsPaused)
-        //    Берем свободных жителей (AgentAssignment.Workplace == Entity.Null) 
-        //    и назначаем на здание, инкрементируя AssignedCount.
-        
-        // 2. Поиск зданий с избытком: DesiredWorkers < AssignedCount (или IsPaused == true)
-        //    Отзываем лишних жителей (сбрасываем цель на Плазу) 
-        //    и декрементируем AssignedCount.
+        // 1. Дома по Building.Id. target = min(DesiredWorkers, slots). Paused игнорируется.
+        // 2. Факт > target — отпустить лишних (с конца списка, стабильно по AgentId).
+        // 3. Факт < target — взять свободных (Workplace == Null). DesiredWorkers не писать.
+        // 4. AssignedCount = факт. WorkforceSummary на сессию.
     }
 }
 ```

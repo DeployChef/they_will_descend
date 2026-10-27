@@ -40,7 +40,6 @@ namespace TheyWillDescend.Presentation.GameHud
         static readonly FixedString64Bytes LivestockId = new("livestock");
         static readonly FixedString64Bytes RationsId = new("rations");
 
-
         // Public properties for setup / inspector validation
         public TMP_Text WoodValue { get => woodValue; set => woodValue = value; }
         public TMP_Text CopalValue { get => copalValue; set => copalValue = value; }

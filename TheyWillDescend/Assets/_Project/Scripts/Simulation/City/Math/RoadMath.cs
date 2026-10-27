@@ -1,4 +1,5 @@
 using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
 
 namespace TheyWillDescend.Simulation.City
@@ -346,7 +347,7 @@ namespace TheyWillDescend.Simulation.City
             for (var i = 0; i < footprint.Length; i++)
             {
                 var cell = footprint[i];
-                cell.BuildingId = 1;
+                cell.Building = new Entity { Index = 1, Version = 1 };
                 stamped[i] = cell;
             }
 
@@ -387,9 +388,9 @@ namespace TheyWillDescend.Simulation.City
                 var ray = WrapCluster((int)math.round(turns * n), n);
                 var left = WrapCluster(ray - 1, n);
                 var right = WrapCluster(ray, n);
-                var idL = FaceBuildingId(occupied, left, inner);
-                var idR = FaceBuildingId(occupied, right, inner);
-                return idL != 0 && idL == idR;
+                var idL = FaceBuilding(occupied, left, inner);
+                var idR = FaceBuilding(occupied, right, inner);
+                return idL != Entity.Null && idL == idR;
             }
 
             var cluster = RadialGridMath.TurnsToCluster(turns, n);
@@ -410,21 +411,21 @@ namespace TheyWillDescend.Simulation.City
                 return true;
 
             var turns = WrapFine(fineA, fineCount) / (float)fineCount;
-            var idIn = 0;
-            var idOut = 0;
+            var idIn = Entity.Null;
+            var idOut = Entity.Null;
             if (ringLine > 0)
             {
                 var nIn = config.GetClusterCount(ringLine - 1);
-                idIn = FaceBuildingId(occupied, RadialGridMath.TurnsToCluster(turns, nIn), ringLine - 1);
+                idIn = FaceBuilding(occupied, RadialGridMath.TurnsToCluster(turns, nIn), ringLine - 1);
             }
 
             if (ringLine < config.RingCount)
             {
                 var nOut = config.GetClusterCount(ringLine);
-                idOut = FaceBuildingId(occupied, RadialGridMath.TurnsToCluster(turns, nOut), ringLine);
+                idOut = FaceBuilding(occupied, RadialGridMath.TurnsToCluster(turns, nOut), ringLine);
             }
 
-            return idIn != 0 && idIn == idOut;
+            return idIn != Entity.Null && idIn == idOut;
         }
 
         static bool OnClusterRay(float turns, int clusterCount)
@@ -448,21 +449,23 @@ namespace TheyWillDescend.Simulation.City
 
         static bool FaceOccupied(NativeArray<OccupiedCell> occupied, int cluster, int radial)
         {
-            return FaceBuildingId(occupied, cluster, radial) != 0;
+            return FaceBuilding(occupied, cluster, radial) != Entity.Null;
         }
 
-        static int FaceBuildingId(NativeArray<OccupiedCell> occupied, int cluster, int radial)
+        static Entity FaceBuilding(NativeArray<OccupiedCell> occupied, int cluster, int radial)
         {
             for (var i = 0; i < occupied.Length; i++)
             {
                 if (occupied[i].Cluster == cluster && occupied[i].Radial == radial)
                 {
-                    var id = occupied[i].BuildingId;
-                    return id != 0 ? id : cluster * 4096 + radial + 1;
+                    var building = occupied[i].Building;
+                    return building != Entity.Null
+                        ? building
+                        : new Entity { Index = cluster * 4096 + radial + 1, Version = 1 };
                 }
             }
 
-            return 0;
+            return Entity.Null;
         }
     }
 }

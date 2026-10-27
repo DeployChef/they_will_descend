@@ -33,10 +33,10 @@ namespace TheyWillDescend.Presentation.GameHud
                 ? canvas.worldCamera
                 : null;
             var defs = em.GetBuffer<StoryDialogDef>(session);
-            var now = Now(em);
+            var now = Now(em, session);
             var seen = new HashSet<Entity>();
 
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<StoryLiveDialog>());
+            var query = SimWorld.LiveDialogs(em);
             using var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
             for (var i = 0; i < entities.Length; i++)
             {
@@ -92,12 +92,10 @@ namespace TheyWillDescend.Presentation.GameHud
             SimCommands.TryPost(new StoryUiCommand { Open = 1, Dialog = dialog });
         }
 
-        static float Now(EntityManager em)
+        static float Now(EntityManager em, Entity session)
         {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
+            if (!SimWorld.TryGetGameTime(em, session, out var time))
                 return 0f;
-            var time = query.GetSingleton<GameTime>();
             return time.Day * 24f + time.HourOfDay;
         }
 

@@ -1,6 +1,6 @@
-using TheyWillDescend.Infrastructure.Logging;
-using TheyWillDescend.Infrastructure.Save;
-using TheyWillDescend.Shell;
+using Cysharp.Threading.Tasks;
+using TheyWillDescend.Presentation.Infrastructure;
+using TheyWillDescend.Presentation.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -83,7 +83,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 return;
             }
 
-            _shell.EnterGame(loadSlot ? RunLaunch.Slot : new RunLaunch(kind, false));
+            _shell.StartRun(loadSlot ? RunLaunch.Slot : new RunLaunch(kind, false)).Forget();
         }
     }
 }

@@ -54,10 +54,7 @@ namespace TheyWillDescend.Presentation.GameHud
             if (source != null)
                 return source;
 
-            // A sibling under the same HUD panel is the usual layout; the scene search is
-            // the last resort so forgetting the reference is not a silent failure.
-            return GetComponentInParent<OrbEnergyGlow>(true)
-                ?? FindAnyObjectByType<OrbEnergyGlow>();
+            return GetComponentInParent<OrbEnergyGlow>(true);
         }
     }
 }

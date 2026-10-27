@@ -115,7 +115,7 @@ HUD **читает** `GameTime` + `SimControl`. Кнопки → `SimClockComman
 
 - Камера, меню, FMOD pitch не ускоряются через `timeScale`
 - `Set(Running)` по закрытию каталога — ломает x3 и игнорирует Esc-pause
-- Музыка: `GameAudio` паузит инстанс по `PlayerPaused`, не по Speed
+- Музыка: `SimPauseAudioBridge` передаёт `PlayerPaused` в `AudioService` (снапшот ESC + пауза музыки), не Speed
 
 ---
 
@@ -271,4 +271,4 @@ Load **не** выгружает сцену Game и **не** зовёт `Shutdow
 4. На паузе игрока Speed=3. Что показывает тулза? Что лежит в `SimControl.DeltaTime`? Почему сутки всё равно стоят?
 5. Игрок на x3 открыл стройку. Можно ли нажать x1? Что будет после постановки дома?
 
-Связанные: [[03 Core Systems]] · [[09 App Shell]] · [[08 Production ECS]] · [[10 Vertical Slice — Shell + ECS Walkers]] · [[../GDD/08 UI & Visual|GDD UI]]
+Связанные: [[03 Core Systems]] · [[09 App Shell]] · [[08 Production ECS]] · [[../GDD/08 UI & Visual|GDD UI]]

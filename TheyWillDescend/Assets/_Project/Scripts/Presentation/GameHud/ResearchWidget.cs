@@ -1,4 +1,4 @@
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
 using TheyWillDescend.Simulation.Research;
@@ -42,8 +42,6 @@ namespace TheyWillDescend.Presentation.GameHud
         static readonly Color StatusOk = new(0.55f, 0.85f, 0.55f, 1f);
         static readonly Color StatusBusy = new(0.95f, 0.8f, 0.35f, 1f);
         static readonly Color StatusBlocked = new(0.92f, 0.45f, 0.4f, 1f);
-
-
 
         public static ResearchWidget Current { get; private set; }
 
@@ -170,7 +168,6 @@ namespace TheyWillDescend.Presentation.GameHud
                 GameLog.Warning("Research: command buffer missing — run catalog was not populated.");
         }
 
-
         void HideAllNodes()
         {
             if (nodes == null)
@@ -192,7 +189,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
             }
 
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<TechInfo>());
+            var query = SimWorld.TechCards(em);
             using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
             if (infos.Length == 0)
             {
@@ -342,7 +339,6 @@ namespace TheyWillDescend.Presentation.GameHud
             }
         }
 
-    
         static bool TryReadBoard(
             out EntityManager em,
             out Entity session,

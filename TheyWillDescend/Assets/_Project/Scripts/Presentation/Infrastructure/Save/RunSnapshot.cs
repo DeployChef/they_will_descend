@@ -1,6 +1,6 @@
 using System;
 
-namespace TheyWillDescend.Infrastructure.Save
+namespace TheyWillDescend.Presentation.Infrastructure
 {
     [Serializable]
     public sealed class RunSnapshot
@@ -9,7 +9,6 @@ namespace TheyWillDescend.Infrastructure.Save
         /// Current payload only. Older slots are deleted on load — no migration while we iterate.
         /// </summary>
         public const int CurrentVersion = 26;
-
 
         public int version = CurrentVersion;
         public int speed = 1;
@@ -94,7 +93,6 @@ namespace TheyWillDescend.Infrastructure.Save
         public byte paused;
         public int desiredWorkers;
     }
-
 
     [Serializable]
     public sealed class ResolvedBuildingPrototypeSnapshot

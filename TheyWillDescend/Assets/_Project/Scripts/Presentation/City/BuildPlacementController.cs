@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TheyWillDescend.Content;
-using TheyWillDescend.Infrastructure.Logging;
+using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Simulation.City;
 using TheyWillDescend.Simulation.Content;
 using TheyWillDescend.Simulation.Economy;
@@ -12,11 +12,12 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
     /// <summary>
-    /// Play aiming: ghost zone + catalog mesh, polar snap, click → PlaceBuildingCommand.
+    /// Play aiming: ghost zone + the scene's body model, polar snap, click → PlaceBuildingRequest.
     /// Does not own house types, live meshes, or BuildingViewBoard.
     /// </summary>
     public sealed class BuildPlacementController : MonoBehaviour
@@ -39,9 +40,10 @@ namespace TheyWillDescend.Presentation.City
 
         readonly List<(int cluster, int radial)> _clusters = new(64);
 
+        VisualSet _visuals;
         string _typeId;
         BuildingFootprint _footprint;
-        GameObject _ghostPrefab;
+        GameObject _ghostBody;
 
         bool _placing;
         bool _canPlace;
@@ -60,6 +62,12 @@ namespace TheyWillDescend.Presentation.City
         public bool IsPlacing => _placing;
 
         public event Action Finished;
+
+        [Inject]
+        public void Construct(VisualSet visuals)
+        {
+            _visuals = visuals;
+        }
 
         public void BeginPlacing(string typeId)
         {
@@ -82,12 +90,12 @@ namespace TheyWillDescend.Presentation.City
             }
             _typeId = spec.TypeId.ToString();
             _footprint = spec.Footprint;
-            _ghostPrefab = ResolveGhostPrefab(_typeId);
+            _ghostBody = _visuals != null ? _visuals.FindBody(_typeId) : null;
             _placing = true;
             gridGuide.SetBuildModeActive(true);
             EnsureGhost();
             RecreateGhostBuilding();
-            GameLog.Info($"Place mode: {BuildingView.NameOf(_ghostPrefab)}.");
+            GameLog.Info($"Place mode: {BuildingView.NameOf(catalog != null ? catalog.FindPrefab(_typeId) : null)}.");
         }
 
         public void CancelPlacing()
@@ -193,8 +201,6 @@ namespace TheyWillDescend.Presentation.City
             if (!SimCommands.Request(new PlaceBuildingRequest
                 {
                     TypeId = _typeId,
-                    WidthClusters = _footprint.WidthClusters,
-                    DepthRadialRings = _footprint.DepthRadialRings,
                     AnchorCluster = _anchorCluster,
                     AnchorRadial = _anchorRadial
                 }))
@@ -424,13 +430,13 @@ namespace TheyWillDescend.Presentation.City
             }
             _ghostRenderers = null;
 
-            if (_ghostPrefab == null)
+            if (_ghostBody == null)
                 return;
 
-            var instance = Instantiate(_ghostPrefab, _ghostRoot);
-            instance.name = "GhostHouse";
+            var instance = new GameObject("GhostHouse");
+            instance.transform.SetParent(_ghostRoot, false);
+            Instantiate(_ghostBody, instance.transform).name = "Body";
             StripColliders(instance);
-            HideWidget(instance);
             ReplaceMaterialsToGhostShader(instance, ghostBuildingMaterial);
             _ghostBuilding = instance.transform;
             _ghostRenderers = instance.GetComponentsInChildren<Renderer>(false);
@@ -484,13 +490,6 @@ namespace TheyWillDescend.Presentation.City
                 building.Translate(0f, offset, 0f, Space.World);
         }
 
-        static void HideWidget(GameObject go)
-        {
-            var widgets = go.GetComponentsInChildren<BuildingWidget>(true);
-            for (var i = 0; i < widgets.Length; i++)
-                widgets[i].gameObject.SetActive(false);
-        }
-
         static void StripColliders(GameObject go)
         {
             var cols = go.GetComponentsInChildren<Collider>();
@@ -522,11 +521,6 @@ namespace TheyWillDescend.Presentation.City
 
                 mat.SetFloat("_CanBuild", _canPlace ? 1f : 0f);
             }
-        }
-
-        GameObject ResolveGhostPrefab(string typeId)
-        {
-            return catalog != null ? catalog.FindPrefab(typeId) : null;
         }
 
         static bool TryGetPointerOnBuildPlane(out Vector3 world)
@@ -604,7 +598,7 @@ namespace TheyWillDescend.Presentation.City
                 {
                     Cluster = clusters[i].cluster,
                     Radial = clusters[i].radial,
-                    BuildingId = 1
+                    Building = new Entity { Index = 1, Version = 1 }
                 };
             }
 

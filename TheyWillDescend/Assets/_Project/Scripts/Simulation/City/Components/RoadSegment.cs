@@ -8,7 +8,7 @@ namespace TheyWillDescend.Simulation.City
     public struct RoadSegment : IBufferElementData
     {
         public int Id;
-        public int SiteId;
+        public Entity Site;
         public int RingA;
         public int FineA;
         public int RingB;

@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
-using TheyWillDescend.Infrastructure.Logging;
 using TheyWillDescend.Presentation.Audio;
+using TheyWillDescend.Presentation.Cameras;
+using TheyWillDescend.Presentation.Infrastructure;
+using UnityEngine;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.City
 {
@@ -17,10 +20,6 @@ namespace TheyWillDescend.Presentation.City
         [Header("References")]
         [SerializeField] AudioZoneSettings settings;
         [SerializeField] AudioVisibilityChecker visibilityChecker;
-
-        [Header("FMOD Banks")]
-        [Tooltip("Банки с ивентом (без расширения .bank). Используется, если EventReference в настройках не задан. Master грузится всегда.")]
-        [SerializeField] string[] fmodBanks = { "Ambience_Town" };
 
         /// <summary>Живые ячейки. Порядок не фиксирован — идентификатор у каждой свой.</summary>
         private readonly List<AudioCell> _cells = new();
@@ -44,14 +43,26 @@ namespace TheyWillDescend.Presentation.City
         /// </summary>
         private bool _topologyDirty;
 
-        /// <summary>Банки загружены (один раз; hot reload пересоздаёт ячейки сам).</summary>
-        private bool _banksLoaded;
+        /// <summary>RTS-контроллер камеры: скорость для доплера FlyBy.</summary>
+        RTSCameraController _rtsController;
+
+        AudioService _audio;
 
         public AudioZoneSettings Settings => settings;
         public AudioVisibilityChecker VisibilityChecker => visibilityChecker;
 
         /// <summary>Живые ячейки (только для чтения).</summary>
         public IReadOnlyList<AudioCell> Cells => _cells;
+
+        /// <summary>Банки сейчас выгрузятся: инстансы на их ивентах надо заглушить.</summary>
+        public event Action BanksUnloading;
+
+        [Inject]
+        public void Construct(RTSCameraController rtsController, AudioService audio)
+        {
+            _rtsController = rtsController;
+            _audio = audio;
+        }
 
         void Awake()
         {
@@ -70,8 +81,6 @@ namespace TheyWillDescend.Presentation.City
         {
             if (!enabled || settings == null)
                 return;
-
-            EnsureBanksLoaded();
 
             _frameCounter++;
             if (_frameCounter < TickFrames)
@@ -106,23 +115,6 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
-        /// <summary>
-        /// Грузит банки до первого создания инстансов. Если задан EventReference —
-        /// банки определяются автоматически из ивента (принцип StudioEventEmitter).
-        /// </summary>
-        private void EnsureBanksLoaded()
-        {
-            if (_banksLoaded)
-                return;
-
-            _banksLoaded = true;
-
-            if (!settings.EventReference.IsNull)
-                FmodBankLoader.LoadBanksForEvent(settings.EventReference);
-            else
-                FmodBankLoader.LoadBanks(fmodBanks);
-        }
-
         // ===== Привязка построек =====
 
         /// <summary>
@@ -133,8 +125,6 @@ namespace TheyWillDescend.Presentation.City
         {
             if (settings == null || source == null)
                 return null;
-
-            EnsureBanksLoaded();
 
             var pos = source.transform.position;
             var radius = settings.AttachRadius;
@@ -239,7 +229,6 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
-
         /// <summary>
         /// Сбрасывает реестр ячеек: инстансы освобождаются, постройки остаются
         /// жить. Используется hot reload'ом банков.
@@ -254,13 +243,14 @@ namespace TheyWillDescend.Presentation.City
             _topologyDirty = true;
         }
 
+#if UNITY_EDITOR
         /// <summary>
         /// Перелинковывает все активные BuildingAudioSource заново — после hot
         /// reload ячеек. Неактивные сами придут через OnEnable.
         /// </summary>
         private void RelinkAllSources()
         {
-            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var sources = FindObjectsByType<BuildingAudioSource>(FindObjectsInactive.Exclude);
             for (var i = 0; i < sources.Length; i++)
             {
                 var source = sources[i];
@@ -276,7 +266,7 @@ namespace TheyWillDescend.Presentation.City
                 GameLog.Info($"AudioZoneManager: relinked {sources.Length} buildings into {_cells.Count} cells "
                     + $"(capacity {settings.CellCapacity}, attach radius {settings.AttachRadius:F1} m).");
         }
-
+#endif
 
         /// <summary>
         /// Обновляет видимость ячеек и Distance RTPC (audio LOD). Всё, что зависит
@@ -320,16 +310,8 @@ namespace TheyWillDescend.Presentation.City
             var flyByMax = settings.FlyByMaxSpeed;
             var flyByGate = settings.FlyByGateSpeed;
             var camVel = Vector3.zero;
-            if (flyBySpeed)
-            {
-                if (_rtsController == null && !_lookedForRtsController)
-                {
-                    _lookedForRtsController = true;
-                    _rtsController = FindFirstObjectByType<RTSCameraController>();
-                }
-                if (_rtsController != null)
-                    camVel = _rtsController.Velocity;
-            }
+            if (flyBySpeed && _rtsController != null)
+                camVel = _rtsController.Velocity;
 
             for (var i = 0; i < _cells.Count; i++)
             {
@@ -349,47 +331,38 @@ namespace TheyWillDescend.Presentation.City
             }
         }
 
-        /// <summary>RTS-контроллер камеры (ленивый поиск): скорость для доплера FlyBy.</summary>
-        private RTSCameraController _rtsController;
-
-        /// <summary>Пытались ли найти RTS-контроллер.</summary>
-        private bool _lookedForRtsController;
-
         void OnDestroy() => ClearCells();
 
+#if UNITY_EDITOR
         /// <summary>
-        /// Hot reload: выгружает ивентовые банки, грузит заново, пересобирает
+        /// Hot reload: перезагружает набор банков GameWorld, пересобирает
         /// ячейки и перелинковывает постройки — без перезапуска сцены. Правой
         /// кнопкой по заголовку компонента в инспекторе во время Play.
-        /// Master и Master.strings не трогаем — они нужны для резолва путей.
+        /// Ветер и звук стройки сидят на тех же банках — их инстансы FMOD оборвёт.
         /// </summary>
         [ContextMenu("Reload FMOD Banks")]
         private void ReloadFmodBanks()
         {
+            if (_audio == null)
+                return;
+
             GameLog.Info("AudioZoneManager: hot reload banks started.");
 
             // Случайные городские звуки лежат в том же банке — их инстансы
             // тоже сошлются на выгружаемые ивенты. Глушим их до выгрузки.
-            FindFirstObjectByType<ZoneAmbienceSfxScheduler>()?.SilenceAll();
+            BanksUnloading?.Invoke();
 
             // Глушим все ячейки до выгрузки банков (инстансы ссылаются на ивенты).
             ClearCells();
 
-            // Выгружаем ивентовые банки (найденные ранее для EventReference)
-            // и вручную указанные. Master/Master.strings не трогаем — они
-            // нужны для резолва путей ивентов.
-            FmodBankLoader.UnloadEventBanks();
-            FmodBankLoader.UnloadBanks(fmodBanks);
-
-            // Грузим заново: EventReference → автоопределение, иначе ручной список.
-            _banksLoaded = false;
-            EnsureBanksLoaded();
+            _audio.Banks.ReloadInEditor(_audio.Catalog.GameWorld);
 
             // Пересобираем ячейки из стоящих построек.
             RelinkAllSources();
 
             GameLog.Info("AudioZoneManager: hot reload banks done.");
         }
+#endif
 
         // ===== Debug Gizmos =====
 
