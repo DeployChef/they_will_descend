@@ -2,6 +2,7 @@ using TheyWillDescend.Presentation.Agents;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.Cameras;
 using TheyWillDescend.Presentation.City;
+using TheyWillDescend.Presentation.GameHud;
 using TheyWillDescend.Presentation.Environment;
 using TheyWillDescend.Presentation.Shell;
 using TheyWillDescend.Presentation.ShellUi;
@@ -35,6 +36,7 @@ namespace TheyWillDescend.Main
             builder.Register(r => r.Resolve<SceneDressing>().Visuals, Lifetime.Scoped);
             builder.RegisterComponentInHierarchy<BuildingViewBoard>();
             builder.RegisterComponentInHierarchy<BuildPlacementController>();
+            builder.RegisterComponentInHierarchy<BuildingInspectPanel>();
             builder.RegisterComponentInHierarchy<AgentViewBoard>();
         }
     }

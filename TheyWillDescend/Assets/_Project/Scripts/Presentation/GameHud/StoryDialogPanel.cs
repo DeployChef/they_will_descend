@@ -102,7 +102,7 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             entity = Entity.Null;
             live = default;
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<StoryLiveDialog>());
+            var query = SimWorld.LiveDialogs(em);
             using var entities = query.ToEntityArray(Allocator.Temp);
             for (var i = 0; i < entities.Length; i++)
             {

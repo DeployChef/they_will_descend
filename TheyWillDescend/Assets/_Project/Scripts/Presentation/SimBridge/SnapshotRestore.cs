@@ -387,6 +387,8 @@ namespace TheyWillDescend.Presentation.SimBridge
                 return;
 
             var hq = hqQuery.GetSingletonEntity();
+            if (em.HasComponent<CityCore>(session))
+                em.SetComponentData(session, new CityCore { Headquarters = hq });
             var feed = em.GetBuffer<PyramidFeedLine>(hq);
             var info = em.HasBuffer<ResourceInfo>(session)
                 ? em.GetBuffer<ResourceInfo>(session)

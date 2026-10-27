@@ -189,7 +189,7 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
             }
 
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<TechInfo>());
+            var query = SimWorld.TechCards(em);
             using var infos = query.ToComponentDataArray<TechInfo>(Allocator.Temp);
             if (infos.Length == 0)
             {

@@ -13,7 +13,9 @@ Presentation  ←  query / pull                           единственно
 Simulation    ✕  TimeWidget / ViewBoard / Animator
 ```
 
-`SystemBase` в Presentation, который вызывает `TimeWidget.ShowTime` или `*ViewBoard.Sync`, — это **обратная** связь: ECS-тик владеет видом. Так нельзя. Канон: виджет/доска в `Update` / `LateUpdate` сами читают World. Query не кэшировать на MonoBehaviour (lifetime GO ≠ lifetime World).
+`SystemBase` в Presentation, который вызывает `TimeWidget.ShowTime` или `*ViewBoard.Sync`, — это **обратная** связь: ECS-тик владеет видом. Так нельзя. Канон: виджет/доска в `Update` / `LateUpdate` сами читают World. Query не кэшировать на MonoBehaviour (lifetime GO ≠ lifetime World). Если список всё же нужен (живые диалоги, квесты, тех-карты) — кэш на `SimWorld`, у него то же время жизни, что у World.
+
+HUD (`Presentation/GameHud`) не делает `CreateEntityQuery`. Карточка дома читает `BuildingSelection.Selected` и компоненты этой сущности; idle — `WorkforceSummary` на сессии; бригада стройки — `Construction.CrewAssigned` / `CrewArrived`; пирамида — `CityCore.Headquarters`; часы — `GameTime` на сессии через `SimWorld`. Доски видов (`BuildingViewBoard`, `AgentViewBoard`) мир сканировать могут: это синхронизация GO, не HUD.
 
 Редкое исключение наружу: `BuildingRejectedEvent` (тост). Не спавн, не тик дня.
 

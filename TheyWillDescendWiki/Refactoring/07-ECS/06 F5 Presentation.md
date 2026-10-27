@@ -6,6 +6,8 @@
 
 Виды (`BuildingViewBoard`, `AgentViewBoard`) мир сканировать **могут** — это их работа (синхронизация GO). Не путать с HUD.
 
+> **Статус: сделано.** AgentViewBoard не измеряли и не переписывали.
+
 ---
 
 ## 1. Что убрать
@@ -82,6 +84,8 @@ public int CrewArrived;
 
 Не начинать Ф5 с переписывания доски «потому что документ 03 сказал микрофризы». Документ 03 не измерял.
 
+**Результат Ф5:** замер не делали. Доску оставили как есть. Цифр профайлера нет — не утверждать микрофризы и не «оптимизировать впрок».
+
 ---
 
 ## 5. Порядок работ
@@ -107,12 +111,14 @@ TryFindBuilding       — нет
 CountWorkforce        — нет
 ```
 
-Профайлер: открытая карточка дома без движения значений — 0 B GC от панели.
+Профайлер: открытая карточка дома без движения значений — 0 B GC от панели. В Ф5 не снимали.
+
+Grep проверен: `CreateEntityQuery` в `Presentation/GameHud/` пусто; `TryFindBuilding` / `CountWorkforce` нет; `FindFirstObjectByType` / `FindAnyObjectByType` в `Update` / `LateUpdate` нет (`PauseCameraSwitch.ResolveBrain` и `GameAudio` — не кадр).
 
 ---
 
 ## 7. Вики после Ф5
 
-- [[../../Architecture/14 Sim Presentation Bridge|14]] — pull без query в HUD
-- [[../../Architecture/03 Presentation & Performance|03]] в рефакторинге — результат замера AgentViewBoard
-- [[../07 Foundation Fixes|07]] §7
+- [[../../Architecture/14 Sim Presentation Bridge|14]] — pull без query в HUD — сделано
+- [[../03 Presentation & Performance|03]] в рефакторинге — замер AgentViewBoard не делали, доску не трогали — записано
+- [[../07 Foundation Fixes|07]] §7 — статус «сделано»

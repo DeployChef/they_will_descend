@@ -10,6 +10,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace TheyWillDescend.Presentation.GameHud
 {
@@ -47,6 +48,19 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Image powerIcon;
 
         BuildPlacementController _placement;
+        string _lastTitle;
+        string _lastWorkers;
+        string _lastIdle;
+        string _lastStatus;
+        string _lastRole;
+        string _lastResourceName;
+        string _lastResourceRate;
+
+        [Inject]
+        public void Construct(BuildPlacementController placement)
+        {
+            _placement = placement;
+        }
 
         void Awake()
         {
@@ -167,41 +181,33 @@ namespace TheyWillDescend.Presentation.GameHud
 
             if (card != null)
                 card.SetActive(true);
-            if (title != null)
-                title.text = string.IsNullOrEmpty(displayName) ? $"Building {building.TypeId}" : displayName;
+            Write(title, ref _lastTitle, string.IsNullOrEmpty(displayName) ? $"Building {building.TypeId}" : displayName);
 
             var occupied = workplace.AssignedCount;
             var working = workplace.WorkingCount;
             var paused = workplace.IsPaused;
-            var onShift = TryGetGameTime(em, out var time) && time.IsWorkShift;
+            var onShift = SimWorld.TryGetGameTime(em, bag, out var time) && time.IsWorkShift;
             if (slots < 0)
                 slots = 0;
             var summary = em.HasComponent<WorkforceSummary>(bag)
                 ? em.GetComponentData<WorkforceSummary>(bag)
                 : default;
-            if (workers != null)
-                workers.text = $"{occupied} / {workplace.DesiredWorkers}";
-
-            if (idle != null)
-                idle.text = $"Idle workers  {summary.IdleWorkers}";
+            Write(workers, ref _lastWorkers, $"{occupied} / {workplace.DesiredWorkers}");
+            Write(idle, ref _lastIdle, $"Idle workers  {summary.IdleWorkers}");
 
             if (constructing)
             {
-                CountConstructionCrew(em, entity, out var crewAssigned, out var crewArrived);
-                if (workers != null)
-                    workers.text = $"{construction.Normalized * 100f:0}%";
+                var crewAssigned = construction.CrewAssigned;
+                var crewArrived = construction.CrewArrived;
+                Write(workers, ref _lastWorkers, $"{construction.Normalized * 100f:0}%");
                 UpdateRecipeLabels(em, entity, bag, slots, 0f);
-                if (status != null)
-                {
-                    if (crewArrived < 1)
-                        status.text = crewAssigned > 0
-                            ? (dismantling ? "Crew walking to dismantle." : "Crew walking to the site.")
-                            : (dismantling ? "Waiting to dismantle." : "Waiting for workers.");
-                    else
-                        status.text = dismantling
-                            ? $"{crewArrived} dismantling."
-                            : $"{crewArrived} building.";
-                }
+                Write(status, ref _lastStatus, crewArrived < 1
+                    ? crewAssigned > 0
+                        ? (dismantling ? "Crew walking to dismantle." : "Crew walking to the site.")
+                        : (dismantling ? "Waiting to dismantle." : "Waiting for workers.")
+                    : dismantling
+                        ? $"{crewArrived} dismantling."
+                        : $"{crewArrived} building.");
 
                 if (workFill != null)
                     workFill.fillAmount = construction.Normalized;
@@ -209,16 +215,11 @@ namespace TheyWillDescend.Presentation.GameHud
             else if (!onShift)
             {
                 UpdateRecipeLabels(em, entity, bag, slots, 0f);
-                if (status != null)
-                {
-                    if (occupied == 0)
-                        status.text =
-                            $"Off shift ({time.WorkShiftStartHour:00}:00–{time.WorkShiftEndHour:00}:00). No one assigned.";
-                    else
-                        status.text = paused
-                            ? "Off shift. Crew at the pyramid. Production is stopped."
-                            : "Off shift. Crew walks around the pyramid.";
-                }
+                Write(status, ref _lastStatus, occupied == 0
+                    ? $"Off shift ({time.WorkShiftStartHour:00}:00–{time.WorkShiftEndHour:00}:00). No one assigned."
+                    : paused
+                        ? "Off shift. Crew at the pyramid. Production is stopped."
+                        : "Off shift. Crew walks around the pyramid.");
 
                 if (workFill != null)
                     workFill.fillAmount = Workplace.Load01(occupied, slots);
@@ -226,10 +227,9 @@ namespace TheyWillDescend.Presentation.GameHud
             else if (paused)
             {
                 UpdateRecipeLabels(em, entity, bag, slots, 0f);
-                if (status != null)
-                    status.text = occupied == 0
-                        ? "Production stopped. No one assigned."
-                        : "Production stopped. Crew stays assigned.";
+                Write(status, ref _lastStatus, occupied == 0
+                    ? "Production stopped. No one assigned."
+                    : "Production stopped. Crew stays assigned.");
                 if (workFill != null)
                     workFill.fillAmount = Workplace.Load01(occupied, slots);
             }
@@ -237,15 +237,11 @@ namespace TheyWillDescend.Presentation.GameHud
             {
                 var productionLoad = Workplace.Load01(working, slots);
                 UpdateRecipeLabels(em, entity, bag, slots, productionLoad);
-                if (status != null)
-                {
-                    if (occupied == 0)
-                        status.text = "No one assigned.";
-                    else if (working >= occupied)
-                        status.text = "All workers on site.";
-                    else
-                        status.text = $"{working} on site, {occupied - working} walking.";
-                }
+                Write(status, ref _lastStatus, occupied == 0
+                    ? "No one assigned."
+                    : working >= occupied
+                        ? "All workers on site."
+                        : $"{working} on site, {occupied - working} walking.");
 
                 if (workFill != null)
                     workFill.fillAmount = Workplace.Load01(occupied, slots);
@@ -262,24 +258,17 @@ namespace TheyWillDescend.Presentation.GameHud
             UpdatePowerIcon(paused);
         }
 
-        static bool TryGetGameTime(EntityManager em, out GameTime time)
-        {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-            {
-                time = default;
-                return false;
-            }
-
-            time = query.GetSingleton<GameTime>();
-            return true;
-        }
-
         BuildingCatalogAsset FindViewCatalog()
         {
-            if (_placement == null)
-                _placement = FindAnyObjectByType<BuildPlacementController>();
             return _placement != null ? _placement.Catalog : null;
+        }
+
+        static void Write(TMP_Text label, ref string last, string value)
+        {
+            if (label == null || last == value)
+                return;
+            last = value;
+            label.text = value;
         }
 
         void UpdateRecipeLabels(
@@ -289,8 +278,7 @@ namespace TheyWillDescend.Presentation.GameHud
             int slots,
             float productionLoad)
         {
-            if (buildingRole != null)
-                buildingRole.text = slots > 0 ? "Workplace" : "Building";
+            Write(buildingRole, ref _lastRole, slots > 0 ? "Workplace" : "Building");
 
             if (resourceName == null && resourceRate == null)
                 return;
@@ -328,10 +316,8 @@ namespace TheyWillDescend.Presentation.GameHud
                 }
             }
 
-            if (resourceName != null)
-                resourceName.text = name ?? string.Empty;
-            if (resourceRate != null)
-                resourceRate.text = rate ?? string.Empty;
+            Write(resourceName, ref _lastResourceName, name ?? string.Empty);
+            Write(resourceRate, ref _lastResourceRate, rate ?? string.Empty);
         }
 
         static string DisplayName(DynamicBuffer<ResourceInfo> names, FixedString64Bytes resourceId)
@@ -345,30 +331,6 @@ namespace TheyWillDescend.Presentation.GameHud
             }
 
             return resourceId.ToString();
-        }
-
-        static void CountConstructionCrew(
-            EntityManager em,
-            Entity site,
-            out int assigned,
-            out int arrived)
-        {
-            assigned = 0;
-            arrived = 0;
-            if (site == Entity.Null)
-                return;
-
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<AgentAssignment>());
-            using var assignments = query.ToComponentDataArray<AgentAssignment>(Allocator.Temp);
-            for (var i = 0; i < assignments.Length; i++)
-            {
-                var job = assignments[i];
-                if (job.ConstructionSite != site)
-                    continue;
-                assigned++;
-                if (job.Arrived != 0)
-                    arrived++;
-            }
         }
 
         bool TrySelectedWorkplace(out EntityManager em, out Entity entity, out Workplace workplace)

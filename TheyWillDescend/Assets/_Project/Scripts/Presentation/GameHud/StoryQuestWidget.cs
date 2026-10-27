@@ -31,9 +31,9 @@ namespace TheyWillDescend.Presentation.GameHud
                 return;
 
             var defs = em.GetBuffer<StoryQuestDef>(session);
-            var now = Now(em);
+            var now = Now(em, session);
             var seen = new HashSet<Entity>();
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<StoryLiveQuest>());
+            var query = SimWorld.LiveQuests(em);
             using var entities = query.ToEntityArray(Allocator.Temp);
             for (var i = 0; i < entities.Length; i++)
             {
@@ -87,9 +87,7 @@ namespace TheyWillDescend.Presentation.GameHud
         {
             if (def.CountBuildings != 0)
             {
-                using var query = em.CreateEntityQuery(
-                    ComponentType.ReadOnly<Building>(),
-                    ComponentType.Exclude<Construction>());
+                var query = SimWorld.FinishedHouses(em);
                 using var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
                 var count = 0;
                 for (var i = 0; i < buildings.Length; i++)
@@ -106,12 +104,10 @@ namespace TheyWillDescend.Presentation.GameHud
             return (int)ResourceLedger.Get(em.GetBuffer<ResourceAmount>(session), def.GoalId);
         }
 
-        static float Now(EntityManager em)
+        static float Now(EntityManager em, Entity session)
         {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
+            if (!SimWorld.TryGetGameTime(em, session, out var time))
                 return 0f;
-            var time = query.GetSingleton<GameTime>();
             return time.Day * 24f + time.HourOfDay;
         }
     }

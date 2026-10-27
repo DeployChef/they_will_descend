@@ -461,6 +461,8 @@ UI:      HQ entity (из CityCore, §7.2) → GetBuffer<PyramidFeedLine> → lin
 - `rg "FindFirstObjectByType" -g "*.cs"` — нет вызовов внутри `Update` / `LateUpdate`.
 - Открытая карточка дома и карточка пирамиды: в профайлере 0 B `GC.Alloc` от панели в кадре без изменений.
 
+> **Статус: сделано.** HUD больше не делает `CreateEntityQuery`. Инспектор дома читает `selection.Selected`, `WorkforceSummary`, `GameTime` с сессии, бригаду с `Construction.Crew*`. Пирамида — `CityCore.Headquarters`. Запросы списков (диалоги, квесты, тех-карты, готовые дома) кэширует `SimWorld`. Hover выбора — только меш; footprint-query только на клике. `Find*` в `Update`/`LateUpdate` нет. **AgentViewBoard не трогали:** замер в профайлере в этой фазе не делали. Подробности: [[07-ECS/06 F5 Presentation]].
+
 ---
 
 ## 8. Ф6. Сборки, namespace, мусор

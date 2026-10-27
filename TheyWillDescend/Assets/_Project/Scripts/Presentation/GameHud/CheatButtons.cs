@@ -226,27 +226,12 @@ namespace TheyWillDescend.Presentation.GameHud
         static bool TryGetGameTime(out GameTime time)
         {
             time = default;
-            if (!SimWorld.TryGet(out var em, out _))
-                return false;
-
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-                return false;
-
-            time = query.GetSingleton<GameTime>();
-            return true;
+            return SimWorld.TryGet(out var em, out var bag) && SimWorld.TryGetGameTime(em, bag, out time);
         }
 
         static void WriteGameTime(GameTime time)
         {
-            if (!SimWorld.TryGet(out var em, out _))
-                return;
-
-            using var query = em.CreateEntityQuery(ComponentType.ReadWrite<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-                return;
-
-            em.SetComponentData(query.GetSingletonEntity(), time);
+            SimWorld.TrySetGameTime(time);
         }
     }
 }

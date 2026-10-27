@@ -63,6 +63,7 @@ namespace TheyWillDescend.Presentation.SimBridge
             });
             em.AddComponentData(session, new AgentIdSequence());
             em.AddComponentData(session, new WorkforceSummary());
+            em.AddComponentData(session, new CityCore());
             em.AddBuffer<SimClockCommand>(session);
             em.AddBuffer<BuildingRejectedEvent>(session);
 
@@ -122,7 +123,7 @@ namespace TheyWillDescend.Presentation.SimBridge
         public static void SpawnRunEntities(EntityManager em, Entity session, float workerSpeed, ResourceInfo[] info)
         {
             CreateAgentPrototype(em, session, workerSpeed);
-            CreateHeadquarters(em, info);
+            CreateHeadquarters(em, session, info);
         }
 
         static void CreateAgentPrototype(EntityManager em, Entity session, float speed)
@@ -438,11 +439,15 @@ namespace TheyWillDescend.Presentation.SimBridge
             em.AddComponentData(session, loyalty);
         }
 
-        static void CreateHeadquarters(EntityManager em, ResourceInfo[] info)
+        static void CreateHeadquarters(EntityManager em, Entity session, ResourceInfo[] info)
         {
             var hqEntity = em.CreateEntity();
             RunWorld.Own(em, hqEntity);
             em.AddComponent<Headquarters>(hqEntity);
+            if (em.HasComponent<CityCore>(session))
+                em.SetComponentData(session, new CityCore { Headquarters = hqEntity });
+            else
+                em.AddComponentData(session, new CityCore { Headquarters = hqEntity });
             em.AddComponentData(hqEntity, LocalTransform.FromPosition(float3.zero));
 #if UNITY_EDITOR
             em.SetName(hqEntity, "Headquarters");

@@ -204,10 +204,9 @@ namespace TheyWillDescend.Presentation.Environment
             if (dayLight == null)
                 return;
 
-            if (!SimWorld.TryGet(out var em, out _))
-                return;
-
-            if (!TryGetGameTime(em, out var gameTime) || gameTime.DayDuration <= 0f)
+            if (!SimWorld.TryGet(out var em, out var bag)
+                || !SimWorld.TryGetGameTime(em, bag, out var gameTime)
+                || gameTime.DayDuration <= 0f)
                 return;
 
             // Доля дня: 0 = полночь, 0.25 = утро, 0.5 = полдень, 0.75 = вечер, 1 = полночь
@@ -334,22 +333,6 @@ namespace TheyWillDescend.Presentation.Environment
             if (t < 0.85f)
                 return Color.Lerp(dayColor, duskColor, (t - 0.75f) / 0.1f);
             return Color.Lerp(duskColor, nightColor, (t - 0.85f) / 0.15f);
-        }
-
-        /// <summary>
-        /// Читаем GameTime через EntityQuery (канон — как в TimeWidget).
-        /// </summary>
-        static bool TryGetGameTime(EntityManager em, out GameTime time)
-        {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-            {
-                time = default;
-                return false;
-            }
-
-            time = query.GetSingleton<GameTime>();
-            return true;
         }
 
         // Отладочная отрисовка дуги солнца в сцене

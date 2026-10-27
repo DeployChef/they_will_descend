@@ -19,6 +19,7 @@ namespace TheyWillDescend.Presentation.GameHud
         [SerializeField] Button speed2Button;
         [SerializeField] Button speed3Button;
         [SerializeField] TMP_Text clockLabel;
+        string _lastClock;
 
         void Awake()
         {
@@ -54,22 +55,13 @@ namespace TheyWillDescend.Presentation.GameHud
             if (clockLabel == null)
                 return;
 
-            clockLabel.text = hasControl && TryGetGameTime(em, out var time)
+            var text = hasControl && SimWorld.TryGetGameTime(em, bag, out var time)
                 ? GameClockFormat.Format(time)
                 : "Day --  --:--";
-        }
-
-        static bool TryGetGameTime(EntityManager em, out GameTime time)
-        {
-            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<GameTime>());
-            if (query.IsEmptyIgnoreFilter)
-            {
-                time = default;
-                return false;
-            }
-
-            time = query.GetSingleton<GameTime>();
-            return true;
+            if (_lastClock == text)
+                return;
+            _lastClock = text;
+            clockLabel.text = text;
         }
 
         static void OnPauseClicked()

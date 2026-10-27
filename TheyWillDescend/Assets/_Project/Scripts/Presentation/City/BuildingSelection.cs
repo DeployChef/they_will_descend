@@ -18,8 +18,6 @@ namespace TheyWillDescend.Presentation.City
         [SerializeField] BuildPlacementController placement;
         [SerializeField] RoadPaintController roadPaint;
 
-        EntityQuery _buildingQuery;
-
         public Entity Selected { get; private set; }
         public Entity Hovered { get; private set; }
         public bool IsPyramidSelected { get; private set; }
@@ -62,11 +60,6 @@ namespace TheyWillDescend.Presentation.City
                 Deselect();
         }
 
-        void OnDestroy()
-        {
-            _buildingQuery = default;
-        }
-
         void UpdateHover()
         {
             Hovered = Entity.Null;
@@ -78,7 +71,11 @@ namespace TheyWillDescend.Presentation.City
                 return;
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
-            if (!TryPick(out var building, out _))
+            var cam = Camera.main;
+            if (cam == null)
+                return;
+            var ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
+            if (!TryPickMesh(ray, out var building, out var hitPyramid) || hitPyramid)
                 return;
             Hovered = building;
         }
@@ -205,13 +202,12 @@ namespace TheyWillDescend.Presentation.City
             if (!SimWorld.TryGet(out var em, out _))
                 return false;
 
-            if (_buildingQuery == default)
-                _buildingQuery = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
-            if (_buildingQuery.IsEmptyIgnoreFilter)
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<Building>());
+            if (query.IsEmptyIgnoreFilter)
                 return false;
 
-            var houses = _buildingQuery.ToEntityArray(Allocator.Temp);
-            var buildings = _buildingQuery.ToComponentDataArray<Building>(Allocator.Temp);
+            var houses = query.ToEntityArray(Allocator.Temp);
+            var buildings = query.ToComponentDataArray<Building>(Allocator.Temp);
             var best = float.MaxValue;
             var picked = Entity.Null;
             for (var i = 0; i < buildings.Length; i++)

@@ -13,6 +13,8 @@ namespace TheyWillDescend.Simulation.City
         public float Elapsed;
         public float Duration;
         public byte Dismantling;
+        public int CrewAssigned;
+        public int CrewArrived;
 
         public readonly bool IsDismantling => Dismantling != 0;
 

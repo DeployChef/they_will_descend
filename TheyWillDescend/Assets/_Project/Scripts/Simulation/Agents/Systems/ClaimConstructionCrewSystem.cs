@@ -123,6 +123,26 @@ namespace TheyWillDescend.Simulation.Agents
 
                 sites[s] = site;
             }
+
+            var constructions = SystemAPI.GetComponentLookup<Construction>(false);
+            for (var s = 0; s < sites.Length; s++)
+            {
+                var site = sites[s];
+                if (!constructions.HasComponent(site.Entity))
+                    continue;
+                var arrived = 0;
+                for (var i = 0; i < agents.Length; i++)
+                {
+                    var job = agents[i].Job;
+                    if (job.ConstructionSite != site.Entity || job.Arrived == 0)
+                        continue;
+                    arrived++;
+                }
+
+                var construction = constructions.GetRefRW(site.Entity);
+                construction.ValueRW.CrewAssigned = site.Claimed;
+                construction.ValueRW.CrewArrived = arrived;
+            }
         }
 
         static void SortById(NativeList<Site> sites)
