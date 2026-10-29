@@ -22,7 +22,7 @@
 
 ## Правило тика
 
-Симуляция **работает**, только если `SimControl.IsRunning`. Меню и брифинг — `SessionInGame = 0` → Mode Off.
+Симуляция **работает**, только если `SimControl.IsRunning`. Пока сессии нет (меню), системы с `RequireForUpdate<SimSession>` не исполняются. Пауза — `Frozen`, не второй флаг «мы в игре».
 
 Внутри ECS:
 

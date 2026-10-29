@@ -178,8 +178,8 @@ namespace TheyWillDescend.Presentation.SimBridge
             control.Speed = snapshot.speed < 1 ? 1 : snapshot.speed > 3 ? 3 : snapshot.speed;
             control.TimePaused = snapshot.playerPaused ? (byte)1 : (byte)0;
             control.PlayerPaused = 0;
-            control.Mode = SimRunMode.Off;
-            control.SessionInGame = 0;
+            control.BuildLocked = 0;
+            control.Mode = control.TimePaused != 0 ? SimRunMode.Frozen : SimRunMode.Running;
             em.SetComponentData(session, control);
         }
 

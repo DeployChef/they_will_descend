@@ -25,13 +25,6 @@ namespace TheyWillDescend.Simulation.Gods
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            if (em.GetComponentData<SimControl>(session).SessionInGame == 0)
-            {
-                using var leftover = query.ToEntityArray(Allocator.Temp);
-                em.DestroyEntity(leftover);
-                return;
-            }
-
             if (!SystemAPI.TryGetSingletonEntity<Headquarters>(out var hq))
                 return;
 

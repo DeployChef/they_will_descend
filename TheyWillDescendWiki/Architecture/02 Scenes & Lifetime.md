@@ -9,7 +9,7 @@
 | Сцена | Живёт | Содержимое |
 | --- | --- | --- |
 | **MainMenu** | пока в меню | Main Camera (+ `StudioListener`), Canvas: `PressAnyKeyScreen`, `MainMenuScreen`; `MainMenuFlow`, `MainMenuLifetimeScope` |
-| **Game** | сессия рана | Main Camera (+ `CinemachineBrain`, `StudioListener`), VCam, уровень, свет, HUD, `WorldAudio`, `GameSession`, `GameLifetimeScope` |
+| **Game** | сессия рана | Main Camera (+ `CinemachineBrain`, `StudioListener`), VCam, уровень, свет, HUD, `WorldAudio`, `SimulationHost`, `GameLifetimeScope` |
 
 Сцен Root и Loading нет. Процесс — префаб `AppScope` (корневой scope VContainer), экран загрузки — его дочерний объект.
 

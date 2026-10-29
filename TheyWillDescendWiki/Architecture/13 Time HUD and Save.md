@@ -13,7 +13,7 @@
 
 Истина часов — `SimControl` в ECS. Нет отдельного C#-`SimGate` и нет второго компонента `SimClock`.
 
-Speed **не затирают** стройкой. Тик = функция `(SessionInGame, Speed, PlayerPaused, BuildLocked)`.
+Speed **не затирают** стройкой. Тик = функция `(Speed, TimePaused, PlayerPaused, BuildLocked)`.
 
 Три вещи, которые нельзя смешивать:
 
@@ -46,10 +46,10 @@ Speed **не затирают** стройкой. Тик = функция `(Sess
 
 ```text
 Speed          // последняя выбранная 1|2|3, стройка не затирает
-PlayerPaused   // кнопка ⏸ / Esc
+TimePaused     // кнопка ⏸
+PlayerPaused   // Esc-оверлей
 BuildLocked    // каталог / ghost
-SessionInGame  // Playing vs меню
-Mode           // Off | Frozen если любой замок | Running
+Mode           // Frozen если любой замок, иначе Running
 DeltaTime      // кадр × Speed; системы сами skip, если не Running
 ```
 
@@ -65,10 +65,11 @@ Esc в `Playing`: сначала `BuildWidget.TryHandleEscape()`, иначе о�
 API вентиля — `SimClockCommand`:
 
 ```text
-SetSessionInGame
 SetSpeed(1|2|3)
 TogglePlayerPause
 SetPlayerPause
+SetTimePause
+ToggleTimePause
 SetBuildLocked
 Restore (load)
 ```
@@ -82,7 +83,7 @@ HUD **никогда** не пишет `Mode` вручную. `ConsumeSimClockCo
 ```text
 SimControl
   Mode, Speed, DeltaTime
-  SessionInGame, PlayerPaused, BuildLocked
+  TimePaused, PlayerPaused, BuildLocked
 ```
 
 `ApplySimDeltaTime` (последний в `CommandSystemGroup`) пишет `DeltaTime = frame * Speed`.  
@@ -205,18 +206,16 @@ SavePayload v22
 
 ### Load (последовательность)
 
-1. Нет файла → лог, ничего не трогать.
-2. `RunSessionSnapshot.BeginApply` восстанавливает сохранённый resolved building catalog, затем при остановленной sim переводит `SimSession.Phase` в `Preparing` и атомарно ставит reset + restore-команды.
-3. Следующий `CommandSystemGroup` сносит **только динамику рана**: `DespawnAllAgentsCommand` → `DespawnAllBuildingsCommand`, затем восстанавливает clock/buildings/agents/paused/feed. Не выгружать `Game.unity`.
-4. Snapshot-place имеет source `SnapshotRestore`: он разрешён в `Preparing`; gameplay-place разрешён только в `Ready`.
-5. Lifecycle-finalizer переводит `Preparing → Ready` лишь когда все входящие очереди drained.
-6. `GameSession.Apply` ждёт `Ready`. Пауза на это время показывает сцену Loading через `ShellService` и снимает её после `Ready`. Потом `PauseMenuScreen` перестраивает views.
+Кнопка Load и в меню, и в паузе — `RunLaunch.FromSave(SaveService.Slot0)` и загрузка сцены `Game`. Отдельного apply внутри живой сцены нет.
 
-Load **не** выгружает сцену Game и **не** зовёт `Shutdown`.
+1. Нет файла → кнопка серая (меню) или лог при чтении.
+2. `ShellService` показывает шторку и грузит `Game`.
+3. `SimulationHost.Open` при выключенных группах стирает прошлый ран, собирает пустую сессию и зовёт `SnapshotRestore.Apply`. Скорость и пауза из снимка становятся `Mode` до того, как группы включатся.
+4. `PauseMenuScreen.RebuildViews`.
 
-Перед apply пауза показывает сцену Loading. Выход в главное меню — `ShellService.ReturnToMenu`: `Shutdown` (рана больше нет), выгрузка Game, загрузка MainMenu. Load из главного меню — `ShellService.StartRun(RunLaunch.FromSave(id))`: шелл грузит Game и зовёт `Begin`. Сейчас кнопка передаёт `SaveService.Slot0`.
+Выход в главное меню — `ShellService.GoToMenu()`. Сцена Game умирает, `SimulationHost.Dispose` стирает ран.
 
-Новый **Start Game / Start Debug** зовёт `RunPublisher.BeginRun`: runtime-дома не в SubScene, поэтому reset входит в тот же ECS pipeline до scenario seed.
+Новый **Start Game / Start Debug** — `RunLaunch.New` / `New(debug: true)`. Хост после bootstrap зовёт `ScenarioSetup`.
 
 ---
 

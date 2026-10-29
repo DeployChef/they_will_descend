@@ -4,16 +4,16 @@ using Cysharp.Threading.Tasks;
 using TheyWillDescend.Presentation.Audio;
 using TheyWillDescend.Presentation.Infrastructure;
 using TheyWillDescend.Presentation.ShellUi;
-using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Presentation.SimBridge;
 using VContainer.Unity;
 
 namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// Entry point of the Game scene. Picks the launch (menu → editor setting → Normal), reports the
-    /// world sound banks and the run start as loading work, then turns the clock, game input, pause menu
-    /// and gameplay music on.
-    /// Leaving the scene turns them off before the run is reset.
+    /// world sound banks and <see cref="SimulationHost.Open"/> as loading work, then turns game input,
+    /// the pause menu and gameplay music on. The host owns the run: it builds the session and wipes it
+    /// when this scene dies.
     /// </summary>
     public sealed class GameEntry : IInitializable, IDisposable
     {
@@ -28,10 +28,9 @@ namespace TheyWillDescend.Presentation.Shell
         };
 #endif
 
-        readonly ShellService _shell;
         readonly AppContext _app;
         readonly LoadingScreen _screen;
-        readonly GameSession _session;
+        readonly SimulationHost _host;
         readonly InputService _input;
         readonly PauseMenuScreen _pause;
         readonly AudioService _audio;
@@ -41,15 +40,13 @@ namespace TheyWillDescend.Presentation.Shell
         readonly float _debugLoadStageSeconds;
 #endif
         readonly CancellationTokenSource _life = new();
-        IDisposable _teardown;
         IDisposable _worldBanks;
         bool _live;
 
         public GameEntry(
-            ShellService shell,
             AppContext app,
             LoadingScreen screen,
-            GameSession session,
+            SimulationHost host,
             InputService input,
             PauseMenuScreen pause,
             AudioService audio,
@@ -57,10 +54,9 @@ namespace TheyWillDescend.Presentation.Shell
             bool editorDebug,
             float debugLoadStageSeconds)
         {
-            _shell = shell;
             _app = app;
             _screen = screen;
-            _session = session;
+            _host = host;
             _input = input;
             _pause = pause;
             _audio = audio;
@@ -73,26 +69,38 @@ namespace TheyWillDescend.Presentation.Shell
 
         public void Initialize()
         {
-            _teardown = _shell.RegisterTeardown(EndRun);
-
 #if UNITY_EDITOR
             if (_debugLoadStageSeconds > 0.001f)
-            {
                 _screen.Add(DebugLoadStage(0), weight: 1f, label: DebugLoadLabels[0]);
-                return;
-            }
+            else
 #endif
-            QueueRunWork();
+                QueueRunWork();
+
+            // A menu transition already raised the curtain and will wait. Play on this scene has not.
+            if (!_screen.IsVisible)
+                CoverDirectOpen(_life.Token).Forget();
         }
 
         public void Dispose()
         {
-            _teardown?.Dispose();
-            _teardown = null;
+            Disarm();
             _worldBanks?.Dispose();
             _worldBanks = null;
             _life.Cancel();
             _life.Dispose();
+        }
+
+        async UniTaskVoid CoverDirectOpen(CancellationToken ct)
+        {
+            _screen.ShowImmediate();
+            try
+            {
+                await _screen.Wait(ct);
+                await _screen.Hide(ct);
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         void QueueRunWork()
@@ -139,27 +147,17 @@ namespace TheyWillDescend.Presentation.Shell
 #endif
         }
 
-        async UniTask BeginRun(RunLaunch launch, CancellationToken ct)
+        UniTask BeginRun(RunLaunch launch, CancellationToken ct)
         {
-            if (!await _session.Begin(launch, ct))
-                throw new InvalidOperationException("The run did not start (see GameSession errors above).");
+            ct.ThrowIfCancellationRequested();
+            if (!_host.Open(launch))
+                throw new InvalidOperationException("The run did not start (see SimulationHost errors above).");
             Arm();
-        }
-
-        async UniTask<bool> EndRun(CancellationToken ct)
-        {
-            var wasLive = _live;
-            Disarm();
-            if (await _session.Shutdown(ct))
-                return true;
-            if (wasLive)
-                Arm();
-            return false;
+            return UniTask.CompletedTask;
         }
 
         void Arm()
         {
-            SimCommands.TryPost(SimClockCommand.InGame(true));
             _input.EnableGame();
             _pause.Use();
             _audio.Music.Set(MusicTheme.Gameplay);
@@ -174,7 +172,6 @@ namespace TheyWillDescend.Presentation.Shell
             _live = false;
             _pause.Release();
             _input.Disable();
-            SimCommands.TryPost(SimClockCommand.InGame(false));
         }
     }
 }

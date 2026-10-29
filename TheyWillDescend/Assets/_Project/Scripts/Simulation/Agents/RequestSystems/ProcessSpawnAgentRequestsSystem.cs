@@ -27,17 +27,13 @@ namespace TheyWillDescend.Simulation.Agents
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var inGame = em.GetComponentData<SimControl>(session).SessionInGame != 0;
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
             using var requests = query.ToComponentDataArray<SpawnAgentRequest>(Allocator.Temp);
 
             for (var i = 0; i < requests.Length; i++)
             {
-                if (inGame)
-                {
-                    var req = requests[i];
-                    AgentSpawn.Spawn(em, session, in req);
-                }
+                var req = requests[i];
+                AgentSpawn.Spawn(em, session, in req);
                 em.DestroyEntity(requestEntities[i]);
             }
         }

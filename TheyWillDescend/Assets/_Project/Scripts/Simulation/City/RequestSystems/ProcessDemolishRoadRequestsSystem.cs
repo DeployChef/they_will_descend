@@ -24,13 +24,11 @@ namespace TheyWillDescend.Simulation.City
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var inGame = em.GetComponentData<SimControl>(session).SessionInGame != 0;
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
             using var requests = query.ToComponentDataArray<DemolishRoadRequest>(Allocator.Temp);
             for (var i = 0; i < requests.Length; i++)
             {
-                if (inGame)
-                    RoadSections.BeginDismantle(em, session, requests[i].SegmentId);
+                RoadSections.BeginDismantle(em, session, requests[i].SegmentId);
                 em.DestroyEntity(requestEntities[i]);
             }
         }

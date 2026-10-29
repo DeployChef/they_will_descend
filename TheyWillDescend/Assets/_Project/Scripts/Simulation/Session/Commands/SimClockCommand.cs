@@ -4,7 +4,6 @@ namespace TheyWillDescend.Simulation.Session
 {
     public enum SimClockCommandKind : byte
     {
-        SetSessionInGame = 1,
         TogglePlayerPause = 2,
         SetSpeed = 3,
         SetBuildLocked = 4,
@@ -19,12 +18,6 @@ namespace TheyWillDescend.Simulation.Session
         public SimClockCommandKind Kind;
         public int Value;
         public int Secondary;
-
-        public static SimClockCommand InGame(bool inGame) => new()
-        {
-            Kind = SimClockCommandKind.SetSessionInGame,
-            Value = inGame ? 1 : 0
-        };
 
         public static SimClockCommand TogglePause() => new()
         {

@@ -30,7 +30,7 @@ GameBlockout.unity ──► общий ран (префаб) и данные �
 
 | Группа | Что это | Объекты |
 | --- | --- | --- |
-| Функционал | без этого ран не играется | `GameLifetimeScope`, `GameSession`, камеры (Main Camera, VCam, пауза, цель RTS), `BuildPlacement`, `RadialGridGuide`, `AgentSpawner`, `Headquarters` (логика и клик), `WorldAudio`, HUD |
+| Функционал | без этого ран не играется | `GameLifetimeScope`, `SimulationHost`, камеры (Main Camera, VCam, пауза, цель RTS), `BuildPlacement`, `RadialGridGuide`, `AgentSpawner`, `Headquarters` (логика и клик), `WorldAudio`, HUD |
 | Декорации | мир вокруг, к логике отношения не имеет | `@Environment`, Directional Light, Global Volume, смена дня (`TimeLightController`) |
 | Облик сущностей | как выглядят вещи, которые порождает ран | модели зданий, модели людей, модель пирамиды |
 
@@ -69,7 +69,7 @@ Unity грузит всё, на что ссылается загруженная
 
 ```text
 #GameRun                  ← префаб Prefabs/Game/GameRun.prefab, общий для обеих сцен
-   #Scope                 GameLifetimeScope, GameSession
+   #Scope                 GameLifetimeScope, SimulationHost
    #Cameras               Main Camera, VCam_Gameplay, PauseCamera, RTSCameraTarget
    #City                  RadialGridGuide, BuildPlacement, Headquarters (PyramidView, ClickProxy, PlazaRing, CenterTarget)
    #Agents                AgentSpawner, Humans
@@ -118,7 +118,7 @@ public sealed class VisualSet : ScriptableObject
 
 `StartRun` и `RestartRun` оба открывают `Game`. Шелл блокаут не знает и сцену вне списка сборки не грузит. Play на `GameBlockout.unity` по-прежнему стартует ран, потому что у сцены свой вход. Рестарт из неё уходит в `Game`.
 
-`$Dev` / `ScenarioEditor` живёт только в блокауте: это мастерская стартового сценария (`DefaultScenario` и т.п.). `Game` в сборке редактор домов не тащит. Ран по-прежнему читает `ScenarioDefinition` с `GameSession`, не из сцены.
+`$Dev` / `ScenarioEditor` живёт только в блокауте: это мастерская стартового сценария (`DefaultScenario` и т.п.). `Game` в сборке редактор домов не тащит. Ран по-прежнему читает `ScenarioDefinition` с `SimulationHost`, не из сцены.
 
 ---
 

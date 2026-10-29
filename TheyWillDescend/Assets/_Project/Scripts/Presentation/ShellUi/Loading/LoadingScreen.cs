@@ -12,7 +12,8 @@ namespace TheyWillDescend.Presentation.ShellUi
     /// <summary>
     /// Process-owned curtain (child of AppScope). Survives both the scene we leave and the one we enter.
     /// A scene adds work with <see cref="Add"/>; <see cref="Wait"/> keeps the curtain up and draws progress
-    /// until every task ends. A failed task throws. Only <see cref="Shell.ShellService"/> shows or hides it.
+    /// until every task ends. A failed task throws. The shell shows it for a scene change.
+    /// <see cref="Shell.GameEntry"/> shows it when Game is opened directly.
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class LoadingScreen : MonoBehaviour
@@ -33,9 +34,6 @@ namespace TheyWillDescend.Presentation.ShellUi
         readonly List<Entry> _entries = new();
         CanvasGroup _group;
 
-        /// <summary>Raised when the list goes from empty to busy.</summary>
-        public event Action WorkAdded;
-
         public bool IsVisible { get; private set; }
 
         /// <summary>The object stays inactive in the prefab, so Awake may not have run yet.</summary>
@@ -46,8 +44,6 @@ namespace TheyWillDescend.Presentation.ShellUi
             var entry = new Entry { Weight = weight > 0f ? weight : 1f, Label = label };
             _entries.Add(entry);
             Track(task, entry).Forget();
-            if (_entries.Count == 1)
-                WorkAdded?.Invoke();
         }
 
         /// <summary>

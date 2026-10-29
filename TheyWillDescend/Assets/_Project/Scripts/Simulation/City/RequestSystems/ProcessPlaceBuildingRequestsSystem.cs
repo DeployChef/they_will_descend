@@ -25,7 +25,6 @@ namespace TheyWillDescend.Simulation.City
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var inGame = em.GetComponentData<SimControl>(session).SessionInGame != 0;
             var grid = em.GetComponentData<CityGrid>(session);
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
             using var requests = query.ToComponentDataArray<PlaceBuildingRequest>(Allocator.Temp);
@@ -33,18 +32,14 @@ namespace TheyWillDescend.Simulation.City
 
             for (var i = 0; i < requests.Length; i++)
             {
-                if (inGame)
+                var spec = new BuildingPlaceSpec
                 {
-                    var spec = new BuildingPlaceSpec
-                    {
-                        TypeId = requests[i].TypeId,
-                        AnchorCluster = requests[i].AnchorCluster,
-                        AnchorRadial = requests[i].AnchorRadial,
-                        Mode = BuildingPlaceMode.Gameplay
-                    };
-                    BuildingPlacement.TryPlace(em, session, ref grid, in spec, catalog, recipes);
-                }
-
+                    TypeId = requests[i].TypeId,
+                    AnchorCluster = requests[i].AnchorCluster,
+                    AnchorRadial = requests[i].AnchorRadial,
+                    Mode = BuildingPlaceMode.Gameplay
+                };
+                BuildingPlacement.TryPlace(em, session, ref grid, in spec, catalog, recipes);
                 em.DestroyEntity(requestEntities[i]);
             }
 

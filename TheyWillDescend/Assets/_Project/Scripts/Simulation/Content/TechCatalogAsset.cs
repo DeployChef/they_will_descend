@@ -24,7 +24,7 @@ namespace TheyWillDescend.Simulation.Content
     /// <summary>
     /// Design-time tech table. Runtime truth is one entity per row, spawned
     /// into the world at run start. Extra assets (DLC/plugins) append to the
-    /// same list on GameSession.
+    /// same list on SimulationHost.
     /// </summary>
     [CreateAssetMenu(
         fileName = "TechCatalog",

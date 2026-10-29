@@ -25,7 +25,7 @@ namespace TheyWillDescend.Main
 
         protected override void Configure(IContainerBuilder builder)
         {
-            builder.RegisterComponentInHierarchy<GameSession>();
+            builder.RegisterComponentInHierarchy<SimulationHost>();
             builder.RegisterComponentInHierarchy<PauseMenuScreen>();
             builder.RegisterEntryPoint<SimPauseAudioBridge>();
 

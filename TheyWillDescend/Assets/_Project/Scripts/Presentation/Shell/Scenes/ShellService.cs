@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TheyWillDescend.Presentation.Infrastructure;
@@ -10,14 +9,14 @@ namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// Where the player goes next, and the load that gets them there.
-    /// Show screen → teardown → Single load → wait for the screen's tasks → hide.
-    /// Writes <see cref="AppContext.CurrentLaunch"/> on start and restart. Does not know <see cref="GameSession"/>.
+    /// Show screen → Single load → wait for the screen's tasks → hide.
+    /// Writes <see cref="AppContext.CurrentLaunch"/> on start and restart.
+    /// The run itself lives and dies with the Game scene.
     /// </summary>
     public sealed class ShellService : IDisposable
     {
         readonly AppContext _app;
         readonly LoadingScreen _screen;
-        readonly List<Func<CancellationToken, UniTask<bool>>> _teardowns = new();
         CancellationTokenSource _life = new();
         bool _running;
 
@@ -25,12 +24,10 @@ namespace TheyWillDescend.Presentation.Shell
         {
             _app = app;
             _screen = screen;
-            _screen.WorkAdded += OnWorkAdded;
         }
 
         public void Dispose()
         {
-            _screen.WorkAdded -= OnWorkAdded;
             if (_life == null)
                 return;
             _life.Cancel();
@@ -43,16 +40,6 @@ namespace TheyWillDescend.Presentation.Shell
         public UniTask<bool> RestartRun(RunLaunch launch) => ChangeScene(GameScenes.Game, launch);
 
         public UniTask<bool> GoToMenu() => ChangeScene(GameScenes.MainMenu);
-
-        /// <summary>
-        /// The current scene's cleanup, run under the screen before it unloads.
-        /// Returning false aborts the transition. Dispose the handle when the scene goes away.
-        /// </summary>
-        public IDisposable RegisterTeardown(Func<CancellationToken, UniTask<bool>> teardown)
-        {
-            _teardowns.Add(teardown);
-            return new Registration(this, teardown);
-        }
 
         async UniTask<bool> ChangeScene(string sceneName, RunLaunch? launch = null)
         {
@@ -70,12 +57,6 @@ namespace TheyWillDescend.Presentation.Shell
             try
             {
                 await _screen.Show(ct);
-                if (!await RunTeardowns(ct))
-                {
-                    await _screen.Hide(ct);
-                    return false;
-                }
-
                 await LoadSingle(sceneName, ct);
                 await FinishLoading(ct);
                 return true;
@@ -90,50 +71,10 @@ namespace TheyWillDescend.Presentation.Shell
             }
         }
 
-        /// <summary>A scene opened directly asked for time with no transition running.</summary>
-        void OnWorkAdded()
-        {
-            if (_running || _life == null)
-                return;
-            RunStandalone(_life.Token).Forget();
-        }
-
-        async UniTaskVoid RunStandalone(CancellationToken ct)
-        {
-            _running = true;
-            try
-            {
-                _screen.ShowImmediate();
-                await FinishLoading(ct);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                _running = false;
-            }
-        }
-
         async UniTask FinishLoading(CancellationToken ct)
         {
             await _screen.Wait(ct);
             await _screen.Hide(ct);
-        }
-
-        async UniTask<bool> RunTeardowns(CancellationToken ct)
-        {
-            var snapshot = _teardowns.ToArray();
-            for (var i = 0; i < snapshot.Length; i++)
-            {
-                if (!await snapshot[i](ct))
-                {
-                    GameLog.Error("Shell: scene teardown was not confirmed.");
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         static async UniTask LoadSingle(string sceneName, CancellationToken ct)
@@ -147,24 +88,6 @@ namespace TheyWillDescend.Presentation.Shell
             // Scenes may also register work in Start, which runs on the next frame.
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
             GameLog.Info($"Scene '{sceneName}' loaded.");
-        }
-
-        sealed class Registration : IDisposable
-        {
-            ShellService _owner;
-            readonly Func<CancellationToken, UniTask<bool>> _teardown;
-
-            public Registration(ShellService owner, Func<CancellationToken, UniTask<bool>> teardown)
-            {
-                _owner = owner;
-                _teardown = teardown;
-            }
-
-            public void Dispose()
-            {
-                _owner?._teardowns.Remove(_teardown);
-                _owner = null;
-            }
         }
     }
 }

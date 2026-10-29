@@ -305,7 +305,7 @@ Build HUD: ключи из `BuildingPrototype`, имя с `BuildingView` на п
 | Console: duplicate typeId | Два префаба с одним ключом в catalog |
 | Console: needs a BuildingStamp / invalid footprint | На префабе нет карточки или width/depth 0 |
 | HUD пустой / «catalog empty» | SubScene не запеклась; catalog не на SimControl |
-| Start Debug без домов | Console: `Run kit: Debug` и `N houses`; на `GameSession` висит DebugScenario |
+| Start Debug без домов | Console: `Run kit: Debug` и `N houses`; на `SimulationHost` висит DebugScenario |
 | Игрок ставит бесплатно | Пустой `costs` на `BuildingStamp` |
 | Сутки снова 5 с / нет смены | `SimRulesAuthoring` без ассета; править `DefaultSimRules`, не Inspector SubScene |
 | Призрак без меша, дом после клика есть | `BuildPlacementController.Catalog` не тот asset |

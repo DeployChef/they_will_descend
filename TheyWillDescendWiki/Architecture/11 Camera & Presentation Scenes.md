@@ -37,7 +37,7 @@
 
 ```text
 #GameRun        Prefabs/Game/GameRun.prefab — функционал, ни одной ссылки на арт
-   #Scope       GameLifetimeScope, GameSession
+   #Scope       GameLifetimeScope, SimulationHost
    #Cameras     Main Camera (Brain + StudioListener), VCam_Gameplay, PauseCamera, RTSCameraTarget
    #City        RadialGridGuide, BuildPlacement, Headquarters (PyramidView, клик, площадь)
    #Agents      AgentSpawner, Humans

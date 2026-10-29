@@ -37,40 +37,29 @@ namespace TheyWillDescend.Simulation.Session
         {
             switch (command.Kind)
             {
-                case SimClockCommandKind.SetSessionInGame:
-                    control.SessionInGame = command.Value != 0 ? (byte)1 : (byte)0;
-                    control.BuildLocked = 0;
-                    if (control.SessionInGame == 0)
-                    {
-                        control.TimePaused = 0;
-                        control.PlayerPaused = 0;
-                    }
-                    break;
                 case SimClockCommandKind.TogglePlayerPause:
                 case SimClockCommandKind.ToggleTimePause:
-                    if (control.SessionInGame == 0 || control.BuildLocked != 0)
+                    if (control.BuildLocked != 0)
                         return;
                     control.TimePaused = control.TimePaused == 0 ? (byte)1 : (byte)0;
                     break;
                 case SimClockCommandKind.SetPlayerPause:
-                    if (control.SessionInGame == 0 || control.BuildLocked != 0)
+                    if (control.BuildLocked != 0)
                         return;
                     control.PlayerPaused = command.Value != 0 ? (byte)1 : (byte)0;
                     break;
                 case SimClockCommandKind.SetTimePause:
-                    if (control.SessionInGame == 0 || control.BuildLocked != 0)
+                    if (control.BuildLocked != 0)
                         return;
                     control.TimePaused = command.Value != 0 ? (byte)1 : (byte)0;
                     break;
                 case SimClockCommandKind.SetSpeed:
-                    if (control.SessionInGame == 0 || control.BuildLocked != 0)
+                    if (control.BuildLocked != 0)
                         return;
                     control.Speed = ClampSpeed(command.Value);
                     control.TimePaused = 0;
                     break;
                 case SimClockCommandKind.SetBuildLocked:
-                    if (command.Value != 0 && control.SessionInGame == 0)
-                        return;
                     control.BuildLocked = command.Value != 0 ? (byte)1 : (byte)0;
                     break;
                 case SimClockCommandKind.Restore:
@@ -92,12 +81,6 @@ namespace TheyWillDescend.Simulation.Session
 
         static void RefreshMode(ref SimControl control)
         {
-            if (control.SessionInGame == 0)
-            {
-                control.Mode = SimRunMode.Off;
-                return;
-            }
-
             control.Mode = control.TimePaused != 0
                 || control.PlayerPaused != 0
                 || control.BuildLocked != 0

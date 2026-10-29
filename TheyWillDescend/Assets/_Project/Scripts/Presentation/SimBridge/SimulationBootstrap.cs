@@ -57,7 +57,7 @@ namespace TheyWillDescend.Presentation.SimBridge
 
             em.AddComponentData(session, new SimControl
             {
-                Mode = SimRunMode.Off,
+                Mode = SimRunMode.Running,
                 Speed = 1,
                 DeltaTime = 0f
             });

@@ -51,7 +51,7 @@ namespace TheyWillDescend.Simulation.Research
 
             if (catalogs == null || catalogs.Length == 0)
             {
-                Debug.LogWarning("ResearchWorld.Populate: GameSession has no tech catalogs.");
+                Debug.LogWarning("ResearchWorld.Populate: SimulationHost has no tech catalogs.");
                 return 0;
             }
 

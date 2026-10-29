@@ -57,10 +57,10 @@ public sealed class AppScope : LifetimeScope
 | Сервис | Роль |
 | --- | --- |
 | `AppContext` | Факты процесса: `CurrentLaunch` (запись при старте и рестарте, чтение не стирает), `SplashShown`. Не статика |
-| `ShellService` | `StartRun(launch)` и `RestartRun(launch)` пишут билет и открывают `Game`. `GoToMenu()` открывает `MainMenu` и билет не трогает. Сам ведёт конвейер: шторка → teardown → Single-load → `LoadingScreen.Wait` → спрятать. `GameSession` не знает. Блокаут не знает |
+| `ShellService` | `StartRun(launch)` и `RestartRun(launch)` пишут билет и открывают `Game`. `GoToMenu()` открывает `MainMenu` и билет не трогает. Сам ведёт конвейер: шторка → Single-load → `LoadingScreen.Wait` → спрятать. Ран и блокаут не знает |
 | `LoadingScreen` | Шторка процесса и список работы сцены: `Add(task, weight, label)`, `Wait`. Упавшая задача бросает исключение. Переживает выгрузку и загрузку сцен |
 | `InputService` | Клон `TheyWillDescend.inputactions`. Карты `Menu` (Proceed) и `Game` (Pause). Какую карту включить, решает точка входа сцены |
-| `SaveService` | Слот сейва. UI и `GameSession` получают его внедрением, не статикой |
+| `SaveService` | Слот сейва. UI и `SimulationHost` получают его внедрением, не статикой |
 | `AudioService` | Банки, музыка, снапшоты, UI-звук. См. [[06 FMOD Audio]] |
 
 ---
@@ -70,7 +70,7 @@ public sealed class AppScope : LifetimeScope
 | Сцена | Scope | Точка входа | Что включает на входе |
 | --- | --- | --- | --- |
 | `MainMenu` | `MainMenuLifetimeScope` | `MainMenuFlow` | карта ввода `Menu`, музыка `Menu`; сплэш один раз за процесс (`AppContext.SplashShown`) |
-| `Game` | `GameLifetimeScope` | `GameEntry` | банки `GameWorld` и `GameSession.Begin` на `LoadingScreen`; по готовности часы, карта `Game`, меню паузы, музыка `Gameplay` |
+| `Game` | `GameLifetimeScope` | `GameEntry` | банки `GameWorld` и `SimulationHost.Open` на `LoadingScreen`; по готовности карта `Game`, меню паузы, музыка `Gameplay` |
 
 Build list: `MainMenu` (0), `Game`. Переходы только Single-загрузкой: одновременно живёт ровно одна сцена, одна камера, один слушатель FMOD.
 
@@ -80,19 +80,35 @@ Build list: `MainMenu` (0), `Game`. Переходы только Single-заг�
 
 ```text
 Initialize
-  teardown → ShellService.RegisterTeardown(EndRun)
   launch   = AppContext.CurrentLaunch → #if UNITY_EDITOR поля на GameLifetimeScope (save id или New+debug) → New
   LoadingScreen.Add(AcquireWorldBanks, 1, "Loading sounds…")
   LoadingScreen.Add(BeginRun(launch),  3, "Preparing the city…")
 
-BeginRun:  GameSession.Begin(launch); провал → исключение; успех → Arm
-Arm:       SimClockCommand.InGame(true), InputService.EnableGame, PauseMenuScreen.Use, Music.Set(Gameplay)
-EndRun:    Disarm (меню паузы, ввод, InGame(false)) → GameSession.Shutdown; провал → Arm обратно
+BeginRun:  SimulationHost.Open(launch); провал → исключение; успех → Arm
+Arm:       InputService.EnableGame, PauseMenuScreen.Use, Music.Set(Gameplay)
+Dispose:   Disarm (меню паузы, ввод). Ран стирает SimulationHost.Dispose, не этот класс
 ```
 
 Редакторская настройка — два поля на `GameLifetimeScope`: `editorSaveId` и `editorDebug`. Пустой id даёт `RunLaunch.New(editorDebug)`, заполненный — `RunLaunch.FromSave(id)`. В билде ветка вырезана: без билета из меню всегда `New`.
 
-### 2.2. Меню
+### 2.2. `SimulationHost`
+
+Компонент на `#GameRun`. Каталоги остаются полями инспектора. Системы он не регистрирует: их уже собрал автопоиск Default World.
+
+```text
+Open(launch)
+  выключить Initialization + Simulation, дождаться джобов
+  RunWorld.Wipe
+  SimulationBootstrap.InitializeRun   (новая партия: Mode = Running, Speed = 1)
+  сценарий или SnapshotRestore        (сейв пишет скорость и паузу, Mode = Frozen или Running)
+  включить группы обратно
+
+Dispose / OnDestroy
+  выключить Simulation, дождаться джобов, RunWorld.Wipe, включить группу
+  повторный вызов ничего не делает
+```
+
+### 2.3. Меню
 
 Кнопки: **Start Game** / **Load** / **Start Debug** → `ShellService.StartRun(launch)`. Start Game — `RunLaunch.New()`, Debug — `RunLaunch.New(debug: true)`, Load — `RunLaunch.FromSave(SaveService.Slot0)`. Допустимые `DifficultyProfile` и default принадлежат `ScenarioDefinition`: Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Кнопка Load серая, если файла `run_slot0.json` нет.
 
@@ -107,23 +123,21 @@ Play из MainMenu (и билд)
 Меню → «Начать»
   ShellService.StartRun(launch) пишет AppContext.CurrentLaunch и грузит Game
     1. LoadingScreen.Show
-    2. teardown'ы текущей сцены (у меню их нет)
-    3. Single-загрузка Game (меню выгружается само)
-    4. GameEntry читает CurrentLaunch, кладёт работу на LoadingScreen; конвейер ждёт Wait
-    5. LoadingScreen.Hide
+    2. Single-загрузка Game (меню выгружается само)
+    3. GameEntry читает CurrentLaunch, кладёт работу на LoadingScreen; конвейер ждёт Wait
+    4. LoadingScreen.Hide
 
 Play из Game напрямую (редактор)
   AppScope поднимается → CurrentLaunch пуст → редакторская настройка
-  LoadingScreen получил работу без активного перехода → ShellService сам показывает экран
+  GameEntry сам показывает шторку, ждёт свои задачи и прячет её
 
 Игра → «Главное меню» / «Перезапуск» / «Загрузить»
   ShellService.GoToMenu() / RestartRun(launch) → тот же конвейер. GoToMenu билет не стирает
-  teardown Game (EndRun) идёт под экраном, до выгрузки сцены
+  Сцена Game умирает вместе со scope: SimulationHost.Dispose стирает ран
 ```
 
 Правила конвейера:
 - Второй переход во время текущего игнорируется (метод возвращает `false`), а не ставится в очередь. Билет при этом не перезаписывается.
-- Teardown вернул `false` → переход отменяется, экран убирается, игрок остаётся в сцене.
 - Задача на `LoadingScreen` или сама загрузка сцены упала → исключение. В меню из-за этого не уходим.
 
 ---
@@ -133,26 +147,25 @@ Play из Game напрямую (редактор)
 Истина — `SimControl` на session entity.
 
 ```text
-SessionInGame, PlayerPaused, BuildLocked, Speed
-Mode = Off | Frozen | Running   (считает ConsumeSimClockCommandsSystem)
+TimePaused, PlayerPaused, BuildLocked, Speed
+Mode = Frozen если любой замок, иначе Running
 DeltaTime = frame * Speed       (ApplySimDeltaTime; не ноль на паузе)
 ```
 
-UI и `GameEntry` пишут `SimCommands.TryPost(SimClockCommand.…)`, не поля напрямую. Системы читают `IsRunning` / `DeltaTime`. Не `timeScale`, нет `SimGate`.
+UI пишет `SimCommands.TryPost(SimClockCommand.…)`, не поля напрямую. Системы читают `IsRunning` / `DeltaTime`. Не `timeScale`, нет `SimGate`, нет `SessionInGame`.
 
 | Режим | Смысл | Кто |
 | --- | --- | --- |
-| **Off** | рана нет: меню, загрузка | до `Arm` и после `Disarm` |
-| **Running** | город живёт | `GameEntry.Arm` |
-| **Frozen** | ран есть, пауза посреди сессии | `PlayerPaused` / `BuildLocked` |
+| **Running** | город живёт, скорость 1 у новой партии | `SimulationBootstrap` при `Open` |
+| **Frozen** | пауза или замок стройки | флаги на `SimControl`; сейв восстанавливает паузу в `SnapshotRestore` |
 
-Пауза часов — оверлей на Game, не смена сцены. Esc: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе `PauseMenuScreen` (Continue / Save / Load / Main Menu) + `SimClockCommand.PlayerPaused`. Замки паузы: [[13 Time HUD and Save]].
+`Off` — нулевое значение компонента. Хост до включения систем пишет Running или Frozen. Пауза часов — оверлей на Game, не смена сцены. Esc: сначала `BuildWidget.Current?.TryHandleEscape()`, иначе `PauseMenuScreen` (Continue / Save / Load / Main Menu) + `SimClockCommand.PlayerPaused`. Замки паузы: [[13 Time HUD and Save]].
 
 ---
 
 ## 5. Временное
 
-- **`GameSession.Shutdown` как teardown перехода** — до Ф1 [[../Refactoring/07 Foundation Fixes|07]]. ECS-мир переживает загрузку сцен, поэтому прошлый ран чистится вручную под экраном. Когда ран станет «стереть мир и создать заново», teardown упростится.
+- **Стирание рана на смерти сцены.** ECS-мир переживает выгрузку, поэтому `SimulationHost.Dispose` делает `RunWorld.Wipe`. `Open` перед сборкой стирает ещё раз, если Dispose не случился.
 - **`.Current`-синглтоны экранов** (`PauseMenuScreen.Current`, `BuildWidget.Current` и др.) живут внутри одной сцены — допустимо. Сервисы процесса к ним не обращаются.
 - **Перезагрузка домена при входе в Play включена.** Если её выключат, статики (`SimWorld`, `UiSound`, `.Current`) нужно сбрасывать через `RuntimeInitializeOnLoadMethod(SubsystemRegistration)`.
 

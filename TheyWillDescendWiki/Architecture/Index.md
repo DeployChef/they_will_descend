@@ -11,7 +11,7 @@
 - [[00 Overview]] — стек и слои
 - [[01 Folder Structure]] — `Assets/_Project`, сборки-стены
 - [[02 Scenes & Lifetime]] — MainMenu, Game; три срока жизни
-- [[03 Core Systems]] — службы Shell, GameSession, SimControl, GameLog
+- [[03 Core Systems]] — службы Shell, SimulationHost, SimControl, GameLog
 - [[04 Simulation]] — город, люди, экономика (что есть / что ещё нет)
 - [[05 Content Pipeline]] — здания, ресурсы, сценарий: как заводить
 - [[06 FMOD Audio]] — FMOD Studio 2.03, `AudioService`, наборы банков, каталог

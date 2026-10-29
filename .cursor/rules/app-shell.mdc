@@ -1,5 +1,5 @@
 ---
-description: Elegant App Shell — ShellService, GameSession, SimControl; no fat GameDirector
+description: Elegant App Shell — ShellService, SimulationHost, SimControl; no fat GameDirector
 alwaysApply: true
 ---
 
@@ -12,20 +12,20 @@ alwaysApply: true
 ## Elegant core (prefer this over jam GameDirector)
 
 - `AppContext` holds process facts: `CurrentLaunch` (getter/setter, not cleared on read) and `SplashShown`. Not a static.
-- `ShellService` is navigation and the scene change: `StartRun` / `RestartRun` write `CurrentLaunch` and load `Game`, `GoToMenu` loads `MainMenu`. The load is curtain → teardown → Single load → `LoadingScreen.Wait` → hide. A failed load or task throws. There is no fallback to the menu. It never calls `GameSession` and does not know the blockout. Scenes are never loaded additively on top of each other.
+- `ShellService` is navigation and the scene change: `StartRun` / `RestartRun` write `CurrentLaunch` and load `Game`, `GoToMenu` loads `MainMenu`. The load is curtain → Single load → `LoadingScreen.Wait` → hide. A failed load or task throws. There is no fallback to the menu. It does not know the run and does not know the blockout. Scenes are never loaded additively on top of each other.
 - `LoadingScreen` is a child of the `AppScope` prefab — there is no Loading scene. A scene says "wait for me" with `Add(task, weight, label)` on that screen. A failed task throws.
-- `GameEntry` (entry point of `GameLifetimeScope`) reads `AppContext.CurrentLaunch`; if it is empty, editor fields `editorSaveId` / `editorDebug` on `GameLifetimeScope`, otherwise `New`. It adds the `GameWorld` bank set and `GameSession.Begin` to `LoadingScreen`, then turns the clock, the `Game` input map and the pause menu on; its teardown Disarms and wipes the run (`RunWorld.Wipe`) before the scene unloads.
+- `GameEntry` (entry point of `GameLifetimeScope`) reads `AppContext.CurrentLaunch`; if it is empty, editor fields `editorSaveId` / `editorDebug` on `GameLifetimeScope`, otherwise `New`. It adds the `GameWorld` bank set and `SimulationHost.Open` to `LoadingScreen`, then turns the `Game` input map, the pause menu and gameplay music on. When the scene dies it releases those. It does not wipe the run.
+- `SimulationHost` lives on `#GameRun`: catalogs, `Open(RunLaunch)` / `Dispose`. Open wipes leftovers, bootstraps, then seeds a scenario or applies a save. A new run is `Running` at speed 1. A save restores speed and pause. `Dispose` (and `OnDestroy`) disables the sim group, completes jobs and `RunWorld.Wipe`. It does not load scenes and does not register systems. Unity already owns `MonoBehaviour.Start`, so the run method is `Open`.
 - Any scene is an entry point: Play on `MainMenu.unity`, `Game.unity` or `Blockout/GameBlockout.unity` works on its own. Build list: MainMenu (0), Game. Shell loads only those two names. There is no Root/boot scene.
 - `MainMenuFlow` turns the `Menu` input map on and listens to `InputService.Proceeded`. Each scene entry sets its music cue (`AudioService.Music.Set`).
-- `AppScope` registers `AppContext`, `ShellService`, `SaveService`, `InputService` (plain class, `.inputactions` via `WithParameter`), `LoadingScreen`, `AudioService`. Each scene has its own `LifetimeScope` deriving from `LifetimeScope` directly (no parent reference needed). The slot file is `SaveService`; UI and `GameSession` do not touch it as a static.
-- `GameSession` lives in the Game scene: catalogs, `Begin` / `Shutdown`. Begin wipes then bootstraps and seeds (scenario or save). It does not load scenes.
-- Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`
+- `AppScope` registers `AppContext`, `ShellService`, `SaveService`, `InputService` (plain class, `.inputactions` via `WithParameter`), `LoadingScreen`, `AudioService`. Each scene has its own `LifetimeScope` deriving from `LifetimeScope` directly (no parent reference needed). The slot file is `SaveService`; UI and `SimulationHost` do not touch it as a static.
+- Clock: `SimControl` + `SimClockCommand` in ECS — **no SimGate**, no `timeScale`, no `SessionInGame`. Mode is `Running` or `Frozen` from pause and the build lock. `Off` is only the zero value.
 - MainMenu: splash then buttons live on `MainMenuFlow` in that scene. Buttons call `ShellService.StartRun`. Press any key plays once per process; `AppContext.SplashShown` remembers that across scene loads.
 - VContainer stays in Presentation/Main. Never inside `ISystem`
 
 ## Do not treat as canon
 
-Fat `GameDirector`, card Inject, soft restart via Find, economy pause via timeScale only, `Startup.Update`.
+Fat `GameDirector`, card Inject, soft restart via Find, economy pause via timeScale only, `Startup.Update`, a shell teardown list, `SessionInGame`.
 
 ## Canon wiki
 

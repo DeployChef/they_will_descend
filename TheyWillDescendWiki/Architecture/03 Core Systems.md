@@ -9,13 +9,13 @@
 | Служба | Срок жизни | Ответственность |
 | --- | --- | --- |
 | **AppContext** | процесс | `CurrentLaunch`, `SplashShown`. Не статика, чтение билет не стирает |
-| **ShellService** | процесс | `StartRun` / `RestartRun` / `GoToMenu` и загрузка сцены: экран → teardown → Single → `LoadingScreen.Wait` → экран прочь. **Нет** верхней FSM, `GameSession` не знает |
+| **ShellService** | процесс | `StartRun` / `RestartRun` / `GoToMenu` и загрузка сцены: экран → Single → `LoadingScreen.Wait` → экран прочь. **Нет** верхней FSM, ран не знает |
 | **LoadingScreen** | процесс | шторка и список работы сцены: `Add(task, weight, label)`. Упавшая задача бросает исключение |
 | **InputService** | процесс | клон `.inputactions`; Menu/Proceed, Game/Pause (Esc) |
 | **AudioService** | процесс | банки по наборам, музыка, снапшоты, UI-звук. ECS не читает |
 | **SaveService** | процесс | слот сейва |
-| **GameEntry** | сцена Game | выбирает запуск, кладёт подготовку рана на `LoadingScreen`, на Ready включает часы, ввод, меню паузы |
-| **GameSession** | сцена Game | `Begin` / `Apply` / `Shutdown` одной попытки; ждёт bake через `SimWorld.TryGet` |
+| **GameEntry** | сцена Game | выбирает запуск, кладёт `SimulationHost.Open` на `LoadingScreen`, включает ввод, меню паузы, музыку |
+| **SimulationHost** | сцена Game | `Open` / `Dispose` одной партии: wipe, bootstrap, сценарий или сейв; на смерти сцены снова wipe |
 | **SimPauseAudioBridge** | сцена Game | читает `SimControl.PlayerPaused`, передаёт паузу в `AudioService` |
 | **GameLog** | статика | каналы логов (`Presentation/Infrastructure/Logging`) |
 
@@ -51,8 +51,9 @@ Composition Root — сборка `TheyWillDescend.Main`: `AppScope` (проце
 ```
 MainMenu «Начать» → ShellService.StartRun(launch) пишет AppContext.CurrentLaunch
   → ShellService: экран загрузки, Single-загрузка Game
-  → GameEntry читает CurrentLaunch: банки GameWorld + GameSession.Begin(launch) на LoadingScreen
-  → Ready: GameEntry.Arm → SimClockCommand.InGame(true), карта Game, меню паузы
+  → GameEntry читает CurrentLaunch: банки GameWorld + SimulationHost.Open(launch) на LoadingScreen
+  → новая партия уже Running на скорости 1; сейв восстановил паузу и скорость
+  → GameEntry включает карту Game, меню паузы, музыку Gameplay
   → ECS Time / City / Agents / Economy тикают, пока Mode == Running
 ```
 

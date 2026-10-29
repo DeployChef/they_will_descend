@@ -1,11 +1,12 @@
 using System;
+using TheyWillDescend.Presentation.SimBridge;
 
 namespace TheyWillDescend.Presentation.Shell
 {
     /// <summary>
     /// One launch request. The menu passes it to <see cref="ShellService.StartRun"/>,
     /// which stores it on <see cref="AppContext.CurrentLaunch"/>.
-    /// <see cref="GameEntry"/> reads that and hands it to <see cref="GameSession.Begin"/>.
+    /// <see cref="GameEntry"/> reads that and hands it to <see cref="SimulationHost.Open"/>.
     /// A save launch always names the snapshot. There is no "load the slot" without an id.
     /// </summary>
     public readonly struct RunLaunch

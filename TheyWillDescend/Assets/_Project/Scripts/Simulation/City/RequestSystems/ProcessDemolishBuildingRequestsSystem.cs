@@ -17,21 +17,19 @@ namespace TheyWillDescend.Simulation.City
         public void OnUpdate(ref SystemState state)
         {
             var em = state.EntityManager;
-            if (!SimSessionAccess.TryGet(em, out var session))
+            if (!SimSessionAccess.TryGet(em, out _))
                 return;
 
             var query = SystemAPI.QueryBuilder().WithAll<DemolishBuildingRequest>().Build();
             if (query.IsEmptyIgnoreFilter)
                 return;
 
-            var inGame = em.GetComponentData<SimControl>(session).SessionInGame != 0;
             using var requestEntities = query.ToEntityArray(Allocator.Temp);
             using var requests = query.ToComponentDataArray<DemolishBuildingRequest>(Allocator.Temp);
 
             for (var i = 0; i < requests.Length; i++)
             {
-                if (inGame)
-                    BuildingDismantle.Begin(em, requests[i].Building);
+                BuildingDismantle.Begin(em, requests[i].Building);
                 em.DestroyEntity(requestEntities[i]);
             }
         }

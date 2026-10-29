@@ -37,15 +37,6 @@ namespace TheyWillDescend.Simulation.City
                 return;
             }
 
-            if (em.GetComponentData<SimControl>(session).SessionInGame == 0)
-            {
-                using var leftover = query.ToEntityArray(Allocator.Temp);
-                em.DestroyEntity(leftover);
-                em.SetComponentData(session, grid);
-                em.SetComponentData(session, network);
-                return;
-            }
-
             NativeArray<OccupiedCell> occupied = default;
             if (em.HasBuffer<OccupiedCell>(session))
             {

@@ -64,9 +64,9 @@ Assets/_Project/Scripts/
     City/        placement, grid guide, BuildingViewBoard, BuildingSelection, BuildingRejectLog
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Camera/      RTSCameraController, PauseCamera*            (namespace Presentation.Cameras)
-    SimBridge/   SimulationBootstrap, RunPublisher, RunSessionSnapshot, StorySave, SimPauseAudioBridge
+    SimBridge/   SimulationHost, SimulationBootstrap, RunSessionSnapshot, SnapshotRestore, ScenarioSetup, SimPauseAudioBridge
     Shell/       AppContext, Scenes (ShellService, GameScenes),
-                 Session (GameEntry, GameSession, RunLaunch), Input (InputService)
+                 Session (GameEntry, RunLaunch), Input (InputService)
     ShellUi/     MainMenu, Game (PauseMenuScreen), Loading (LoadingScreen)
     Infrastructure/ Logging (GameLog), Save (SaveService, RunSnapshot)
     Audio/       звук мира (ячейки, ветер, стройка); Service/ — AudioService, каталог, банки, музыка

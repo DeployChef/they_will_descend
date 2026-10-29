@@ -19,7 +19,7 @@ HUD (`Presentation/GameHud`) не делает `CreateEntityQuery`. Карточ
 
 Редкое исключение наружу: `BuildingRejectedEvent` (тост). Не спавн, не тик дня.
 
-Пауза/скорость — буфер `SimClockCommand` на сессии, не запись стоков. Ран готов, когда `GameSession.Begin` синхронно собрал мир (`RunWorld.Wipe` + bootstrap + scenario/save). Фаз `SimSession.Phase` нет.
+Пауза/скорость — буфер `SimClockCommand` на сессии, не запись стоков. Ран готов, когда `SimulationHost.Open` синхронно собрал мир (`RunWorld.Wipe` + bootstrap + scenario/save). Новая партия при этом уже `Running` на скорости 1. Фаз `SimSession.Phase` нет.
 
 Gameplay Presentation **никогда не запускает** `Process*` вручную.
 
@@ -40,7 +40,7 @@ Gameplay Presentation **никогда не запускает** `Process*` вр
 
 Итоги UI не пишет: склад, лояльность, позу, `WorkingCount`. Кнопка может прочитать мир, чтобы посереть. Ограничение (нельзя желать больше свободных людей, чем есть) остаётся в системе. Часы — запрос, потому что это режим тика, а не поле одного дома.
 
-Исключений для ручного playback нет. `GameSession.Begin` синхронно: wipe → bootstrap → `ScenarioSetup` или `SnapshotRestore.Apply`. Teardown — `RunWorld.Wipe` в `Shutdown` до выгрузки сцены.
+Исключений для ручного playback нет. `SimulationHost.Open` синхронно: wipe → bootstrap → `ScenarioSetup` или `SnapshotRestore.Apply`. Смерть сцены — `RunWorld.Wipe` в `Dispose`.
 
 ## Меши и поза
 

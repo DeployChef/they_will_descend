@@ -10450,7 +10450,7 @@ GameObject:
   - component: {fileID: 6573916607889333648}
   - component: {fileID: 1761659956273623798}
   m_Layer: 0
-  m_Name: GameSession
+  m_Name: SimulationHost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10482,8 +10482,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f160de21de80cb140b8fa6163ac4ef73, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Shell.GameSession
-  simulationReadyTimeoutSeconds: 30
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.SimBridge.SimulationHost
   defaultScenario: {fileID: 11400000, guid: 5e2fe816c6f6db740b756034667afdc6, type: 2}
   debugScenario: {fileID: 11400000, guid: 2d8f1a4c6e0b3957a1c3d5f7092e4b61, type: 2}
   techCatalogs:
