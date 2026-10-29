@@ -21,9 +21,8 @@ namespace TheyWillDescend.Main
 
         protected override void Configure(IContainerBuilder builder)
         {
+            builder.Register<AppContext>(Lifetime.Singleton);
             builder.Register<ShellService>(Lifetime.Singleton);
-            builder.Register<TransitionService>(Lifetime.Singleton);
-            builder.Register<LoadingTasks>(Lifetime.Singleton);
             builder.Register<SaveService>(Lifetime.Singleton);
             builder.Register<InputService>(Lifetime.Singleton).WithParameter(inputActions);
             builder.RegisterComponent(loadingScreen);

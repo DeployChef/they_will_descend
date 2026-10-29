@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using TheyWillDescend.Presentation.Infrastructure;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,23 +10,74 @@ using UnityEngine.UI;
 namespace TheyWillDescend.Presentation.ShellUi
 {
     /// <summary>
-    /// Process-owned curtain (child of AppScope). Survives both the scene we leave and the one we
-    /// enter. Only <see cref="Shell.TransitionService"/> shows or hides it.
+    /// Process-owned curtain (child of AppScope). Survives both the scene we leave and the one we enter.
+    /// A scene adds work with <see cref="Add"/>; <see cref="Wait"/> keeps the curtain up and draws progress
+    /// until every task ends. A failed task throws. Only <see cref="Shell.ShellService"/> shows or hides it.
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class LoadingScreen : MonoBehaviour
     {
+        sealed class Entry
+        {
+            public float Weight;
+            public string Label;
+            public bool Done;
+            public Exception Error;
+        }
+
         [SerializeField] TMP_Text status;
         [SerializeField] Image progressFill;
         [SerializeField, Min(0f)] float fadeSeconds = 0.25f;
         [SerializeField] string defaultStatus = "Loading...";
 
+        readonly List<Entry> _entries = new();
         CanvasGroup _group;
+
+        /// <summary>Raised when the list goes from empty to busy.</summary>
+        public event Action WorkAdded;
 
         public bool IsVisible { get; private set; }
 
         /// <summary>The object stays inactive in the prefab, so Awake may not have run yet.</summary>
         CanvasGroup Group => _group != null ? _group : _group = GetComponent<CanvasGroup>();
+
+        public void Add(UniTask task, float weight = 1f, string label = null)
+        {
+            var entry = new Entry { Weight = weight > 0f ? weight : 1f, Label = label };
+            _entries.Add(entry);
+            Track(task, entry).Forget();
+            if (_entries.Count == 1)
+                WorkAdded?.Invoke();
+        }
+
+        /// <summary>
+        /// Waits until every task, including ones added while waiting, has ended.
+        /// Throws if any failed. The list is empty afterwards.
+        /// </summary>
+        public async UniTask Wait(CancellationToken cancellationToken)
+        {
+            while (!AllDone())
+            {
+                SetProgress(Progress(), CurrentLabel());
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+
+            SetProgress(1f, null);
+
+            Exception failure = null;
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                var error = _entries[i].Error;
+                if (error == null)
+                    continue;
+                GameLog.Error($"Loading task '{_entries[i].Label}' failed: {error.Message}");
+                failure ??= error;
+            }
+
+            _entries.Clear();
+            if (failure != null)
+                throw new InvalidOperationException("A loading task failed.", failure);
+        }
 
         public async UniTask Show(CancellationToken cancellationToken)
         {
@@ -47,7 +101,7 @@ namespace TheyWillDescend.Presentation.ShellUi
             gameObject.SetActive(false);
         }
 
-        public void SetProgress(float progress, string label)
+        void SetProgress(float progress, string label)
         {
             if (progressFill != null)
                 progressFill.fillAmount = Mathf.Clamp01(progress);
@@ -79,6 +133,57 @@ namespace TheyWillDescend.Presentation.ShellUi
             }
 
             group.alpha = target;
+        }
+
+        static async UniTaskVoid Track(UniTask task, Entry entry)
+        {
+            try
+            {
+                await task;
+            }
+            catch (Exception e)
+            {
+                entry.Error = e;
+            }
+            finally
+            {
+                entry.Done = true;
+            }
+        }
+
+        bool AllDone()
+        {
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                if (!_entries[i].Done)
+                    return false;
+            }
+
+            return true;
+        }
+
+        float Progress()
+        {
+            float total = 0f, done = 0f;
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                total += _entries[i].Weight;
+                if (_entries[i].Done)
+                    done += _entries[i].Weight;
+            }
+
+            return total > 0f ? done / total : 1f;
+        }
+
+        string CurrentLabel()
+        {
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                if (!_entries[i].Done)
+                    return _entries[i].Label;
+            }
+
+            return null;
         }
     }
 }

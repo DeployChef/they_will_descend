@@ -40,19 +40,19 @@ namespace TheyWillDescend.Presentation.ShellUi
         void OnEnable()
         {
             if (loadButton != null)
-                loadButton.interactable = _save != null && _save.HasSlot;
+                loadButton.interactable = _save != null && _save.Exists(SaveService.Slot0);
         }
 
         public void Show() => gameObject.SetActive(true);
 
         public void Hide() => gameObject.SetActive(false);
 
-        void StartGame() => BeginRun(RunKind.Normal, loadSlot: false);
+        void StartGame() => Begin(RunLaunch.New());
 
         void StartDebug()
         {
             GameLog.Info("Main menu: Start Debug.");
-            BeginRun(RunKind.Debug, loadSlot: false);
+            Begin(RunLaunch.New(debug: true));
         }
 
         void LoadGame()
@@ -63,19 +63,19 @@ namespace TheyWillDescend.Presentation.ShellUi
                 return;
             }
 
-            if (!_save.HasSlot)
+            if (!_save.Exists(SaveService.Slot0))
             {
-                GameLog.Warning("Main menu: no save slot.");
+                GameLog.Warning("Main menu: no save slot0.");
                 if (loadButton != null)
                     loadButton.interactable = false;
                 return;
             }
 
-            GameLog.Info("Main menu: Load slot.");
-            BeginRun(default, loadSlot: true);
+            GameLog.Info("Main menu: Load slot0.");
+            Begin(RunLaunch.FromSave(SaveService.Slot0));
         }
 
-        void BeginRun(RunKind kind, bool loadSlot)
+        void Begin(RunLaunch launch)
         {
             if (_shell == null)
             {
@@ -83,7 +83,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 return;
             }
 
-            _shell.StartRun(loadSlot ? RunLaunch.Slot : new RunLaunch(kind, false)).Forget();
+            _shell.StartRun(launch).Forget();
         }
     }
 }

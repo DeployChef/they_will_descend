@@ -6,17 +6,15 @@
 
 ## Shell (вне ECS)
 
-| Служба | Ответственность |
-| --- | --- |
 | Служба | Срок жизни | Ответственность |
 | --- | --- | --- |
-| **ShellService** | процесс | навигация: `StartRun` / `RestartRun` / `GoToMenu`, параметры запуска. **Нет** верхней FSM |
-| **TransitionService** | процесс | единственный загрузчик сцен: экран → teardown → Single-загрузка → `LoadingTasks` → экран прочь |
-| **LoadingTasks** | процесс | сцена кладёт сюда работу, которую надо дождаться под экраном загрузки |
+| **AppContext** | процесс | `CurrentLaunch`, `SplashShown`. Не статика, чтение билет не стирает |
+| **ShellService** | процесс | `StartRun` / `RestartRun` / `GoToMenu` и загрузка сцены: экран → teardown → Single → `LoadingScreen.Wait` → экран прочь. **Нет** верхней FSM, `GameSession` не знает |
+| **LoadingScreen** | процесс | шторка и список работы сцены: `Add(task, weight, label)`. Упавшая задача бросает исключение |
 | **InputService** | процесс | клон `.inputactions`; Menu/Proceed, Game/Pause (Esc) |
 | **AudioService** | процесс | банки по наборам, музыка, снапшоты, UI-звук. ECS не читает |
 | **SaveService** | процесс | слот сейва |
-| **GameEntry** | сцена Game | выбирает запуск, кладёт подготовку рана в `LoadingTasks`, на Ready включает часы, ввод, меню паузы |
+| **GameEntry** | сцена Game | выбирает запуск, кладёт подготовку рана на `LoadingScreen`, на Ready включает часы, ввод, меню паузы |
 | **GameSession** | сцена Game | `Begin` / `Apply` / `Shutdown` одной попытки; ждёт bake через `SimWorld.TryGet` |
 | **SimPauseAudioBridge** | сцена Game | читает `SimControl.PlayerPaused`, передаёт паузу в `AudioService` |
 | **GameLog** | статика | каналы логов (`Presentation/Infrastructure/Logging`) |
@@ -51,9 +49,9 @@ Composition Root — сборка `TheyWillDescend.Main`: `AppScope` (проце
 ## Порядок при старте рана
 
 ```
-MainMenu «Начать» → ShellService.StartRun(launch)
-  → TransitionService: экран загрузки, Single-загрузка Game
-  → GameEntry: банки GameWorld + GameSession.Begin(launch) в LoadingTasks
+MainMenu «Начать» → ShellService.StartRun(launch) пишет AppContext.CurrentLaunch
+  → ShellService: экран загрузки, Single-загрузка Game
+  → GameEntry читает CurrentLaunch: банки GameWorld + GameSession.Begin(launch) на LoadingScreen
   → Ready: GameEntry.Arm → SimClockCommand.InGame(true), карта Game, меню паузы
   → ECS Time / City / Agents / Economy тикают, пока Mode == Running
 ```

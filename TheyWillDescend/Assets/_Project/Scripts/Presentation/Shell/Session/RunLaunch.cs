@@ -1,52 +1,35 @@
+using System;
+
 namespace TheyWillDescend.Presentation.Shell
 {
-    public enum RunKind
-    {
-        Normal = 0,
-        Debug = 1
-    }
-
     /// <summary>
-    /// One launch request. The menu passes it to <see cref="ShellService.StartRun"/>;
-    /// <see cref="GameEntry"/> takes it back and hands it to <see cref="GameSession.Begin"/>.
+    /// One launch request. The menu passes it to <see cref="ShellService.StartRun"/>,
+    /// which stores it on <see cref="AppContext.CurrentLaunch"/>.
+    /// <see cref="GameEntry"/> reads that and hands it to <see cref="GameSession.Begin"/>.
+    /// A save launch always names the snapshot. There is no "load the slot" without an id.
     /// </summary>
     public readonly struct RunLaunch
     {
-        public readonly RunKind Kind;
-        public readonly bool LoadSlot;
+        public readonly bool Debug;
+        public readonly string SaveId;
 
-        public RunLaunch(RunKind kind, bool loadSlot)
+        RunLaunch(bool debug, string saveId)
         {
-            Kind = kind;
-            LoadSlot = loadSlot;
+            Debug = debug;
+            SaveId = saveId;
         }
 
-        public static RunLaunch Normal => new RunLaunch(RunKind.Normal, false);
+        public bool IsSave => !string.IsNullOrEmpty(SaveId);
 
-        public static RunLaunch Debug => new RunLaunch(RunKind.Debug, false);
+        public static RunLaunch New(bool debug = false) => new RunLaunch(debug, null);
 
-        public static RunLaunch Slot => new RunLaunch(RunKind.Normal, true);
-
-        public override string ToString() => LoadSlot ? "Slot" : Kind.ToString();
-    }
-
-    /// <summary>
-    /// Run that Game starts when it is opened directly in the editor. Builds always start Normal.
-    /// </summary>
-    public enum EditorRunLaunch
-    {
-        Normal = 0,
-        Debug = 1,
-        Slot = 2
-    }
-
-    public static class EditorRunLaunchExtensions
-    {
-        public static RunLaunch ToLaunch(this EditorRunLaunch launch) => launch switch
+        public static RunLaunch FromSave(string saveId)
         {
-            EditorRunLaunch.Debug => RunLaunch.Debug,
-            EditorRunLaunch.Slot => RunLaunch.Slot,
-            _ => RunLaunch.Normal
-        };
+            if (string.IsNullOrWhiteSpace(saveId))
+                throw new ArgumentException("A save launch needs a save id.", nameof(saveId));
+            return new RunLaunch(false, saveId.Trim());
+        }
+
+        public override string ToString() => IsSave ? SaveId : Debug ? "Debug" : "New";
     }
 }

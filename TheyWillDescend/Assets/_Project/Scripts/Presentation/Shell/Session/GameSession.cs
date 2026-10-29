@@ -64,7 +64,7 @@ namespace TheyWillDescend.Presentation.Shell
                 em.CompleteAllTrackedJobs();
                 RunWorld.Wipe(em);
 
-            var debug = !launch.LoadSlot && launch.Kind == RunKind.Debug;
+            var debug = !launch.IsSave && launch.Debug;
             var scenario = debug ? debugScenario : defaultScenario;
             var storyPack = scenario != null ? scenario.StoryPack : null;
             if (storyPack == null && defaultScenario != null)
@@ -72,7 +72,7 @@ namespace TheyWillDescend.Presentation.Shell
 
             var workerSpeed = simRules != null ? simRules.WorkerSpeed : 2f;
 
-            if (launch.LoadSlot)
+            if (launch.IsSave)
             {
                 if (_save == null)
                 {
@@ -80,9 +80,9 @@ namespace TheyWillDescend.Presentation.Shell
                     return UniTask.FromResult(false);
                 }
 
-                if (!_save.TryRead(out var snapshot))
+                if (!_save.TryRead(launch.SaveId, out var snapshot))
                 {
-                    GameLog.Error("GameSession.Begin failed — save slot is missing.");
+                    GameLog.Error($"GameSession.Begin failed — save '{launch.SaveId}' is missing.");
                     return UniTask.FromResult(false);
                 }
 

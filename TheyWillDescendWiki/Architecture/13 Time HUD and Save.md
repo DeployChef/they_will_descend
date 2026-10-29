@@ -214,7 +214,7 @@ SavePayload v22
 
 Load **не** выгружает сцену Game и **не** зовёт `Shutdown`.
 
-Перед apply пауза показывает сцену Loading. Выход в главное меню — `ShellService.ReturnToMenu`: `Shutdown` (рана больше нет), выгрузка Game, загрузка MainMenu. Load из главного меню — `ShellService.EnterGame(RunLaunch.Slot)`: шелл грузит Game и зовёт `Begin`.
+Перед apply пауза показывает сцену Loading. Выход в главное меню — `ShellService.ReturnToMenu`: `Shutdown` (рана больше нет), выгрузка Game, загрузка MainMenu. Load из главного меню — `ShellService.StartRun(RunLaunch.FromSave(id))`: шелл грузит Game и зовёт `Begin`. Сейчас кнопка передаёт `SaveService.Slot0`.
 
 Новый **Start Game / Start Debug** зовёт `RunPublisher.BeginRun`: runtime-дома не в SubScene, поэтому reset входит в тот же ECS pipeline до scenario seed.
 

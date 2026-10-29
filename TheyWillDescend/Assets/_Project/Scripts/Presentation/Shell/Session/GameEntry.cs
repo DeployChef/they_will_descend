@@ -29,14 +29,15 @@ namespace TheyWillDescend.Presentation.Shell
 #endif
 
         readonly ShellService _shell;
-        readonly TransitionService _transition;
-        readonly LoadingTasks _loading;
+        readonly AppContext _app;
+        readonly LoadingScreen _screen;
         readonly GameSession _session;
         readonly InputService _input;
         readonly PauseMenuScreen _pause;
         readonly AudioService _audio;
-        readonly EditorRunLaunch _editorLaunch;
 #if UNITY_EDITOR
+        readonly string _editorSaveId;
+        readonly bool _editorDebug;
         readonly float _debugLoadStageSeconds;
 #endif
         readonly CancellationTokenSource _life = new();
@@ -46,36 +47,38 @@ namespace TheyWillDescend.Presentation.Shell
 
         public GameEntry(
             ShellService shell,
-            TransitionService transition,
-            LoadingTasks loading,
+            AppContext app,
+            LoadingScreen screen,
             GameSession session,
             InputService input,
             PauseMenuScreen pause,
             AudioService audio,
-            EditorRunLaunch editorLaunch,
+            string editorSaveId,
+            bool editorDebug,
             float debugLoadStageSeconds)
         {
             _shell = shell;
-            _transition = transition;
-            _loading = loading;
+            _app = app;
+            _screen = screen;
             _session = session;
             _input = input;
             _pause = pause;
             _audio = audio;
-            _editorLaunch = editorLaunch;
 #if UNITY_EDITOR
+            _editorSaveId = editorSaveId;
+            _editorDebug = editorDebug;
             _debugLoadStageSeconds = debugLoadStageSeconds;
 #endif
         }
 
         public void Initialize()
         {
-            _teardown = _transition.RegisterTeardown(EndRun);
+            _teardown = _shell.RegisterTeardown(EndRun);
 
 #if UNITY_EDITOR
             if (_debugLoadStageSeconds > 0.001f)
             {
-                _loading.Add(DebugLoadStage(0), weight: 1f, label: DebugLoadLabels[0]);
+                _screen.Add(DebugLoadStage(0), weight: 1f, label: DebugLoadLabels[0]);
                 return;
             }
 #endif
@@ -94,8 +97,8 @@ namespace TheyWillDescend.Presentation.Shell
 
         void QueueRunWork()
         {
-            _loading.Add(AcquireWorldBanks(_life.Token), weight: 1f, label: "Loading sounds...");
-            _loading.Add(BeginRun(PickLaunch(), _life.Token), weight: 3f, label: "Preparing the city...");
+            _screen.Add(AcquireWorldBanks(_life.Token), weight: 1f, label: "Loading sounds...");
+            _screen.Add(BeginRun(PickLaunch(), _life.Token), weight: 3f, label: "Preparing the city...");
         }
 
 #if UNITY_EDITOR
@@ -108,7 +111,7 @@ namespace TheyWillDescend.Presentation.Shell
             var next = index + 1;
             if (next < DebugLoadLabels.Length)
             {
-                _loading.Add(DebugLoadStage(next), weight: 1f, label: DebugLoadLabels[next]);
+                _screen.Add(DebugLoadStage(next), weight: 1f, label: DebugLoadLabels[next]);
                 return;
             }
 
@@ -123,13 +126,16 @@ namespace TheyWillDescend.Presentation.Shell
 
         RunLaunch PickLaunch()
         {
-            if (_shell.TryTakeLaunch(out var taken))
-                return taken;
+            if (_app.CurrentLaunch.HasValue)
+                return _app.CurrentLaunch.Value;
 #if UNITY_EDITOR
-            GameLog.Info($"GameEntry: no launch from the menu — editor setting {_editorLaunch}.");
-            return _editorLaunch.ToLaunch();
+            var launch = string.IsNullOrWhiteSpace(_editorSaveId)
+                ? RunLaunch.New(_editorDebug)
+                : RunLaunch.FromSave(_editorSaveId);
+            GameLog.Info($"GameEntry: no launch from the menu — editor setting {launch}.");
+            return launch;
 #else
-            return RunLaunch.Normal;
+            return RunLaunch.New();
 #endif
         }
 

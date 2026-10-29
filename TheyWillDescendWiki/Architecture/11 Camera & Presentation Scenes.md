@@ -99,11 +99,11 @@ Brain смотрит на виртуальную камеру. Сама VCam н�
 | Режим | Что открыть | Что происходит |
 | --- | --- | --- |
 | **Play из меню** | `MainMenu.unity` | сплэш → меню → по Start экран загрузки и Game |
-| **Play из игры** | `Game.unity` | ран по `EditorRunLaunch` на `GameLifetimeScope` (Normal / Debug / Slot) |
-| **Play блокаута** | `Blockout/GameBlockout.unity` | тот же ран на блоках; рестарт остаётся в блокауте |
+| **Play из игры** | `Game.unity` | ран по `editorSaveId` / `editorDebug` на `GameLifetimeScope` |
+| **Play блокаута** | `Blockout/GameBlockout.unity` | тот же ран, пока сцена открыта в редакторе. Рестарт и старт из меню открывают `Game` |
 | **Edit уровня / UI** | нужную сцену | открывать по одной: две контентные сцены в Play стартуют обе |
 
-`LoadSceneAsync` по имени **требует**, чтобы сцена была в Build Profiles / Build Settings. Build list: `MainMenu` (0), `Game`. Блокаута в сборке нет: в редакторе `TransitionService` грузит его по пути.
+`LoadSceneAsync` по имени **требует**, чтобы сцена была в Build Profiles / Build Settings. Build list: `MainMenu` (0), `Game`. Шелл грузит только эти две. Блокаут в сборке нет, и переход на него кода не имеет.
 
 ## Итог одной фразой
 

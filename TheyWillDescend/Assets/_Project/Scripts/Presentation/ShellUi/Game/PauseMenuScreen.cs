@@ -266,7 +266,7 @@ namespace TheyWillDescend.Presentation.ShellUi
                 return;
             }
 
-            if (!_save.HasSlot)
+            if (!_save.Exists(SaveService.Slot0))
                 return;
             if (_shell == null)
             {
@@ -277,7 +277,7 @@ namespace TheyWillDescend.Presentation.ShellUi
             _busy = true;
             CloseBuildIfBusy();
             Hide();
-            Navigate(_shell.RestartRun(RunLaunch.Slot)).Forget();
+            Navigate(_shell.RestartRun(RunLaunch.FromSave(SaveService.Slot0))).Forget();
         }
 
         void LeaveToMainMenu()

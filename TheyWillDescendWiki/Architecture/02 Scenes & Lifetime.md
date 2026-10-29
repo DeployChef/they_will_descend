@@ -25,7 +25,7 @@ AppScope (процесс, DontDestroyOnLoad)
   → выход в меню → экран → teardown рана → Single-загрузка MainMenu
 ```
 
-Любая сцена — точка входа: Play на `Game.unity` стартует ран по редакторской настройке запуска (`EditorRunLaunch` на `GameLifetimeScope`).
+Любая сцена — точка входа: Play на `Game.unity` стартует ран по полям `editorSaveId` / `editorDebug` на `GameLifetimeScope`.
 
 Меню **не** содержит игровой мир. Game появляется только по Start.
 
@@ -37,7 +37,7 @@ AppScope (процесс, DontDestroyOnLoad)
 | Сцена | `LifetimeScope` сцены: камера, UI, звук сцены |
 | Ран | ECS DefaultWorld; ран = время жизни сцены Game |
 
-Сцены грузятся только Single-загрузкой через `TransitionService`. Additive поверх контентной сцены — нет.
+Сцены грузятся только Single-загрузкой через `ShellService`. Additive поверх контентной сцены — нет.
 
 Контейнер — только Presentation/Main, не ECS. Объекты сцены получают зависимости внедрением от scope своей сцены, не `Find*`.
 

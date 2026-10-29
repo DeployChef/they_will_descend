@@ -269,7 +269,7 @@ AudioService (ITickable, ILateTickable, IDisposable)
 | Набор | Банки | Кто держит |
 | --- | --- | --- |
 | `CoreBanks` | Master.strings, Master, UI, Main_theme | `AudioService`, весь процесс |
-| `GameWorldBanks` | Ambience_Town, Ambience_Wind_Generator, BUILDING | `GameEntry`: задача `LoadingTasks` на входе в Game, отпускает в teardown |
+| `GameWorldBanks` | Ambience_Town, Ambience_Wind_Generator, BUILDING | `GameEntry`: задача на `LoadingScreen` на входе в Game, отпускает в teardown |
 
 - `Acquire` грузит банки с сэмплами и ждёт, пока сэмплы догрузятся — под экраном загрузки.
 - Выгрузка — кадром позже, чтобы инстансы сцены успели остановиться.

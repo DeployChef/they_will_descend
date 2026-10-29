@@ -41,9 +41,8 @@ public sealed class AppScope : LifetimeScope
 
     protected override void Configure(IContainerBuilder builder)
     {
+        builder.Register<AppContext>(Lifetime.Singleton);
         builder.Register<ShellService>(Lifetime.Singleton);
-        builder.Register<TransitionService>(Lifetime.Singleton);
-        builder.Register<LoadingTasks>(Lifetime.Singleton);
         builder.Register<SaveService>(Lifetime.Singleton);
         builder.Register<InputService>(Lifetime.Singleton).WithParameter(inputActions);
         builder.RegisterComponent(loadingScreen);
@@ -57,10 +56,9 @@ public sealed class AppScope : LifetimeScope
 
 | Сервис | Роль |
 | --- | --- |
-| `ShellService` | Только навигация: `StartRun(launch)` (→ `Game`), `RestartRun(launch)` (→ текущая сцена рана, поэтому рестарт блокаута остаётся в блокауте), `GoToMenu()`, `TryTakeLaunch(out launch)`, `SplashShown`. Хранит параметры запуска между кнопкой и загрузкой. `GameSession` не знает |
-| `TransitionService` | Единственный, кто грузит сцены. Конвейер перехода (§3), реестр teardown'ов сцены |
-| `LoadingTasks` | Сцена сообщает «мне нужно время»: `Add(task, weight, label)`. Ошибка задачи = исключение |
-| `LoadingScreen` | Визуал процесса: `Show` / `Hide` (асинхронные), `SetProgress`. Переживает выгрузку и загрузку сцен |
+| `AppContext` | Факты процесса: `CurrentLaunch` (запись при старте и рестарте, чтение не стирает), `SplashShown`. Не статика |
+| `ShellService` | `StartRun(launch)` и `RestartRun(launch)` пишут билет и открывают `Game`. `GoToMenu()` открывает `MainMenu` и билет не трогает. Сам ведёт конвейер: шторка → teardown → Single-load → `LoadingScreen.Wait` → спрятать. `GameSession` не знает. Блокаут не знает |
+| `LoadingScreen` | Шторка процесса и список работы сцены: `Add(task, weight, label)`, `Wait`. Упавшая задача бросает исключение. Переживает выгрузку и загрузку сцен |
 | `InputService` | Клон `TheyWillDescend.inputactions`. Карты `Menu` (Proceed) и `Game` (Pause). Какую карту включить, решает точка входа сцены |
 | `SaveService` | Слот сейва. UI и `GameSession` получают его внедрением, не статикой |
 | `AudioService` | Банки, музыка, снапшоты, UI-звук. См. [[06 FMOD Audio]] |
@@ -71,8 +69,8 @@ public sealed class AppScope : LifetimeScope
 
 | Сцена | Scope | Точка входа | Что включает на входе |
 | --- | --- | --- | --- |
-| `MainMenu` | `MainMenuLifetimeScope` | `MainMenuFlow` | карта ввода `Menu`, музыка `Menu`; сплэш один раз за процесс (`ShellService.SplashShown`) |
-| `Game` | `GameLifetimeScope` | `GameEntry` | банки `GameWorld` и `GameSession.Begin` в `LoadingTasks`; по готовности часы, карта `Game`, меню паузы, музыка `Gameplay` |
+| `MainMenu` | `MainMenuLifetimeScope` | `MainMenuFlow` | карта ввода `Menu`, музыка `Menu`; сплэш один раз за процесс (`AppContext.SplashShown`) |
+| `Game` | `GameLifetimeScope` | `GameEntry` | банки `GameWorld` и `GameSession.Begin` на `LoadingScreen`; по готовности часы, карта `Game`, меню паузы, музыка `Gameplay` |
 
 Build list: `MainMenu` (0), `Game`. Переходы только Single-загрузкой: одновременно живёт ровно одна сцена, одна камера, один слушатель FMOD.
 
@@ -82,21 +80,21 @@ Build list: `MainMenu` (0), `Game`. Переходы только Single-заг�
 
 ```text
 Initialize
-  teardown → TransitionService.RegisterTeardown(EndRun)
-  launch   = меню (TryTakeLaunch) → #if UNITY_EDITOR настройка EditorRunLaunch на GameLifetimeScope → Normal
-  LoadingTasks.Add(AcquireWorldBanks, 1, "Loading sounds…")
-  LoadingTasks.Add(BeginRun(launch),  3, "Preparing the city…")
+  teardown → ShellService.RegisterTeardown(EndRun)
+  launch   = AppContext.CurrentLaunch → #if UNITY_EDITOR поля на GameLifetimeScope (save id или New+debug) → New
+  LoadingScreen.Add(AcquireWorldBanks, 1, "Loading sounds…")
+  LoadingScreen.Add(BeginRun(launch),  3, "Preparing the city…")
 
 BeginRun:  GameSession.Begin(launch); провал → исключение; успех → Arm
 Arm:       SimClockCommand.InGame(true), InputService.EnableGame, PauseMenuScreen.Use, Music.Set(Gameplay)
 EndRun:    Disarm (меню паузы, ввод, InGame(false)) → GameSession.Shutdown; провал → Arm обратно
 ```
 
-Редакторская настройка (`Normal` / `Debug` / `Slot`) лежит полем на `GameLifetimeScope` и передаётся через `WithParameter`. В билде её ветка вырезана: без параметров всегда `Normal`, отладочный запуск не уедет игрокам.
+Редакторская настройка — два поля на `GameLifetimeScope`: `editorSaveId` и `editorDebug`. Пустой id даёт `RunLaunch.New(editorDebug)`, заполненный — `RunLaunch.FromSave(id)`. В билде ветка вырезана: без билета из меню всегда `New`.
 
 ### 2.2. Меню
 
-Кнопки: **Start Game** / **Load** / **Start Debug** → `ShellService.StartRun(launch)`. Допустимые `DifficultyProfile` и default принадлежат `ScenarioDefinition`: Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Load = слот; кнопка серая, если файла нет.
+Кнопки: **Start Game** / **Load** / **Start Debug** → `ShellService.StartRun(launch)`. Start Game — `RunLaunch.New()`, Debug — `RunLaunch.New(debug: true)`, Load — `RunLaunch.FromSave(SaveService.Slot0)`. Допустимые `DifficultyProfile` и default принадлежат `ScenarioDefinition`: Start Game берёт `DefaultScenario.DefaultDifficulty`, Debug — `DebugScenario.DefaultDifficulty`. Кнопка Load серая, если файла `run_slot0.json` нет.
 
 ---
 
@@ -107,26 +105,26 @@ Play из MainMenu (и билд)
   AppScope поднимается → MainMenu → MainMenuFlow: карта Menu, музыка Menu
 
 Меню → «Начать»
-  ShellService.StartRun(launch) → TransitionService.Run("Game")
+  ShellService.StartRun(launch) пишет AppContext.CurrentLaunch и грузит Game
     1. LoadingScreen.Show
     2. teardown'ы текущей сцены (у меню их нет)
     3. Single-загрузка Game (меню выгружается само)
-    4. GameEntry забирает launch, кладёт работу в LoadingTasks; конвейер ждёт WaitAll
+    4. GameEntry читает CurrentLaunch, кладёт работу на LoadingScreen; конвейер ждёт Wait
     5. LoadingScreen.Hide
 
 Play из Game напрямую (редактор)
-  AppScope поднимается → GameEntry: launch не передан → редакторская настройка
-  LoadingTasks получил работу без активного перехода → TransitionService сам показывает экран
+  AppScope поднимается → CurrentLaunch пуст → редакторская настройка
+  LoadingScreen получил работу без активного перехода → ShellService сам показывает экран
 
 Игра → «Главное меню» / «Перезапуск» / «Загрузить»
-  ShellService.GoToMenu() / RestartRun(launch) → тот же конвейер
+  ShellService.GoToMenu() / RestartRun(launch) → тот же конвейер. GoToMenu билет не стирает
   teardown Game (EndRun) идёт под экраном, до выгрузки сцены
 ```
 
 Правила конвейера:
-- Второй переход во время текущего игнорируется (`Run` возвращает `false`), а не ставится в очередь.
+- Второй переход во время текущего игнорируется (метод возвращает `false`), а не ставится в очередь. Билет при этом не перезаписывается.
 - Teardown вернул `false` → переход отменяется, экран убирается, игрок остаётся в сцене.
-- Задача `LoadingTasks` упала → откат в `MainMenu`. Если упало само меню — экран убирается, дальше откатываться некуда.
+- Задача на `LoadingScreen` или сама загрузка сцены упала → исключение. В меню из-за этого не уходим.
 
 ---
 

@@ -15,19 +15,19 @@ namespace TheyWillDescend.Presentation.ShellUi
         [SerializeField] MainMenuScreen menu;
 
         bool _menuVisible;
-        ShellService _shell;
+        AppContext _app;
         InputService _input;
 
         [Inject]
-        public void Construct(ShellService shell, InputService input, AudioService audio)
+        public void Construct(AppContext app, InputService input, AudioService audio)
         {
-            _shell = shell;
+            _app = app;
             _input = input;
             _input.Proceeded += OnProceed;
             _input.EnableMenu();
             audio.Music.Set(MusicTheme.Menu);
 
-            if (shell.SplashShown)
+            if (app.SplashShown)
                 ShowMenu();
             else
                 ShowSplash();
@@ -59,7 +59,7 @@ namespace TheyWillDescend.Presentation.ShellUi
         void ShowMenu()
         {
             _menuVisible = true;
-            _shell.MarkSplashShown();
+            _app.SplashShown = true;
             if (splash != null)
                 splash.Hide();
             if (menu != null)

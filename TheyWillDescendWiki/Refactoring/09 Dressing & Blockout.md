@@ -116,7 +116,7 @@ public sealed class VisualSet : ScriptableObject
 
 Только в редакторе: открыть `GameBlockout.unity` → Play. В сборку сцена не входит.
 
-`ShellService.RestartRun` перезапускает **текущую** сцену рана, а не всегда `Game`. В редакторе `TransitionService` грузит сцену, которой нет в списке сборки, по пути (`EditorSceneManager.LoadSceneAsyncInPlayMode`). Для Game поведение не меняется.
+`StartRun` и `RestartRun` оба открывают `Game`. Шелл блокаут не знает и сцену вне списка сборки не грузит. Play на `GameBlockout.unity` по-прежнему стартует ран, потому что у сцены свой вход. Рестарт из неё уходит в `Game`.
 
 `$Dev` / `ScenarioEditor` живёт только в блокауте: это мастерская стартового сценария (`DefaultScenario` и т.п.). `Game` в сборке редактор домов не тащит. Ран по-прежнему читает `ScenarioDefinition` с `GameSession`, не из сцены.
 
@@ -148,7 +148,7 @@ public sealed class VisualSet : ScriptableObject
 | Что | Итог |
 | --- | --- |
 | Код | `VisualSet` (Content), `SceneDressing` (Presentation/Environment). `GameLifetimeScope` раздаёт `VisualSet` видам. `BuildingViewBoard` вкладывает модель в оболочку; призрак — обёртка `GhostHouse` с моделью. `AgentViewBoard` без своего массива. `PyramidView` без ссылки на модель. Main → Content |
-| Оболочка | `RestartRun` грузит текущую сцену по пути; `TransitionService` в редакторе грузит сцену вне списка сборки через `EditorSceneManager.LoadSceneAsyncInPlayMode` |
+| Оболочка | `StartRun` и `RestartRun` открывают `Game`. Загрузка сцены вне списка сборки убрана |
 | Здания | `Body` вынесен из `Kitchen`/`Sawmill`/`Workshop` в `Content/Visuals/Bodies/*_Body.prefab` (локальный масштаб сохранён) |
 | Game | разложена по §2.1, `#GameRun` → `Prefabs/Game/GameRun.prefab`. Удалён пустой `Simulation`/SubScene. `DayCicleController` → `DayCycle`, `#GameHudCanvas` → `GameHudCanvas` (имя, которое ждут редакторские сборщики HUD) |
 | Блокаут | `Blockout/`: `GameBlockout.unity`, `BlockoutVisuals.asset`, кубы зданий по габаритам настоящих моделей, капсула жителя, ступенчатая пирамида, земля-диск, 4 материала Simple Lit. Плоский ambient, один направленный свет, без volume и смены дня |

@@ -65,7 +65,7 @@ Assets/_Project/Scripts/
     GameHud/     Time / TimelineRibbon / Resource / Build / Inspect / Save / Spawn
     Camera/      RTSCameraController, PauseCamera*            (namespace Presentation.Cameras)
     SimBridge/   SimulationBootstrap, RunPublisher, RunSessionSnapshot, StorySave, SimPauseAudioBridge
-    Shell/       Scenes (ShellService, TransitionService, LoadingTasks, GameScenes),
+    Shell/       AppContext, Scenes (ShellService, GameScenes),
                  Session (GameEntry, GameSession, RunLaunch), Input (InputService)
     ShellUi/     MainMenu, Game (PauseMenuScreen), Loading (LoadingScreen)
     Infrastructure/ Logging (GameLog), Save (SaveService, RunSnapshot)
