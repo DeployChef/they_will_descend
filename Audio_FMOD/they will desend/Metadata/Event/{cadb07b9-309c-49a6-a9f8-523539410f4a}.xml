@@ -722,7 +722,7 @@
 			<value>0</value>
 		</property>
 		<property name="maximum">
-			<value>0.32999998331069946</value>
+			<value>0.31999999284744263</value>
 		</property>
 		<property name="isInverted">
 			<value>true</value>
@@ -755,13 +755,10 @@
 	</object>
 	<object class="ParameterCondition" id="{3b34a0b3-6f7e-4623-89c5-3a513b9cfc6c}">
 		<property name="minimum">
-			<value>0.34400001168251038</value>
+			<value>0.67000001668930054</value>
 		</property>
 		<property name="maximum">
-			<value>0.67500001192092896</value>
-		</property>
-		<property name="isInverted">
-			<value>true</value>
+			<value>1</value>
 		</property>
 		<relationship name="parameter">
 			<destination>{1f41a512-6a65-4a0e-8fd2-d2107ae1c617}</destination>
@@ -772,7 +769,7 @@
 			<value>0</value>
 		</property>
 		<property name="maximum">
-			<value>0.33000001311302185</value>
+			<value>0.32499998807907104</value>
 		</property>
 		<relationship name="parameter">
 			<destination>{1f41a512-6a65-4a0e-8fd2-d2107ae1c617}</destination>
@@ -1069,6 +1066,9 @@
 		<property name="value">
 			<value>0</value>
 		</property>
+		<property name="curveShape">
+			<value>-1</value>
+		</property>
 	</object>
 	<object class="AutomationPoint" id="{48c407a8-601a-4508-8700-99c2e7201188}">
 		<property name="position">
@@ -1083,7 +1083,7 @@
 			<value>0.45000000000000001</value>
 		</property>
 		<property name="value">
-			<value>0</value>
+			<value>6</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{fa14bfb1-0c2c-4f63-94bd-c42522f04d20}">
