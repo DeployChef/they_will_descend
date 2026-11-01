@@ -33,7 +33,7 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _BlendNoiseScale
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -124,6 +124,8 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _BlendNoiseScale: 0.129
+    - _BlendNoiseStrength: 1
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -149,6 +151,10 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RockTiling: 0.05
+    - _Smooth1: 0
+    - _Smooth1_1: 0
+    - _Smooth1_2: 0
+    - _Smooth1_3: 0
     - _Smoothness: 0.2
     - _SmoothnessTextureChannel: 0
     - _SmoothstepMax: 0.8

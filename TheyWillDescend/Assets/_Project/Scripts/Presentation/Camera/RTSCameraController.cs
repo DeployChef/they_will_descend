@@ -63,6 +63,9 @@ namespace TheyWillDescend.Presentation.Cameras
         /// </summary>
         public Vector3 Velocity => currentVelocity;
 
+        /// <summary>Текущий сглаженный радиус зума для компонентов представления.</summary>
+        public float CurrentZoomRadius => currentRadius;
+
         private void OnValidate()
         {
             if (camera == null) camera = GetComponent<CinemachineCamera>();
