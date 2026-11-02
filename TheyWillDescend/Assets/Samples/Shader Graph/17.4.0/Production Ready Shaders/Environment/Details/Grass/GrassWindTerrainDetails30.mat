@@ -67,7 +67,7 @@ Material:
     - _AlphaDstBlend: 0
     - _AlphaSrcBlend: 1
     - _AlphaToMask: 1
-    - _BendIntensity: 1.54
+    - _BendIntensity: 0.33
     - _BladeHeight: 0.3
     - _Blend: 0
     - _BlendMode: 0
@@ -85,14 +85,15 @@ Material:
     - _DoubleSidedNormalMode: 2
     - _DstBlend: 0
     - _DstBlend2: 0
+    - _DstBlendAlpha: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _ExcludeFromTUAndAA: 0
     - _MaterialID: 1
     - _MaterialTypeMask: 2
     - _OpaqueCullMode: 2
-    - _PerBladeRandomTimeOffset: 0.204
-    - _PerBladeWindIntensityVariation: 0.3
+    - _PerBladeRandomTimeOffset: 0.21
+    - _PerBladeWindIntensityVariation: 0.129
     - _PerPixelSorting: 0
     - _QueueControl: 0
     - _QueueOffset: 0
@@ -104,6 +105,7 @@ Material:
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
     - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4
@@ -126,9 +128,9 @@ Material:
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
     - _UseShadowThreshold: 0
-    - _WindDirection: 80
-    - _WindDirectionVariation: 30
-    - _WindSpeed: 1
+    - _WindDirection: -7
+    - _WindDirectionVariation: 180
+    - _WindSpeed: -1
     - _WorkflowMode: 1
     - _ZTest: 4
     - _ZTestDepthEqualForOpaque: 3
