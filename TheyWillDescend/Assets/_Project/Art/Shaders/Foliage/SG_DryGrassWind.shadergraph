@@ -43,7 +43,11 @@
             "m_Id": "34757078af3d9d295593e6b8beb497db"
         }
     ],
-    "m_Keywords": [],
+    "m_Keywords": [
+        {
+            "m_Id": "42cb4504845041d4960e4d2c3e266143"
+        }
+    ],
     "m_Dropdowns": [],
     "m_CategoryData": [
         {
@@ -1220,6 +1224,9 @@
     "m_ObjectId": "9237a8e8827b28bfb79c4c247bba4dbc",
     "m_Name": "Dry Grass",
     "m_ChildObjectList": [
+        {
+            "m_Id": "42cb4504845041d4960e4d2c3e266143"
+        },
         {
             "m_Id": "1cd224c176e8633416e679259d8323fe"
         },
@@ -4406,4 +4413,32 @@
     "m_CustomColors": {
         "m_SerializableColors": []
     }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.ShaderKeyword",
+    "m_ObjectId": "42cb4504845041d4960e4d2c3e266143",
+    "m_Guid": {
+        "m_GuidSerialized": "028a8410-f03b-458b-a47d-a36f0adde793"
+    },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "Wind Enabled",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Wind Enabled",
+    "m_DefaultReferenceName": "_WIND_ENABLED",
+    "m_OverrideReferenceName": "_WIND_ENABLED",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_KeywordType": 0,
+    "m_KeywordDefinition": 0,
+    "m_KeywordScope": 0,
+    "m_KeywordStages": 63,
+    "m_Entries": [],
+    "m_Value": 1,
+    "m_IsEditable": true
 }

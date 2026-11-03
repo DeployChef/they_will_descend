@@ -1,12 +1,15 @@
 #ifndef TWD_NATURAL_GRASS_WIND_INCLUDED
 #define TWD_NATURAL_GRASS_WIND_INCLUDED
 
+#if defined(_WIND_ENABLED)
 float3 TWD_GrassRotate(float3 v, float3 axis, float angle)
 {
     float s, c;
     sincos(angle, s, c);
     return v * c + cross(axis, v) * s + axis * dot(axis, v) * (1.0 - c);
 }
+
+#endif
 
 // WindData: R = root-to-tip weight, G = blade phase, B = blade variation.
 // Angles are in degrees at the material boundary; the field is world aligned.
@@ -16,6 +19,13 @@ void NaturalGrassWind_float(float3 PositionOS, float3 NormalOS, float3 TangentOS
     float BladeVariation, float PhaseOffset, float TuftSway, float TuftSwaySpeed,
     out float3 BentPositionOS, out float3 BentNormalOS, out float3 BentTangentOS)
 {
+#if !defined(_WIND_ENABLED)
+    // A material keyword removes the entire wind path from static variants,
+    // including ShadowCaster/DepthOnly passes. No runtime branch is needed.
+    BentPositionOS = PositionOS;
+    BentNormalOS = NormalOS;
+    BentTangentOS = TangentOS;
+#else
     float rootWeight = saturate(WindData.r);
     float strength = max(Strength, 0.0);
     float variation = saturate(BladeVariation);
@@ -84,6 +94,7 @@ void NaturalGrassWind_float(float3 PositionOS, float3 NormalOS, float3 TangentOS
     BentPositionOS = TransformWorldToObject(positionWS);
     BentNormalOS = TransformWorldToObjectNormal(normalWS);
     BentTangentOS = TransformWorldToObjectDir(tangentWS);
+#endif
 }
 
 void NaturalGrassWind_half(half3 PositionOS, half3 NormalOS, half3 TangentOS,

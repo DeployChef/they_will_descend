@@ -24,7 +24,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 267d7487d4829294fb81339830ae7a57, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _WIND_ENABLED
   m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 1
@@ -62,6 +63,7 @@ Material:
     - _SwayStrength: 0.171
     - _TuftSwaySpeed: 1
     - _TuftSwayStrength: 0.07
+    - _WIND_ENABLED: 1
     - _WindDirection: 22
     - _WindDirectionVariation: 30.9
     - _WindDisplacement: 0.3
