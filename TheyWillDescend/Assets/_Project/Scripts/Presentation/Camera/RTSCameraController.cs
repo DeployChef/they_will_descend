@@ -63,8 +63,10 @@ namespace TheyWillDescend.Presentation.Cameras
         /// </summary>
         public Vector3 Velocity => currentVelocity;
 
-        /// <summary>Текущий сглаженный радиус зума для компонентов представления.</summary>
-        public float CurrentZoomRadius => currentRadius;
+        /// <summary>Сглаженный радиус зума; в редакторе — заданное положение орбиты.</summary>
+        public float CurrentZoomRadius => Application.IsPlaying(gameObject)
+            ? currentRadius
+            : orbitalFollow != null ? orbitalFollow.RadialAxis.Value : minRadius;
 
         private void OnValidate()
         {
