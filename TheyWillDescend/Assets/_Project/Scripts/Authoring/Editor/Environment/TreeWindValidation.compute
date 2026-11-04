@@ -1,0 +1,35 @@
+// Editor-only GPU checks exercise the production HLSL, not a CPU reimplementation.
+#pragma kernel WindOn _TREE_WIND_ENABLED
+#pragma kernel WindOff
+#pragma target 4.5
+
+float4x4 _TestObjectToWorld;
+float4x4 _TestWorldToObject;
+float3 TransformObjectToWorld(float3 p) { return mul(_TestObjectToWorld, float4(p, 1)).xyz; }
+float3 TransformWorldToObjectDir(float3 d) { return normalize(mul((float3x3)_TestWorldToObject, d)); }
+
+#include "../../../../Art/Shaders/Foliage/NaturalTreeWind.hlsl"
+
+// Six float4 records per vertex avoid host-language struct packing differences.
+StructuredBuffer<float4> _Input;
+RWStructuredBuffer<float4> _Output;
+uint _Count;
+float _TestTime, _Strength, _Speed, _Direction, _Variation, _Gust;
+float _SwaySpeed, _TrunkBend, _BranchSway, _Flutter, _FlutterSpeed;
+
+void Evaluate(uint id)
+{
+    if (id >= _Count) return;
+    float3 p, n, t;
+    NaturalTreeWind_float(_Input[id*6].xyz, _Input[id*6+1].xyz, _Input[id*6+2].xyz,
+        _Input[id*6+3], _Input[id*6+4], _Input[id*6+5],
+        _TestTime, _Strength, _Speed, _Direction, _Variation, _Gust, _SwaySpeed,
+        _TrunkBend, _BranchSway, _Flutter, _FlutterSpeed, 0, -1, p, n, t);
+    _Output[id * 3] = float4(p, 1);
+    _Output[id * 3 + 1] = float4(n, 0);
+    _Output[id * 3 + 2] = float4(t, 0);
+}
+[numthreads(64,1,1)]
+void WindOn(uint3 id : SV_DispatchThreadID) { Evaluate(id.x); }
+[numthreads(64,1,1)]
+void WindOff(uint3 id : SV_DispatchThreadID) { Evaluate(id.x); }
