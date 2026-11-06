@@ -4,9 +4,6 @@
 		<property name="color">
 			<value>Blue</value>
 		</property>
-		<property name="volume">
-			<value>-9</value>
-		</property>
 		<property name="name">
 			<value>MUSIC</value>
 		</property>
@@ -25,6 +22,7 @@
 	</object>
 	<object class="MixerBusEffectChain" id="{d4d96e5f-89bc-49fb-b1e3-28704ef777fb}">
 		<relationship name="effects">
+			<destination>{060a8874-b039-4ad0-ab92-af4592bce217}</destination>
 			<destination>{63ccd0fc-d2ba-4fa2-87fc-62a90e68e48e}</destination>
 			<destination>{628777d5-4e9c-4007-a967-3472a92514f8}</destination>
 			<destination>{6fb4ebbd-3505-41c1-a309-8e93517e7978}</destination>
@@ -34,6 +32,20 @@
 		<property name="overridingOutputFormat">
 			<value>1</value>
 		</property>
+	</object>
+	<object class="MultibandEqEffect" id="{060a8874-b039-4ad0-ab92-af4592bce217}">
+		<property name="filterTypeA">
+			<value>9</value>
+		</property>
+		<property name="frequencyA">
+			<value>751.130615</value>
+		</property>
+		<property name="qualityA">
+			<value>0.479999989</value>
+		</property>
+		<relationship name="modulators">
+			<destination>{2f909a37-4252-4470-b2ab-3b77b7e5d1be}</destination>
+		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{63ccd0fc-d2ba-4fa2-87fc-62a90e68e48e}" />
 	<object class="MixerSend" id="{628777d5-4e9c-4007-a967-3472a92514f8}">
@@ -51,5 +63,28 @@
 		<property name="cutoff">
 			<value>22000</value>
 		</property>
+	</object>
+	<object class="SpectralSidechainModulator" id="{2f909a37-4252-4470-b2ab-3b77b7e5d1be}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>gainA</value>
+		</property>
+		<property name="mode">
+			<value>1</value>
+		</property>
+		<property name="amount">
+			<value>-12</value>
+		</property>
+		<property name="attackTime">
+			<value>35</value>
+		</property>
+		<property name="minimumThresholdFrequency">
+			<value>190</value>
+		</property>
+		<property name="maximumThresholdFrequency">
+			<value>5500</value>
+		</property>
+		<relationship name="sidechains">
+			<destination>{f7334160-1086-4e61-a316-01ee8e7c8c5b}</destination>
+		</relationship>
 	</object>
 </objects>

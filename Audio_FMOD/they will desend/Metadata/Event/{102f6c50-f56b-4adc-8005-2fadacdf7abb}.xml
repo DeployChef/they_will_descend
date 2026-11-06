@@ -140,6 +140,7 @@
 		<relationship name="automationTracks">
 			<destination>{e47d4f0b-9a5c-48b4-86ad-688cbf5e6808}</destination>
 			<destination>{3f73d5ff-5513-402c-8093-2cc7d4899d61}</destination>
+			<destination>{57854a64-5f39-48dc-b039-f453158f72cf}</destination>
 		</relationship>
 		<relationship name="modules">
 			<destination>{e91e0193-8c31-4ba1-86cd-c76b89533bdb}</destination>
@@ -530,6 +531,11 @@
 	<object class="AutomationTrack" id="{3f73d5ff-5513-402c-8093-2cc7d4899d61}">
 		<relationship name="automator">
 			<destination>{f8e21a82-666d-4953-8dd1-3f2d11691870}</destination>
+		</relationship>
+	</object>
+	<object class="AutomationTrack" id="{57854a64-5f39-48dc-b039-f453158f72cf}">
+		<relationship name="automator">
+			<destination>{685e4f43-7b04-4e2d-800a-9f2d99735d10}</destination>
 		</relationship>
 	</object>
 	<object class="SingleSound" id="{e91e0193-8c31-4ba1-86cd-c76b89533bdb}">
@@ -1637,17 +1643,30 @@
 		<property name="filterTypeB">
 			<value>9</value>
 		</property>
+		<property name="filterTypeC">
+			<value>9</value>
+		</property>
 		<property name="frequencyA">
 			<value>720.641174</value>
 		</property>
 		<property name="frequencyB">
 			<value>54.0684319</value>
 		</property>
+		<property name="frequencyC">
+			<value>610.5672</value>
+		</property>
+		<property name="qualityC">
+			<value>2.10000014</value>
+		</property>
 		<property name="gainB">
 			<value>7.24137783</value>
 		</property>
+		<property name="gainC">
+			<value>1.03448153</value>
+		</property>
 		<relationship name="automators">
 			<destination>{bb1b3042-e6eb-4c10-b7a3-0849e3303339}</destination>
+			<destination>{685e4f43-7b04-4e2d-800a-9f2d99735d10}</destination>
 		</relationship>
 		<relationship name="modulators">
 			<destination>{2bf8582f-51a4-4bbd-aaef-91a826b3799e}</destination>
@@ -2055,6 +2074,14 @@
 			<destination>{604304ac-910c-4fef-a665-7906cac93b08}</destination>
 		</relationship>
 	</object>
+	<object class="Automator" id="{685e4f43-7b04-4e2d-800a-9f2d99735d10}">
+		<property name="nameOfPropertyBeingAutomated">
+			<value>gainC</value>
+		</property>
+		<relationship name="automationCurves">
+			<destination>{c3dbcb7f-93e4-4f52-b3b5-14b4ca587131}</destination>
+		</relationship>
+	</object>
 	<object class="LFOModulator" id="{2bf8582f-51a4-4bbd-aaef-91a826b3799e}">
 		<property name="nameOfPropertyBeingModulated">
 			<value>frequencyA</value>
@@ -2168,6 +2195,15 @@
 			<destination>{d8ad58a8-271b-4a63-990d-927b372afefc}</destination>
 		</relationship>
 	</object>
+	<object class="AutomationCurve" id="{c3dbcb7f-93e4-4f52-b3b5-14b4ca587131}">
+		<relationship name="parameter">
+			<destination>{2a5e06f2-e505-4f3e-a5a8-c3b54cbe0f9c}</destination>
+		</relationship>
+		<relationship name="automationPoints">
+			<destination>{e8adf2fc-6813-4e78-a6bd-fd60123bbb94}</destination>
+			<destination>{9d2b8c3a-7bf2-434b-8128-c0fd73e16be7}</destination>
+		</relationship>
+	</object>
 	<object class="AutomationPoint" id="{d16d7e0b-2136-481e-9b72-00c8d870ed27}">
 		<property name="position">
 			<value>0</value>
@@ -2241,6 +2277,22 @@
 		</property>
 		<property name="value">
 			<value>15</value>
+		</property>
+	</object>
+	<object class="AutomationPoint" id="{e8adf2fc-6813-4e78-a6bd-fd60123bbb94}">
+		<property name="position">
+			<value>0</value>
+		</property>
+		<property name="value">
+			<value>9.82758522</value>
+		</property>
+	</object>
+	<object class="AutomationPoint" id="{9d2b8c3a-7bf2-434b-8128-c0fd73e16be7}">
+		<property name="position">
+			<value>1</value>
+		</property>
+		<property name="value">
+			<value>-5.17241478</value>
 		</property>
 	</object>
 </objects>
