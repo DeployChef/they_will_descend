@@ -72,6 +72,11 @@ Audio_FMOD/**/*.cache.meta
 TheyWillDescend/Assets/Plugins/FMOD/Cache/
 TheyWillDescend/Assets/Plugins/FMOD/Cache.meta
 
+# FMOD Studio source audio (raw wavs) — heavy binaries.
+# Runtime/editor read only built banks (Build/Desktop + StreamingAssets).
+# Sources stay local; a fresh clone cannot rebuild banks — only the sound designer does.
+Audio_FMOD/**/Assets/
+
 # FMOD Studio build output IS committed.
 # FMODStudioSettings.asset has sourceBankPath = ../Audio_FMOD/they will desend/Build/Desktop
 # and HasPlatforms = 0, so Play-in-Editor and the Event Browser read banks from here.
