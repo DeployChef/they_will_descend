@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{2b09ac7b-d54a-4c45-99b3-61e44e217dc8}">
+		<property name="color">
+			<value>Green</value>
+		</property>
+		<property name="name">
+			<value>stress timer</value>
+		</property>
+		<relationship name="folder">
+			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{032d4097-1a1a-4a7f-ab05-da3218eec446}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{032d4097-1a1a-4a7f-ab05-da3218eec446}">
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+		<relationship name="modulators">
+			<destination>{22a29a6d-aca5-46c9-9f4d-032b41dc2253}</destination>
+		</relationship>
+	</object>
+	<object class="SeekModulator" id="{22a29a6d-aca5-46c9-9f4d-032b41dc2253}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>cursorPosition</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.029999999329447746</value>
+		</property>
+		<relationship name="automators">
+			<destination>{2d5e6a3f-37b2-4312-a1b1-9168788ac08b}</destination>
+		</relationship>
+	</object>
+	<object class="Automator" id="{2d5e6a3f-37b2-4312-a1b1-9168788ac08b}">
+		<property name="nameOfPropertyBeingAutomated">
+			<value>speedAscending</value>
+		</property>
+		<relationship name="automationCurves">
+			<destination>{7f1de9be-ef09-4467-b417-c04c6fd1f217}</destination>
+		</relationship>
+	</object>
+	<object class="AutomationCurve" id="{7f1de9be-ef09-4467-b417-c04c6fd1f217}">
+		<relationship name="parameter">
+			<destination>{f0e05e45-e608-4049-adaa-7b443842d574}</destination>
+		</relationship>
+		<relationship name="automationPoints">
+			<destination>{2fa5ecfd-cfd4-4e69-98fa-d77a43720c61}</destination>
+			<destination>{60175d81-1a91-491d-aef1-dc2b41519c90}</destination>
+		</relationship>
+	</object>
+	<object class="AutomationPoint" id="{2fa5ecfd-cfd4-4e69-98fa-d77a43720c61}">
+		<property name="position">
+			<value>0</value>
+		</property>
+		<property name="value">
+			<value>0.25999999</value>
+		</property>
+		<property name="curveShape">
+			<value>0.0355164967</value>
+		</property>
+	</object>
+	<object class="AutomationPoint" id="{60175d81-1a91-491d-aef1-dc2b41519c90}">
+		<property name="position">
+			<value>0.75</value>
+		</property>
+		<property name="value">
+			<value>0.0299999993</value>
+		</property>
+	</object>
+</objects>

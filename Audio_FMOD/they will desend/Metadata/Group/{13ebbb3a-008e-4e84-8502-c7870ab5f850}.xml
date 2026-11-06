@@ -28,8 +28,17 @@
 	<object class="MixerBusEffectChain" id="{1315e3c7-d1c1-46cc-8f9e-9be835e7bc62}">
 		<relationship name="effects">
 			<destination>{23372084-6b5f-49a1-abdb-97e7ed75a542}</destination>
+			<destination>{f7334160-1086-4e61-a316-01ee8e7c8c5b}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{6eab0a23-7fd9-4cbc-b142-51c7b621a3a8}" />
 	<object class="MixerBusFader" id="{23372084-6b5f-49a1-abdb-97e7ed75a542}" />
+	<object class="SpectralSidechain" id="{f7334160-1086-4e61-a316-01ee8e7c8c5b}">
+		<property name="minimumFrequency">
+			<value>58</value>
+		</property>
+		<property name="maximumFrequency">
+			<value>22000</value>
+		</property>
+	</object>
 </objects>
