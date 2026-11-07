@@ -27,15 +27,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 2b90db76909a6b44c9c5c61b2e15c63e, type: 3}
+        m_Texture: {fileID: 2800000, guid: d579cb28595374f429efc861f4896127, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: 1b731d067a55dff4c906d76ae6a709b0, type: 3}
+        m_Texture: {fileID: 2800000, guid: ce23d9e13af73494f856b6ace10ee3e5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RoughnessMap:
-        m_Texture: {fileID: 2800000, guid: a10107feb4707854896b2f90b4dcfc9d, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0455d95609ffde1418981e21c8c0f4a1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -70,15 +70,15 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 0
-    - _Smoothness: 1
+    - _Smoothness: 0
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _TREE_WIND_ENABLED: 1
-    - _TextureTiling: 4.74
+    - _TextureTiling: 4.91
     - _TreeSwaySpeed: 0.7
     - _TrunkBend: 3.8
-    - _VariationStrength: 0.203
+    - _VariationStrength: 0.364
     - _WindDirection: 25
     - _WindPhaseOffset: 0
     - _WindPreviewTime: -1
@@ -89,8 +89,8 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _LeafTint: {r: 0.3207547, g: 0.13596518, b: 0.09229262, a: 1}
-    - _VariationTint: {r: 0.7573869, g: 0.8679245, b: 0.7941298, a: 1}
+    - _LeafTint: {r: 0.71221966, g: 0.8371268, b: 0.9150943, a: 1}
+    - _VariationTint: {r: 0.8490566, g: 0.74646264, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3799728739331414508

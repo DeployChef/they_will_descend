@@ -27,15 +27,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 20b5bb4a7e1ded047b43d3f7c7b2781d, type: 3}
+        m_Texture: {fileID: 2800000, guid: d579cb28595374f429efc861f4896127, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: a6625bfc33c906a469e1244d1323b15e, type: 3}
+        m_Texture: {fileID: 2800000, guid: ce23d9e13af73494f856b6ace10ee3e5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RoughnessMap:
-        m_Texture: {fileID: 2800000, guid: 08b7b5c8662e27e49a15bda4adfa5d34, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0455d95609ffde1418981e21c8c0f4a1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -53,7 +53,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaClip: 0
-    - _AlphaCutoff: 0.01
+    - _AlphaCutoff: 0
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
@@ -66,19 +66,19 @@ Material:
     - _GustStrength: 0.4
     - _LeafFlutter: 7
     - _LeafFlutterSpeed: 2
-    - _NormalStrength: 0.35
+    - _NormalStrength: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 0
-    - _Smoothness: 1
+    - _Smoothness: 0
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _TREE_WIND_ENABLED: 1
-    - _TextureTiling: 3
+    - _TextureTiling: 0.82
     - _TreeSwaySpeed: 0.65
     - _TrunkBend: 1
-    - _VariationStrength: 0.2
+    - _VariationStrength: 0.51
     - _WindDirection: 25
     - _WindPhaseOffset: 0
     - _WindPreviewTime: -1
@@ -89,8 +89,8 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _LeafTint: {r: 0.5377358, g: 0.5377358, b: 0.5377358, a: 1}
-    - _VariationTint: {r: 0.2760852, g: 0.5660378, b: 0.14684944, a: 1}
+    - _LeafTint: {r: 0.754717, g: 0.7358903, b: 0.6301175, a: 1}
+    - _VariationTint: {r: 0.32720718, g: 0.5377358, b: 0.366074, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &144198507044688640

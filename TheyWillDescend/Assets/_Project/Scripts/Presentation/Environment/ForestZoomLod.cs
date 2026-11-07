@@ -5,7 +5,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Environment
 {
     /// <summary>
-    /// One zoom policy for explicitly assigned plateau/front-line tree groups.
+    /// Zoom-dependent plateau trees and fixed low-detail decorative forest.
     /// Pan, yaw and distance to individual trees never participate in selection.
     /// Far-background forest is deliberately not collected from the entire scene.
     /// </summary>
@@ -15,8 +15,11 @@ namespace TheyWillDescend.Presentation.Environment
     {
         [SerializeField] RTSCameraController cameraController;
 
-        [SerializeField, Tooltip("Корни деревьев/групп на плато и первой линии за лавой. Дальний фон сюда не добавлять.")]
+        [SerializeField, Tooltip("Деревья на плато: нижний шаг RTS-зума — LOD0, остальные — LOD2.")]
         Transform[] treeRoots = System.Array.Empty<Transform>();
+
+        [SerializeField, Tooltip("Внешний лес за лавой: всегда LOD2. Имеет приоритет над переключаемыми группами.")]
+        Transform[] fixedLod2Roots = System.Array.Empty<Transform>();
 
         [SerializeField, Min(.01f), Tooltip("Граница между ближайшим шагом RTS-зума и следующим. Меньше — LOD0, больше — LOD2.")]
         float detailSwitchRadius = 6.5f;
@@ -34,6 +37,7 @@ namespace TheyWillDescend.Presentation.Environment
         {
             public LODGroup Group;
             public int FarLod;
+            public bool FixedLod2;
             public int AppliedLod = -1;
         }
 
@@ -61,16 +65,17 @@ namespace TheyWillDescend.Presentation.Environment
         void LateUpdate()
         {
             if (_refreshRequested) Refresh();
-            if (!cameraController) return;
-            var radius = cameraController.CurrentZoomRadius;
-            // The camera initializes its smoothed radius in Start.
-            if (radius <= 0f) return;
-
-            _currentLod = _currentLod < 0
-                ? radius <= detailSwitchRadius ? 0 : 2
-                : _currentLod == 0
-                    ? radius > detailSwitchRadius + hysteresis ? 2 : 0
-                    : radius < detailSwitchRadius - hysteresis ? 0 : 2;
+            if (cameraController)
+            {
+                var radius = cameraController.CurrentZoomRadius;
+                // Fixed forest does not need to wait for the camera's Start.
+                if (radius > 0f)
+                    _currentLod = _currentLod < 0
+                        ? radius <= detailSwitchRadius ? 0 : 2
+                        : _currentLod == 0
+                            ? radius > detailSwitchRadius + hysteresis ? 2 : 0
+                            : radius < detailSwitchRadius - hysteresis ? 0 : 2;
+            }
 
             foreach (var entry in _entries)
             {
@@ -80,7 +85,8 @@ namespace TheyWillDescend.Presentation.Environment
                     entry.AppliedLod = -1;
                     continue;
                 }
-                var level = _currentLod == 0 ? 0 : entry.FarLod;
+                if (!entry.FixedLod2 && _currentLod < 0) continue;
+                var level = entry.FixedLod2 || _currentLod != 0 ? entry.FarLod : 0;
                 if (entry.AppliedLod == level) continue;
                 group.ForceLOD(level);
                 entry.AppliedLod = level;
@@ -94,16 +100,29 @@ namespace TheyWillDescend.Presentation.Environment
             ReleaseGroups();
             _entries.Clear();
             var seen = new HashSet<LODGroup>();
-            foreach (var root in treeRoots)
+            // Collect fixed roots first so overlapping assignments cannot enable LOD0.
+            CollectGroups(fixedLod2Roots, true, seen);
+            CollectGroups(treeRoots, false, seen);
+            _refreshRequested = false;
+        }
+
+        void CollectGroups(Transform[] roots, bool fixedLod2, HashSet<LODGroup> seen)
+        {
+            if (roots == null) return;
+            foreach (var root in roots)
             {
                 if (!root) continue;
                 foreach (var group in root.GetComponentsInChildren<LODGroup>(true))
                 {
                     if (!seen.Add(group) || group.lodCount == 0) continue;
-                    _entries.Add(new Entry { Group = group, FarLod = Mathf.Min(2, group.lodCount - 1) });
+                    _entries.Add(new Entry
+                    {
+                        Group = group,
+                        FarLod = Mathf.Min(2, group.lodCount - 1),
+                        FixedLod2 = fixedLod2
+                    });
                 }
             }
-            _refreshRequested = false;
         }
 
         void OnDisable()
