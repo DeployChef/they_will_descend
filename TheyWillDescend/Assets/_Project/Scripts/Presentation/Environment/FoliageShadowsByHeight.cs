@@ -50,6 +50,7 @@ namespace TheyWillDescend.Presentation.Environment
             public MeshFilter Filter;
             public Mesh Mesh;
             public Bounds GeometryBounds;
+            public Transform MeasurementSpace;
             public Matrix4x4 LastMatrix;
         }
 
@@ -106,8 +107,8 @@ namespace TheyWillDescend.Presentation.Environment
             _zoomAllowsShadows = allowsShadows;
             foreach (var entry in _entries)
             {
-                if (entry.Renderer && entry.Filter)
-                    Apply(entry, entry.Filter.transform.localToWorldMatrix);
+                if (entry.Renderer && entry.Filter && entry.MeasurementSpace)
+                    Apply(entry, entry.MeasurementSpace.localToWorldMatrix);
                 else
                     _refreshRequested = true;
             }
@@ -127,7 +128,8 @@ namespace TheyWillDescend.Presentation.Environment
                     continue;
 
                 var mesh = filter.sharedMesh;
-                if (!TryGetGeometryBounds(mesh, out var bounds))
+                var authored = FoliageRestBounds.TryGet(filter, out var bounds, out var measurementSpace);
+                if (!authored && !TryGetGeometryBounds(mesh, out bounds))
                     continue;
 
                 var entry = new Entry
@@ -135,10 +137,11 @@ namespace TheyWillDescend.Presentation.Environment
                     Renderer = renderer,
                     Filter = filter,
                     Mesh = mesh,
-                    GeometryBounds = bounds
+                    GeometryBounds = bounds,
+                    MeasurementSpace = measurementSpace
                 };
                 _entries.Add(entry);
-                Apply(entry, filter.transform.localToWorldMatrix);
+                Apply(entry, measurementSpace.localToWorldMatrix);
             }
 
             _refreshRequested = false;
@@ -218,13 +221,13 @@ namespace TheyWillDescend.Presentation.Environment
 
             foreach (var entry in _entries)
             {
-                if (!entry.Renderer || !entry.Filter || entry.Filter.sharedMesh != entry.Mesh)
+                if (!entry.Renderer || !entry.Filter || !entry.MeasurementSpace || entry.Filter.sharedMesh != entry.Mesh)
                 {
                     _refreshRequested = true;
                     continue;
                 }
 
-                var matrix = entry.Filter.transform.localToWorldMatrix;
+                var matrix = entry.MeasurementSpace.localToWorldMatrix;
                 if (!matrix.Equals(entry.LastMatrix))
                     Apply(entry, matrix);
             }

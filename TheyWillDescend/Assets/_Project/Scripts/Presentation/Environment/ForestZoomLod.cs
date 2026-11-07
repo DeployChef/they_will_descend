@@ -5,7 +5,7 @@ using UnityEngine;
 namespace TheyWillDescend.Presentation.Environment
 {
     /// <summary>
-    /// Zoom-dependent plateau trees and fixed low-detail decorative forest.
+    /// Zoom-dependent foliage groups and fixed low-detail decorative forest.
     /// Pan, yaw and distance to individual trees never participate in selection.
     /// Far-background forest is deliberately not collected from the entire scene.
     /// </summary>
@@ -15,13 +15,19 @@ namespace TheyWillDescend.Presentation.Environment
     {
         [SerializeField] RTSCameraController cameraController;
 
-        [SerializeField, Tooltip("Деревья на плато: нижний шаг RTS-зума — LOD0, остальные — LOD2.")]
+        [SerializeField, Tooltip("Необязательно: дальний LOD при переходе на камеру меню. Без ссылки поведение прежнее.")]
+        PauseCameraSwitch menuCameraSwitch;
+
+        [SerializeField, Range(.05f, .95f), Tooltip("Вес камеры меню, после которого используется дальний LOD, включая обратный переход.")]
+        float menuLodBlendThreshold = .5f;
+
+        [SerializeField, Tooltip("Группы с переключением: ближе границы зума — первый LOD, дальше — дальний (до LOD2).")]
         Transform[] treeRoots = System.Array.Empty<Transform>();
 
         [SerializeField, Tooltip("Внешний лес за лавой: всегда LOD2. Имеет приоритет над переключаемыми группами.")]
         Transform[] fixedLod2Roots = System.Array.Empty<Transform>();
 
-        [SerializeField, Min(.01f), Tooltip("Граница между ближайшим шагом RTS-зума и следующим. Меньше — LOD0, больше — LOD2.")]
+        [SerializeField, Min(.01f), Tooltip("Граница радиуса RTS-зума. Меньше — первый LOD, больше — дальний (до LOD2).")]
         float detailSwitchRadius = 6.5f;
 
         [SerializeField, Min(0f), Tooltip("Запас вокруг границы, исключающий дрожание выбора уровня.")]
@@ -31,7 +37,8 @@ namespace TheyWillDescend.Presentation.Environment
         bool _refreshRequested = true;
         int _currentLod = -1;
 
-        public int CurrentLod => _currentLod;
+        public int CurrentLod => menuCameraSwitch && menuCameraSwitch.MenuBlendProgress >= menuLodBlendThreshold
+            ? 2 : _currentLod;
 
         sealed class Entry
         {
@@ -54,6 +61,7 @@ namespace TheyWillDescend.Presentation.Environment
         {
             detailSwitchRadius = Mathf.Max(.01f, detailSwitchRadius);
             hysteresis = Mathf.Clamp(hysteresis, 0f, detailSwitchRadius * .5f);
+            menuLodBlendThreshold = Mathf.Clamp(menuLodBlendThreshold, .05f, .95f);
             // OnValidate can run during deserialization; defer all renderer writes.
             _refreshRequested = true;
         }
@@ -77,6 +85,7 @@ namespace TheyWillDescend.Presentation.Environment
                             : radius < detailSwitchRadius - hysteresis ? 0 : 2;
             }
 
+            var currentLod = CurrentLod;
             foreach (var entry in _entries)
             {
                 var group = entry.Group;
@@ -85,8 +94,8 @@ namespace TheyWillDescend.Presentation.Environment
                     entry.AppliedLod = -1;
                     continue;
                 }
-                if (!entry.FixedLod2 && _currentLod < 0) continue;
-                var level = entry.FixedLod2 || _currentLod != 0 ? entry.FarLod : 0;
+                if (!entry.FixedLod2 && currentLod < 0) continue;
+                var level = entry.FixedLod2 || currentLod != 0 ? entry.FarLod : 0;
                 if (entry.AppliedLod == level) continue;
                 group.ForceLOD(level);
                 entry.AppliedLod = level;

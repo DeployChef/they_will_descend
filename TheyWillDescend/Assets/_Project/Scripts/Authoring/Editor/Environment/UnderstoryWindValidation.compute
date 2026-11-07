@@ -1,0 +1,29 @@
+// Editor validation runs the shared production grass/understory function.
+#pragma kernel WindOn _WIND_ENABLED
+#pragma kernel WindOff
+#pragma target 4.5
+float4x4 _TestObjectToWorld, _TestWorldToObject;
+float3 TransformObjectToWorld(float3 p) { return mul(_TestObjectToWorld,float4(p,1)).xyz; }
+float3 TransformWorldToObject(float3 p) { return mul(_TestWorldToObject,float4(p,1)).xyz; }
+float3 TransformObjectToWorldNormal(float3 n) { return normalize(mul(n,(float3x3)_TestWorldToObject)); }
+float3 TransformWorldToObjectNormal(float3 n) { return normalize(mul(n,(float3x3)_TestObjectToWorld)); }
+float3 TransformObjectToWorldDir(float3 d) { return normalize(mul((float3x3)_TestObjectToWorld,d)); }
+float3 TransformWorldToObjectDir(float3 d) { return normalize(mul((float3x3)_TestWorldToObject,d)); }
+#include "../../../../Art/Shaders/Foliage/NaturalGrassWind.hlsl"
+StructuredBuffer<float4> _Input;
+RWStructuredBuffer<float4> _Output;
+uint _Count;
+float _TestTime, _Strength, _Speed, _Direction, _Wander, _Gust, _Sway, _Variation, _Phase, _TuftSway, _TuftSpeed;
+void Evaluate(uint id)
+{
+    if(id>=_Count)return;
+    float3 p,n,t;
+    NaturalGrassWind_float(_Input[id*5].xyz,_Input[id*5+1].xyz,_Input[id*5+2].xyz,
+        _Input[id*5+3],_Input[id*5+4],_TestTime,_Direction,_Strength,_Speed,
+        _Wander,_Gust,_Sway,_Variation,_Phase,_TuftSway,_TuftSpeed,p,n,t);
+    _Output[id*3]=float4(p,1);
+    _Output[id*3+1]=float4(n,0);
+    _Output[id*3+2]=float4(t,0);
+}
+[numthreads(64,1,1)]void WindOn(uint3 id:SV_DispatchThreadID){Evaluate(id.x);}
+[numthreads(64,1,1)]void WindOff(uint3 id:SV_DispatchThreadID){Evaluate(id.x);}
