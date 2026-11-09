@@ -42,7 +42,8 @@ MonoBehaviour:
   - {fileID: 7833122117494664109}
   - {fileID: 1828033053093358152}
   - {fileID: -7818362323216330652}
-  m_RendererFeatureMap: ad6b866f10d7b46c486a4d5f607a5e19649064f7e3987f93
+  - {fileID: 8689607258088741051}
+  m_RendererFeatureMap: ad6b866f10d7b46c486a4d5f607a5e19649064f7e3987f93bb180900c3af9778
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -113,3 +114,18 @@ MonoBehaviour:
     BlurQuality: 0
     Falloff: 100
     SampleCount: -1
+--- !u!114 &8689607258088741051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3989ce8b7274e12a85b1794d2fe9d6b, type: 3}
+  m_Name: PureVolumetricFogRendererFeature
+  m_EditorClassIdentifier: BKPureNature.PureVolumetricFog::BKPureNature.PureVolumetricFogRendererFeature
+  m_Active: 1
+  resolution: 2
+  depthTolerance: 0.1

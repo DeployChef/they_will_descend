@@ -1,0 +1,9 @@
+<linker>
+  <!-- Optional package bridge reads the serialized height field through reflection. -->
+  <assembly fullname="BKPureNature.PureVolumetricFog" ignoreIfMissing="1">
+    <type fullname="BKPureNature.PureVolumetricFog" preserve="nothing">
+      <field name="groundFogHeight" />
+      <field name="density" />
+    </type>
+  </assembly>
+</linker>

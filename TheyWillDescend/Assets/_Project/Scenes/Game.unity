@@ -96347,6 +96347,7 @@ Transform:
   - {fileID: 5414414336361887205}
   - {fileID: 2117199569}
   - {fileID: 415528594}
+  - {fileID: 745838913}
   m_Father: {fileID: 2145229450}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &433272625
@@ -168929,6 +168930,78 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8308395119376886094, guid: 8582fbe5b2e8727418a9cad28b1a9565, type: 3}
   m_PrefabInstance: {fileID: 708116296}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &712867818
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 712867820}
+  - component: {fileID: 712867819}
+  m_Layer: 0
+  m_Name: Fog_HeightSource_Terrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!218 &712867819
+Terrain:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 712867818}
+  m_Enabled: 1
+  serializedVersion: 6
+  m_TerrainData: {fileID: 15600000, guid: cf9540d06d199634088c2c5a097ceedc, type: 2}
+  m_TreeDistance: 5000
+  m_TreeBillboardDistance: 50
+  m_TreeCrossFadeLength: 5
+  m_TreeMaximumFullLODCount: 50
+  m_DetailObjectDistance: 80
+  m_DetailObjectDensity: 1
+  m_HeightmapPixelError: 5
+  m_SplatMapDistance: 1000
+  m_HeightmapMinimumLODSimplification: 0
+  m_HeightmapMaximumLOD: 0
+  m_ShadowCastingMode: 2
+  m_DrawHeightmap: 0
+  m_DrawInstanced: 0
+  m_DrawTreesAndFoliage: 0
+  m_StaticShadowCaster: 0
+  m_IgnoreQualitySettings: 0
+  m_ReflectionProbeUsage: 1
+  m_MaterialTemplate: {fileID: 2100000, guid: 594ea882c5a793440b60ff72d896021e, type: 2}
+  m_BakeLightProbesForTrees: 1
+  m_PreserveTreePrototypeLayers: 0
+  m_DeringLightProbesForTrees: 1
+  m_ReceiveGI: 1
+  m_ScaleInLightmap: 0.018285714
+  m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
+  m_GroupingID: 0
+  m_RenderingLayerMask: 1
+  m_AllowAutoConnect: 1
+  m_EnableHeightmapRayTracing: 1
+  m_EnableTreesAndDetailsRayTracing: 0
+  m_TreeMotionVectorModeOverride: 3
+--- !u!4 &712867820
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 712867818}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -700, y: -20, z: -700}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 745838913}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &713364659
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -170131,6 +170204,39 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6475211101911524349, guid: 58e67160b4d6a994e853b28ae01e24be, type: 3}
   m_PrefabInstance: {fileID: 744583881}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &745838912
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 745838913}
+  m_Layer: 0
+  m_Name: Atmosphere_PureFog_TEST
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &745838913
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745838912}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 712867820}
+  - {fileID: 1168062333}
+  m_Father: {fileID: 428405606}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &746211233
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -188874,7 +188980,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54476da1965de8945943c551310afd53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Environment.TimeLightController
-  dayLight: {fileID: 0}
+  dayLight: {fileID: 1114217853}
   lightIntensityCurve:
     serializedVersion: 2
     m_Curve:
@@ -188979,7 +189085,7 @@ MonoBehaviour:
   useReflectionProbeIntensity: 0
   dayProbeIntensity: 1
   nightProbeIntensity: 0
-  useFog: 1
+  useFog: 0
   fogMode: 1
   nightFogColor: {r: 0.16108933, g: 0.16957852, b: 0.18867922, a: 1}
   dayFogColor: {r: 0.38, g: 0.44, b: 0.43, a: 1}
@@ -248276,6 +248382,129 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8308395119376886094, guid: 8582fbe5b2e8727418a9cad28b1a9565, type: 3}
   m_PrefabInstance: {fileID: 1167348263}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1168062332
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1168062333}
+  - component: {fileID: 1168062334}
+  - component: {fileID: 1168062335}
+  m_Layer: 0
+  m_Name: Pure_Volumetric_Fog_TEST
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1168062333
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1168062332}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 745838913}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1168062334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1168062332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a8a4f589d342f24fbade49a21a154f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BKPureNature.PureVolumetricFog::BKPureNature.PureVolumetricFog
+  settingsVersion: 1
+  terrains:
+  - {fileID: 712867819}
+  findActiveTerrainsAutomatically: 0
+  horizontalPadding: 40
+  bottomPadding: 20
+  topPadding: 160
+  terrainEdgeFade: 0
+  terrainFollow: 0
+  rebuildWhenTerrainChanges: 0
+  density: 0.003
+  groundFogHeight: 65
+  topSoftness: 0.1
+  noiseTextureResolution: 64
+  noiseSeed: 1337
+  largeNoiseScale: 170
+  detailNoiseScale: 45
+  noiseAmount: 0.25
+  noiseFloor: 0.12
+  noiseContrast: 1.8
+  noiseStrength: 3
+  noiseCoverage: 0
+  noiseHeightDistortion: 12
+  verticalNoiseShear: 0.004
+  windDirection: {x: 0.28734788, y: 0.95782626}
+  windSpeed: 2
+  debugView: 0
+  useSceneDepth: 1
+  depthBias: 0
+  maximumRaySteps: 48
+  minimumRaySteps: 12
+  targetStepLength: 25
+  maximumFogDistance: 1400
+  nearFadeDistance: 200
+  farFadeStart: 0
+  fogColor: {r: 0.5, g: 0.59, b: 0.58, a: 1}
+  followSceneFogColor: 0
+  ambientColor: {r: 0.65, g: 0.7, b: 0.7, a: 1}
+  followSceneAmbientColor: 0
+  ambientStrength: 1
+  ambientShadowStrength: 0.7
+  sunStrength: 0.65
+  sunScattering: 0.1
+  anisotropy: 0.01
+  directionalLight: {fileID: 1114217853}
+  rayJitterStrength: 0.35
+  noiseMipBias: 0.5
+  noiseFilterScale: 0.7
+  rayStepSmoothing: 1
+  enableVolumetricShadows: 0
+  terrainCastsFogShadows: 1
+  useUnityRealtimeShadows: 1
+  shadowStrength: 0.7
+  shadowDistance: 900
+  terrainShadowBias: 0
+  fogSelfShadowStrength: 2.25
+--- !u!114 &1168062335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1168062332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a3583c0b9547f241a145d08adcf9214, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TheyWillDescend.Presentation::TheyWillDescend.Presentation.Environment.MenuFogHeightController
+  fogVolume: {fileID: 1168062334}
+  pauseCamera: {fileID: 20413124}
+  cameraController: {fileID: 1372388729}
+  baseDensity: 0.003
+  gameplayFogHeight: 65
+  menuFogHeight: 35
+  fullFogZoomRadius: 8.4
+  fogOffZoomRadius: 10
+  zoomFadeInTime: 1.2
+  zoomFadeOutTime: 0.7
 --- !u!1 &1170199272
 GameObject:
   m_ObjectHideFlags: 0
@@ -489625,35 +489854,35 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 717796881983169623, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 717796881983169623, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 717796881983169623, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 717796881983169623, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -25
       objectReference: {fileID: 0}
     - target: {fileID: 904819480188670865, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 904819480188670865, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 904819480188670865, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 904819480188670865, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -525
       objectReference: {fileID: 0}
     - target: {fileID: 1742968657778721877, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -489661,19 +489890,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2024170165321943019, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2024170165321943019, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2024170165321943019, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 2024170165321943019, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -375
       objectReference: {fileID: 0}
     - target: {fileID: 3345358605630246629, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_Name
@@ -489709,35 +489938,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4771730156183945991, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4771730156183945991, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4771730156183945991, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 4771730156183945991, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -25
       objectReference: {fileID: 0}
     - target: {fileID: 6072509775877771451, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6072509775877771451, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6072509775877771451, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 6072509775877771451, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -75
       objectReference: {fileID: 0}
     - target: {fileID: 6484784604461970870, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -489773,51 +490002,51 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6603572967930827314, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6603572967930827314, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6603572967930827314, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 6603572967930827314, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -25
       objectReference: {fileID: 0}
     - target: {fileID: 8237891918489502199, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8237891918489502199, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8237891918489502199, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 250
       objectReference: {fileID: 0}
     - target: {fileID: 8237891918489502199, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -225
       objectReference: {fileID: 0}
     - target: {fileID: 8740791077777882712, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8740791077777882712, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8740791077777882712, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 8740791077777882712, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -25
       objectReference: {fileID: 0}
     - target: {fileID: 9199263549373973286, guid: 50721a28c00ddf24eb9448ff14ac0e2d, type: 3}
       propertyPath: m_LocalPosition.x
