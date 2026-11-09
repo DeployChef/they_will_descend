@@ -63,16 +63,16 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaCutoff: 0.45
-    - _BendIntensity: 0.13
+    - _BendIntensity: 0
     - _BladeVariation: 0.65
-    - _GustStrength: 0.45
+    - _GustStrength: 0
     - _NormalStrength: 0.5
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Smoothness: 0.35
-    - _SwayStrength: 0.55
+    - _SwayStrength: 0
     - _TuftSwaySpeed: 0.65
-    - _TuftSwayStrength: 0.4
+    - _TuftSwayStrength: 0
     - _VariationStrength: 0.2
     - _WIND_ENABLED: 0
     - _WindDirection: 105
@@ -80,7 +80,7 @@ Material:
     - _WindPhaseOffset: 0
     - _WindSpeed: 1
     m_Colors:
-    - _LeafTint: {r: 1, g: 1, b: 1, a: 1}
+    - _LeafTint: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 1}
     - _VariationTint: {r: 0.82, g: 0.94, b: 0.74, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _DirtNormal:
-        m_Texture: {fileID: 2800000, guid: 3412c879cf94db84ba83bc51fac14555, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8858fa54c2bf48a4f8a7b97f8d2ef91d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DirtRoughness:
@@ -33,11 +33,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DirtTexture:
-        m_Texture: {fileID: 2800000, guid: 35754cd69d6ef6f45a35166b581a5723, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6e27271b2187ab54cb4cc0a73e5d1792, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _LeafNormal:
-        m_Texture: {fileID: 2800000, guid: 89c638aa3b0e7c149ab8ce4e16a00082, type: 3}
+        m_Texture: {fileID: 2800000, guid: c06f524f4a1b7604787d1e729e0e57ab, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _LeafTexture:
@@ -79,8 +79,8 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _CoastBreakup: 11.5
-    - _CoastEnd: 168.8
+    - _CoastBreakup: -6.5
+    - _CoastEnd: 154.3
     - _CoastStart: 142
     - _ColorMultiplierMax: 2
     - _ColorMultiplierMin: 0.217
@@ -92,10 +92,10 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
-    - _ForestBreakup: 24
-    - _ForestEnd: 272.1
-    - _ForestPatchSize: 12
-    - _ForestStart: 147.3
+    - _ForestBreakup: -8.2
+    - _ForestEnd: 201.2
+    - _ForestPatchSize: 11.2
+    - _ForestStart: 113.7
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
@@ -132,8 +132,8 @@ Material:
     - _Color: {r: 0.4150943, g: 0.4150943, b: 0.4150943, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _ForestTint: {r: 0.8018868, g: 0.8018868, b: 0.8018868, a: 1}
-    - _LeafTint: {r: 0.11948488, g: 0.254717, b: 0.116545044, a: 1}
-    - _MudTint: {r: 0.1509434, g: 0.1509434, b: 0.1509434, a: 1}
+    - _LeafTint: {r: 0.016153438, g: 0.103773594, b: 0.08040822, a: 1}
+    - _MudTint: {r: 0.2264151, g: 0.0501958, b: 0.0501958, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
