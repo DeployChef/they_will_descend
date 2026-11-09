@@ -24,6 +24,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _CanopyMask:
+        m_Texture: {fileID: 2800000, guid: 124b7acab6bfda0439c0b253825c54e3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DirtNormal:
         m_Texture: {fileID: 2800000, guid: 8858fa54c2bf48a4f8a7b97f8d2ef91d, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -77,6 +81,7 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
+    - _CanopyShadeStrength: 0
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _CoastBreakup: -6.5
@@ -129,6 +134,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.41509432, g: 0.41509432, b: 0.41509432, a: 1}
+    - _CanopyMaskWorldRect: {r: -500, g: -500, b: 1000, a: 1000}
     - _Color: {r: 0.4150943, g: 0.4150943, b: 0.4150943, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _ForestTint: {r: 0.8018868, g: 0.8018868, b: 0.8018868, a: 1}

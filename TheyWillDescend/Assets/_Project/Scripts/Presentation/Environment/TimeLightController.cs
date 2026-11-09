@@ -2,6 +2,8 @@ using UnityEngine;
 using Unity.Entities;
 using TheyWillDescend.Simulation.Time;
 using TheyWillDescend.Simulation.Session;
+using TheyWillDescend.Presentation.Cameras;
+using TheyWillDescend.Presentation.Rendering;
 
 namespace TheyWillDescend.Presentation.Environment
 {
@@ -46,11 +48,50 @@ namespace TheyWillDescend.Presentation.Environment
         [SerializeField] private float nightProbeIntensity = 0f;
 
         [Header("Fog")]
+        [Tooltip("Контроллер применяет эти настройки тумана по игровому времени суток.")]
         [SerializeField] private bool useFog = true;
-        [SerializeField] private float nightFogDensity = 0.015f;
-        [SerializeField] private float dayFogDensity = 0.003f;
+        [Tooltip("Linear: дистанции Start/End. Exponential и Exponential Squared: Density.")]
+        [SerializeField] private FogMode fogMode = FogMode.Exponential;
+        [ColorUsage(false)]
         [SerializeField] private Color nightFogColor = new Color(0.05f, 0.05f, 0.12f);
+        [ColorUsage(false)]
         [SerializeField] private Color dayFogColor = new Color(0.6f, 0.75f, 1f);
+
+        [Header("Fog - Linear Distances")]
+        [Tooltip("Только Linear. Дистанция начала дымки от камеры днём, в единицах мира.")]
+        [SerializeField, Min(0f)] private float dayFogStartDistance = 140f;
+        [Tooltip("Только Linear. Дистанция полного перехода в цвет тумана днём.")]
+        [SerializeField, Min(0.01f)] private float dayFogEndDistance = 650f;
+        [Tooltip("Только Linear. Дистанция начала дымки от камеры ночью.")]
+        [SerializeField, Min(0f)] private float nightFogStartDistance = 100f;
+        [Tooltip("Только Linear. Дистанция полного перехода в цвет тумана ночью.")]
+        [SerializeField, Min(0.01f)] private float nightFogEndDistance = 450f;
+
+        [Header("Fog - Exponential Density")]
+        [Tooltip("Только Exponential / Exponential Squared. В Linear не используется.")]
+        [SerializeField, Min(0f)] private float nightFogDensity = 0.015f;
+        [Tooltip("Только Exponential / Exponential Squared. В Linear не используется.")]
+        [SerializeField, Min(0f)] private float dayFogDensity = 0.003f;
+
+        [Header("Fog - World Mask")]
+        [Tooltip("Дымка с маской в мировых XZ. Выключите для сравнения со встроенным туманом Unity.")]
+        [SerializeField] private bool useMaskedFog;
+        [Tooltip("WorldFogRenderFeature на активном URP Renderer. При отсутствии используется встроенный Fog.")]
+        [SerializeField] private WorldFogRenderFeature maskedFogFeature;
+        [Tooltip("Центр плато в мировых координатах X/Z.")]
+        [SerializeField] private Vector2 fogMaskCenterXZ = Vector2.zero;
+        [Tooltip("Радиус области с силой Plateau Fog Strength. Дальше начинается плавный переход.")]
+        [SerializeField, Min(0f)] private float fogClearRadius = 100f;
+        [Tooltip("Ширина перехода от плато к полной силе дымки внешнего леса.")]
+        [SerializeField, Min(0.01f)] private float fogTransitionWidth = 100f;
+        [Tooltip("Множитель дымки внутри радиуса плато в игровой камере. 1 сохраняет прежнюю силу.")]
+        [SerializeField, Range(0f, 1f)] private float plateauFogStrength = 1f;
+        [Tooltip("Множитель над плато в камере меню. Плавно смешивается по переходу камеры.")]
+        [SerializeField, Range(0f, 1f)] private float menuPlateauFogStrength = 0.12f;
+        [Tooltip("Множитель дымки за внешней границей перехода. 1 — обычная дистанционная дымка.")]
+        [SerializeField, Range(0f, 2f)] private float forestFogStrength = 1f;
+        [Tooltip("Максимальная непрозрачность дымки. 1 позволяет полностью скрывать дальние поверхности.")]
+        [SerializeField, Range(0f, 1f)] private float maximumFogOpacity = 0.95f;
 
         [Header("Skybox")]
         [SerializeField] private bool useSkyboxExposure = true;
@@ -73,6 +114,7 @@ namespace TheyWillDescend.Presentation.Environment
         private Light _sunRotationLight;
         private float _sunYaw;
         private float _sunRoll;
+        private WorldFogRenderFeature _lastMaskedFogFeature;
 
         private void Awake()
         {
@@ -86,7 +128,7 @@ namespace TheyWillDescend.Presentation.Environment
                     new Keyframe(1f, 0f)
                 );
             }
-            
+
             if (skyboxExposureCurve == null || skyboxExposureCurve.keys.Length == 0)
             {
                 skyboxExposureCurve = new AnimationCurve(
@@ -163,6 +205,15 @@ namespace TheyWillDescend.Presentation.Environment
 
         private void OnValidate()
         {
+            dayFogStartDistance = Mathf.Max(0f, dayFogStartDistance);
+            dayFogEndDistance = Mathf.Max(dayFogStartDistance + 0.01f, dayFogEndDistance);
+            nightFogStartDistance = Mathf.Max(0f, nightFogStartDistance);
+            nightFogEndDistance = Mathf.Max(nightFogStartDistance + 0.01f, nightFogEndDistance);
+            dayFogDensity = Mathf.Max(0f, dayFogDensity);
+            nightFogDensity = Mathf.Max(0f, nightFogDensity);
+            fogClearRadius = Mathf.Max(0f, fogClearRadius);
+            fogTransitionWidth = Mathf.Max(0.01f, fogTransitionWidth);
+
             // Настройка кривых в редакторе (дублирует Awake)
             if (lightIntensityCurve == null || lightIntensityCurve.keys.Length == 0)
             {
@@ -173,7 +224,7 @@ namespace TheyWillDescend.Presentation.Environment
                     new Keyframe(1f, 0f)
                 );
             }
-            
+
             if (skyboxExposureCurve == null || skyboxExposureCurve.keys.Length == 0)
             {
                 skyboxExposureCurve = new AnimationCurve(
@@ -249,17 +300,70 @@ namespace TheyWillDescend.Presentation.Environment
                 }
             }
 
-            // 6. Fog — плотнее ночью, прозрачнее днём
-            RenderSettings.fog = useFog;
-            if (useFog)
-            {
-                float fogDensity = Mathf.Lerp(nightFogDensity, dayFogDensity, dayness);
-                RenderSettings.fogDensity = fogDensity;
-                RenderSettings.fogColor = Color.Lerp(nightFogColor, dayFogColor, dayness);
-            }
+            // 6. Fog — отдельные параметры дня и ночи, общий переход с освещением.
+            ApplyFog(dayness);
 
             // 7. Skybox — плавная смена материала
             ApplySkyboxMaterial(dayProgress);
+        }
+
+        private void ApplyFog(float dayness)
+        {
+            var menuCamera = PauseCameraSwitch.Current;
+            ApplyFogForView(dayness, menuCamera != null ? menuCamera.MenuBlendProgress : 0f);
+        }
+
+        private void ApplyFogForView(float dayness, float menuBlend)
+        {
+            if (_lastMaskedFogFeature != maskedFogFeature)
+            {
+                if (_lastMaskedFogFeature != null) _lastMaskedFogFeature.ClearFog();
+                _lastMaskedFogFeature = maskedFogFeature;
+            }
+            bool masked = useMaskedFog && maskedFogFeature != null && maskedFogFeature.IsReady;
+            // The two paths are exclusive: the screen pass must receive unfogged scene colour.
+            RenderSettings.fog = useFog && !masked;
+            if (!useFog)
+            {
+                if (maskedFogFeature != null) maskedFogFeature.ClearFog();
+                return;
+            }
+
+            RenderSettings.fogMode = fogMode;
+            RenderSettings.fogColor = Color.Lerp(nightFogColor, dayFogColor, dayness);
+
+            float start = Mathf.Max(0f, Mathf.Lerp(nightFogStartDistance, dayFogStartDistance, dayness));
+            float end = Mathf.Max(start + 0.01f, Mathf.Lerp(nightFogEndDistance, dayFogEndDistance, dayness));
+            float density = Mathf.Max(0f, Mathf.Lerp(nightFogDensity, dayFogDensity, dayness));
+            RenderSettings.fogStartDistance = start;
+            RenderSettings.fogEndDistance = end;
+            RenderSettings.fogDensity = density;
+
+            if (masked)
+            {
+                maskedFogFeature.SetFog(new WorldFogSettings
+                {
+                    Enabled = true,
+                    Color = RenderSettings.fogColor,
+                    Distance = new Vector4(start, end, density, (float)fogMode),
+                    Mask = new Vector4(fogMaskCenterXZ.x, fogMaskCenterXZ.y,
+                        Mathf.Max(0f, fogClearRadius), Mathf.Max(0.01f, fogTransitionWidth)),
+                    Strength = new Vector4(Mathf.Lerp(plateauFogStrength, menuPlateauFogStrength, menuBlend),
+                        forestFogStrength, maximumFogOpacity, 0f)
+                });
+            }
+            else if (maskedFogFeature != null)
+            {
+                maskedFogFeature.ClearFog();
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (maskedFogFeature != null) maskedFogFeature.ClearFog();
+            if (_lastMaskedFogFeature != null && _lastMaskedFogFeature != maskedFogFeature)
+                _lastMaskedFogFeature.ClearFog();
+            _lastMaskedFogFeature = null;
         }
 
         // ==================== SKYBOX ====================

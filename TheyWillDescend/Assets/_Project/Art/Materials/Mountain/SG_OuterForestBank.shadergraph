@@ -104,6 +104,15 @@
         },
         {
             "m_Id": "16df1c0025bb19c0412a52affdd12dbd"
+        },
+        {
+            "m_Id": "d1c21864904d4489bd1d6d5e6d787d7a"
+        },
+        {
+            "m_Id": "96fd9cf30d6349b9b53309df14858f86"
+        },
+        {
+            "m_Id": "1fe60acc91fb43b795983b66c12960ab"
         }
     ],
     "m_Keywords": [],
@@ -117,6 +126,9 @@
         },
         {
             "m_Id": "9e78c645f83643722ebe3989102abd7b"
+        },
+        {
+            "m_Id": "1b2e572359d4468680504b54ccb11f53"
         }
     ],
     "m_Nodes": [
@@ -335,6 +347,15 @@
         },
         {
             "m_Id": "ae89a914d25eb574fc748cc60df37fb2"
+        },
+        {
+            "m_Id": "e7b022289fb64159b1902f7c3a244f6a"
+        },
+        {
+            "m_Id": "5bbf89102faf4488bfe1ea83014446b1"
+        },
+        {
+            "m_Id": "78534755788a421e9760823f14ecb5d8"
         }
     ],
     "m_GroupDatas": [],
@@ -1445,6 +1466,48 @@
                 },
                 "m_SlotId": 0
             }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "e7b022289fb64159b1902f7c3a244f6a"
+                },
+                "m_SlotId": 0
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "de5d9d9c6c6a64bc1b3294846ec875b0"
+                },
+                "m_SlotId": 26
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "5bbf89102faf4488bfe1ea83014446b1"
+                },
+                "m_SlotId": 0
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "de5d9d9c6c6a64bc1b3294846ec875b0"
+                },
+                "m_SlotId": 27
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "78534755788a421e9760823f14ecb5d8"
+                },
+                "m_SlotId": 0
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "de5d9d9c6c6a64bc1b3294846ec875b0"
+                },
+                "m_SlotId": 28
+            }
         }
     ],
     "m_VertexContext": {
@@ -1797,7 +1860,7 @@
             "x": -1080,
             "y": -860,
             "width": 206,
-            "height": 130.0000762939453
+            "height": 130.00007629394531
         }
     },
     "m_Slots": [
@@ -2088,7 +2151,7 @@
             "x": -1080,
             "y": -620,
             "width": 207.9998779296875,
-            "height": 325.9999694824219
+            "height": 325.99996948242188
         }
     },
     "m_Slots": [
@@ -2620,7 +2683,7 @@
             "x": -750,
             "y": -860,
             "width": 120,
-            "height": 149.0000762939453
+            "height": 149.00007629394531
         }
     },
     "m_Slots": [
@@ -2740,7 +2803,7 @@
             "x": -420,
             "y": -860,
             "width": 152,
-            "height": 142.0000762939453
+            "height": 142.00007629394531
         }
     },
     "m_Slots": [
@@ -2878,7 +2941,7 @@
             "x": -420,
             "y": 100,
             "width": 115,
-            "height": 34.00000762939453
+            "height": 34.000007629394531
         }
     },
     "m_Slots": [
@@ -3187,7 +3250,7 @@
     "m_ShaderOutputName": "Edge2",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.8700000047683716,
+        "x": 0.87000000476837158,
         "y": 1,
         "z": 1,
         "w": 1
@@ -3657,7 +3720,7 @@
     "m_ShaderOutputName": "A",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.6499999761581421,
+        "x": 0.64999997615814209,
         "y": 0,
         "z": 0,
         "w": 0
@@ -3774,7 +3837,7 @@
             "x": -2400,
             "y": 340,
             "width": 117,
-            "height": 33.99999237060547
+            "height": 33.999992370605469
         }
     },
     "m_Slots": [
@@ -4012,7 +4075,7 @@
             "x": -1740,
             "y": 340,
             "width": 120,
-            "height": 148.9999237060547
+            "height": 148.99992370605469
         }
     },
     "m_Slots": [
@@ -5454,7 +5517,7 @@
     "m_Hidden": false,
     "m_PerRendererData": false,
     "m_customAttributes": [],
-    "m_Value": 0.6499999761581421,
+    "m_Value": 0.64999997615814209,
     "m_FloatType": 1,
     "m_LiteralFloatMode": false,
     "m_RangeValues": {
@@ -8970,7 +9033,7 @@
     "m_Group": {
         "m_Id": ""
     },
-    "m_Name": "Forest Ground — Scale and Repeat Breakup",
+    "m_Name": "Forest Ground — Surface and Canopy Shade",
     "m_DrawState": {
         "m_Expanded": true,
         "m_Position": {
@@ -9059,6 +9122,15 @@
         },
         {
             "m_Id": "7d7ba193482941a6f779c145ff00e292"
+        },
+        {
+            "m_Id": "ac7469a1aedd42ad8e06f40ff2ee4998"
+        },
+        {
+            "m_Id": "9dd5e788b8d64946b79aa0f2627ddb9e"
+        },
+        {
+            "m_Id": "9fadb5a356eb443599fd243aaafa26fa"
         }
     ],
     "synonyms": [
@@ -9073,8 +9145,8 @@
         "m_SerializableColors": []
     },
     "m_SourceType": 0,
-    "m_FunctionName": "OuterForestSurface",
-    "m_FunctionSource": "1c48d4346e1860e46be4be65f01bf341",
+    "m_FunctionName": "OuterForestSurfaceCanopy",
+    "m_FunctionSource": "9d0300bdc80776e429d4bb0da166ab78",
     "m_FunctionSourceUsePragmas": false,
     "m_FunctionBody": ""
 }
@@ -9686,3 +9758,361 @@
     "m_FunctionSourceUsePragmas": false,
     "m_FunctionBody": ""
 }
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+    "m_ObjectId": "1b2e572359d4468680504b54ccb11f53",
+    "m_Name": "Canopy Ground Shade",
+    "m_ChildObjectList": [
+        {
+            "m_Id": "d1c21864904d4489bd1d6d5e6d787d7a"
+        },
+        {
+            "m_Id": "96fd9cf30d6349b9b53309df14858f86"
+        },
+        {
+            "m_Id": "1fe60acc91fb43b795983b66c12960ab"
+        }
+    ]
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
+    "m_ObjectId": "d1c21864904d4489bd1d6d5e6d787d7a",
+    "m_Guid": {
+        "m_GuidSerialized": "a2b42e7a-1dc2-4b44-a507-110b04175e6d"
+    },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "Canopy Shade Mask",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Canopy Shade Mask",
+    "m_DefaultReferenceName": "_CanopyMask",
+    "m_OverrideReferenceName": "_CanopyMask",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": {
+        "m_SerializedTexture": "",
+        "m_Guid": ""
+    },
+    "isMainTexture": false,
+    "useTilingAndOffset": false,
+    "useTexelSize": false,
+    "m_Modifiable": true,
+    "m_DefaultType": 1,
+    "isMainColor": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Texture2DInputMaterialSlot",
+    "m_ObjectId": "ac7469a1aedd42ad8e06f40ff2ee4998",
+    "m_Id": 26,
+    "m_DisplayName": "CanopyMask",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "CanopyMask",
+    "m_StageCapability": 2,
+    "m_BareResource": false,
+    "m_Texture": {
+        "m_SerializedTexture": "",
+        "m_Guid": ""
+    },
+    "m_DefaultType": 1
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Texture2DMaterialSlot",
+    "m_ObjectId": "7b98946b4fc248d19153a9bce237043f",
+    "m_Id": 0,
+    "m_DisplayName": "Out",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_BareResource": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "e7b022289fb64159b1902f7c3a244f6a",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -1820,
+            "y": 1820,
+            "width": 173,
+            "height": 33.99993896484375
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "7b98946b4fc248d19153a9bce237043f"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": false,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "d1c21864904d4489bd1d6d5e6d787d7a"
+    }
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector4ShaderProperty",
+    "m_ObjectId": "96fd9cf30d6349b9b53309df14858f86",
+    "m_Guid": {
+        "m_GuidSerialized": "4c5ad826-b9fb-4fa8-867b-baba2c3b3215"
+    },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "Canopy Mask World Rect",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Canopy Mask World Rect",
+    "m_DefaultReferenceName": "_CanopyMaskWorldRect",
+    "m_OverrideReferenceName": "_CanopyMaskWorldRect",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": true,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": {
+        "x": -500,
+        "y": -500,
+        "z": 1000,
+        "w": 1000
+    },
+    "isMainColor": false,
+    "isMainTexture": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
+    "m_ObjectId": "9dd5e788b8d64946b79aa0f2627ddb9e",
+    "m_Id": 27,
+    "m_DisplayName": "CanopyWorldRect",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "CanopyWorldRect",
+    "m_StageCapability": 2,
+    "m_Value": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+    },
+    "m_DefaultValue": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector4MaterialSlot",
+    "m_ObjectId": "8578aa0db9b5405fab4857d86a803f18",
+    "m_Id": 0,
+    "m_DisplayName": "Out",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+    },
+    "m_DefaultValue": {
+        "x": 1,
+        "y": 1,
+        "z": 1,
+        "w": 1
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "5bbf89102faf4488bfe1ea83014446b1",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -1820,
+            "y": 1930,
+            "width": 173,
+            "height": 33.99993896484375
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "8578aa0db9b5405fab4857d86a803f18"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": false,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "96fd9cf30d6349b9b53309df14858f86"
+    }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "1fe60acc91fb43b795983b66c12960ab",
+    "m_Guid": {
+        "m_GuidSerialized": "312573cb-8c7b-4e1f-b794-3d5679063260"
+    },
+    "promotedFromAssetID": "",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "Canopy Shade Strength",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "Canopy Shade Strength",
+    "m_DefaultReferenceName": "_CanopyShadeStrength",
+    "m_OverrideReferenceName": "_CanopyShadeStrength",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": 0.6,
+    "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0,
+        "y": 1
+    },
+    "m_SliderType": 0,
+    "m_SliderPower": 3,
+    "m_EnumType": 0,
+    "m_CSharpEnumString": "",
+    "m_EnumNames": [
+        "Default"
+    ],
+    "m_EnumValues": [
+        0
+    ],
+    "isMainTexture": false,
+    "isMainColor": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+    "m_ObjectId": "9fadb5a356eb443599fd243aaafa26fa",
+    "m_Id": 28,
+    "m_DisplayName": "CanopyShadeStrength",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "CanopyShadeStrength",
+    "m_StageCapability": 2,
+    "m_Value": 0,
+    "m_DefaultValue": 0,
+    "m_Labels": [],
+    "m_LiteralMode": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+    "m_ObjectId": "75d4ff31834944c78ce6838a7770fb57",
+    "m_Id": 0,
+    "m_DisplayName": "Out",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": 0,
+    "m_DefaultValue": 0,
+    "m_Labels": [],
+    "m_LiteralMode": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "78534755788a421e9760823f14ecb5d8",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -1820,
+            "y": 2040,
+            "width": 173,
+            "height": 33.99993896484375
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "75d4ff31834944c78ce6838a7770fb57"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": false,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "1fe60acc91fb43b795983b66c12960ab"
+    }
+}
+
