@@ -30,8 +30,28 @@ namespace TheyWillDescend.Presentation.Environment
         [SerializeField, Min(0f), Tooltip("Время затухания тумана при отдалении, в секундах.")]
         private float zoomFadeOutTime = .7f;
 
+        [Header("Plateau fog mask")]
+        [SerializeField] private Shader plateauFogShader;
+        [SerializeField, Tooltip("Регулирует плотность объёмного тумана по расстоянию от центра плато в плоскости XZ.")]
+        private bool usePlateauMask;
+        [SerializeField] private Vector2 plateauCenterXZ;
+        [SerializeField, Min(0f), Tooltip("До этого радиуса действует плотность тумана на плато.")]
+        private float plateauStartRadius = 120f;
+        [SerializeField, Min(0f), Tooltip("На этом радиусе и дальше действует плотность тумана снаружи.")]
+        private float plateauEndRadius = 220f;
+        [SerializeField, Range(0f, 2f)] private float gameplayPlateauStrength;
+        [SerializeField, Range(0f, 2f)] private float menuPlateauStrength;
+        [SerializeField, Range(0f, 2f)] private float outsidePlateauStrength = 1f;
+
+        private static readonly int PlateauMaskId = Shader.PropertyToID("_PlateauFogMask");
+        private static readonly int PlateauStrengthId = Shader.PropertyToID("_PlateauFogStrength");
+        private static readonly int CullModeId = Shader.PropertyToID("_CullMode");
+
         private FieldInfo _heightField;
         private FieldInfo _densityField;
+        private Material[] _volumeMaterials;
+        private MethodInfo _updateMaterial;
+        private Shader _originalFogShader;
         private MonoBehaviour _boundVolume;
         private float _originalHeight;
         private float _originalDensity;
@@ -74,6 +94,12 @@ namespace TheyWillDescend.Presentation.Environment
             }
 
             _boundVolume = fogVolume;
+            const BindingFlags volumeMembers = BindingFlags.Instance | BindingFlags.NonPublic;
+            _volumeMaterials = fogVolume.GetType().GetField("_materials", volumeMembers)?.GetValue(fogVolume) as Material[];
+            _updateMaterial = fogVolume.GetType().GetMethod("UpdateMaterial", volumeMembers);
+            if (plateauFogShader != null && (_volumeMaterials == null || _updateMaterial == null))
+                Debug.LogWarning("Pure Volumetric Fog material API changed; plateau fog masking is unavailable.", this);
+
             _originalHeight = (float)_heightField.GetValue(_boundVolume);
             _originalDensity = (float)_densityField.GetValue(_boundVolume);
             _originalEnabled = _boundVolume.enabled;
@@ -126,6 +152,66 @@ namespace TheyWillDescend.Presentation.Environment
             // Re-enable only on a visibility transition, after setting height/density.
             if (_boundVolume.enabled != showFog)
                 _boundVolume.enabled = showFog;
+            if (showFog)
+                ApplyPlateauMask(menuBlend);
+        }
+
+        private void ApplyPlateauMask(float menuBlend)
+        {
+            if (_volumeMaterials == null || _updateMaterial == null)
+                return;
+
+            if (!usePlateauMask || plateauFogShader == null || !plateauFogShader.isSupported)
+            {
+                RestoreFogShader();
+                return;
+            }
+
+            float start = Mathf.Max(0f, plateauStartRadius);
+            float end = Mathf.Max(start + .01f, plateauEndRadius);
+            float inside = Mathf.Lerp(gameplayPlateauStrength, menuPlateauStrength, Mathf.Clamp01(menuBlend));
+            var mask = new Vector4(plateauCenterXZ.x, plateauCenterXZ.y, start, end);
+            var strengths = new Vector4(inside, outsidePlateauStrength, 0f, 0f);
+            bool shaderChanged = false;
+            foreach (var material in _volumeMaterials)
+            {
+                if (material == null) continue;
+                if (material.shader != plateauFogShader)
+                {
+                    _originalFogShader = material.shader;
+                    SetFogShader(material, plateauFogShader);
+                    shaderChanged = true;
+                }
+                material.SetVector(PlateauMaskId, mask);
+                material.SetVector(PlateauStrengthId, strengths);
+            }
+
+            if (shaderChanged)
+                _updateMaterial.Invoke(_boundVolume, null);
+        }
+
+        private void RestoreFogShader()
+        {
+            if (_originalFogShader == null) return;
+
+            bool shaderChanged = false;
+            foreach (var material in _volumeMaterials)
+            {
+                if (material == null || material.shader == _originalFogShader) continue;
+                SetFogShader(material, _originalFogShader);
+                shaderChanged = true;
+            }
+
+            if (shaderChanged)
+                _updateMaterial.Invoke(_boundVolume, null);
+            _originalFogShader = null;
+        }
+
+        private static void SetFogShader(Material material, Shader shader)
+        {
+            float cullMode = material.GetFloat(CullModeId);
+            material.shader = shader;
+            material.SetFloat(CullModeId, cullMode);
         }
 
         private void ApplyHeightForView(float menuBlend)
@@ -150,6 +236,7 @@ namespace TheyWillDescend.Presentation.Environment
             {
                 _heightField.SetValue(_boundVolume, _originalHeight);
                 _densityField.SetValue(_boundVolume, _originalDensity);
+                RestoreFogShader();
                 _boundVolume.enabled = _originalEnabled;
             }
 
@@ -157,6 +244,9 @@ namespace TheyWillDescend.Presentation.Environment
             _boundVolume = null;
             _heightField = null;
             _densityField = null;
+            _volumeMaterials = null;
+            _updateMaterial = null;
+            _originalFogShader = null;
             _visibilityInitialized = false;
             _gameplayVisibility = 0f;
         }

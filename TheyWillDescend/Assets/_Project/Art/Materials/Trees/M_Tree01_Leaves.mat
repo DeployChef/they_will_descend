@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Tree01_Leaves
-  m_Shader: {fileID: -6465566751694194690, guid: 0a9045ac72706a545a33675978a137a0, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 890c4ad413a785a4bb2411db206a57b1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
@@ -18,7 +18,7 @@ Material:
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 1
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 2450
   stringTagMap:
     RenderType: TransparentCutout
   disabledShaderPasses:
@@ -81,7 +81,7 @@ Material:
     - _TextureTiling: 1
     - _TreeSwaySpeed: 0.65
     - _TrunkBend: 1
-    - _VariationStrength: 0.14
+    - _VariationStrength: 0
     - _WindDirection: 25
     - _WindPhaseOffset: 0
     - _WindPreviewTime: -1
@@ -92,8 +92,8 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _LeafTint: {r: 0.54, g: 0.62, b: 0.59, a: 1}
-    - _VariationTint: {r: 0.62, g: 0.66, b: 0.57, a: 1}
+    - _LeafTint: {r: 0.5, g: 0.59, b: 0.49, a: 1}
+    - _VariationTint: {r: 0.53, g: 0.6, b: 0.5, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5850354166166527444
