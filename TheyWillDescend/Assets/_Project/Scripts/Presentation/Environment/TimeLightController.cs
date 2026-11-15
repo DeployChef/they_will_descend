@@ -80,6 +80,8 @@ namespace TheyWillDescend.Presentation.Environment
         [SerializeField] private WorldFogRenderFeature maskedFogFeature;
         [Tooltip("Центр плато в мировых координатах X/Z.")]
         [SerializeField] private Vector2 fogMaskCenterXZ = Vector2.zero;
+
+        [Header("Fog - Day World Mask")]
         [Tooltip("Радиус области с силой Plateau Fog Strength. Дальше начинается плавный переход.")]
         [SerializeField, Min(0f)] private float fogClearRadius = 100f;
         [Tooltip("Ширина перехода от плато к полной силе дымки внешнего леса.")]
@@ -92,6 +94,14 @@ namespace TheyWillDescend.Presentation.Environment
         [SerializeField, Range(0f, 2f)] private float forestFogStrength = 1f;
         [Tooltip("Максимальная непрозрачность дымки. 1 позволяет полностью скрывать дальние поверхности.")]
         [SerializeField, Range(0f, 1f)] private float maximumFogOpacity = 0.95f;
+
+        [Header("Fog - Night World Mask")]
+        [SerializeField, Min(0f)] private float nightFogClearRadius = 100f;
+        [SerializeField, Min(0.01f)] private float nightFogTransitionWidth = 100f;
+        [SerializeField, Range(0f, 1f)] private float nightPlateauFogStrength = 1f;
+        [SerializeField, Range(0f, 1f)] private float nightMenuPlateauFogStrength = 0.12f;
+        [SerializeField, Range(0f, 2f)] private float nightForestFogStrength = 1f;
+        [SerializeField, Range(0f, 1f)] private float nightMaximumFogOpacity = 0.95f;
 
         [Header("Skybox")]
         [SerializeField] private bool useSkyboxExposure = true;
@@ -213,6 +223,8 @@ namespace TheyWillDescend.Presentation.Environment
             nightFogDensity = Mathf.Max(0f, nightFogDensity);
             fogClearRadius = Mathf.Max(0f, fogClearRadius);
             fogTransitionWidth = Mathf.Max(0.01f, fogTransitionWidth);
+            nightFogClearRadius = Mathf.Max(0f, nightFogClearRadius);
+            nightFogTransitionWidth = Mathf.Max(0.01f, nightFogTransitionWidth);
 
             // Настройка кривых в редакторе (дублирует Awake)
             if (lightIntensityCurve == null || lightIntensityCurve.keys.Length == 0)
@@ -341,15 +353,20 @@ namespace TheyWillDescend.Presentation.Environment
 
             if (masked)
             {
+                float clearRadius = Mathf.Lerp(nightFogClearRadius, fogClearRadius, dayness);
+                float transitionWidth = Mathf.Lerp(nightFogTransitionWidth, fogTransitionWidth, dayness);
+                float plateauStrength = Mathf.Lerp(nightPlateauFogStrength, plateauFogStrength, dayness);
+                float menuPlateauStrength = Mathf.Lerp(nightMenuPlateauFogStrength, menuPlateauFogStrength, dayness);
                 maskedFogFeature.SetFog(new WorldFogSettings
                 {
                     Enabled = true,
                     Color = RenderSettings.fogColor,
                     Distance = new Vector4(start, end, density, (float)fogMode),
                     Mask = new Vector4(fogMaskCenterXZ.x, fogMaskCenterXZ.y,
-                        Mathf.Max(0f, fogClearRadius), Mathf.Max(0.01f, fogTransitionWidth)),
-                    Strength = new Vector4(Mathf.Lerp(plateauFogStrength, menuPlateauFogStrength, menuBlend),
-                        forestFogStrength, maximumFogOpacity, 0f)
+                        Mathf.Max(0f, clearRadius), Mathf.Max(0.01f, transitionWidth)),
+                    Strength = new Vector4(Mathf.Lerp(plateauStrength, menuPlateauStrength, menuBlend),
+                        Mathf.Lerp(nightForestFogStrength, forestFogStrength, dayness),
+                        Mathf.Lerp(nightMaximumFogOpacity, maximumFogOpacity, dayness), 0f)
                 });
             }
             else if (maskedFogFeature != null)
