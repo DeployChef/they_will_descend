@@ -33,13 +33,13 @@
 	<object class="MixerBusFader" id="{ee5c13cc-4bc4-46e7-8637-b03a0ed50c74}" />
 	<object class="CompressorEffect" id="{f843bd3b-2bbf-4270-8ce6-9e7ca1c54ace}">
 		<property name="threshold">
-			<value>-6</value>
+			<value>-16</value>
 		</property>
 		<property name="ratio">
-			<value>1.70000005</value>
+			<value>1.39999998</value>
 		</property>
 		<property name="attackTime">
-			<value>0.550000012</value>
+			<value>0.200000003</value>
 		</property>
 		<property name="releaseTime">
 			<value>880</value>
@@ -67,7 +67,7 @@
 	</object>
 	<object class="GainEffect" id="{8cd55a59-4a01-4cfa-898b-cf5b291c47ab}">
 		<property name="gain">
-			<value>-10</value>
+			<value>-8</value>
 		</property>
 	</object>
 </objects>

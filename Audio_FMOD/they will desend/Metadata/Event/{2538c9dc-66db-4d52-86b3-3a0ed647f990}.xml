@@ -167,11 +167,8 @@
 		</relationship>
 	</object>
 	<object class="MultiSound" id="{8acebb44-1005-4f3a-b49b-6565eaa6c896}">
-		<property name="start">
-			<value>6</value>
-		</property>
 		<property name="length">
-			<value>16</value>
+			<value>22</value>
 		</property>
 	</object>
 	<object class="EventMixerGroup" id="{b2422768-6f17-41ed-af48-fedc851323c9}">
@@ -189,11 +186,8 @@
 		</relationship>
 	</object>
 	<object class="MultiSound" id="{1928984a-3b41-4f6f-934c-6db0702f971e}">
-		<property name="start">
-			<value>6</value>
-		</property>
 		<property name="length">
-			<value>16</value>
+			<value>22</value>
 		</property>
 	</object>
 	<object class="EventMixerGroup" id="{a5b14061-65fb-42fd-8758-40a8d4befbc0}">
@@ -268,16 +262,16 @@
 	</object>
 	<object class="LoopRegion" id="{d284e317-f415-453c-8890-42080e7db249}">
 		<property name="position">
-			<value>6</value>
+			<value>0</value>
 		</property>
 		<property name="length">
-			<value>16</value>
+			<value>22</value>
 		</property>
 		<relationship name="timeline">
 			<destination>{0e34921d-4aae-4949-b11d-21d112542df6}</destination>
 		</relationship>
 		<relationship name="markerTrack">
-			<destination>{ebc93731-67f1-4b4c-be62-e0fa2c3732a2}</destination>
+			<destination>{c75be8cd-3020-4287-b925-19572a41118a}</destination>
 		</relationship>
 	</object>
 	<object class="NamedMarker" id="{6c5cbbc7-0fec-4d27-8f09-a5b099d1bf41}">
@@ -296,10 +290,10 @@
 	</object>
 	<object class="TransitionRegion" id="{362d7c19-9f63-4b8e-a6e0-9a3f89caeb66}">
 		<property name="position">
-			<value>6</value>
+			<value>0</value>
 		</property>
 		<property name="length">
-			<value>16</value>
+			<value>22</value>
 		</property>
 		<property name="quantizationInterval">
 			<value>2</value>

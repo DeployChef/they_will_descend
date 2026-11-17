@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="Bank" id="{b5fe2adf-d582-4ff7-bd96-a47a50280dae}">
+		<property name="name">
+			<value>Voice</value>
+		</property>
+		<relationship name="folder">
+			<destination>{8867e07c-eeae-4ce9-b27e-2588e4085b7a}</destination>
+		</relationship>
+		<relationship name="audioTable">
+			<destination>{5360c2bb-e219-4adb-9d0f-cb67b7d28fe9}</destination>
+		</relationship>
+	</object>
+	<object class="AudioTable" id="{5360c2bb-e219-4adb-9d0f-cb67b7d28fe9}">
+		<property name="name">
+			<value>ru</value>
+		</property>
+		<property name="sourceDirectory" />
+	</object>
+</objects>

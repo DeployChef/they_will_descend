@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{3a952e8c-6871-4722-a9f5-74c747b48f60}">
+		<property name="name">
+			<value>rytm</value>
+		</property>
+		<relationship name="folder">
+			<destination>{7e6e27e0-8510-42cd-b825-1d49e0868c9c}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{1f8d8e3b-6b96-47d1-81cd-6b5bca9649a8}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{1f8d8e3b-6b96-47d1-81cd-6b5bca9649a8}">
+		<property name="parameterType">
+			<value>1</value>
+		</property>
+		<property name="maximum">
+			<value>2</value>
+		</property>
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

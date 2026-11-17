@@ -129,7 +129,10 @@
 			<value>2500</value>
 		</property>
 		<property name="maximumTimeBetweenSounds">
-			<value>95000</value>
+			<value>160000</value>
+		</property>
+		<property name="spawnRate">
+			<value>50</value>
 		</property>
 		<property name="minimumScatterDistance">
 			<value>0.300000012</value>
@@ -142,9 +145,6 @@
 		</relationship>
 	</object>
 	<object class="EventMixerGroup" id="{1c372083-7b20-4478-b446-8ec2bcdca1a9}">
-		<property name="volume">
-			<value>-9</value>
-		</property>
 		<property name="name">
 			<value>Audio 1</value>
 		</property>

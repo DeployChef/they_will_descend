@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="MixerGroup" id="{7e8f7a7d-5a42-4b9c-bae5-0d8f74d8e2a0}">
+		<property name="name">
+			<value>superstress</value>
+		</property>
+		<relationship name="effectChain">
+			<destination>{974d2b49-e74e-413b-b954-f256c550ea97}</destination>
+		</relationship>
+		<relationship name="panner">
+			<destination>{86aec78b-d136-48a0-9b23-28bb8407103c}</destination>
+		</relationship>
+		<relationship name="output">
+			<destination>{0b349b2d-daa6-4e98-9eb9-4bc1bfd35819}</destination>
+		</relationship>
+	</object>
+	<object class="MixerBusEffectChain" id="{974d2b49-e74e-413b-b954-f256c550ea97}">
+		<relationship name="effects">
+			<destination>{e6933a68-d97c-4703-bb37-0ed7cab2c27f}</destination>
+		</relationship>
+	</object>
+	<object class="MixerBusPanner" id="{86aec78b-d136-48a0-9b23-28bb8407103c}" />
+	<object class="MixerBusFader" id="{e6933a68-d97c-4703-bb37-0ed7cab2c27f}" />
+</objects>
