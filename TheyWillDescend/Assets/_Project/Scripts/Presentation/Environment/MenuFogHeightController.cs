@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace TheyWillDescend.Presentation.Environment
 {
-    /// <summary>Shows volumetric fog in close gameplay and the pause menu.</summary>
+    /// <summary>Shows volumetric fog during play in close gameplay and the pause menu.</summary>
+    [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class MenuFogHeightController : MonoBehaviour
     {
@@ -64,9 +65,25 @@ namespace TheyWillDescend.Presentation.Environment
 
         private void OnEnable()
         {
+            if (!Application.IsPlaying(gameObject))
+            {
+                DisableEditModeFog();
+                return;
+            }
+
+            // This controller owns the enabled state: the volume stays disabled in
+            // the saved scene and is activated only for the running game.
+            if (fogVolume != null)
+                fogVolume.enabled = true;
+
             // Wait until LateUpdate so the RTS camera has initialized its zoom in Start.
-            if (Application.isPlaying)
-                BindVolume();
+            BindVolume();
+        }
+
+        private void DisableEditModeFog()
+        {
+            if (fogVolume != null && fogVolume.enabled)
+                fogVolume.enabled = false;
         }
 
         private bool BindVolume()
@@ -111,6 +128,12 @@ namespace TheyWillDescend.Presentation.Environment
 
         private void LateUpdate()
         {
+            if (!Application.IsPlaying(gameObject))
+            {
+                DisableEditModeFog();
+                return;
+            }
+
             if (_hasBinding && _boundVolume != null)
                 ApplyFogForView(cameraController != null ? cameraController.CurrentZoomRadius : fullFogZoomRadius,
                     pauseCamera != null ? pauseCamera.MenuBlendProgress : 0f, Time.unscaledDeltaTime);
@@ -237,8 +260,11 @@ namespace TheyWillDescend.Presentation.Environment
                 _heightField.SetValue(_boundVolume, _originalHeight);
                 _densityField.SetValue(_boundVolume, _originalDensity);
                 RestoreFogShader();
-                _boundVolume.enabled = _originalEnabled;
+                _boundVolume.enabled = Application.IsPlaying(gameObject) && _originalEnabled;
             }
+
+            if (!Application.IsPlaying(gameObject))
+                DisableEditModeFog();
 
             _hasBinding = false;
             _boundVolume = null;
