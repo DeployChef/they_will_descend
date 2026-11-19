@@ -251,6 +251,21 @@
   "m_GroupDatas": [],
   "m_StickyNoteDatas": [],
   "m_Edges": [
+{
+  "m_OutputSlot": {
+    "m_Node": {
+      "m_Id": "ed69eb582cdb4e6d925cad26812c9aa4"
+    },
+    "m_SlotId": 4
+  },
+  "m_InputSlot": {
+    "m_Node": {
+      "m_Id": "664620cbc5a8469590275f1b33833dad"
+    },
+    "m_SlotId": 2
+  }
+},
+
     {
       "m_OutputSlot": {
         "m_Node": {
@@ -6736,6 +6751,9 @@
     },
     {
       "m_Id": "5334a76c0ace400bae0f4acdc34f8c61"
+    },
+    {
+      "m_Id": "9b63dad654e1457bb478c8ae0946ce70"
     }
   ],
   "synonyms": [
@@ -6753,7 +6771,7 @@
   "m_FunctionName": "CalmCrownRGB",
   "m_FunctionSource": "",
   "m_FunctionSourceUsePragmas": false,
-  "m_FunctionBody": "Out = float4(lerp(float3(0.09716311, 0.16331501, 0.04937131), In.rgb, 0.20), In.a);"
+  "m_FunctionBody": "Out = float4(lerp(float3(0.09716311, 0.16331501, 0.04937131), In.rgb, 0.20) * saturate(CoverShade), In.a);"
 }
 
 {
@@ -6803,5 +6821,21 @@
     "z": 0.0,
     "w": 0.0
   },
+  "m_Labels": []
+}
+
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+  "m_ObjectId": "9b63dad654e1457bb478c8ae0946ce70",
+  "m_Id": 2,
+  "m_DisplayName": "CoverShade",
+  "m_SlotType": 0,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "CoverShade",
+  "m_StageCapability": 2,
+  "m_Value": 1,
+  "m_DefaultValue": 1,
   "m_Labels": []
 }
